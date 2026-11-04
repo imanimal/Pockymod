@@ -285,6 +285,8 @@ export interface CollectionEntry {
 export interface CollectionCheck {
   name: string; collectionVersions: string[]; currentPatch: string | null; gameVersionOk: boolean | null; entries: CollectionEntry[];
   missing: number; installed: number; unavailable: number; needsClick: number; downloadBytes: number;
+  /** Items hosted outside Nexus, which the user gets by hand. */
+  external?: Array<{ name: string; resourceType: string | null; resourceUrl: string | null; optional: boolean; version: string | null; instructions: string | null }>;
 }
 export interface LocalCollection {
   format: string; version: number; name: string; description: string; game: string; gameVersion: string | null; createdAt: string;

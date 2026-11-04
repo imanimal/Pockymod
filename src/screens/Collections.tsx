@@ -122,6 +122,21 @@ function CheckDialog({ title, load, onClose, onQueued }: { title: string; load: 
           ))}
           {shown.length > 80 && <p className="dim" style={{ padding: ".5em" }}>and {shown.length - 80} more</p>}
         </div>
+        {(c.external?.length ?? 0) > 0 && (
+          <div className="note warn">
+            <b>{c.external!.length} {c.external!.length === 1 ? "item comes" : "items come"} from outside Nexus.</b> The app cannot download {c.external!.length === 1 ? "it" : "them"}; get {c.external!.length === 1 ? "it" : "them"} by hand:
+            <div className="rows" style={{ marginTop: ".4em" }}>
+              {c.external!.map((x) => (
+                <div key={x.name} className="row" style={{ cursor: "default" }}>
+                  <span className="m-main"><span className="m-t">{x.name}</span>
+                    <span className="m-meta">{x.version && <span>v{x.version}</span>}{x.optional && <span>optional</span>}{x.resourceType && <span>{x.resourceType.toLowerCase()}</span>}</span>
+                    {x.instructions && <span style={{ fontSize: ".84em", whiteSpace: "normal" }}>{x.instructions}</span>}</span>
+                  {x.resourceUrl && <span className="m-side"><Key size="sm" variant="ghost" icon="web" onClick={() => { void navigator.clipboard?.writeText(x.resourceUrl!); toast("Link copied: open it in your browser."); }}>Copy link</Key></span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <p className="dim" style={{ fontSize: ".82em" }}>Installer choices and rules saved in the collection are not applied yet; each mod installs with its default layout.</p>
         <div className="actions" style={{ justifyContent: "flex-end" }}>
           {c.entries.some((e) => e.optional) && <Switch checked={optional} onChange={setOptional}>Include optional mods</Switch>}

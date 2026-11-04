@@ -26,7 +26,8 @@ const BROWSE_QUERY: &str = "query Collections($filter: CollectionsSearchFilter, 
 
 const REVISION_QUERY: &str = "query Revision($slug: String!, $revision: Int) { collectionRevision(slug: $slug, revision: $revision, domainName: \"cyberpunk2077\") {
   revisionNumber modCount totalSize adultContent gameVersions { reference } collection { name slug summary user { name } }
-  modFiles { fileId optional updatePolicy version file { fileId name version size sizeInBytes uri category mod { modId name } } } } }";
+  modFiles { fileId optional updatePolicy version file { fileId name version size sizeInBytes uri category mod { modId name } } }
+  externalResources { name resourceType resourceUrl optional version instructions } } }";
 
 fn bigint<'de, D: Deserializer<'de>>(d: D) -> std::result::Result<u64, D::Error> {
     Ok(match Value::deserialize(d)? { Value::String(s) => s.parse().unwrap_or(0), Value::Number(n) => n.as_u64().unwrap_or(0), _ => 0 })
@@ -130,6 +131,26 @@ pub struct Revision {
     pub game_versions: Vec<GameVersionRef>,
     pub collection: RevCollection,
     pub mod_files: Vec<RevMod>,
+    /// Things the collection needs from outside Nexus (a site download, a tool): the app cannot fetch them.
+    #[serde(default)]
+    pub external_resources: Vec<External>,
+}
+
+/// A collection item hosted outside Nexus (checked live 2026-11-04: `externalResources` on a revision).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct External {
+    pub name: String,
+    #[serde(default)]
+    pub resource_type: Option<String>,
+    #[serde(default)]
+    pub resource_url: Option<String>,
+    #[serde(default)]
+    pub optional: bool,
+    #[serde(default)]
+    pub version: Option<String>,
+    #[serde(default)]
+    pub instructions: Option<String>,
 }
 
 pub async fn revision(client: &NexusClient, slug: &str, revision: Option<u32>) -> Result<Revision> {
@@ -280,6 +301,9 @@ pub struct Check {
     pub unavailable: usize,
     pub needs_click: usize,
     pub download_bytes: u64,
+    /// Items from outside Nexus, listed so nothing is dropped silently; the user gets them by hand.
+    #[serde(default)]
+    pub external: Vec<External>,
 }
 
 /// "2.5.0.0" and "2.5" compare as patch 2.5; "3.0.80.51928" (an executable version) cannot be compared.
@@ -305,7 +329,7 @@ fn summarize(name: String, versions: Vec<String>, patch: Option<String>, entries
     let unavailable = entries.iter().filter(|e| e.status == "unavailable" && e.replacement.is_none()).count();
     let needs_click = if premium { open.iter().filter(|e| !is_archive_name(&e.uri)).count() } else { missing };
     let download_bytes = open.iter().map(|e| e.size).sum();
-    Check { name, game_version_ok: compare_versions(&versions, patch.as_deref()), collection_versions: versions, current_patch: patch, missing, installed: entries.len() - open.len(), unavailable, needs_click, download_bytes, entries }
+    Check { name, game_version_ok: compare_versions(&versions, patch.as_deref()), collection_versions: versions, current_patch: patch, missing, installed: entries.len() - open.len(), unavailable, needs_click, download_bytes, entries, external: Vec::new() }
 }
 
 fn installed_files(db: &Db) -> Result<BTreeSet<(u32, u32)>> {
@@ -324,7 +348,9 @@ pub fn check_revision(db: &Db, rev: &Revision, patch: Option<String>, premium: b
         Some(Entry { mod_id: f.m.mod_id, file_id: f.file_id, name: f.m.name.clone(), file_name: f.name.clone(), version: f.version.clone(),
             size: f.size_in_bytes.unwrap_or(f.size * 1024), uri: f.uri.clone(), optional: m.optional, md5: None, status: status.into(), replacement: None })
     }).collect();
-    Ok(summarize(rev.collection.name.clone(), rev.game_versions.iter().map(|g| g.reference.clone()).collect(), patch, entries, premium))
+    let mut c = summarize(rev.collection.name.clone(), rev.game_versions.iter().map(|g| g.reference.clone()).collect(), patch, entries, premium);
+    c.external = rev.external_resources.clone();
+    Ok(c)
 }
 
 pub fn check_local(db: &Db, c: &LocalCollection, patch: Option<String>, premium: bool) -> Result<Check> {
@@ -358,7 +384,9 @@ pub async fn resolve_files(client: &NexusClient, db: &Mutex<Db>, check: &mut Che
             }
         }
     }
+    let external = std::mem::take(&mut check.external);
     *check = summarize(check.name.clone(), check.collection_versions.clone(), check.current_patch.clone(), std::mem::take(&mut check.entries), premium);
+    check.external = external;
     Ok(())
 }
 
