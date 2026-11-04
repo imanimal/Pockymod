@@ -148,10 +148,16 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
     let staging = staging_dir(library, req.mod_id, req.file_id);
     let fresh = staging.with_extension("new");
     let fomod_cfg = crate::fomod::find_config(&entries);
-    let (plan, chosen) = if let Some(cfg) = &fomod_cfg {
+    // no installer, but variants side by side: a one-choice installer of our own
+    let synth = if fomod_cfg.is_none() { crate::fomod::variants(&entries, &req.name) } else { None };
+    let (plan, chosen) = if fomod_cfg.is_some() || synth.is_some() {
         let _ = fs::remove_dir_all(&fresh);
         archive::extract(&req.archive, &fresh)?;
-        let f = crate::fomod::parse(&crate::fomod::decode(&fs::read(fresh.join(cfg))?), cfg)?;
+        let f = match (&fomod_cfg, synth) {
+            (Some(cfg), _) => crate::fomod::parse(&crate::fomod::decode(&fs::read(fresh.join(cfg))?), cfg)?,
+            (None, Some(v)) => v,
+            (None, None) => unreachable!(),
+        };
         match &req.fomod_choices {
             None => { let _ = fs::remove_dir_all(&fresh); let defaults = crate::fomod::defaults(&f); return Ok(InstallOutcome::NeedsChoices { fomod: f, defaults }); }
             Some(c) => { let files = crate::fomod::resolve(&f, c, &entries)?; (crate::cyberpunk::layout::summarize(files.clone()), Some(files)) }

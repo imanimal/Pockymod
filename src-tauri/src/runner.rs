@@ -272,7 +272,7 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         ids.into_iter().find(|i| replace_only.contains(i))
     } else { None };
     // installer options are asked through the normal path, so the Vortex in-place update is for plain archives
-    let has_options = pocket_core::archive::list(&archive).map(|e| pocket_core::fomod::find_config(&e).is_some()).unwrap_or(false);
+    let has_options = pocket_core::archive::list(&archive).map(|e| pocket_core::fomod::find_config(&e).is_some() || pocket_core::fomod::variants(&e, &item.mod_name).is_some()).unwrap_or(false);
     if let (Some(vid), Some(setup), false) = (vortex_id, pocket_core::vortex::find(&game), has_options) {
         let db = st.db.clone();
         let (g, l, a, uri, fid, ver) = (game.clone(), library.clone(), archive.clone(), pocket_core::queue::download_name(item.mod_id, item.file_id, &item.uri), item.file_id, item.version.clone());

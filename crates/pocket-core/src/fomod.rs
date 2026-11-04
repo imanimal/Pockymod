@@ -40,6 +40,51 @@ pub struct Fomod {
     pub conditional: Vec<Conditional>,
 }
 
+/// An archive without an installer that holds several variants side by side ("2K/…" and "4K/…", each laid out
+/// for the game, landing on the same paths): an installer with one choice, so the user picks one instead of every
+/// variant going in and the last one silently winning. Folders that clash with no other go in whatever is picked.
+pub fn variants(entries: &[String], mod_name: &str) -> Option<Fomod> {
+    use crate::cyberpunk::layout::plan_install;
+    let files: Vec<String> = entries.iter().map(|e| e.replace('\\', "/")).filter(|e| !e.ends_with('/')).collect();
+    let anchors = ["archive", "bin", "r6", "red4ext", "engine", "mods"];
+    // drop wrapper folders every file shares ("ModName/…")
+    let mut depth = 0;
+    loop {
+        let seg = |f: &String| f.split('/').nth(depth).map(str::to_lowercase);
+        let first = files.first().and_then(seg)?;
+        let all_deeper = files.iter().all(|f| f.split('/').count() > depth + 1 && seg(f).as_deref() == Some(first.as_str()));
+        if !all_deeper || anchors.contains(&first.as_str()) { break; }
+        depth += 1;
+    }
+    let mut groups: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for f in &files {
+        let parts: Vec<&str> = f.split('/').collect();
+        if parts.len() <= depth + 1 { groups.entry(String::new()).or_default().push(f.clone()); continue; }
+        groups.entry(parts[..=depth].join("/")).or_default().push(f.clone());
+    }
+    if groups.len() < 2 { return None; }
+    let planned: Vec<(String, Vec<Placement>)> = groups.iter()
+        .filter(|(k, _)| !k.is_empty() && !anchors.contains(&k.rsplit('/').next().unwrap_or("").to_lowercase().as_str()))
+        .map(|(k, v)| (k.clone(), plan_install(v, mod_name).files)).filter(|(_, p)| !p.is_empty()).collect();
+    let targets = |p: &[Placement]| p.iter().map(|x| x.target.to_lowercase()).collect::<std::collections::BTreeSet<_>>();
+    let clashes = |i: usize| planned.iter().enumerate().any(|(j, (_, q))| j != i && !targets(&planned[i].1).is_disjoint(&targets(q)));
+    let (var, shared): (Vec<usize>, Vec<usize>) = (0..planned.len()).partition(|i| clashes(*i));
+    if var.len() < 2 { return None; }
+    let maps = |p: &[Placement]| p.iter().map(|x| FileMap { source: x.source.clone(), destination: x.target.clone(), folder: false, priority: 0 }).collect::<Vec<_>>();
+    let mut required: Vec<FileMap> = shared.iter().flat_map(|i| maps(&planned[*i].1)).collect();
+    // loose files beside the variant folders (and anchored folders like archive/) go in too
+    for (k, v) in &groups {
+        if k.is_empty() || anchors.contains(&k.rsplit('/').next().unwrap_or("").to_lowercase().as_str()) { required.extend(maps(&plan_install(v, mod_name).files)); }
+    }
+    let plugins = var.iter().map(|i| {
+        let (k, p) = &planned[*i];
+        Plugin { name: k.rsplit('/').next().unwrap_or(k).to_string(), description: format!("{} files", p.len()), image: None, files: maps(p), flags: Vec::new(), kind: "Optional".into() }
+    }).collect();
+    Some(Fomod { name: mod_name.to_string(), root: String::new(), required,
+        steps: vec![Step { name: "Choose a variant".into(), groups: vec![Group { name: "This archive holds several versions of the mod. Pick one.".into(), kind: "SelectExactlyOne".into(), plugins }] }],
+        conditional: Vec::new() })
+}
+
 /// The ModuleConfig.xml entry in an archive listing, if any.
 pub fn find_config(entries: &[String]) -> Option<String> {
     entries.iter().find(|e| e.replace('\\', "/").to_lowercase().ends_with("fomod/moduleconfig.xml")).cloned()
@@ -169,6 +214,22 @@ pub fn resolve(f: &Fomod, choices: &[[usize; 3]], entries: &[String]) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn variant_folders_become_one_choice() {
+        let e: Vec<String> = ["Jacket/2K/archive/pc/mod/jacket.archive", "Jacket/4K/archive/pc/mod/jacket.archive", "Jacket/Shared/r6/tweaks/jacket.yaml", "Jacket/readme.txt"]
+            .iter().map(|s| s.to_string()).collect();
+        let f = variants(&e, "Jacket").expect("variants");
+        let g = &f.steps[0].groups[0];
+        assert_eq!(g.plugins.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(), ["2K", "4K"]);
+        let picked = resolve(&f, &[[0, 0, 1]], &e).unwrap();
+        let t: Vec<(&str, &str)> = picked.iter().map(|p| (p.source.as_str(), p.target.as_str())).collect();
+        assert!(t.contains(&("Jacket/4K/archive/pc/mod/jacket.archive", "archive/pc/mod/jacket.archive")), "{t:?}");
+        assert!(t.iter().any(|(_, d)| d.ends_with("jacket.yaml")), "shared files go in too: {t:?}");
+        assert!(!t.iter().any(|(s, _)| s.contains("2K")));
+        // one layout only: no choice
+        assert!(variants(&["M/archive/pc/mod/a.archive".to_string(), "M/r6/scripts/a.reds".to_string()], "M").is_none());
+    }
 
     const XML: &str = r#"<?xml version="1.0" encoding="UTF-16"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
