@@ -27,10 +27,30 @@ pub const REDMOD_EXE: &str = "tools/redmod/bin/redMod.exe";
 pub struct GameInstall { pub store: &'static str, pub path: PathBuf, pub exists: bool }
 
 /// Every install found on this machine, Steam first.
+/// A path as Windows compares them: one kind of slash, no trailing slash, any letter case.
+pub fn path_key(p: &Path) -> String {
+    p.to_string_lossy().replace('/', "\\").trim_end_matches('\\').to_lowercase()
+}
+
+/// The same folder spelled the way Windows shows it: backslashes, and the drive letter in capitals.
+fn tidy(p: PathBuf) -> PathBuf {
+    let mut s = p.to_string_lossy().replace('/', "\\");
+    if s.as_bytes().get(1) == Some(&b':') { s.replace_range(0..1, &s[0..1].to_uppercase()); }
+    PathBuf::from(s.trim_end_matches('\\').to_string())
+}
+
 pub fn detect() -> Vec<GameInstall> {
     let mut out: Vec<GameInstall> = Vec::new();
+    // Steam keeps its folder in the registry twice, once lower case with forward slashes ("c:/program files
+    // (x86)/steam"): both lead to the same game, so a path is the same one in any spelling, and the spelling with
+    // capitals (as Explorer shows it) is the one kept
     let mut push = |store: &'static str, p: PathBuf| {
-        if !out.iter().any(|g| g.path == p) { let exists = p.join(EXE).exists(); out.push(GameInstall { store, path: p, exists }); }
+        let p = tidy(p);
+        let key = path_key(&p);
+        match out.iter_mut().find(|g| path_key(&g.path) == key) {
+            Some(g) => { if g.path.to_string_lossy().chars().filter(|c| c.is_uppercase()).count() < p.to_string_lossy().chars().filter(|c| c.is_uppercase()).count() { g.path = p; } }
+            None => { let exists = p.join(EXE).exists(); out.push(GameInstall { store, path: p, exists }); }
+        }
     };
     for p in steam_candidates() { push("Steam", p); }
     for p in gog_candidates() { push("GOG", p); }
@@ -73,10 +93,12 @@ fn steam_candidates() -> Vec<PathBuf> {
     {
         use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
         let mut roots: Vec<PathBuf> = Vec::new();
-        if let Some(p) = reg_str(HKEY_CURRENT_USER, "Software\\Valve\\Steam", "SteamPath") { roots.push(PathBuf::from(p)); }
+        // the machine-wide entry first: it has the folder's real capitals; the user's is often lower case
         if let Some(p) = reg_str(HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Valve\\Steam", "InstallPath") { roots.push(PathBuf::from(p)); }
+        if let Some(p) = reg_str(HKEY_CURRENT_USER, "Software\\Valve\\Steam", "SteamPath") { roots.push(PathBuf::from(p)); }
         roots.push(PathBuf::from("C:\\Program Files (x86)\\Steam"));
-        roots.dedup();
+        let mut seen = std::collections::BTreeSet::new();
+        roots.retain(|r| seen.insert(path_key(r)));
         roots.iter().flat_map(|r| steam_from_root(r)).collect()
     }
     #[cfg(not(windows))]
@@ -204,6 +226,13 @@ fn probe_writable(game: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn one_folder_in_two_spellings_is_one_install() {
+        assert_eq!(path_key(Path::new("c:/program files (x86)/steam/steamapps/common/Cyberpunk 2077")),
+                   path_key(Path::new("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Cyberpunk 2077\\")));
+        assert_eq!(tidy(PathBuf::from("c:/program files (x86)/steam")), PathBuf::from("C:\\program files (x86)\\steam"));
+    }
 
     #[test]
     fn steam_library_files() {
