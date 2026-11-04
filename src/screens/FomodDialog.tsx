@@ -6,7 +6,8 @@ import { Key, Pill } from "../ui/pocket";
 import { errorText, library, type Choice, type ChoicesNeeded } from "../lib/api";
 import { toast } from "../ui/toast";
 
-export function FomodDialog({ need, onClose, onInstalled }: { need: ChoicesNeeded; onClose: () => void; onInstalled?: () => void }) {
+/** With `apply`, the dialog changes the options of a mod already installed (its last picks preselected in `need`). */
+export function FomodDialog({ need, onClose, onInstalled, apply }: { need: ChoicesNeeded; onClose: () => void; onInstalled?: () => void; apply?: (choices: Choice[]) => Promise<void> }) {
   const [picked, setPicked] = useState<Set<string>>(() => new Set(need.defaults.map((c) => c.join("."))));
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -29,6 +30,7 @@ export function FomodDialog({ need, onClose, onInstalled }: { need: ChoicesNeede
     setBusy(true);
     try {
       const choices = [...picked].map((k) => k.split(".").map(Number) as Choice);
+      if (apply) { await apply(choices); onClose(); return; }
       const out = await library.installFile({ ...need.request, fomodChoices: choices });
       if (out.status === "installed") toast(`Installed ${need.request.name}${out.needsRedmodDeploy ? ". Run the REDmod deploy from Load order." : "."}`);
       else if (out.status === "staged") toast(`${need.request.name} is staged: its files clash with other mods. Decide in Library.`, true);
@@ -38,6 +40,7 @@ export function FomodDialog({ need, onClose, onInstalled }: { need: ChoicesNeede
   };
   return (
     <Dialog icon="install" title={`${need.fomod.name || need.request.name}: options`} count={steps.length > 1 ? `step ${step + 1} of ${steps.length}` : undefined} onClose={onClose}>
+      {apply && step === 0 && <p className="dim" style={{ fontSize: ".86em" }}>Your last picks are selected. The new ones go in from the files already on disk; nothing is downloaded.</p>}
       {s && <>
         <b className="hi">{s.name}</b>
         {s.groups.map((g, gi) => (
@@ -61,7 +64,7 @@ export function FomodDialog({ need, onClose, onInstalled }: { need: ChoicesNeede
       <div className="actions" style={{ justifyContent: "flex-end" }}>
         {step > 0 && <Key variant="ghost" onClick={() => setStep(step - 1)}>Back</Key>}
         {step < steps.length - 1 ? <Key variant="dark" icon="chevron" onClick={() => setStep(step + 1)}>Next</Key>
-          : <Key variant="primary" icon="install" disabled={busy || missing.length > 0} onClick={install}>Install with these</Key>}
+          : <Key variant="primary" icon="install" disabled={busy || missing.length > 0} onClick={install}>{apply ? "Use these options" : "Install with these"}</Key>}
       </div>
     </Dialog>
   );

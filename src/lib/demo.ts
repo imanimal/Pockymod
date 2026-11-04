@@ -361,6 +361,133 @@ export function installDemo() {
     patches: () => [["2.0", "2023-09-21"], ["2.1", "2023-12-05"], ["2.12", "2024-03-01"], ["2.2", "2024-12-10"], ["2.3", "2025-07-17"], ["2.5", "2026-10-22"]]
       .map(([version, released]) => [{ version, released }, Date.parse(`${released}T00:00:00Z`) / 1000]),
   });
+  installTroubleshootDemo();
+}
+
+// ── logs, overlapping archives, standing choices, installer options, moving the library (demo answers) ──
+
+type DemoRename = { modId: number; name: string; target: string; renamed: string; installId: number | null; createdAt: number };
+const demoRenames: DemoRename[] = [];
+let demoWins = [{ id: 1, winner: "Better Netrunning", loser: "Netrunner Rework", winnerInstall: 0, loserInstall: 0, files: 3, createdAt: Math.floor(Date.now() / 1000) - 86400 * 3 }];
+/** Names for the demo's logs and archives: the user's demo installs first, then mods from the browse fixture. */
+function demoNames(n: number): Array<{ id: number | null; modId: number | null; name: string; enabled: boolean }> {
+  const own = installs.map((i) => ({ id: i.id as number | null, modId: i.modId as number | null, name: i.name, enabled: i.enabled }));
+  const extra = fixture.nodes.slice(20, 20 + n).map((c) => ({ id: null, modId: c.modId as number | null, name: c.name, enabled: true }));
+  return [...own, ...extra].slice(0, n);
+}
+function demoLogs() {
+  const now = Math.floor(Date.now() / 1000);
+  const start = now - 17 * 60;
+  const [a, b, c] = demoNames(3);
+  const t = (s: number) => new Date((start + s) * 1000).toISOString().replace("T", " ").slice(0, 19);
+  const entry = (tool: string, log: string, level: "error" | "warning", text: string, who: { id: number | null } | undefined, subject: string | null, s = 4) =>
+    ({ log, tool, level, time: t(s), text, subject, installId: who?.id ?? null });
+  const rs = "r6/logs/redscript_rCURRENT.log";
+  const axl = "red4ext/plugins/ArchiveXL/ArchiveXL-2026-11-04-11-52-10.log";
+  const cet = "bin/x64/plugins/cyber_engine_tweaks/mods/HUDTweaks/HUDTweaks.log";
+  const mods = [
+    { who: a, entries: [
+      entry("redscript", rs, "error", "error[UNRESOLVED_REF]: 'NetrunnerHelper' is not defined\n --> r6\\scripts\\BetterNetrunning\\Hacks.reds:212:9\n    |\n212 |     NetrunnerHelper.Boost(this);", a, "r6/scripts/betternetrunning/hacks.reds"),
+      entry("redscript", rs, "error", "error[UNRESOLVED_METHOD]: 'GetQuickhackCost' is not defined on 'ScriptableSystem'\n --> r6\\scripts\\BetterNetrunning\\Cost.reds:48:5", a, "r6/scripts/betternetrunning/cost.reds"),
+    ] },
+    { who: b, entries: [entry("ArchiveXL", axl, "error", "HairRework.archive.xl: Can't resolve appearance \"hair_long_02\".", b, "hairrework.archive.xl", 6)] },
+    { who: c, entries: [entry("CET mod HUDTweaks", cet, "warning", "[string \"init.lua\"]:88: attempt to index a nil value (field 'settings')\nstack traceback:\n  init.lua:88: in function 'onDraw'", c, "bin/x64/plugins/cyber_engine_tweaks/mods/hudtweaks/", 40)] },
+  ].filter((m) => m.who).map((m) => ({ installId: m.who!.id ?? 0, name: m.who!.name, enabled: m.who!.enabled,
+    errors: m.entries.filter((e) => e.level === "error").length, warnings: m.entries.filter((e) => e.level === "warning").length, entries: m.entries }));
+  const other = [entry("RED4ext", "red4ext/logs/red4ext-2026-11-04-11-52-08.log", "warning", "mod_settings (version: 0.2.9) uses RED4ext.SDK v0.4.0 which is not supported by RED4ext v1.31.0.", undefined, null, 2)];
+  const logsList = [
+    { tool: "redscript", path: rs, written: start + 5, current: true, errors: 2, warnings: 0, size: 48_210 },
+    { tool: "ArchiveXL", path: axl, written: start + 30, current: true, errors: 1, warnings: 0, size: 9_800 },
+    { tool: "RED4ext", path: "red4ext/logs/red4ext-2026-11-04-11-52-08.log", written: start + 3, current: true, errors: 0, warnings: 1, size: 6_400 },
+    { tool: "Cyber Engine Tweaks", path: "bin/x64/plugins/cyber_engine_tweaks/cyber_engine_tweaks.log", written: start + 60, current: true, errors: 0, warnings: 0, size: 3_200 },
+    { tool: "CET mod HUDTweaks", path: cet, written: start + 40, current: true, errors: 0, warnings: 1, size: 1_100 },
+    { tool: "TweakXL", path: "red4ext/plugins/TweakXL/TweakXL-2026-11-04-11-52-10.log", written: start + 12, current: true, errors: 0, warnings: 0, size: 2_400 },
+    { tool: "Codeware", path: "red4ext/plugins/Codeware/Codeware.log", written: now - 86400 * 9, current: false, errors: 1, warnings: 0, size: 700 },
+  ];
+  const errors = mods.reduce((n, m) => n + m.errors, 0);
+  const warnings = mods.reduce((n, m) => n + m.warnings, 0) + other.length;
+  return { lastStart: start, logs: logsList, mods, other, errors, warnings, scriptsFailed: mods.some((m) => m.entries.some((e) => e.tool === "redscript")) };
+}
+function demoOverlaps() {
+  const [a, b, c] = demoNames(3);
+  const side = (who: { id: number | null; modId: number | null; name: string } | undefined, archives: string[], redmod = false) =>
+    ({ installId: who?.id ?? null, modId: who?.modId ?? null, name: who?.name ?? archives[0].split("/").pop()!, archives, redmod });
+  const renamed = (target: string) => demoRenames.some((r) => r.target === target);
+  const out = [];
+  if (a && !renamed("archive/pc/mod/HairRework.archive"))
+    out.push({ winner: side({ id: null, modId: null, name: "#Hair Pack Base" }, ["archive/pc/mod/#HairPackBase.archive"]), loser: side(a, ["archive/pc/mod/HairRework.archive"]), files: 42,
+      loadFirst: [{ target: "archive/pc/mod/HairRework.archive", name: "!HairRework.archive" }], how: "Archives load in name order and the first one wins." });
+  if (b) out.push({ winner: side(b, ["archive/pc/mod/ApartmentLights.archive"]), loser: side(c, ["mods/BetterApartments/archives/apartments.archive"], true), files: 7, loadFirst: null,
+    how: `${c?.name ?? "This mod"} is a REDmod. REDmod archives load after every archive in archive/pc/mod, so it cannot win by a new name.` });
+  out.push({ winner: side(c ?? a, ["archive/pc/mod/basegame_ui_tweaks.archive"]), loser: side(undefined, ["archive/pc/mod/zz_old_ui.archive"]), files: 3, loadFirst: null,
+    how: "zz_old_ui.archive is not managed by Pocket Mods. To make it win, rename it in archive/pc/mod so its name sorts first, for example with ! in front." });
+  return { archives: 128, overlaps: out, sameContent: 13, unreadable: [], modlist: null, millis: 37 };
+}
+const demoFomod = {
+  name: "Netrunner Suit Recolours", root: "",
+  steps: [
+    { name: "Colour", groups: [
+      { name: "Suit colour", kind: "SelectExactlyOne", plugins: [
+        { name: "Black", description: "The original black with cyan trim.", image: null, kind: "Optional" },
+        { name: "Red", description: "Arasaka red with gold trim.", image: null, kind: "Recommended" },
+        { name: "White", description: "Clean white with grey panels.", image: null, kind: "Optional" } ] },
+      { name: "Extras", kind: "SelectAny", plugins: [
+        { name: "Matching gloves", description: "Gloves in the same colour.", image: null, kind: "Optional" },
+        { name: "Hood", description: "Adds the hood as a separate item.", image: null, kind: "Optional" } ] } ] },
+    { name: "Fit", groups: [
+      { name: "Body", kind: "SelectExactlyOne", plugins: [
+        { name: "Vanilla body", description: "", image: null, kind: "Optional" }, { name: "Hyst EBB", description: "For the Hyst EBB body mod.", image: null, kind: "Optional" } ] } ] },
+  ],
+};
+let demoChoices: Array<[number, number, number]> = [[0, 0, 1], [0, 1, 0], [1, 0, 0]];
+
+function installTroubleshootDemo() {
+  registerDemo({
+    library_list: () => installs.map((i) => ({ ...i, hasOptions: i.source === "pocket" && i.modType !== "framework" })),
+    logs_scan: () => new Promise((ok) => setTimeout(() => ok(demoLogs()), 150)),
+    logs_report: () => {
+      const l = demoLogs();
+      return [`Pocket Mods 0.1.0 report`, `Game: Cyberpunk 2077 patch 2.5 (exe 3.0.80.0)`, `Frameworks: Cyber Engine Tweaks 1.37.1, RED4ext 1.31.0, ArchiveXL 1.28.6`,
+        `Mods: ${installs.filter((i) => i.enabled).length} on of ${installs.length} installed`, `Errors: ${l.errors}, warnings: ${l.warnings}`,
+        ...l.mods.flatMap((m) => [``, `${m.name} (${m.enabled ? "on" : "off"}): ${m.errors} errors, ${m.warnings} warnings`, ...m.entries.map((e) => `  [${e.tool}] ${e.level}: ${e.text.split("\n").slice(0, 2).join(" / ")}`)])].join("\n");
+    },
+    log_open: () => { throw { kind: "demo", message: "Opening logs needs the desktop app." }; },
+    archive_overlaps: () => new Promise((ok) => setTimeout(() => ok(demoOverlaps()), 120)),
+    archive_load_first: ({ installId, renames }) => {
+      const who = installs.find((i) => i.id === installId);
+      for (const r of renames as Array<{ target: string; name: string }>) demoRenames.unshift({ modId: who?.modId ?? 0, name: who?.name ?? "Mod", target: r.target, renamed: r.name, installId: (installId as number) ?? null, createdAt: Math.floor(Date.now() / 1000) });
+      demoEmit("library-changed", null);
+      return { outcome: "deployed", linked: 1, copied: 0, backedUp: [], tookFrom: [] };
+    },
+    archive_rename_undo: ({ modId, target }) => { const k = demoRenames.findIndex((r) => r.modId === modId && r.target === target); if (k >= 0) demoRenames.splice(k, 1); demoEmit("library-changed", null); },
+    modlist_disable: () => true,
+    rules_list: () => ({ wins: demoWins, renames: demoRenames }),
+    rule_forget: ({ id }) => { demoWins = demoWins.filter((w) => w.id !== id); },
+    fomod_options: ({ installId }) => ({ installId, name: installs.find((i) => i.id === installId)?.name ?? "Mod", fomod: demoFomod, choices: demoChoices, saved: true }),
+    fomod_change: ({ choices }) => { demoChoices = choices as Array<[number, number, number]>; demoEmit("library-changed", null); return { outcome: "deployed", linked: 4, copied: 0, backedUp: [], tookFrom: [] }; },
+    library_move_check: ({ to }) => {
+      const from = pathsView.libraryDir ?? "D:\\PocketMods";
+      const dest = String(to);
+      const drive = (p: string) => p.slice(0, 2).toLowerCase();
+      const problem = dest.toLowerCase().startsWith(from.toLowerCase()) ? "The new place is inside the library itself. Choose a folder outside it." : null;
+      return { from, to: dest, sameDriveAsGame: drive(dest) === drive(pathsView.gameDir ?? from), quick: drive(dest) === drive(from), files: 1834, bytes: 18_200_000_000, problem };
+    },
+    library_move: async ({ to }) => {
+      const from = pathsView.libraryDir ?? "D:\\PocketMods";
+      const quick = String(to).slice(0, 2).toLowerCase() === from.slice(0, 2).toLowerCase();
+      if (!quick) for (let k = 1; k <= 10; k++) { demoEmit("library-move", [k * 1_820_000_000, 18_200_000_000]); await new Promise((r) => setTimeout(r, 120)); }
+      pathsView = { ...pathsView, libraryDir: String(to), sameVolume: String(to).slice(0, 2).toLowerCase() === (pathsView.gameDir ?? "").slice(0, 2).toLowerCase() };
+      return { how: quick ? "renamed" : "copied", files: 1834, bytes: 18_200_000_000, rewritten: 2410, relinked: quick ? 0 : 912, copies: 0, leftBehind: null, copyTurnedOn: false };
+    },
+    game_folder_set: ({ dir }) => {
+      const g = String(dir);
+      const moved = !!pathsView.gameDir && pathsView.gameDir !== g;
+      pathsView = { ...pathsView, gameDir: g, libraryDir: pathsView.libraryDir ?? `${g.slice(0, 2)}\\PocketMods`, defaultLibrary: `${g.slice(0, 2)}\\PocketMods`, gameLooksRight: true,
+        sameVolume: (pathsView.libraryDir ?? g).slice(0, 2).toLowerCase() === g.slice(0, 2).toLowerCase(), inProgramFiles: g.toLowerCase().includes("program files") };
+      return { paths: pathsView, relink: moved && installs.length ? { checked: 912, ok: 0, relinked: 912, copies: 0, restored: 0, changed: 0 } : null };
+    },
+    game_relink: () => ({ checked: 912, ok: 912, relinked: 0, copies: 0, restored: 0, changed: 0 }),
+  });
 }
 
 // ── for mod authors: My mods from a recorded anonymous answer (src/lib/demo/my-mods.json, made by the

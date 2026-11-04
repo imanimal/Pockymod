@@ -313,3 +313,14 @@
 .launch .playkey { display: flex; gap: .3em; width: 100%; }
 .launch .playkey .play-key { flex: 1; }
 .toast:hover .t-life { animation-play-state: paused; }
+/* Health: the Logs module (errors by mod on the left, the log files on the right) */
+.logs-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(17em, 1fr); gap: var(--gap); align-items: start; }
+@media (max-width: 1100px) { .logs-grid { grid-template-columns: minmax(0, 1fr); } }
+.row.logrow { cursor: default; align-items: start; }
+.row.logrow .m-side { padding-top: .1em; }
+.logline { font: .78em/1.4 var(--font-mono); color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: .2em; }
+
+/* Load order: overlapping archives, and moving the library */
+.row.ovrow { align-items: start; }
+.ovhow { font-size: .82em; color: var(--text-3); white-space: normal; margin-top: .2em; }
+.mvpath { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }

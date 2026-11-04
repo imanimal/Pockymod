@@ -57,6 +57,12 @@ const MIGRATIONS: &[&str] = &[
      ALTER TABLE installs_v8 RENAME TO installs;
      DELETE FROM sqlite_sequence WHERE name IN ('installs', 'installs_v8');
      INSERT INTO sqlite_sequence (name, seq) VALUES ('installs', MAX(COALESCE((SELECT MAX(id) FROM installs), 0), COALESCE((SELECT MAX(install_id) FROM trash), 0)));",
+    // 9: the user's standing choices: which mod's files win when two mods want the same paths ("Take them over"),
+    // and archives renamed so they load earlier (a name prefix). Both are kept by Nexus mod, so updates keep them.
+    "CREATE TABLE conflict_rules (id INTEGER PRIMARY KEY, winner_mod INTEGER NOT NULL, winner_install INTEGER NOT NULL, winner_name TEXT NOT NULL,
+        loser_mod INTEGER NOT NULL, loser_install INTEGER NOT NULL, loser_name TEXT NOT NULL, files INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL);
+     CREATE TABLE archive_renames (mod_id INTEGER NOT NULL, target TEXT NOT NULL, renamed TEXT NOT NULL, install_name TEXT NOT NULL, created_at INTEGER NOT NULL,
+        PRIMARY KEY (mod_id, target));",
 ];
 
 pub struct Db { pub conn: Connection }

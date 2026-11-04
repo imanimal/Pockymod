@@ -15,6 +15,8 @@ import type { ChoicesNeeded, TrashRow } from "../lib/api";
 import { planGroups, useExtensions } from "../lib/extensions";
 import * as ops from "../lib/ops";
 import { installArchive } from "../lib/archives";
+import { installerOptions } from "../lib/api";
+import { record } from "../lib/history";
 
 type Pending =
   | { kind: "conflicts"; installId: number; name: string; conflicts: Conflict[] }
@@ -39,6 +41,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const [newGroup, setNewGroup] = useState("");
   const [manage, setManage] = useState(false);
   const [choices, setChoices] = useState<ChoicesNeeded | null>(null);
+  const [reopt, setReopt] = useState<{ row: InstallRow; need: ChoicesNeeded; before: ChoicesNeeded["defaults"] } | null>(null);
   const [profileName, setProfileName] = useState("");
   const [dupes, setDupes] = useState<number[][]>([]);
   const [trash, setTrash] = useState<TrashRow[]>([]);
@@ -147,6 +150,21 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     const { outcome, request } = await installArchive(archive);
     handleOutcome(outcome, request.name, request);
   });
+
+  // a FOMOD mod's installer again, its last picks selected; the new picks go in from the staged files
+  const changeOptions = (r: InstallRow) => run(async () => {
+    const o = await installerOptions.get(r.id);
+    if (!o.saved) toast(`${r.name} was installed before picks were kept, so the installer's own defaults are selected.`);
+    const request = { modId: r.modId, fileId: r.fileId, name: r.name, version: r.version, archive: "" };
+    setReopt({ row: r, need: { request, fomod: o.fomod, defaults: o.choices }, before: o.choices });
+  });
+  const applyOptions = async (r: InstallRow, picks: ChoicesNeeded["defaults"], before: ChoicesNeeded["defaults"]) => {
+    const d = await installerOptions.change(r.id, picks);
+    if (d && d.outcome !== "deployed") onDeployOutcome(r.id, r.name, d);
+    record({ label: `Changed the options of ${r.name}`, undo: () => installerOptions.change(r.id, before), redo: () => installerOptions.change(r.id, picks) }, !!d && d.outcome !== "deployed");
+    if (!d) toast(`${r.name} keeps the new options; they go in when you turn it on.`);
+    load();
+  };
 
   const notInstalled = downloads.filter((d) => !d.installed);
   const on = (rows ?? []).filter((r) => r.enabled).length;
@@ -267,6 +285,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       <span className="lcard-f" onClick={(e) => e.stopPropagation()}>
                         <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}>{r.enabled ? "On" : "Off"}</Switch>
                         {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
+                        {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} aria-label={`Change the options of ${r.name}`} title="Change options" />}
                       </span>
                     </span>
                   </div>
@@ -296,6 +315,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
                       {updOf(r) && <Key size="sm" variant="ghost" onClick={() => run(async () => { const u = updOf(r)!; await updatesApi.skip(u.modId, u.latest); toast(`Skipping ${r.name} ${u.latest}. A newer version shows again.`); })} disabled={busy} title="Do not offer this version again">Skip</Key>}
                       {r.enabled && r.deployedFiles === 0 && <Key size="sm" onClick={() => deploy(r)} disabled={busy}>Deploy</Key>}
+                      {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} title="Pick other installer options; no download needed">Change options</Key>}
                       <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}><span className="sr-only">On</span></Switch>
                       <Key size="sm" variant="ghost" icon="trash" onClick={() => doBulk("uninstall", [r.id])} disabled={busy} aria-label={`Remove ${r.name}`} title={r.source === "vortex" ? "Remove from the game; it stays in Vortex" : "Remove"} />
                     </span>
@@ -364,6 +384,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         setSortPlan(null);
         toast(`${sortPlan.length} ${sortPlan.length === 1 ? "mod" : "mods"} sorted into ${by.size} ${by.size === 1 ? "group" : "groups"}.`);
       })} />}
+      {reopt && <FomodDialog need={reopt.need} onClose={() => setReopt(null)} apply={(picks) => applyOptions(reopt.row, picks, reopt.before)} />}
       {moveOpen && (
         <Dialog icon="folder" title="Move to group" count={plural(sel.size, "mod")} onClose={() => setMoveOpen(false)}>
           <div className="chips">
@@ -381,7 +402,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         <Dialog icon="warn" title="Files already in use" count={plural(pending.conflicts.length, "file")} band="bad" onClose={() => setPending(null)}>
           <p>{pending.name} wants files that other mods have put in the game. Nothing has been changed yet.</p>
           <div className="log" style={{ maxHeight: "10em" }}>{pending.conflicts.slice(0, 50).map((c) => `${c.target}  ·  ${c.ownerName}`).join("\n")}</div>
-          <p className="dim" style={{ fontSize: ".86em" }}>Taking them over keeps the other mods' copies. They get their files back if you remove {pending.name} later.</p>
+          <p className="dim" style={{ fontSize: ".86em" }}>Taking them over keeps the other mods' copies. They get their files back if you remove {pending.name} later. The choice is remembered for profile switches and updates; Load order lists it under Your choices.</p>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setPending(null)}>Leave it staged</Key>
             <Key onClick={() => deploy({ id: pending.installId, name: pending.name }, true)} disabled={busy}>Take them over</Key>

@@ -28,6 +28,10 @@ pub enum Fix {
     OpenLibrary,
     OpenSettings,
     ResetScripts,
+    /// Turn a mod off (the screen does it through its undoable operations).
+    TurnOff { install_id: i64, name: String },
+    /// Move `archive/pc/mod/modlist.txt` aside.
+    DisableModlist,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -35,7 +39,7 @@ pub enum Fix {
 pub struct Issue {
     pub id: String,
     pub severity: Severity,
-    /// Which module it belongs to: game, frameworks, deploy, redmod, conflicts.
+    /// Which module it belongs to: game, frameworks, deploy, redmod, conflicts, logs.
     pub area: &'static str,
     pub title: String,
     pub detail: String,
@@ -222,7 +226,38 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
             detail: "REDmods were added, removed or reordered since the last REDmod deploy. The game will not see the change until it runs.".into(), fix: Some(Fix::RunRedmodDeploy) });
     }
 
+    // ── archive order: a stray modlist.txt decides it instead of file names ──
+    if let Some(list) = crate::cyberpunk::rdar::modlist(&g.path) {
+        issues.push(Issue { id: "archive.modlist".into(), severity: Severity::Warning, area: "conflicts", title: "A modlist.txt decides the archive order".into(),
+            detail: format!("archive/pc/mod/modlist.txt lists {} archives, and the game loads them in its order instead of by file name. It is usually left over from another tool; the modding wiki advises deleting it. Moving it aside keeps a copy (modlist.txt.off).", list.len()),
+            fix: Some(Fix::DisableModlist) });
+    }
+
+    // ── logs of the last start: mods that report errors ──
+    let launched = db.setting("game.lastLaunch")?.and_then(|v| v.parse().ok());
+    let logs = crate::cyberpunk::logs::scan(db, &g.path, launched)?;
+    issues.extend(log_issues(&logs));
+
     Ok(finish(Some(g.clone()), patch, patch_source, rows, issues))
+}
+
+/// Health issues from the logs: scripts that did not compile, and each enabled mod with errors on the last start.
+pub fn log_issues(logs: &crate::cyberpunk::logs::LogReport) -> Vec<Issue> {
+    let mut out = Vec::new();
+    if logs.scripts_failed {
+        out.push(Issue { id: "logs.scripts".into(), severity: Severity::Problem, area: "logs", title: "Scripts did not compile on the last start".into(),
+            detail: "redscript reported errors, so no script mod works until they are fixed. The mods it names are below; turning one off and starting again usually tells.".into(), fix: None });
+    }
+    for m in logs.mods.iter().filter(|m| m.errors > 0 && m.enabled) {
+        let first = m.entries.iter().find(|e| e.level == crate::cyberpunk::logs::Level::Error).map(|e| e.text.lines().next().unwrap_or("").chars().take(160).collect::<String>()).unwrap_or_default();
+        let tools: BTreeSet<&str> = m.entries.iter().map(|e| e.tool.as_str()).collect();
+        let serious = tools.contains("redscript") || tools.contains("RED4ext");
+        out.push(Issue { id: format!("logs.mod.{}", m.install_id), severity: if serious { Severity::Problem } else { Severity::Warning }, area: "logs",
+            title: format!("{} reports errors on start", m.name),
+            detail: format!("{} {} in the {} {}: {first}", m.errors, if m.errors == 1 { "error" } else { "errors" }, tools.into_iter().collect::<Vec<_>>().join(", "), "log"),
+            fix: Some(Fix::TurnOff { install_id: m.install_id, name: m.name.clone() }) });
+    }
+    out
 }
 
 fn finish(game: Option<GameInfo>, patch: Option<String>, patch_source: &'static str, frameworks: Vec<FrameworkRow>, mut issues: Vec<Issue>) -> HealthReport {

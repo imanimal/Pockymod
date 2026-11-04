@@ -4,12 +4,15 @@ import { plural } from "../lib/text";
 import { useCallback, useEffect, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Tag } from "../ui/pocket";
 import type { IconName } from "../ui/icons";
-import { errorText, game, library, queueMod, resetScripts, type Fix, type HealthReport, type Issue } from "../lib/api";
+import { archives, errorText, game, library, queueMod, resetScripts, type Fix, type HealthReport, type Issue } from "../lib/api";
 import { toast } from "../ui/toast";
+import { LogsModule } from "./LogsModule";
+import * as ops from "../lib/ops";
 
 const AREAS: Array<{ id: Issue["area"]; title: string; icon: IconName }> = [
   { id: "game", title: "Game", icon: "play" },
   { id: "frameworks", title: "Frameworks", icon: "chip" },
+  { id: "logs", title: "Logs", icon: "file" },
   { id: "deploy", title: "Files in the game", icon: "folder" },
   { id: "redmod", title: "REDmod", icon: "loadorder" },
   { id: "conflicts", title: "Overrides", icon: "warn" },
@@ -19,8 +22,10 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
   const [r, setR] = useState<HealthReport | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [stamp, setStamp] = useState(0);
   const load = useCallback((refresh = false) => {
     setBusy(true);
+    setStamp((n) => n + 1);
     game.health(refresh).then((x) => { setR(x); setErr(null); onIssues?.(x.problems); }).catch((e) => setErr(errorText(e))).finally(() => setBusy(false));
   }, [onIssues]);
   useEffect(() => { load(); }, [load]);
@@ -39,6 +44,12 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         case "openLibrary": onNavigate("library"); return;
         case "openSettings": onNavigate("settings"); return;
         case "resetScripts": { const n = await resetScripts(); toast(n ? "The game's own scripts are back." : "Nothing needed resetting."); break; }
+        case "turnOff": {
+          const row = (await library.list()).find((x) => x.id === f.installId);
+          if (row) await ops.setEnabled([row], false);
+          break;
+        }
+        case "disableModlist": { const done = await archives.disableModlist(); toast(done ? "modlist.txt is set aside (modlist.txt.off). File names decide the order again." : "modlist.txt is already gone."); break; }
       }
       load();
     } catch (e) { toast(errorText(e), true); setBusy(false); }
@@ -46,7 +57,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
 
   if (err) return <Module icon="health" title="Health" band="bad"><div className="note bad">{err}</div></Module>;
   if (!r) return <Module icon="health" title="Health" count="checking"><Empty icon="clock" title="Checking the game" /></Module>;
-  const first = r.issues.find((i) => i.fix && i.severity !== "info");
+  const first = r.issues.find((i) => i.fix && i.severity !== "info" && i.area !== "logs");
   const g = r.game;
 
   return (
@@ -64,6 +75,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
       {AREAS.map((a) => {
         const list = r.issues.filter((i) => i.area === a.id);
         if (a.id === "conflicts" && list.length === 0) return null;
+        if (a.id === "logs") return g ? <LogsModule key="logs" stamp={stamp} onChanged={() => load()} /> : null;
         const bad = list.some((i) => i.severity === "problem");
         return (
           <Module key={a.id} icon={a.icon} title={a.title} band={bad ? "bad" : undefined} count={list.length ? `${list.length} ${list.length === 1 ? "item" : "items"}` : "ok"}>
@@ -99,6 +111,8 @@ function fixLabel(f: Fix): string {
     case "openLibrary": return "Open Library";
     case "openSettings": return "Open Settings";
     case "resetScripts": return "Reset scripts";
+    case "turnOff": return "Turn this mod off";
+    case "disableModlist": return "Move it aside";
   }
 }
 

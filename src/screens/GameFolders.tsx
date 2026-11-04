@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Key, Module, Pill, Switch, bytesText } from "../ui/pocket";
 import { browse, downloadsCleanup, downloadsUsage, errorText, game, handler, paths, pickFolder, settings, testHandler, type GameInstall, type HandlerStatus, type PathsView } from "../lib/api";
 import { toast } from "../ui/toast";
+import { relocate } from "../lib/api";
+import { MoveLibraryDialog, relinkText } from "./MoveLibrary";
 
 export function GameFolders() {
   const [p, setP] = useState<PathsView | null>(null);
@@ -22,6 +24,9 @@ export function GameFolders() {
   }, []);
   useEffect(() => { if (p?.gameDir) game.inspect().then((g) => setDetected(g?.detectedPatch ?? null)).catch(() => {}); }, [p?.gameDir]);
   const save = (x: Parameters<typeof paths.set>[0]) => paths.set(x).then(setP).catch((e) => toast(errorText(e), true));
+  // a new game folder: when it is a moved copy of the game, its mod files are linked to the library again
+  const setGame = (dir: string) => relocate.setGame(dir).then(({ paths: v, relink }) => { setP(v); if (relink) toast(relinkText(relink)); }).catch((e) => toast(errorText(e), true));
+  const [moving, setMoving] = useState(false);
 
   return (
     <Module icon="folder" title="Game and mod folders" count={p?.gameLooksRight ? "game found" : "not set"}>
@@ -30,7 +35,7 @@ export function GameFolders() {
         <div className="actions" style={{ flexWrap: "nowrap" }}>
           <code style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p?.gameDir ?? "Not set"}</code>
           <Key size="sm" icon="browse" onClick={() => game.detect().then(setFound).catch((e) => toast(errorText(e), true))}>Find</Key>
-          <Key size="sm" icon="folder" onClick={async () => { const d = await pickFolder("The Cyberpunk 2077 folder (it holds bin\\x64)"); if (d) save({ gameDir: d }); }}>Choose</Key>
+          <Key size="sm" icon="folder" onClick={async () => { const d = await pickFolder("The Cyberpunk 2077 folder (it holds bin\\x64)"); if (d) void setGame(d); }}>Choose</Key>
         </div>
         {found && <>
           <span className="lab">Found</span>
@@ -40,7 +45,7 @@ export function GameFolders() {
               <div key={g.path} className="actions" style={{ flexWrap: "nowrap" }}>
                 <Pill tone={g.exists ? "ok" : undefined}>{g.store}</Pill>
                 <code style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.path}</code>
-                <Key size="sm" disabled={!g.exists} onClick={() => { save({ gameDir: g.path }); setFound(null); }}>Use</Key>
+                <Key size="sm" disabled={!g.exists} onClick={() => { void setGame(g.path); setFound(null); }}>Use</Key>
               </div>
             ))}
             {found.some((g) => g.store === "Epic") && <span className="dim" style={{ fontSize: ".84em" }}>Epic installs are supported on a best-effort basis.</span>}
@@ -57,17 +62,20 @@ export function GameFolders() {
         <span className="lab">Mod library</span>
         <div className="actions" style={{ flexWrap: "nowrap" }}>
           <code style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p?.libraryDir ?? "Set the game folder first"}</code>
-          <Key size="sm" icon="folder" onClick={async () => { const d = await pickFolder("A folder for downloads and staged mods, on the game's drive"); if (d) save({ libraryDir: d }); }}>Choose</Key>
+          <Key size="sm" icon="folder" disabled={!p?.libraryDir} onClick={() => setMoving(true)} title="Move the library and everything in it; mods keep working">Move</Key>
+          <Key size="sm" variant="ghost" onClick={async () => { const d = await pickFolder("A folder for downloads and staged mods, on the game's drive"); if (d) save({ libraryDir: d }); }} title="Use another folder from now on, without moving what is in the current one">Choose</Key>
         </div>
         <span className="lab">Deploy</span>
         <div className="actions">
           {p?.sameVolume === true && <Pill tone="ok">Same drive: hard links</Pill>}
           {p?.sameVolume === false && <Pill tone="over">Different drives</Pill>}
           <Switch checked={!!p?.allowCopy} onChange={(v) => save({ allowCopy: v })}>Copy when hard links are impossible</Switch>
+          {p?.gameLooksRight && <Key size="sm" variant="ghost" icon="link" onClick={() => relocate.relinkGame().then((r) => toast(relinkText(r))).catch((e) => toast(errorText(e), true))} title="After moving the game: link its mod files to the library again">Check links</Key>}
         </div>
       </div>
       {p?.gameDir && !p.gameLooksRight && <div className="note bad" style={{ marginTop: ".7em" }}>That folder has no bin\x64. Pick the folder that holds Cyberpunk2077's bin, archive and r6 folders.</div>}
       {p?.inProgramFiles && <div className="note warn" style={{ marginTop: ".7em" }}>The game is under Program Files, where Windows may block writes. If installs fail with "not allowed", move the game to another Steam library folder (Steam, Properties, Installed files, Move install folder).</div>}
+      {moving && <MoveLibraryDialog onClose={() => setMoving(false)} onMoved={() => paths.get().then(setP).catch(() => {})} />}
       {p?.sameVolume === false && <div className="note warn" style={{ marginTop: ".7em" }}>The mod library is on another drive, so files would be copied, not linked. Choose a library folder on the game's drive{p.defaultLibrary ? ` such as ${p.defaultLibrary}` : ""}.</div>}
 
       <div className="sub-h">Downloaded archives</div>
