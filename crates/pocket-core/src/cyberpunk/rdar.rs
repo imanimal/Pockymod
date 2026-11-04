@@ -160,6 +160,7 @@ pub fn load_order(game: &Path) -> Vec<LoadedArchive> {
 #[serde(rename_all = "camelCase")]
 pub struct Side {
     pub install_id: Option<i64>,
+    pub mod_id: Option<u32>,
     pub name: String,
     /// The archives involved, game-relative.
     pub archives: Vec<String>,
@@ -209,10 +210,10 @@ pub fn overlaps(db: &Db, game: &Path) -> Result<OverlapReport> {
         let mut st = db.conn.prepare("SELECT target, install_id FROM deployed_files WHERE target LIKE '%.archive'")?;
         for r in st.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))? { let (t, i) = r?; owners.insert(t, i); }
     }
-    let mut info: HashMap<i64, (String, String)> = HashMap::new();
+    let mut info: HashMap<i64, (String, String, u32)> = HashMap::new();
     {
-        let mut st = db.conn.prepare("SELECT id, name, source FROM installs")?;
-        for r in st.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?, r.get::<_, String>(2)?)))? { let (i, n, s) = r?; info.insert(i, (n, s)); }
+        let mut st = db.conn.prepare("SELECT id, name, source, mod_id FROM installs")?;
+        for r in st.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?, r.get::<_, String>(2)?, r.get::<_, u32>(3)?)))? { let (i, n, s, m) = r?; info.insert(i, (n, s, m)); }
     }
     let mut rep = OverlapReport { archives: list.len(), modlist: modlist(game), ..Default::default() };
     let owner_of = |i: usize| list.get(i).and_then(|a| owners.get(&a.target.to_lowercase())).map(|id| Owner::Install(*id)).unwrap_or(Owner::File(i));
@@ -249,8 +250,8 @@ pub fn overlaps(db: &Db, game: &Path) -> Result<OverlapReport> {
         let archives: Vec<String> = idx.iter().map(|i| list[*i].target.clone()).collect();
         let redmod = idx.iter().any(|i| list[*i].redmod.is_some());
         match o {
-            Owner::Install(id) => Side { install_id: Some(*id), name: info.get(id).map(|x| x.0.clone()).unwrap_or_else(|| format!("Install {id}")), archives, redmod },
-            Owner::File(i) => Side { install_id: None, name: list[*i].name.clone(), archives, redmod },
+            Owner::Install(id) => Side { install_id: Some(*id), mod_id: info.get(id).map(|x| x.2), name: info.get(id).map(|x| x.0.clone()).unwrap_or_else(|| format!("Install {id}")), archives, redmod },
+            Owner::File(i) => Side { install_id: None, mod_id: None, name: list[*i].name.clone(), archives, redmod },
         }
     };
     for ((w, l), (n, wi, li)) in &pairs {

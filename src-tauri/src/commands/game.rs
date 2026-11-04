@@ -130,6 +130,8 @@ pub async fn game_launch(state: State<'_, AppState>) -> Result<serde_json::Value
         deployed = Some(r);
     }
     pocket_core::launch::launch(&game, redmods)?;
+    // the logs of this start are the ones that matter in Health
+    let _ = state.db.lock().unwrap().set_setting("game.lastLaunch", &now().to_string());
     Ok(serde_json::json!({ "started": true, "modded": redmods, "redmod": deployed }))
 }
 

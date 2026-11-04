@@ -149,6 +149,21 @@ pub fn run() {
             commands::library::nxm_handler_test,
             commands::library::downloads_usage,
             commands::library::downloads_cleanup,
+            commands::troubleshoot::logs_scan,
+            commands::troubleshoot::logs_report,
+            commands::troubleshoot::log_open,
+            commands::troubleshoot::archive_overlaps,
+            commands::troubleshoot::archive_load_first,
+            commands::troubleshoot::archive_rename_undo,
+            commands::troubleshoot::modlist_disable,
+            commands::troubleshoot::rules_list,
+            commands::troubleshoot::rule_forget,
+            commands::troubleshoot::fomod_options,
+            commands::troubleshoot::fomod_change,
+            commands::troubleshoot::library_move_check,
+            commands::troubleshoot::library_move,
+            commands::troubleshoot::game_folder_set,
+            commands::troubleshoot::game_relink,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Pocket Mods");

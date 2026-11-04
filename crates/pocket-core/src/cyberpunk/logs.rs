@@ -99,7 +99,7 @@ const FRAMEWORK_PLUGINS: &[&str] = &["archivexl", "tweakxl", "codeware", "red4ex
 
 const CET: &str = "bin/x64/plugins/cyber_engine_tweaks";
 /// Read at most this much of the end of a log.
-const MAX_READ: u64 = 4 << 20;
+const MAX_READ: u64 = 2 << 20;
 
 fn mtime(p: &Path) -> Option<i64> {
     fs::metadata(p).ok()?.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok().map(|d| d.as_secs() as i64)

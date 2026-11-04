@@ -36,12 +36,12 @@ pub struct MoveCheck {
     pub problem: Option<String>,
 }
 
+/// Is `child` the same folder as `parent` or inside it? Compared as written (both come from Settings or the
+/// folder picker, so both are absolute), without case, either slash.
 fn inside(child: &Path, parent: &Path) -> bool {
-    let c = fs::canonicalize(child).unwrap_or_else(|_| child.to_path_buf());
-    let p = fs::canonicalize(parent).unwrap_or_else(|_| parent.to_path_buf());
-    let lc = c.to_string_lossy().replace('\\', "/").to_lowercase();
-    let lp = p.to_string_lossy().replace('\\', "/").to_lowercase();
-    lc == lp || lc.starts_with(&format!("{}/", lp.trim_end_matches('/')))
+    let norm = |p: &Path| p.to_string_lossy().replace('\\', "/").trim_end_matches('/').to_lowercase();
+    let (c, p) = (norm(child), norm(parent));
+    c == p || c.starts_with(&format!("{p}/"))
 }
 
 /// What moving the library from `from` to `to` would do, and whether it can be done.
@@ -156,8 +156,10 @@ fn move_library_as(db: &Db, game: &Path, from: &Path, to: &Path, force_copy: boo
     let mut rep = MoveReport { files: check.files, bytes: check.bytes, ..Default::default() };
     if let Some(p) = to.parent() { fs::create_dir_all(p)?; }
     if to.is_dir() { fs::remove_dir(to)?; }
-    let renamed = !force_copy && check.quick && fs::rename(from, to).is_ok();
+    // on one drive it is a rename; when that fails (a file in use), stop rather than copy everything
+    let renamed = !force_copy && check.quick;
     if renamed {
+        fs::rename(from, to).map_err(|e| Error::Invalid(format!("Could not move the library: {e}. Close the game and any program using files in it (an archive tool, an Explorer window), then try again.")))?;
         rep.how = "renamed".into();
         match rewrite_paths(db, from, to) {
             Ok(n) => rep.rewritten = n,
@@ -266,7 +268,7 @@ pub fn relink_game(db: &Db, game: &Path, allow_copy: bool) -> Result<RelinkRepor
         }
         if same_file::is_same_file(&src, &dst).unwrap_or(false) { set("hardlink")?; rep.ok += 1; continue; }
         let len = fs::metadata(&dst).map(|m| m.len()).unwrap_or(0);
-        if len != size as u64 { rep.changed += 1; continue; }
+        if len != size as u64 || !same_ends(&src, &dst) { rep.changed += 1; continue; }
         let tmp = dst.with_extension("pocket-relink");
         if same_volume(&src, game) && fs::hard_link(&src, &tmp).is_ok() {
             fs::remove_file(&dst)?;
@@ -280,6 +282,25 @@ pub fn relink_game(db: &Db, game: &Path, allow_copy: bool) -> Result<RelinkRepor
         }
     }
     Ok(rep)
+}
+
+/// The same size was checked; the first and last 64 KiB match too (a full compare of large archives is slow).
+fn same_ends(a: &Path, b: &Path) -> bool {
+    use std::io::{Read, Seek, SeekFrom};
+    let read = |p: &Path| -> std::io::Result<Vec<u8>> {
+        let mut f = fs::File::open(p)?;
+        let len = f.metadata()?.len();
+        let mut out = vec![0u8; len.min(65536) as usize];
+        f.read_exact(&mut out)?;
+        if len > 131072 {
+            let mut tail = vec![0u8; 65536];
+            f.seek(SeekFrom::End(-65536))?;
+            f.read_exact(&mut tail)?;
+            out.extend(tail);
+        }
+        Ok(out)
+    };
+    matches!((read(a), read(b)), (Ok(x), Ok(y)) if x == y)
 }
 
 #[cfg(test)]
