@@ -1,0 +1,26 @@
+# Node / front end
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Rust / Tauri
+target/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Local data and secrets
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-journal
+*.db
+*.log
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
