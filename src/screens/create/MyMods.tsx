@@ -194,10 +194,13 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
   useEffect(() => {
     let live = true;
     authoring.modFiles(m.modId).then((v) => live && setD(v)).catch((e) => live && setErr(errorText(e)));
+    return () => { live = false; };
+  }, [m.modId]);
+  useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", k);
-    return () => { live = false; window.removeEventListener("keydown", k); };
-  }, [m.modId, onClose]);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose]);
 
   const list = d ? (files === "current" ? d.files.filter((f) => ["MAIN", "UPDATE", "OPTIONAL", "MISCELLANEOUS"].includes(f.category)) : d.files) : m.files;
   const main = m.files.find((f) => f.category === "MAIN") ?? m.files[0];

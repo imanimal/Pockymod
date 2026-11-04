@@ -6,13 +6,13 @@ use pocket_core::nexus::rest::NexusUser;
 use pocket_core::{Error, Result};
 use tauri::State;
 
-/// The signed-in member, checking the key once per session.
-async fn signed_in(state: &AppState) -> Option<NexusUser> {
-    if let Some(u) = state.user.read().await.clone() { return Some(u); }
-    if !state.nexus.has_key() { return None; }
-    let u = state.nexus.validate().await.ok()?;
+/// The signed-in member, checking the key once per session. None without a key.
+async fn signed_in(state: &AppState) -> Result<Option<NexusUser>> {
+    if let Some(u) = state.user.read().await.clone() { return Ok(Some(u)); }
+    if !state.nexus.has_key() { return Ok(None); }
+    let u = state.nexus.validate().await?;
     *state.user.write().await = Some(u.clone());
-    Some(u)
+    Ok(Some(u))
 }
 
 fn pinned_key(member_id: u64) -> String { format!("creator.pinned.{member_id}") }
@@ -26,8 +26,9 @@ fn pinned(state: &AppState, member_id: u64) -> Result<Vec<u32>> {
 /// Without a key this is read-only and shows published mods only.
 #[tauri::command]
 pub async fn creator_my_mods(state: State<'_, AppState>, user: Option<String>, refresh: Option<bool>) -> Result<MyMods> {
-    let me = signed_in(&state).await;
     let typed = user.map(|u| u.trim().to_owned()).filter(|u| !u.is_empty());
+    // a typed lookup works even when the key cannot be checked right now
+    let me = if typed.is_some() { signed_in(&state).await.ok().flatten() } else { signed_in(&state).await? };
     let member = match typed {
         Some(t) => mods::resolve_member(&state.nexus, &t).await?,
         None => me.as_ref().map(|u| u.user_id)
