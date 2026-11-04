@@ -5,6 +5,12 @@ import type { IconName } from "./icons";
 const circle = (cx: number, cy: number, r: number) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${r * 2} 0a${r} ${r} 0 1 0 ${-r * 2} 0Z`;
 
 export const LINE_ICONS: Partial<Record<IconName, string>> = {
+  undo: "M9 5 4.5 9.5 9 14M4.5 9.5H15a5 5 0 0 1 0 10h-3",
+  redo: "M15 5l4.5 4.5L15 14M19.5 9.5H9a5 5 0 0 0 0 10h3",
+  history: "M4.2 12a7.8 7.8 0 1 0 2.3-5.5M4.2 4v4.8H9M12 8v4l3 2",
+  power: "M12 3.5v8M7 6.2a7.5 7.5 0 1 0 10 0",
+  tool: "M14.5 4.5a4.5 4.5 0 0 0-5 6L4 16l4 4 5.5-5.5a4.5 4.5 0 0 0 6-5l-3 3-3-1-1-3z",
+  addons: "M5 3.5h14v13l-2 2v2H7v-2l-2-2zM8.5 7h7M8.5 10.5h7",
   browse: `${circle(10.5, 10.5, 6.5)}M15.4 15.4 20 20`,
   library: "M3.5 4.5h17v4h-17zM5 8.5v11h14v-11M9.5 12.5h5",
   collections: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
