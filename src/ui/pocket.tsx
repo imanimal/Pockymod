@@ -58,8 +58,8 @@ export type LcdTone = "ok" | "hot" | "bad";
 export function Lcd({ label, value, unit, sub, bar, level, tone = "ok", size, className = "" }:
   { label: string; value: ReactNode; unit?: string; sub?: ReactNode; bar?: number; level?: { on: number; of: number }; tone?: LcdTone; size?: "sm" | "big"; className?: string }) {
   const cls = ["display", tone === "ok" ? "" : tone, size, className].filter(Boolean).join(" ");
-  // the LCD switches on again (a stepped flicker) whenever its figure changes
-  const ref = useOneShot<HTMLDivElement>("boot", typeof value === "string" || typeof value === "number" ? `${value}${unit ?? ""}` : label);
+  // the LCD switches on again (a stepped flicker) when its figure changes, at most every few seconds
+  const ref = useOneShot<HTMLDivElement>("boot", typeof value === "string" || typeof value === "number" ? `${value}${unit ?? ""}` : label, 4000);
   return (
     <div ref={ref} className={cls} role="group" aria-label={label}>
       <span className="d-lbl">{label}</span>

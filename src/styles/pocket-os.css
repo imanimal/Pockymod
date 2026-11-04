@@ -483,8 +483,9 @@ html .lcard:focus-visible { box-shadow: 0 0 0 2px var(--focus); }
 .row.new, .rows > .row.new { animation: rowIn calc(var(--m) * 240ms + 1ms) ease-out backwards, rowNew calc(var(--m) * 1400ms + 1ms) ease-out; }
 .row { transition: background calc(var(--m) * 120ms), box-shadow calc(var(--m) * 120ms); }
 .row:active:not(.sel) { background: var(--surface-2); }
-.row.sel.ack { animation: selIn calc(var(--m) * 200ms + 1ms) var(--ease); }
-@keyframes selIn { from { box-shadow: inset 0 0 0 var(--accent); background: transparent; } }
+/* a row picked: its bar grows in (rowIn stays first in the list so it does not play again) */
+.row.sel.ack, .rows > .row.sel.ack { animation: rowIn calc(var(--m) * 240ms + 1ms) ease-out backwards, selIn calc(var(--m) * 200ms + 1ms) var(--ease); }
+@keyframes selIn { from { box-shadow: inset 0 0 0 var(--sel, var(--accent)); background: transparent; } }
 
 /* LCDs: segments flicker on over a backlight flash; bars and levels fill a segment at a time */
 @keyframes lcdOn { 0% { opacity: 0; } 30% { opacity: .35; } 45% { opacity: .1; } 60% { opacity: .75; } 75%, 100% { opacity: 1; } }
@@ -520,11 +521,10 @@ html .lcard:focus-visible { box-shadow: 0 0 0 2px var(--focus); }
 .toast.bad:not(.gone) { animation: toastIn calc(var(--m) * 260ms + 1ms) ease-out, nope calc(var(--m) * 300ms + 1ms) steps(1, end) calc(var(--m) * 260ms); }
 .toast .t-life { position: absolute; left: .8em; right: .8em; bottom: 3px; height: 2px; border-radius: 1px; background: var(--accent); opacity: .6; transform-origin: left; pointer-events: none; animation: tLife linear forwards; }
 .toast.bad .t-life { background: var(--bad); }
-.toasts:hover .t-life { animation-play-state: paused; }
 
 /* refused: a two-pixel shake; an LCD flashes its red backlight, a field its red ring. Problems shake as they appear. */
 @keyframes nope { 0% { translate: 2px 0; } 17% { translate: -2px 0; } 34% { translate: 2px 0; } 51% { translate: -2px 0; } 68% { translate: 1px 0; } 85%, 100% { translate: 0; } }
-.nope { animation: nope calc(var(--m) * 300ms + 1ms) steps(1, end); }
+.nope, :is(.btn, .chip, .wk, .nv).nope { animation: nope calc(var(--m) * 300ms + 1ms) steps(1, end); }
 .display.nope { --disp-bg: var(--disp-bad); --disp-fg: #2b0b02; }
 .fbox.nope { box-shadow: inset 0 0 0 2px var(--bad); }
 .note.bad { animation: nope calc(var(--m) * 300ms + 1ms) steps(1, end) calc(var(--m) * 80ms); }

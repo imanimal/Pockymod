@@ -23,7 +23,7 @@
 .tprev-pair { display: grid; grid-template-columns: minmax(0, 1fr); height: 7.4em; box-shadow: inset 0 -1px 0 var(--line); }
 .tprev-pair.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .tprev { display: flex; flex-direction: column; min-width: 0; overflow: hidden; font-size: 13px; color: var(--text); background: var(--bg); }
-.tprev[data-look="pocket"] { background: radial-gradient(color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1.5px) 0 0 / 10px 10px, var(--bg); }
+.tprev[data-look="pocket"] { --sel: var(--accent); background: radial-gradient(color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1.5px) 0 0 / 10px 10px, var(--bg); }
 .tprev[data-look="redline"] {
   background: linear-gradient(color-mix(in srgb, var(--text) 7%, transparent) 1px, transparent 1px) 0 0 / 14px 14px,
     linear-gradient(90deg, color-mix(in srgb, var(--text) 7%, transparent) 1px, transparent 1px) 0 0 / 14px 14px, var(--bg);

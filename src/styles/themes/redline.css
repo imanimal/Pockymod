@@ -317,6 +317,7 @@ html[data-look="redline"] {
   }
   & .btn.ack:not([disabled]), & .btn.ack:not([disabled]):hover { animation: keyUp calc(var(--m) * 240ms + 1ms) var(--ease), rlGlitch calc(var(--m) * 160ms + 1ms) steps(1, end); }
   & .nv.ack, & .nv.ack:hover { animation: rlGlitch calc(var(--m) * 160ms + 1ms) steps(1, end); }
+  & .btn.nope, & .btn.nope:not([disabled]):hover { animation: nope calc(var(--m) * 300ms + 1ms) steps(1, end); }
   & .btn.hov { --ring: var(--acc2); color: var(--acc2); background: var(--corners-br), color-mix(in srgb, var(--acc2) 10%, var(--bg2)); }
   & .btn.primary.hov { --ring: var(--accent); color: var(--on-accent); background: var(--corners-br), color-mix(in srgb, #fff 25%, var(--accent)); }
   & .btn.focus { outline: none; --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }

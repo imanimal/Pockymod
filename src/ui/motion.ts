@@ -7,20 +7,29 @@ export function oneShot(el: Element | null | undefined, cls: string) {
   el.classList.remove(cls);
   void (el as HTMLElement).offsetWidth; // restart it
   el.classList.add(cls);
-  const off = () => el.classList.remove(cls);
-  el.addEventListener("animationend", (e) => { if (e.target === el) off(); }, { once: true });
+  const off = () => { el.classList.remove(cls); el.removeEventListener("animationend", end); };
+  // its own animation (or a pseudo-element's) ending, not a child's
+  const end = (e: Event) => { if (e.target === el) off(); };
+  el.addEventListener("animationend", end);
   setTimeout(off, 1500);
 }
 
-/** A refused action: a two-pixel shake. */
-export const nope = (el: Element | null | undefined) => oneShot(el, "nope");
+/** A refused action: a two-pixel shake (in place of the key's spring back). */
+export const nope = (el: Element | null | undefined) => { el?.classList.remove("ack"); oneShot(el, "nope"); };
 /** Something was stored: a green ring that fades. */
 export const saved = (el: Element | null | undefined) => oneShot(el, "saved");
 
-/** Play `cls` on the element each time `key` changes, the first render included. */
-export function useOneShot<T extends Element>(cls: string, key: unknown): RefObject<T | null> {
+/** Play `cls` on the element when it appears and each time `key` changes, at most once every `gap` ms (so a figure
+ *  that ticks every second does not flicker all the time). */
+export function useOneShot<T extends Element>(cls: string, key: unknown, gap = 0): RefObject<T | null> {
   const ref = useRef<T>(null);
-  useEffect(() => { oneShot(ref.current, cls); }, [cls, key]);
+  const last = useRef(0);
+  useEffect(() => {
+    const now = Date.now();
+    if (last.current && now - last.current < gap) return;
+    last.current = now;
+    oneShot(ref.current, cls);
+  }, [cls, key, gap]);
   return ref;
 }
 

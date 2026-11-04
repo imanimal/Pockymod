@@ -204,7 +204,7 @@ function ThemeMaker({ onDone }: { onDone: () => void }) {
     return p;
   };
 
-  const save = async () => {
+  const save = async (key: HTMLElement) => {
     try {
       const text = JSON.stringify(pkg(), null, 2) + "\n";
       const r = await installThemePackage(text);
@@ -213,7 +213,7 @@ function ThemeMaker({ onDone }: { onDone: () => void }) {
       saved(box.current);
       toast(`${r.name} is saved and in use.`);
       onDone();
-    } catch (e) { nope(box.current); toast(errorText(e), true); }
+    } catch (e) { nope(key); toast(errorText(e), true); }
   };
   const doExport = async () => {
     try { if (await saveTextAs(`${id}.json`, JSON.stringify(pkg(), null, 2) + "\n", ["json"])) toast(`Saved ${id}.json.`); } catch (e) { toast(errorText(e), true); }
@@ -255,7 +255,7 @@ function ThemeMaker({ onDone }: { onDone: () => void }) {
           ))}
         </div>
         <div className="actions">
-          <Key variant="primary" icon="check" onClick={() => void save()}>Save and use</Key>
+          <Key variant="primary" icon="check" onClick={(e) => void save(e.currentTarget)}>Save and use</Key>
           <Key icon="share" onClick={() => void doExport()}>Export file</Key>
           <Key variant="ghost" icon="refresh" onClick={() => setMaps(start)}>Start over</Key>
           <Key variant="ghost" onClick={cancel}>Cancel</Key>

@@ -228,7 +228,7 @@ export async function setTheme(id: string, choice?: SchemeChoice): Promise<void>
   let info = themeInfo(id);
   if (!info || (!info.builtin && !installed.has(id))) { await loadInstalled(); info = installed.get(id) ?? BUILTIN_THEMES.find((t) => t.id === id); }
   if (!info) throw new Error("That theme is not installed.");
-  const c = choice ?? savedChoice() ?? info.schemes[0];
+  const c = choice ?? savedChoice() ?? state.choice; // nothing saved yet: keep the scheme showing (dark for new users)
   write(K.id, info.id);
   if (choice) write(K.scheme, choice);
   cache(info);
