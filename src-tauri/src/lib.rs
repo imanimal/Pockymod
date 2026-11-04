@@ -117,6 +117,11 @@ pub fn run() {
             commands::library::nxm_handler_test,
             commands::library::downloads_usage,
             commands::library::downloads_cleanup,
+            commands::creator::creator_my_mods,
+            commands::creator::creator_mod_files,
+            commands::creator::creator_upload_targets,
+            commands::creator::creator_pin,
+            commands::creator::creator_unpin,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Pocket Mods");

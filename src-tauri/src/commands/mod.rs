@@ -7,3 +7,4 @@ pub mod files;
 pub mod game;
 pub mod library;
 pub mod nexus;
+pub mod creator;
