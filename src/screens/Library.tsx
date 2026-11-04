@@ -12,6 +12,8 @@ import { toast } from "../ui/toast";
 import { FomodDialog } from "./FomodDialog";
 import type { ChoicesNeeded, TrashRow } from "../lib/api";
 import * as ops from "../lib/ops";
+import { installerOptions } from "../lib/api";
+import { record } from "../lib/history";
 
 type Pending =
   | { kind: "conflicts"; installId: number; name: string; conflicts: Conflict[] }
@@ -36,6 +38,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const [newGroup, setNewGroup] = useState("");
   const [manage, setManage] = useState(false);
   const [choices, setChoices] = useState<ChoicesNeeded | null>(null);
+  const [reopt, setReopt] = useState<{ row: InstallRow; need: ChoicesNeeded; before: ChoicesNeeded["defaults"] } | null>(null);
   const [profileName, setProfileName] = useState("");
   const [dupes, setDupes] = useState<number[][]>([]);
   const [trash, setTrash] = useState<TrashRow[]>([]);
@@ -138,6 +141,20 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     const d = { modId: local, fileId: local, name, version: "local", archive };
     handleOutcome(await library.installFile(d), name, d);
   });
+
+  // a FOMOD mod's installer again, its last picks selected; the new picks go in from the staged files
+  const changeOptions = (r: InstallRow) => run(async () => {
+    const o = await installerOptions.get(r.id);
+    const request = { modId: r.modId, fileId: r.fileId, name: r.name, version: r.version, archive: "" };
+    setReopt({ row: r, need: { request, fomod: o.fomod, defaults: o.choices }, before: o.choices });
+  });
+  const applyOptions = async (r: InstallRow, picks: ChoicesNeeded["defaults"], before: ChoicesNeeded["defaults"]) => {
+    const d = await installerOptions.change(r.id, picks);
+    if (d && d.outcome !== "deployed") onDeployOutcome(r.id, r.name, d);
+    record({ label: `Changed the options of ${r.name}`, undo: () => installerOptions.change(r.id, before), redo: () => installerOptions.change(r.id, picks) }, !!d && d.outcome !== "deployed");
+    if (!d) toast(`${r.name} keeps the new options; they go in when you turn it on.`);
+    load();
+  };
 
   const notInstalled = downloads.filter((d) => !d.installed);
   const on = (rows ?? []).filter((r) => r.enabled).length;
@@ -257,6 +274,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       <span className="lcard-f" onClick={(e) => e.stopPropagation()}>
                         <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}>{r.enabled ? "On" : "Off"}</Switch>
                         {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
+                        {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} aria-label={`Change the options of ${r.name}`} title="Change options" />}
                       </span>
                     </span>
                   </div>
@@ -285,6 +303,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                     <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                       {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
                       {r.enabled && r.deployedFiles === 0 && <Key size="sm" onClick={() => deploy(r)} disabled={busy}>Deploy</Key>}
+                      {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} title="Pick other installer options; no download needed">Change options</Key>}
                       <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}><span className="sr-only">On</span></Switch>
                       <Key size="sm" variant="ghost" icon="trash" onClick={() => doBulk("uninstall", [r.id])} disabled={busy} aria-label={`Remove ${r.name}`} title={r.source === "vortex" ? "Remove from the game; it stays in Vortex" : "Remove"} />
                     </span>
@@ -346,6 +365,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       )}
 
       {choices && <FomodDialog need={choices} onClose={() => setChoices(null)} onInstalled={load} />}
+      {reopt && <FomodDialog need={reopt.need} onClose={() => setReopt(null)} apply={(picks) => applyOptions(reopt.row, picks, reopt.before)} />}
       {moveOpen && (
         <Dialog icon="folder" title="Move to group" count={`${sel.size} mods`} onClose={() => setMoveOpen(false)}>
           <div className="chips">

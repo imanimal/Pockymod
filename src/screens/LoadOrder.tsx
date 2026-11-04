@@ -5,6 +5,7 @@ import { Empty, Key, Lcd, Module, Pill, Switch, Tag } from "../ui/pocket";
 import { errorText, game, library, profiles, type InstallRow, type Profile, type RedmodEntry, type RedmodResult } from "../lib/api";
 import { toast } from "../ui/toast";
 import * as ops from "../lib/ops";
+import { OverlapsModule, RulesModule } from "./ArchiveOverlaps";
 
 export function LoadOrder() {
   const [list, setList] = useState<Profile[]>([]);
@@ -76,6 +77,9 @@ export function LoadOrder() {
             <Key size="sm" icon="plus" disabled={!name.trim() || busy} onClick={() => run(async () => { await profiles.create(name, active?.id); setName(""); toast("Profile made as a copy of the active one."); })}>Copy active</Key>
           </div>
         </Module>
+
+        <OverlapsModule />
+        <RulesModule />
       </div>
 
       <Module icon="library" title="Mods in this profile" count={`${rows.filter((r) => r.enabled).length} of ${rows.length} on`} bodyClass="list">
@@ -97,7 +101,7 @@ export function LoadOrder() {
             </div>
           ))}
         </div>
-        <p className="dim" style={{ fontSize: ".82em", padding: ".6em" }}>The order matters for REDmods (they are compiled first to last). Archive mods load by file name, whatever their place here.</p>
+        <p className="dim" style={{ fontSize: ".82em", padding: ".6em" }}>The order matters for REDmods (they are compiled first to last). Archive mods load by file name, whatever their place here: see Overlapping archives.</p>
       </Module>
     </div>
   );

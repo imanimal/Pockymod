@@ -132,6 +132,8 @@ export interface InstallRow {
   origin?: string | null;
   /** Files that were already in the game when it went in, set aside (they can go back). */
   replaced?: number;
+  /** Installed through the mod's own installer (FOMOD): its options can be changed again. */
+  hasOptions?: boolean;
 }
 export interface TrashRow { id: number; installId: number; name: string; modId: number; version: string; source: InstallRow["source"]; reason: string; size: number; removedAt: number }
 export interface ExistingProgress { stage: "vortex" | "folder" | "matching" | "tracking" | "linking"; done: number; total: number; name: string }
@@ -227,8 +229,9 @@ export interface GameInfo {
 }
 export type Fix =
   | { kind: "installMod"; modId: number; name: string } | { kind: "updateMod"; modId: number; name: string }
-  | { kind: "runRedmodDeploy" } | { kind: "redeploy"; installId: number } | { kind: "openLibrary" } | { kind: "openSettings" } | { kind: "resetScripts" };
-export interface Issue { id: string; severity: "problem" | "warning" | "info"; area: "game" | "frameworks" | "deploy" | "redmod" | "conflicts"; title: string; detail: string; fix: Fix | null }
+  | { kind: "runRedmodDeploy" } | { kind: "redeploy"; installId: number } | { kind: "openLibrary" } | { kind: "openSettings" } | { kind: "resetScripts" }
+  | { kind: "turnOff"; installId: number; name: string } | { kind: "disableModlist" };
+export interface Issue { id: string; severity: "problem" | "warning" | "info"; area: "game" | "frameworks" | "deploy" | "redmod" | "conflicts" | "logs"; title: string; detail: string; fix: Fix | null }
 export interface FrameworkRow extends FrameworkState { latest: string | null; updateAvailable: boolean; neededBy: string[] }
 export interface HealthReport { game: GameInfo | null; patch: string | null; patchSource: "detected" | "settings" | "assumed"; frameworks: FrameworkRow[]; issues: Issue[]; problems: number; warnings: number }
 export interface RedmodResult { ok: boolean; mods: string[]; problems: string[]; log: string }
@@ -432,3 +435,53 @@ export const addons = {
 };
 /** A JSON file from the marketplace folder (`index.json`, `themes/x.json` …), cached for an hour. */
 export const marketGet = (path: string, fresh = false) => call<string>("market_get", { path, fresh });
+
+// ── logs, overlapping archives, standing choices, installer options, moving the library ──
+
+export interface LogFile { tool: string; path: string; written: number | null; current: boolean; errors: number; warnings: number; size: number }
+export interface LogEntry { log: string; tool: string; level: "error" | "warning"; time: string | null; text: string; subject: string | null; installId: number | null }
+export interface ModErrors { installId: number; name: string; enabled: boolean; errors: number; warnings: number; entries: LogEntry[] }
+export interface LogReport { lastStart: number | null; logs: LogFile[]; mods: ModErrors[]; other: LogEntry[]; errors: number; warnings: number; scriptsFailed: boolean }
+export const logs = {
+  scan: () => call<LogReport>("logs_scan"),
+  /** A plain-text summary for a forum post (no personal folders in it). */
+  report: () => call<string>("logs_report"),
+  open: (path: string) => call<void>("log_open", { path }),
+};
+
+export interface OverlapSide { installId: number | null; modId: number | null; name: string; archives: string[]; redmod: boolean }
+export interface RenameTo { target: string; name: string }
+export interface Overlap { winner: OverlapSide; loser: OverlapSide; files: number; loadFirst: RenameTo[] | null; how: string }
+export interface OverlapReport { archives: number; overlaps: Overlap[]; sameContent: number; unreadable: Array<[string, string]>; modlist: string[] | null; millis: number }
+export const archives = {
+  overlaps: () => call<OverlapReport>("archive_overlaps"),
+  loadFirst: (installId: number, renames: RenameTo[]) => call<DeployOutcome>("archive_load_first", { installId, renames }),
+  undoRename: (modId: number, target: string) => call<void>("archive_rename_undo", { modId, target }),
+  disableModlist: () => call<boolean>("modlist_disable"),
+};
+
+export interface WinRule { id: number; winner: string; loser: string; winnerInstall: number; loserInstall: number; files: number; createdAt: number }
+export interface RenameRule { modId: number; name: string; target: string; renamed: string; installId: number | null; createdAt: number }
+export const rules = {
+  list: () => call<{ wins: WinRule[]; renames: RenameRule[] }>("rules_list"),
+  forget: (id: number) => call<void>("rule_forget", { id }),
+};
+
+export interface FomodOptions { installId: number; name: string; fomod: Fomod; choices: Choice[]; saved: boolean }
+export const installerOptions = {
+  get: (installId: number) => call<FomodOptions>("fomod_options", { installId }),
+  /** Install again from the staged files with these picks. Null: the mod is off, the picks are kept for later. */
+  change: (installId: number, choices: Choice[]) => call<DeployOutcome | null>("fomod_change", { installId, choices }),
+};
+
+export interface MoveCheck { from: string; to: string; sameDriveAsGame: boolean; quick: boolean; files: number; bytes: number; problem: string | null }
+export interface MoveReport { how: "renamed" | "copied"; files: number; bytes: number; rewritten: number; relinked: number; copies: number; leftBehind: string | null; copyTurnedOn: boolean }
+export interface RelinkReport { checked: number; ok: number; relinked: number; copies: number; restored: number; changed: number }
+export const relocate = {
+  check: (to: string) => call<MoveCheck>("library_move_check", { to }),
+  move: (to: string) => call<MoveReport>("library_move", { to }),
+  onProgress: (cb: (p: [number, number]) => void) => listen<[number, number]>("library-move", cb),
+  /** Set the game folder; a moved copy of the game has its mod files linked to the library again. */
+  setGame: (dir: string) => call<{ paths: PathsView; relink: RelinkReport | null }>("game_folder_set", { dir }),
+  relinkGame: () => call<RelinkReport>("game_relink"),
+};
