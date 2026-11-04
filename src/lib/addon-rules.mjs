@@ -156,7 +156,7 @@ export function validateExtension(m) {
       if ((t.path === undefined) === (t.pick === undefined)) c.err(at, "needs exactly one of path (inside the game folder) or pick (the user picks the program).");
       if (t.path !== undefined) {
         const parts = typeof t.path === "string" ? t.path.split(/[\\/]/) : [];
-        if (!oneLine(t.path, 200) || /^[a-zA-Z]:|^[\\/]/.test(t.path) || parts.some((p) => p === ".." || p === "." || p === ""))
+        if (!oneLine(t.path, 200) || /^[a-zA-Z]:|^[\\/]/.test(t.path) || t.path.includes(":") || parts.some((p) => p === ".." || p === "." || p === ""))
           c.err(`${at}.path`, "must be a path inside the game folder, like tools/redmod/bin/redMod.exe.");
         else if (!/\.exe$/i.test(t.path)) c.err(`${at}.path`, "must end in .exe.");
       }
@@ -220,12 +220,15 @@ export function validateExtension(m) {
 
 /** What the user approves on install. An update that needs anything not on this list asks again. */
 export function approvalItems(m) {
+  // each item is a JSON array, so two different manifests never give the same item (a joined string could:
+  // "pick:WolvenKit.exe" as a path, or ["--a b"] and ["--a", "b"] as arguments). Rust builds the same items.
   const k = (m && m.contributes) || {};
+  const j = (...a) => JSON.stringify(a);
   return [
-    ...(m.permissions ?? []).map((p) => `permission:${p}`),
-    ...(k.tools ?? []).map((t) => `tool:${t.id}:${t.path ?? `pick:${t.pick?.file ?? ""}`}:${(t.args ?? []).join(" ")}`),
-    ...(k.launchOptions ?? []).map((o) => `launch:${o.id}:${(o.args ?? []).join(" ")}`),
-    ...(k.links ?? []).map((l) => `link:${l.url}`),
+    ...(m.permissions ?? []).map((p) => j("permission", p)),
+    ...(k.tools ?? []).map((t) => j("tool", t.id, t.path ?? "", t.pick ? (t.pick.file ?? "") : null, t.args ?? [], t.download ?? "")),
+    ...(k.launchOptions ?? []).map((o) => j("launch", o.id, o.args ?? [])),
+    ...(k.links ?? []).map((l) => j("link", l.id ?? "", l.url)),
   ];
 }
 

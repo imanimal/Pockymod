@@ -39,7 +39,11 @@ describe("extension manifests", () => {
     const m: ExtensionManifest = { ...base(), permissions: ["toast"], contributes: {
       tools: [{ id: "wk", name: "WK", pick: { file: "WolvenKit.exe" } }], launchOptions: [{ id: "s", name: "S", args: ["-skipStartScreen"] }],
       links: [{ id: "w", title: "W", url: "https://wiki.redmodding.org/" }], panels: [{ id: "p", title: "P", html: "<p>hi</p>" }] } };
-    expect(approvalItems(m)).toEqual(["permission:toast", "tool:wk:pick:WolvenKit.exe:", "launch:s:-skipStartScreen", "link:https://wiki.redmodding.org/"]);
+    expect(approvalItems(m)).toEqual(['["permission","toast"]', '["tool","wk","","WolvenKit.exe",[],""]', '["launch","s",["-skipStartScreen"]]', `["link","${m.contributes.links?.[0].id ?? ""}","https://wiki.redmodding.org/"]`]);
+    // a path that looks like a pick, or arguments joined differently, are different items
+    const a = approvalItems({ ...m, contributes: { tools: [{ id: "wk", name: "W", path: "pick:WolvenKit.exe" }] } } as ExtensionManifest);
+    const b = approvalItems({ ...m, contributes: { tools: [{ id: "wk", name: "W", pick: { file: "WolvenKit.exe" } }] } } as ExtensionManifest);
+    expect(a.filter((x) => x.startsWith('["tool"'))).not.toEqual(b.filter((x) => x.startsWith('["tool"')));
   });
 });
 

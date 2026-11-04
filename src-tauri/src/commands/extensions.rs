@@ -77,10 +77,27 @@ fn approved(app: &AppHandle, id: &str) -> Result<(Value, ExtState)> {
     let st = load_states(app)?.remove(id).unwrap_or_default();
     let release = m["release"].as_str().unwrap_or_default();
     if !st.enabled { return Err(Error::Invalid("That extension is turned off. Turn it on in Add-ons.".into())); }
-    if st.approved_release.as_deref() != Some(release) {
+    if st.approved_release.as_deref() != Some(release) || approval_items(&m).iter().any(|i| !st.approved.contains(i)) {
         return Err(Error::Invalid("That extension changed since you approved it. Review it in Add-ons first.".into()));
     }
     Ok((m, st))
+}
+
+/// What the user approves, one item per permission, tool, launch option and link: the same JSON arrays as
+/// `approvalItems` in src/lib/addon-rules.mjs, so nothing can change without being approved again.
+pub fn approval_items(m: &Value) -> Vec<String> {
+    let or = |v: Option<&Value>, d: Value| match v { None | Some(Value::Null) => d, Some(x) => x.clone() };
+    let j = |v: Value| serde_json::to_string(&v).unwrap_or_default();
+    let k = &m["contributes"];
+    let list = |name: &str| k[name].as_array().cloned().unwrap_or_default();
+    let mut out: Vec<String> = m["permissions"].as_array().cloned().unwrap_or_default().into_iter().map(|p| j(serde_json::json!(["permission", p]))).collect();
+    for t in list("tools") {
+        let pick = match t.get("pick") { Some(p) if p.is_object() => or(p.get("file"), Value::from("")), _ => Value::Null };
+        out.push(j(serde_json::json!(["tool", t["id"], or(t.get("path"), Value::from("")), pick, or(t.get("args"), serde_json::json!([])), or(t.get("download"), Value::from(""))])));
+    }
+    for o in list("launchOptions") { out.push(j(serde_json::json!(["launch", o["id"], or(o.get("args"), serde_json::json!([]))]))); }
+    for l in list("links") { out.push(j(serde_json::json!(["link", or(l.get("id"), Value::from("")), l["url"]]))); }
+    out
 }
 
 /// An entry of `contributes.<list>` by id.
@@ -117,10 +134,12 @@ fn args_of(v: &Value, game: Option<&Path>) -> Result<Vec<String>> {
 /// A path inside the game folder: relative, no `..`, no drive or root.
 fn inside(game: &Path, rel: &str) -> Result<PathBuf> {
     let p = Path::new(rel);
-    if rel.is_empty() || p.components().any(|c| !matches!(c, Component::Normal(_))) {
-        return Err(Error::Invalid("A tool's path must be inside the game folder, like tools/x/x.exe.".into()));
-    }
-    Ok(game.join(p))
+    let bad = || Error::Invalid("A tool's path must be inside the game folder, like tools/x/x.exe.".into());
+    // no drive, root, "..", or ":" (a stream name); then, with links and junctions resolved, still inside the game
+    if rel.is_empty() || rel.contains(':') || p.components().any(|c| !matches!(c, Component::Normal(_))) { return Err(bad()); }
+    let full = game.join(p);
+    if let (Ok(real), Ok(g)) = (full.canonicalize(), game.canonicalize()) { if !real.starts_with(&g) { return Err(bad()); } }
+    Ok(full)
 }
 
 fn tool_program(tool: &Value, st: &ExtState, tool_id: &str, game: Option<&Path>) -> Result<PathBuf> {
@@ -310,6 +329,26 @@ pub fn panel_protocol(app: &AppHandle, request: Request<Vec<u8>>) -> Response<Ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn approval_items_match_the_apps() {
+        // the same manifest and items as src/lib/extensions.test.ts
+        let m = serde_json::json!({ "permissions": ["toast"], "contributes": {
+            "tools": [{ "id": "wk", "name": "W", "pick": { "file": "WolvenKit.exe" } }],
+            "launchOptions": [{ "id": "s", "name": "S", "args": ["-skipStartScreen"] }],
+            "links": [{ "id": "w", "title": "W", "url": "https://wiki.redmodding.org/" }] } });
+        assert_eq!(approval_items(&m), ["[\"permission\",\"toast\"]", "[\"tool\",\"wk\",\"\",\"WolvenKit.exe\",[],\"\"]",
+            "[\"launch\",\"s\",[\"-skipStartScreen\"]]", "[\"link\",\"w\",\"https://wiki.redmodding.org/\"]"]);
+    }
+
+    #[test]
+    fn tool_paths_stay_in_the_game_folder() {
+        let dir = std::env::temp_dir().join(format!("pm-inside-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for bad in ["../x.exe", "C:/x.exe", "tools/x.exe:stream", "/x.exe", ""] { assert!(inside(&dir, bad).is_err(), "{bad}"); }
+        assert!(inside(&dir, "tools/x/x.exe").is_ok());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn browser_prefixes() {
