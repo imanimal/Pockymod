@@ -50,9 +50,27 @@ const MIGRATIONS: &[&str] = &[
 
 pub struct Db { pub conn: Connection }
 
+/// One copy of the database a day (before it is opened, so before any schema change), the last five kept, in
+/// `backups/` beside it. Cheap insurance against a crash mid-write or a bad update.
+fn backup_daily(path: &Path) {
+    if !path.exists() { return; }
+    let Some(dir) = path.parent().map(|d| d.join("backups")) else { return };
+    let day = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let target = dir.join(format!("pocket-mods-{day}.sqlite"));
+    if target.exists() || std::fs::create_dir_all(&dir).is_err() { return; }
+    // the WAL may hold recent writes; a checkpoint folds them in first
+    if let Ok(c) = Connection::open(path) { let _ = c.pragma_update(None, "wal_checkpoint", "TRUNCATE"); }
+    if std::fs::copy(path, &target).is_err() { return; }
+    let mut old: Vec<_> = std::fs::read_dir(&dir).into_iter().flatten().flatten().map(|e| e.path())
+        .filter(|p| p.file_name().is_some_and(|n| n.to_string_lossy().starts_with("pocket-mods-"))).collect();
+    old.sort();
+    while old.len() > 5 { let _ = std::fs::remove_file(old.remove(0)); }
+}
+
 impl Db {
     pub fn open(path: &Path) -> Result<Self> {
         if let Some(dir) = path.parent() { std::fs::create_dir_all(dir)?; }
+        backup_daily(path);
         Self::init(Connection::open(path)?)
     }
 
@@ -62,6 +80,10 @@ impl Db {
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "foreign_keys", "ON")?;
         let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0))?;
+        // a newer app made this file: an older one must not guess at a schema it does not know
+        if version as usize > MIGRATIONS.len() {
+            return Err(Error::Invalid("Your library was last opened by a newer version of Pocket Mods. Install that version again (a copy of the library from before is kept in the app's data folder, backups).".into()));
+        }
         for (i, step) in MIGRATIONS.iter().enumerate().skip(version as usize) {
             let tx = conn.unchecked_transaction()?;
             tx.execute_batch(step)?;
