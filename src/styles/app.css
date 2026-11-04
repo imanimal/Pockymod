@@ -248,11 +248,6 @@
 .toast-act:active { translate: 0 1px; }
 .toast-x { background: none; border: 0; color: var(--text-3); padding: .3em; cursor: pointer; display: inline-grid; border-radius: 5px; }
 .toast-x:hover { color: var(--text); background: var(--surface-2); }
-.toast-time { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--accent); opacity: .5; transform-origin: left; animation-name: toastTime; animation-timing-function: linear; animation-fill-mode: forwards; }
-.toast:hover .toast-time { animation-play-state: paused; }
-@keyframes toastTime { to { transform: scaleX(0); } }
-.toast.leaving { animation: toastOut calc(var(--m) * 200ms + 1ms) var(--ease-in) forwards; }
-@keyframes toastOut { to { opacity: 0; transform: translateX(12%); } }
 .toast .tt { animation: print calc(var(--m) * 260ms + 1ms) steps(8, end); }
 @keyframes print { from { clip-path: inset(0 100% 0 0); } }
 
@@ -317,3 +312,4 @@
 @media (max-width: 560px) { .cr-top { grid-template-columns: minmax(0, 1fr); } }
 .launch .playkey { display: flex; gap: .3em; width: 100%; }
 .launch .playkey .play-key { flex: 1; }
+.toast:hover .t-life { animation-play-state: paused; }

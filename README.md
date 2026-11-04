@@ -15,6 +15,7 @@ Built milestone by milestone from [docs/build-prompt.md](docs/build-prompt.md). 
 - **Deploy** with hard links from a mod library on the game's drive; every change is reversible and no mod's file is ever deleted by another.
 - **Health**: missing or outdated frameworks after a game patch, broken deploys, REDmod state, each with one fix key. **Profiles** and the **REDmod load order**, with the REDmod deploy step.
 - **Collections**: browse Nexus collections with pre-install checks, and share your own as a file that pins mod IDs, file IDs, hashes and dependencies.
+- **Themes**: Standard (the default, dark or light), Redline and Pocket, an optional CRT layer, and themes you make in the app or import as a file. [docs/themes.md](docs/themes.md) explains how to make one.
 
 ## Add-ons
 
@@ -43,7 +44,7 @@ cargo run -p pocket-core --example nexus_probe         # log the live mods() res
 
 - `docs/build-prompt.md`: the product, design, tech and Nexus rules for the build.
 - `design/reference/pocket.css`: the Pocket stylesheet from Collegiapp, the reference for tokens and component names.
-- `src/styles/pocket-os.css`: the standalone Pocket stylesheet this app uses, with bundled fonts.
+- `src/styles/pocket-os.css`: the standalone Pocket stylesheet this app uses, with bundled fonts. `src/styles/themes/` holds the Standard and Redline themes, `fx.css` the CRT layer.
 - `src/`: the React UI. It holds no Nexus or file logic.
 - `crates/pocket-core`: Nexus client, cache, install and Cyberpunk logic in Rust.
 - `src-tauri`: the Tauri 2 shell that exposes the core to the UI.

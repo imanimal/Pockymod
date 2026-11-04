@@ -1,12 +1,45 @@
-// Component gallery: every Pocket part in every variant and state, in the current theme.
+// Component gallery: every Pocket part in every variant and state, in the current theme. The theme strip at the top
+// switches the whole app to another theme, scheme or effects level, so each one can be checked part by part.
 // It breaks the one-orange-per-screen rule on purpose, to show the orange variants next to the others.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { ICONS, type IconName } from "../ui/icons";
 import { Chip, Empty, Key, Lcd, LcdLevel, Module, Pill, ProgramKey, SearchField, Seg, Switch, Tag } from "../ui/pocket";
+import { BUILTIN_THEMES, listThemes, setFx, setSchemeChoice, setTheme, useTheme, type ThemeInfo } from "../lib/theme";
+import { ThemeSample } from "./Appearance";
+import { toast } from "../ui/toast";
+import { nope } from "../ui/motion";
 
 const TOKENS = ["--bg", "--bg2", "--surface", "--surface-2", "--line", "--text", "--text-2", "--text-3", "--accent", "--on-accent",
-  "--chrome-bg", "--chrome-fg", "--disp-bg", "--disp-fg", "--disp-hot", "--disp-bad", "--ok", "--warn", "--bad", "--acc2"];
+  "--accent-ink", "--acc2", "--chrome-bg", "--chrome-fg", "--disp-bg", "--disp-fg", "--disp-hot", "--disp-bad", "--ok", "--warn", "--bad",
+  "--on-bad", "--focus", "--on-ring"];
+
+/** Every installed theme, each a sample you can click; then the scheme and effects of the one showing. */
+function ThemeStrip() {
+  const t = useTheme();
+  const [themes, setThemes] = useState<ThemeInfo[]>(BUILTIN_THEMES);
+  useEffect(() => { listThemes().then(setThemes).catch(() => {}); }, []);
+  return (
+    <Module icon="gallery" title="Themes" count={`${t.name} · ${t.scheme} · effects ${t.fx}`}>
+      <div className="gal-themes">
+        {themes.flatMap((th) => th.schemes.map((s) => (
+          <button key={`${th.id}.${s}`} type="button" className={`gal-theme${t.id === th.id && t.scheme === s ? " on" : ""}`}
+            onClick={() => void setTheme(th.id, th.schemes.length > 1 ? s : undefined)} title={`${th.name}, ${s}`}>
+            <ThemeSample info={th} scheme={s} />
+            <span>{th.name} <span className="dim">{s}</span></span>
+          </button>
+        )))}
+      </div>
+      <div className="actions" style={{ marginTop: ".8em" }}>
+        <Seg label="Scheme" value={t.choice} onChange={setSchemeChoice}
+          options={(["dark", "light", "system"] as const).map((v) => ({ value: v, label: v[0].toUpperCase() + v.slice(1), disabled: t.schemes.length < 2 }))} />
+        <Seg label="Effects" value={t.fx} onChange={(v) => setFx(v)} options={[{ value: "off", label: "Effects off" }, { value: "subtle", label: "Subtle" }, { value: "full", label: "Full" }]} />
+        <Key size="sm" onClick={(e) => { nope(e.currentTarget); toast("Refused: this is what a refused action looks like.", true); }}>Try a refused action</Key>
+        <Key size="sm" onClick={() => toast("Saved. Toasts slide in, drain and slide out.")}>Show a toast</Key>
+      </div>
+    </Module>
+  );
+}
 
 // The spec's component names and the Pocket class each one is built on.
 const NAMES: Array<[spec: string, pocket: string, note: string]> = [
@@ -37,6 +70,7 @@ export function Gallery() {
     <div className="stack gallery">
       <div className="grp" style={{ paddingTop: 0 }}>Component gallery <span>pocket-os.css</span></div>
       <p className="dim" style={{ marginTop: -6 }}>Every part in every state. This screen alone shows orange more than once, so the variants sit side by side.</p>
+      <ThemeStrip />
 
       <div className="grid2">
         <Module icon="gallery" title="Keys" count=".btn">
@@ -220,7 +254,7 @@ export function Gallery() {
           </div>
         </Module>
 
-        <Module icon="settings" title="Tokens and type" count="Cream · Night">
+        <Module icon="settings" title="Tokens and type" count={`${TOKENS.length} tokens`}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(8.5em, 1fr))", gap: ".4em" }}>
             {TOKENS.map((t) => (
               <span key={t} style={{ display: "flex", alignItems: "center", gap: ".5em", fontSize: ".8em" }}>
@@ -241,6 +275,15 @@ export function Gallery() {
         <div className="fgrid" style={{ gridTemplateColumns: "10em 15em minmax(0,1fr)" }}>
           {NAMES.map(([s, p, n]) => [<code key={s + "s"}>{s}</code>, <code key={s + "p"}>{p}</code>, <span key={s + "n"} style={{ fontSize: ".86em" }}>{n}</span>])}
         </div>
+      </Module>
+
+      <Module icon="downloads" title="Loading and feedback" count=".skel .nope .boot">
+        <div className="mgrid">{Array.from({ length: 3 }, (_, i) => <span key={i} className="mcard panel skel" style={{ height: "9em" }} />)}</div>
+        <div className="stack" style={{ gap: ".4em", marginTop: ".8em" }}>
+          <span className="skel skel-line" style={{ width: "60%" }} />
+          <span className="skel skel-line" style={{ width: "85%" }} />
+        </div>
+        <div className="note bad" style={{ marginTop: ".8em" }}>A problem note shakes once as it appears.</div>
       </Module>
 
       <div className="grid2">

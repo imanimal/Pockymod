@@ -61,13 +61,13 @@ export function Toasts() {
   return (
     <div className="toasts" role="status" aria-live="polite">
       {list.map((t) => (
-        <div key={t.id} className={`toast${t.bad ? " bad" : ""}${t.action ? " act" : ""}${t.leaving ? " leaving" : ""}`}
+        <div key={t.id} className={`toast${t.bad ? " bad" : ""}${t.action ? " act" : ""}${t.leaving ? " gone" : ""}`}
           onMouseEnter={() => hold(t.id, true)} onMouseLeave={() => hold(t.id, false)}>
           <Icon name={t.bad ? "warn" : t.action?.label === "Redo" ? "redo" : "check"} />
           <span className="tt" key={t.text}>{t.text}</span>
           {t.action && <button type="button" className="toast-act" onClick={() => void t.action!.run()}>{t.action.label}</button>}
           <button type="button" className="toast-x" aria-label="Dismiss" onClick={() => { live.delete(t.id); setList((l) => l.filter((x) => x.id !== t.id)); }}><Icon name="x" size={9} /></button>
-          <i key={`${t.text}-${t.ms}`} className="toast-time" style={{ animationDuration: `calc(var(--m) * ${t.ms}ms + 1ms)` }} />
+          <i key={`${t.text}-${t.ms}`} className="t-life" style={{ animationDuration: `${t.ms}ms` }} aria-hidden="true" />
         </div>
       ))}
     </div>

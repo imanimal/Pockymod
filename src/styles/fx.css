@@ -1,0 +1,102 @@
+/* fx.css — the CRT and glass layer, after the Collegiapp tube (its crt.css moments: power, channel change, degauss).
+   A theme suggests a level with --fx; the user can pick another in Settings, Appearance. html[data-fx]:
+     off     nothing.
+     subtle  faint scanlines on LCDs and the title bar, a soft vignette at the window's edge, and short flickers when
+             the app starts, the view changes and the theme changes. Nothing over body text is blurred or warped.
+     full    scanlines over the whole window, a deeper vignette, warped glass on the title bar and toasts (an SVG
+             displacement filter, #pm-glass, from ui/fx.ts), glowing LCD figures and the full moments: the picture
+             opens from a line on power-on, jumps on a channel change, wobbles in colour on a degauss.
+   The overlay (.crt) never takes a click. ui/fx.ts sets the moments as one-shot classes on <html>: fx-power, fx-chan,
+   fx-dg; each lasts calc(var(--m) * N), so the motion setting and reduced motion skip them. */
+
+.crt { position: fixed; inset: 0; z-index: 90; pointer-events: none; display: none; overflow: hidden; }
+html:is([data-fx="subtle"], [data-fx="full"]) .crt { display: block; }
+.crt > i { position: absolute; inset: 0; display: block; }
+/* scanlines over everything (full) */
+.crt > .scan { display: none; background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, calc(var(--scan) * .2)) 0 1px, transparent 1px 3px); }
+html[data-fx="full"] .crt > .scan { display: block; }
+/* the tube's edge: a vignette; in full also the curve of the glass catching a little light at the top */
+.crt > .vig { background: radial-gradient(ellipse 130% 100% at 50% 50%, transparent 66%, rgba(0, 0, 0, .16) 100%); }
+html[data-fx="full"] .crt > .vig {
+  background: radial-gradient(ellipse 120% 95% at 50% 50%, transparent 58%, rgba(0, 0, 0, .34) 100%),
+    linear-gradient(to bottom, rgba(255, 255, 255, .035), transparent 18%);
+  box-shadow: inset 0 0 5em rgba(0, 0, 0, .28);
+}
+/* the beam and the snow, only seen during the moments */
+.crt > .beam { opacity: 0; background: linear-gradient(to bottom, transparent calc(50% - 2px), rgba(var(--glow-rgb), .95) 50%, transparent calc(50% + 2px)); }
+.crt > .snow {
+  opacity: 0; mix-blend-mode: screen;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
+}
+
+/* LCDs and the title bar: faint scanlines (subtle and full) */
+html:is([data-fx="subtle"], [data-fx="full"]) .display::after {
+  background-image: repeating-linear-gradient(to bottom, rgba(0, 0, 0, calc(var(--scan) * .22)) 0 1px, transparent 1px 3px), var(--lcd-tex, none);
+}
+html:is([data-fx="subtle"], [data-fx="full"]) .shell > .mtop { position: relative; }
+html:is([data-fx="subtle"], [data-fx="full"]) .shell > .mtop::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, calc(var(--scan) * .2)) 0 1px, transparent 1px 3px);
+}
+/* LCD figures glow like phosphor (full) */
+html[data-fx="full"] .display .d-num { text-shadow: var(--lcd-glow, none); }
+html[data-fx="full"] .lcd-chip { text-shadow: var(--lcd-glow, none); }
+
+/* warped glass (full): the title bar and toasts show what is behind them through rippled glass. Their own text sits
+   on top, sharp; only the backdrop is warped. */
+html:root[data-fx="full"] .shell > .mtop {
+  z-index: 30; background-color: color-mix(in srgb, var(--chrome-bg) 58%, transparent);
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, .06), transparent 70%);
+  -webkit-backdrop-filter: url(#pm-glass) saturate(1.4); backdrop-filter: url(#pm-glass) saturate(1.4);
+}
+html:root[data-fx="full"] .toast {
+  background-color: color-mix(in srgb, var(--surface-2) 74%, transparent);
+  -webkit-backdrop-filter: url(#pm-glass) blur(1.5px) saturate(1.4); backdrop-filter: url(#pm-glass) blur(1.5px) saturate(1.4);
+}
+html:root[data-fx="full"][data-look="redline"] .toast { background-image: var(--corners-br); }
+html[data-fx="full"] .toast::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(255, 255, 255, .07), transparent 55%); }
+
+/* power on: the picture opens from a bright line across the middle, overbright, then settles (full); a short
+   flicker in (subtle) */
+@keyframes crtOn {
+  0% { clip-path: inset(50% 0 50% 0); filter: brightness(5) saturate(0); }
+  20% { clip-path: inset(49.4% 4% 49.4% 4%); filter: brightness(5) saturate(0); }
+  45% { clip-path: inset(0); filter: brightness(1.9) saturate(.6); }
+  65% { filter: brightness(.85); }
+  80% { filter: brightness(1.1); }
+  100% { clip-path: inset(0); filter: none; }
+}
+@keyframes crtSoft { 0% { opacity: 0; } 30% { opacity: .75; } 45% { opacity: .4; } 65% { opacity: 1; } 80% { opacity: .85; } 100% { opacity: 1; } }
+@keyframes beamOn { 0% { opacity: 1; transform: scaleX(0); } 20% { opacity: 1; transform: scaleX(1); } 45%, 100% { opacity: 0; transform: scaleX(1); } }
+html.fx-power { background: #000; }
+html.fx-power body { background: #000; }
+html.fx-power[data-fx="full"] .shell { animation: crtOn calc(var(--m) * 720ms + 1ms) steps(16, end) both; }
+html.fx-power[data-fx="full"] .crt > .beam { animation: beamOn calc(var(--m) * 720ms + 1ms) steps(12, end) both; }
+html.fx-power[data-fx="subtle"] .shell { animation: crtSoft calc(var(--m) * 380ms + 1ms) steps(1, end) both; }
+
+/* channel change on a new view: the picture jumps sideways through a burst of snow (full); a brightness blip (subtle) */
+@keyframes chanFull {
+  0% { filter: brightness(1.7) contrast(1.25); transform: translateX(-5px) skewX(-1.2deg); }
+  20% { filter: brightness(.7); transform: translateX(4px); }
+  40% { filter: brightness(1.25); transform: translateX(-2px); }
+  60%, 100% { filter: none; transform: none; }
+}
+@keyframes chanSoft { 0% { filter: brightness(1.22); } 40% { filter: brightness(.94); } 100% { filter: none; } }
+@keyframes snowBurst { 0% { opacity: .32; background-position: 0 0; } 34% { opacity: .22; background-position: 57px 31px; } 67% { opacity: .12; background-position: 13px 89px; } 100% { opacity: 0; } }
+html.fx-chan[data-fx="full"] .shell > .view { animation: chanFull calc(var(--m) * 260ms + 1ms) steps(5, end); }
+html.fx-chan[data-fx="full"] .crt > .snow { animation: snowBurst calc(var(--m) * 220ms + 1ms) steps(1, end); }
+html.fx-chan[data-fx="subtle"] .shell > .view { animation: chanSoft calc(var(--m) * 180ms + 1ms) steps(3, end); }
+
+/* degauss after a theme change: the colours swim and the picture wobbles, then settle (full); a colour wobble only
+   (subtle) */
+@keyframes degauss {
+  0% { filter: hue-rotate(70deg) saturate(2); transform: skewX(1.8deg) scale(1.008); }
+  15% { filter: hue-rotate(-50deg) saturate(1.7); transform: skewX(-1.4deg) scale(1.005); }
+  30% { filter: hue-rotate(34deg) saturate(1.4); transform: skewX(.9deg); }
+  50% { filter: hue-rotate(-16deg) saturate(1.2); transform: skewX(-.45deg); }
+  70% { filter: hue-rotate(7deg); transform: skewX(.15deg); }
+  100% { filter: none; transform: none; }
+}
+@keyframes degaussSoft { 0% { filter: hue-rotate(30deg) saturate(1.4); } 40% { filter: hue-rotate(-14deg) saturate(1.15); } 100% { filter: none; } }
+html.fx-dg[data-fx="full"] .shell { animation: degauss calc(var(--m) * 640ms + 1ms) var(--ease); }
+html.fx-dg[data-fx="subtle"] .shell { animation: degaussSoft calc(var(--m) * 380ms + 1ms) ease-out; }

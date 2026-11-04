@@ -254,6 +254,7 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
               )}
               <div className="mgrid">
                 {results.slice((view === "trending" || view === "popular") && active.length === 0 && results.length > 2 ? 2 : 0).map((c) => <ModCard key={c.modId} c={c} onOpen={() => setSel(c)} />)}
+                {busy && results.length === 0 && Array.from({ length: 8 }, (_, i) => <span key={`skel${i}`} className="mcard panel skel" aria-hidden="true" />)}
               </div>
               {res && results.length < res.total && (
                 <div className="actions" style={{ justifyContent: "center", margin: "1em 0" }}>

@@ -25,7 +25,9 @@ import { Addons } from "./screens/Addons";
 import { Toasts, toast } from "./ui/toast";
 import { installPrefs } from "./lib/prefs";
 import { errorText, game, handler, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
-import { applyTheme, getThemeChoice, setThemeChoice, watchSystemTheme } from "./lib/theme";
+import { toggleScheme, useTheme, watchSystemTheme } from "./lib/theme";
+import { channel } from "./ui/fx";
+import { nope } from "./ui/motion";
 import { windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
 
@@ -45,7 +47,7 @@ const VIEWS: Array<{ id: View; label: string; icon: IconName }> = [
 
 export function App() {
   const [view, setView] = useState<View>("browse");
-  const [scheme, setScheme] = useState<"cream" | "night">(() => applyTheme());
+  const theme = useTheme();
   const [snap, setSnap] = useState<QueueSnapshot | null>(null);
   const [premium, setPremium] = useState(false);
   const [installing, setInstalling] = useState<{ modId: number; fileId: number; name: string } | null>(null);
@@ -57,7 +59,8 @@ export function App() {
   useEffect(() => { let off: (() => void) | undefined; onChoicesNeeded(setChoices).then((u) => { off = u; }); return () => off?.(); }, []);
   useEffect(() => { settings.get("onboarded").then((v) => setOnboard(v !== "1")).catch(() => {}); }, []);
 
-  useEffect(() => watchSystemTheme(() => setScheme(applyTheme())), []);
+  useEffect(() => watchSystemTheme(() => {}), []);
+  useEffect(() => channel(), [view]);
   useEffect(() => installUndoKeys(), []);
   useEffect(() => { applyTextSize(); return installZoomKeys((px) => toast(`Text size ${px}px. Ctrl+0 resets it.`)); }, []);
   useEffect(() => {
@@ -98,11 +101,6 @@ export function App() {
     } catch (e) { toast(errorText(e), true); }
   };
 
-  const toggleScheme = () => {
-    const next = scheme === "night" ? "cream" : "night";
-    setThemeChoice(next);
-    setScheme(next);
-  };
 
   const led = (id: View): Led | undefined =>
     id === "downloads" ? (s?.running ? "run" : s?.waitingOnUser ? "wait" : "off") : id === "health" && healthIssues > 0 ? "bad" : undefined;
@@ -117,8 +115,9 @@ export function App() {
         <span className="sp" data-tauri-drag-region />
         <HistoryMenu onRemoved={() => { setView("library"); setTimeout(() => document.getElementById("recently-removed")?.scrollIntoView({ behavior: "smooth" }), 120); }} />
         <ProfileSwitch onManage={() => setView("loadorder")} />
-        <Key variant="ghost" size="sm" icon={scheme === "night" ? "sun" : "moon"} onClick={toggleScheme}
-          aria-label={scheme === "night" ? "Switch to Cream" : "Switch to Night"} title={`Theme: ${getThemeChoice()}`} />
+        <Key variant="ghost" size="sm" icon={theme.scheme === "dark" ? "sun" : "moon"}
+          onClick={(e) => { if (!toggleScheme()) { nope(e.currentTarget); toast(`${theme.name} comes in dark only.`); } }}
+          aria-label={theme.scheme === "dark" ? "Switch to light" : "Switch to dark"} title={`${theme.name}, ${theme.scheme}`} />
         <span className="winkeys">
           <button type="button" className="wk" aria-label="Minimise" onClick={() => void windowAction("minimize")}><Icon name="minus" size={9} /></button>
           <button type="button" className="wk" aria-label="Maximise" onClick={() => void windowAction("toggleMaximize")}><Icon name="max" size={9} /></button>
@@ -145,12 +144,12 @@ export function App() {
 
       <main className="view">
         {/* Browse stays mounted so its search and filters survive a trip to another view */}
-        <div style={{ display: view === "browse" ? "contents" : "none" }}>
+        <div className="keep" style={{ display: view === "browse" ? "contents" : "none" }}>
           <Browse onInstall={(d, fileId) => void startInstall(d.detail.modId, fileId, d.detail.name)}
             onOpenPage={(modId) => nexusPages.mod(modId).catch((e) => toast(errorText(e), true))} />
         </div>
         {view === "gallery" ? <Gallery />
-          : view === "settings" ? <Settings scheme={scheme} onScheme={setScheme} />
+          : view === "settings" ? <Settings />
           : view === "downloads" ? <Downloads snap={snap} />
           : view === "library" ? <Library updates={updates} onExisting={() => setExistingOpen(true)} />
           : view === "health" ? <Health onNavigate={setView} onIssues={setHealthIssues} />
