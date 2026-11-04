@@ -21,7 +21,7 @@ pub async fn nexus_status(state: State<'_, AppState>, refresh: Option<bool>) -> 
     if has_key && (refresh.unwrap_or(false) || state.user.read().await.is_none()) {
         // validate once per session; a bad key shows as no user, the error goes to the caller
         match state.nexus.validate().await {
-            Ok(u) => *state.user.write().await = Some(u),
+            Ok(u) => { state.queue.lock().unwrap().premium = u.is_premium; *state.user.write().await = Some(u) }
             Err(e @ (Error::BadKey | Error::Throttled { .. })) => return Err(e),
             Err(_) => {}
         }
@@ -39,6 +39,7 @@ pub async fn nexus_set_key(state: State<'_, AppState>, key: String) -> Result<Ne
     match state.nexus.validate().await {
         Ok(user) => {
             state.keys.set(&Secret::new(key))?;
+            state.queue.lock().unwrap().premium = user.is_premium;
             *state.user.write().await = Some(user);
             nexus_status(state, None).await
         }

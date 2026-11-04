@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Key, Lcd, Module, Pill, Seg, Switch } from "../ui/pocket";
 import { applyTheme, getThemeChoice, setMotion, setThemeChoice, type ThemeChoice } from "../lib/theme";
 import { errorText, nexus, type NexusStatus } from "../lib/api";
+import { GameFolders } from "./GameFolders";
 
 export function Settings({ onScheme }: { scheme: "cream" | "night"; onScheme: (s: "cream" | "night") => void }) {
   const [theme, setTheme] = useState<ThemeChoice>(getThemeChoice());
@@ -10,6 +11,7 @@ export function Settings({ onScheme }: { scheme: "cream" | "night"; onScheme: (s
   return (
     <div className="stack" style={{ maxWidth: "56em" }}>
       <NexusAccount />
+      <GameFolders />
       <Module icon="settings" title="Look" count="Pocket">
         <div className="fgrid">
           <span className="lab">Theme</span>

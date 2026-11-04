@@ -108,3 +108,87 @@ export const settings = {
 };
 
 export const fileBytes = (f: ModFile) => f.sizeInBytes ?? f.size * 1024;
+
+// ── library, queue, paths ──
+
+export type ItemState =
+  | { state: "waiting" } | { state: "needsClick" } | { state: "downloading"; received: number; total: number | null }
+  | { state: "installing" } | { state: "done"; installId: number | null; note: string | null } | { state: "failed"; message: string };
+export interface QueueItem {
+  id: number; modId: number; fileId: number; modName: string; fileName: string; version: string; uri: string; size: number;
+  requiredBy: string | null; manualOnly: boolean; state: ItemState;
+}
+export interface QueueSummary {
+  left: number; needsClick: number; bytesLeft: number; running: boolean; waitingOnUser: boolean; failed: number; premium: boolean;
+  bytesPerSec: number | null; secondsLeft: number | null;
+}
+export interface QueueSnapshot { items: QueueItem[]; summary: QueueSummary }
+export interface InstallRow {
+  id: number; modId: number; fileId: number; name: string; version: string; modType: ModType; frameworks: string[]; staging: string;
+  installedAt: number; updatedAt: string | null; deployedFiles: number; enabled: boolean; loadOrder: number;
+}
+export interface Conflict { target: string; ownerInstall: number; ownerName: string }
+export type DeployOutcome =
+  | { outcome: "deployed"; linked: number; copied: number; backedUp: string[]; tookFrom: Conflict[] }
+  | { outcome: "conflicts"; conflicts: Conflict[] }
+  | { outcome: "needsCopy"; reason: string };
+export interface DeployOptions { allowCopy: boolean; takeConflicts: boolean }
+export interface UndeployReport { removed: number; restored: string[]; leftAlone: string[] }
+export interface DownloadRow { modId: number; fileId: number; name: string; version: string; path: string; size: number; md5: string; installed: boolean }
+export interface PathsView {
+  gameDir: string | null; libraryDir: string | null; defaultLibrary: string | null; allowCopy: boolean;
+  gameLooksRight: boolean; sameVolume: boolean | null; inProgramFiles: boolean;
+}
+export interface HandlerStatus { supported: boolean; ours: boolean; owner: string | null; command: string | null }
+export interface InstallPlan { files: Array<{ source: string; target: string; kind: string }>; skipped: string[]; unknown: string[]; modType: ModType | null; warnings: string[] }
+export type InstallOutcome =
+  | { status: "installed"; installId: number; modType: ModType; files: number; needsRedmodDeploy: boolean; deploy: DeployOutcome; replaced: number[]; warnings: string[] }
+  | { status: "needsReview"; plan: InstallPlan }
+  | { status: "staged"; installId: number; deploy: DeployOutcome };
+export interface InstallRequest { modId: number; fileId: number; name: string; version: string; archive: string; acceptUnknown?: boolean; replaceOlder?: boolean; options?: DeployOptions }
+
+export const library = {
+  list: () => call<InstallRow[]>("library_list"),
+  uninstall: (installId: number) => call<UndeployReport>("library_uninstall", { installId }),
+  deploy: (installId: number, options: DeployOptions) => call<DeployOutcome>("library_deploy", { installId, options }),
+  installFile: (request: InstallRequest) => call<InstallOutcome>("library_install_file", { request }),
+  downloads: () => call<DownloadRow[]>("library_downloads"),
+  onChanged: (cb: () => void) => listen<null>("library-changed", () => cb()),
+};
+export const queue = {
+  get: () => call<QueueSnapshot>("queue_get"),
+  plan: (modId: number, fileId: number) => call<QueueItem[]>("queue_plan", { modId, fileId }),
+  add: (modId: number, fileId: number, withDependencies = true) => call<QueueSnapshot>("queue_add", { modId, fileId, withDependencies }),
+  remove: (id: number) => call<QueueSnapshot>("queue_remove", { id }),
+  retry: (id: number) => call<QueueSnapshot>("queue_retry", { id }),
+  clearFinished: () => call<QueueSnapshot>("queue_clear_finished"),
+  showPage: (id: number) => call<void>("queue_show_page", { id }),
+  onChange: (cb: (s: QueueSnapshot) => void) => listen<QueueSnapshot>("queue", cb),
+};
+export const paths = {
+  get: () => call<PathsView>("paths_get"),
+  set: (p: { gameDir?: string; libraryDir?: string; allowCopy?: boolean }) => call<PathsView>("paths_set", p),
+};
+export const handler = {
+  status: () => call<HandlerStatus>("nxm_handler_status"),
+  register: () => call<HandlerStatus>("nxm_handler_register"),
+};
+export const nexusPages = {
+  mod: (modId: number, fileId?: number) => call<void>("open_nexus_page", { modId, fileId }),
+  url: (url: string) => call<void>("open_nexus_url", { url }),
+};
+export const onToast = (cb: (msg: string) => void) => listen<string>("toast", cb);
+
+/** A folder picker, through the dialog plugin. Outside Tauri it asks with a prompt. */
+export async function pickFolder(title: string): Promise<string | null> {
+  if (!("__TAURI_INTERNALS__" in window)) return window.prompt(title) || null;
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ directory: true, title });
+  return typeof r === "string" ? r : null;
+}
+export async function pickArchive(): Promise<string | null> {
+  if (!("__TAURI_INTERNALS__" in window)) return window.prompt("Archive path") || null;
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ title: "Install a mod archive", filters: [{ name: "Mod archives", extensions: ["zip", "7z", "rar"] }] });
+  return typeof r === "string" ? r : null;
+}

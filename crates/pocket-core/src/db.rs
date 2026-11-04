@@ -27,6 +27,10 @@ const MIGRATIONS: &[&str] = &[
      CREATE TABLE deployed_files (target TEXT PRIMARY KEY, install_id INTEGER NOT NULL, source TEXT NOT NULL, method TEXT NOT NULL, size INTEGER NOT NULL, deployed_at INTEGER NOT NULL);
      CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
      INSERT INTO profiles (name, active) VALUES ('Default', 1);",
+    // 3: deploy ownership: the file a deploy replaced (backup) or the install it took a path from (prev_install)
+    "ALTER TABLE deployed_files ADD COLUMN target_path TEXT NOT NULL DEFAULT '';
+     ALTER TABLE deployed_files ADD COLUMN backup TEXT;
+     ALTER TABLE deployed_files ADD COLUMN prev_install INTEGER;",
 ];
 
 pub struct Db { pub conn: Connection }
