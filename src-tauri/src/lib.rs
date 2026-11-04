@@ -144,6 +144,8 @@ pub fn run() {
             commands::extras::creator_publish,
             commands::existing::existing_scan,
             commands::existing::existing_track,
+            commands::existing::vortex_profiles_scan,
+            commands::existing::vortex_profiles_import,
             commands::existing::groups_list,
             commands::existing::groups_set,
             commands::existing::group_create,

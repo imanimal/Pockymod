@@ -23,6 +23,7 @@ pub mod relocate;
 pub mod rules;
 pub mod updates;
 pub mod vortex;
+pub mod vortex_profiles;
 pub mod error;
 pub mod nexus;
 

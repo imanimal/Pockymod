@@ -3,12 +3,15 @@
 import { plural } from "../lib/text";
 import { useCallback, useEffect, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Switch, Tag } from "../ui/pocket";
-import { errorText, game, library, profiles, type InstallRow, type Profile, type RedmodEntry, type RedmodResult } from "../lib/api";
+import { errorText, game, library, profiles, vortexProfiles, type InstallRow, type Profile, type RedmodEntry, type RedmodResult } from "../lib/api";
+import { profilesText } from "./Existing";
 import { toast } from "../ui/toast";
 import * as ops from "../lib/ops";
 import { OverlapsModule, RulesModule } from "./ArchiveOverlaps";
 
 export function LoadOrder() {
+  const [vx, setVx] = useState<Awaited<ReturnType<typeof vortexProfiles.scan>> | null>(null);
+  useEffect(() => { vortexProfiles.scan().then(setVx).catch(() => setVx(null)); }, []);
   const [list, setList] = useState<Profile[]>([]);
   const [rows, setRows] = useState<InstallRow[]>([]);
   const [redmods, setRedmods] = useState<RedmodEntry[]>([]);
@@ -77,6 +80,13 @@ export function LoadOrder() {
             <label className="fbox"><input className="finput" value={name} onChange={(e) => setName(e.target.value)} placeholder="New profile name" aria-label="New profile name" /></label>
             <Key size="sm" icon="plus" disabled={!name.trim() || busy} onClick={() => run(async () => { await profiles.create(name, active?.id); setName(""); toast("Profile made as a copy of the active one."); })}>Copy active</Key>
           </div>
+          {vx && vx.tracked > 0 && vx.profiles.length > 0 && (
+            <div className="actions" style={{ marginTop: ".5em" }}>
+              <Key size="sm" variant="ghost" icon="user" disabled={busy} onClick={() => run(async () => { const r = await vortexProfiles.import(); toast(profilesText(r)); })}
+                title={`Vortex's profiles (${vx.profiles.map((p) => p.name).join(", ")}) as profiles here, its mods on or off as in each`}>
+                {vx.imported ? "Sync with Vortex's profiles again" : `Bring in Vortex's ${vx.profiles.length} profiles`}</Key>
+            </div>
+          )}
         </Module>
 
         <OverlapsModule />

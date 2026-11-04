@@ -136,7 +136,7 @@ export interface InstallRow {
   hasOptions?: boolean;
 }
 export interface TrashRow { id: number; installId: number; name: string; modId: number; version: string; source: InstallRow["source"]; reason: string; size: number; removedAt: number }
-export interface ExistingProgress { stage: "vortex" | "folder" | "matching" | "tracking" | "linking"; done: number; total: number; name: string }
+export interface ExistingProgress { stage: "vortex" | "folder" | "matching" | "tracking" | "linking" | "profiles"; done: number; total: number; name: string }
 export interface Conflict { target: string; ownerInstall: number; ownerName: string }
 export type DeployOutcome =
   | { outcome: "deployed"; linked: number; copied: number; backedUp: string[]; tookFrom: Conflict[] }
@@ -376,11 +376,18 @@ export function descriptionMedia(src: string, picture?: string | null): Array<{ 
 // ── existing mods, groups, bulk ──
 
 export interface FoundMod { name: string; kind: ModType; files: string[]; modId: number | null }
-export interface ExistingScan { vortex: { staging: string | null; mods: number; deployed: number; alreadyTracked: number; sample: string[] } | null; found: FoundMod[] }
-export interface TrackResult { vortex: { tracked: number; matchedOnNexus: number; already: number }; found: number }
+export interface VortexProfileBrief { name: string; on: number; active: boolean }
+export interface ExistingScan { vortex: { staging: string | null; mods: number; deployed: number; alreadyTracked: number; sample: string[]; profiles: VortexProfileBrief[] } | null; found: FoundMod[] }
+export interface ProfileImport { profiles: Array<{ name: string; created: boolean; on: number; of: number }>; active: string | null; deployed: number; removed: number; notDeployed: Array<[number, string]> }
+export interface TrackResult { vortex: { tracked: number; matchedOnNexus: number; already: number }; found: number; profiles: ProfileImport | null }
 export const existing = {
   scan: () => call<ExistingScan>("existing_scan"),
-  track: (vortexMods: boolean, foundMods: boolean) => call<TrackResult>("existing_track", { vortexMods, foundMods }),
+  track: (vortexMods: boolean, foundMods: boolean, vortexProfiles = true) => call<TrackResult>("existing_track", { vortexMods, foundMods, vortexProfiles }),
+};
+/** Vortex's profiles for the game, brought in as profiles here (also after its mods were brought in without them). */
+export const vortexProfiles = {
+  scan: () => call<{ profiles: VortexProfileBrief[]; imported: boolean; tracked: number }>("vortex_profiles_scan"),
+  import: () => call<ProfileImport>("vortex_profiles_import"),
 };
 export const groups = {
   list: () => call<{ presets: string[]; custom: string[] }>("groups_list"),
@@ -514,7 +521,7 @@ export const extensionsApi = {
 /** Open a page in the default browser. Only this project's GitHub pages and Nexus Mods pages. */
 export const openExternal = (url: string) => call<void>("open_external", { url });
 /** A marketplace file and where it came from: the network, the hour's cache, or an old copy when offline. */
-export const marketFetch = (path: string, fresh = false) => call<{ text: string; source: "network" | "cache" | "offline" }>("market_fetch", { path, fresh });
+export const marketFetch = (path: string, fresh = false) => call<{ text: string; source: "network" | "cache" | "offline" | "bundled" }>("market_fetch", { path, fresh });
 /** Ask for a program (an extension's tool). Outside Tauri it asks with a prompt. */
 export async function pickProgram(title: string): Promise<string | null> {
   if (!("__TAURI_INTERNALS__" in window)) return window.prompt(title) || null;

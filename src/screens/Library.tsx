@@ -6,7 +6,7 @@ import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
 import { Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Tag, bytesText } from "../ui/pocket";
 import {
-  FRAMEWORKS, errorText, groups as groupsApi, library, pickArchive, profiles, queue, queueMod, updates as updatesApi,
+  FRAMEWORKS, errorText, groups as groupsApi, library, pickArchive, profiles, queue, queueMod, updates as updatesApi, vortexProfiles,
   type Conflict, type DeployOutcome, type DownloadRow, type InstallOutcome, type InstallPlan, type InstallRow, type Update,
 } from "../lib/api";
 import { toast } from "../ui/toast";
@@ -17,6 +17,7 @@ import * as ops from "../lib/ops";
 import { installArchive } from "../lib/archives";
 import { installerOptions } from "../lib/api";
 import { record } from "../lib/history";
+import { profilesText } from "./Existing";
 
 type Pending =
   | { kind: "conflicts"; installId: number; name: string; conflicts: Conflict[] }
@@ -47,6 +48,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const [trash, setTrash] = useState<TrashRow[]>([]);
   const [showExtra, setShowExtra] = useState(false);
   const [trashOpen, setTrashOpen] = useState(false);
+  // Vortex's profiles, when its mods were brought in before profiles came along with them
+  const [vxp, setVxp] = useState<{ names: string[]; tracked: number } | null>(null);
   const groupRules = useExtensions().active.groupRules;
   const [sortPlan, setSortPlan] = useState<ReturnType<typeof planGroups> | null>(null);
   const [layout, setLayoutState] = useState<"grid" | "list">(() => { try { return localStorage.getItem("pm.libraryLayout") === "list" ? "list" : "grid"; } catch { return "grid"; } });
@@ -66,6 +69,11 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     profiles.list().then((p) => setProfileName(p.find((x) => x.active)?.name ?? "")).catch(() => {});
     library.duplicates().then(setDupes).catch(() => setDupes([]));
     library.trash().then(setTrash).catch(() => setTrash([]));
+    vortexProfiles.scan().then((v) => {
+      let later = false;
+      try { later = localStorage.getItem("pm.vortexProfiles.later") === "1"; } catch { /* storage unavailable */ }
+      setVxp(!v.imported && !later && v.tracked > 0 && v.profiles.length > 1 ? { names: v.profiles.map((p) => p.name), tracked: v.tracked } : null);
+    }).catch(() => setVxp(null));
   }, []);
   useEffect(() => {
     load();
@@ -202,6 +210,17 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       )}
 
       {manage && <GroupManager custom={customGroups} onChange={load} />}
+
+      {vxp && (
+        <Module icon="user" title="Your Vortex profiles" count={vxp.names.length}>
+          <p>Vortex has {vxp.names.length} profiles for Cyberpunk 2077 ({vxp.names.join(", ")}), and the {vxp.tracked} Vortex mods here are all in one. Bring the profiles in: each becomes a profile here with the same mods on, and the one Vortex uses now stays active, so the game does not change.</p>
+          <div className="actions" style={{ marginTop: ".5em" }}>
+            <Key icon="user" disabled={busy} onClick={() => run(async () => { const r = await vortexProfiles.import(); toast(profilesText(r)); setVxp(null); })}>Bring in {vxp.names.length} profiles</Key>
+            <Key variant="ghost" onClick={() => { try { localStorage.setItem("pm.vortexProfiles.later", "1"); } catch { /* storage unavailable */ } setVxp(null); }}>Not now</Key>
+          </div>
+          <p className="dim" style={{ fontSize: ".84em", marginTop: ".4em" }}>You can do it later from Load order, Profiles.</p>
+        </Module>
+      )}
 
       {replacedRows.length > 0 && (
         <Module icon="warn" title="Your own files were set aside" count={replacedRows.length}>

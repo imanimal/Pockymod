@@ -3,6 +3,7 @@ use crate::state::{AppState, Paths};
 use pocket_core::found::{self, FoundMod};
 use pocket_core::install::{self, PRESET_GROUPS};
 use pocket_core::vortex::{self, TrackReport};
+use pocket_core::vortex_profiles::{self, ImportReport, VortexProfile};
 use pocket_core::{profiles, Error, Result};
 use serde::Serialize;
 use std::collections::BTreeSet;
@@ -14,7 +15,17 @@ fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T> + Send + 'static) -
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct VortexSummary { pub staging: Option<String>, pub mods: usize, pub deployed: usize, pub already_tracked: usize, pub sample: Vec<String> }
+pub struct VortexSummary { pub staging: Option<String>, pub mods: usize, pub deployed: usize, pub already_tracked: usize, pub sample: Vec<String>, pub profiles: Vec<ProfileBrief> }
+
+/// A Vortex profile as the scan shows it: its name, how many mods are on in it, and whether Vortex has it deployed.
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ProfileBrief { pub name: String, pub on: usize, pub active: bool }
+
+fn briefs(list: &[VortexProfile]) -> Vec<ProfileBrief> { list.iter().map(|p| ProfileBrief { name: p.name.clone(), on: p.enabled.len(), active: p.active }).collect() }
+
+/// Vortex's profiles for the game, or none when Vortex's settings are not there or cannot be read.
+fn vortex_profiles_now() -> Vec<VortexProfile> { vortex_profiles::state_dir().and_then(|d| vortex_profiles::read(&d).ok()).unwrap_or_default() }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -43,6 +54,7 @@ pub async fn existing_scan(app: AppHandle, state: State<'_, AppState>) -> Result
                     staging: s.staging.as_ref().map(|p| p.to_string_lossy().into_owned()), deployed: mods.iter().filter(|m| m.deployed).count(),
                     already_tracked: mods.iter().filter(|m| tracked.contains(&m.folder)).count(), mods: mods.len(),
                     sample: mods.iter().take(8).map(|m| m.candidates.first().map(|c| c.name.clone()).unwrap_or_else(|| m.folder.clone())).collect(),
+                    profiles: briefs(&vortex_profiles_now()),
                 }), files)
             }
             None => (None, BTreeSet::new()),
@@ -57,14 +69,14 @@ pub async fn existing_scan(app: AppHandle, state: State<'_, AppState>) -> Result
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TrackResult { pub vortex: TrackReport, pub found: usize }
+pub struct TrackResult { pub vortex: TrackReport, pub found: usize, pub profiles: Option<ImportReport> }
 
 /// Track what the scan found. Vortex's mods are matched to Nexus (so they get update checks) and stay Vortex's.
 #[tauri::command]
-pub async fn existing_track(app: AppHandle, state: State<'_, AppState>, vortex_mods: bool, found_mods: bool) -> Result<TrackResult> {
+pub async fn existing_track(app: AppHandle, state: State<'_, AppState>, vortex_mods: bool, found_mods: bool, vortex_profiles: Option<bool>) -> Result<TrackResult> {
     let paths = Paths::load(&state.db.lock().unwrap());
     let (game, library) = paths.require()?;
-    let mut res = TrackResult { vortex: TrackReport::default(), found: 0 };
+    let mut res = TrackResult { vortex: TrackReport::default(), found: 0, profiles: None };
     if vortex_mods {
         if let Some(setup) = vortex::find(&game) {
             let list = vortex::list_mods(&setup, &game);
@@ -91,9 +103,48 @@ pub async fn existing_track(app: AppHandle, state: State<'_, AppState>, vortex_m
             Ok(found::track(&d, &g, &l, &mods)?.len())
         }).await?;
     }
+    // Vortex's profiles come along, so its mods stay in the sets they were in
+    if vortex_mods && vortex_profiles.unwrap_or(true) {
+        let _ = app.emit("existing-progress", serde_json::json!({ "stage": "profiles", "done": 0, "total": 0, "name": "" }));
+        let list = blocking(|| Ok(vortex_profiles_now())).await?;
+        if list.len() > 1 || list.first().is_some_and(|p| p.name != "Default") {
+            let db = state.db.clone();
+            let (g, l, o) = (game.clone(), library.clone(), paths.deploy_options());
+            res.profiles = Some(blocking(move || vortex_profiles::import(&db.lock().unwrap(), &g, &l, &o, &list)).await?);
+        }
+    }
     state.db.lock().unwrap().set_setting("existing.asked", "1")?;
     let _ = app.emit("library-changed", ());
     Ok(res)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VortexProfilesView { pub profiles: Vec<ProfileBrief>, pub imported: bool, pub tracked: usize }
+
+/// Vortex's profiles, whether they were brought in already, and how many Vortex mods are tracked here.
+#[tauri::command]
+pub async fn vortex_profiles_scan(state: State<'_, AppState>) -> Result<VortexProfilesView> {
+    let list = blocking(|| Ok(vortex_profiles_now())).await?;
+    let d = state.db.lock().unwrap();
+    let tracked: i64 = d.conn.query_row("SELECT COUNT(*) FROM installs WHERE source = 'vortex'", [], |r| r.get(0))?;
+    Ok(VortexProfilesView { profiles: briefs(&list), imported: d.setting("vortex.profilesImported")?.is_some(), tracked: tracked as usize })
+}
+
+/// Bring Vortex's profiles in for the Vortex mods already tracked (also after an import made before this existed).
+#[tauri::command]
+pub async fn vortex_profiles_import(app: AppHandle, state: State<'_, AppState>) -> Result<ImportReport> {
+    crate::commands::not_while_running()?;
+    let paths = Paths::load(&state.db.lock().unwrap());
+    let (game, library) = paths.require()?;
+    let dir = vortex_profiles::state_dir().ok_or_else(|| Error::Invalid("Vortex's settings folder (%APPDATA%\\Vortex\\state.v2) is not there.".into()))?;
+    let list = blocking(move || vortex_profiles::read(&dir)).await?;
+    if list.is_empty() { return Err(Error::Invalid("Vortex has no profiles for Cyberpunk 2077.".into())); }
+    let db = state.db.clone();
+    let o = paths.deploy_options();
+    let r = blocking(move || vortex_profiles::import(&db.lock().unwrap(), &game, &library, &o, &list)).await?;
+    let _ = app.emit("library-changed", ());
+    Ok(r)
 }
 
 #[derive(Serialize)]

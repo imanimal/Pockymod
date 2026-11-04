@@ -25,6 +25,7 @@ same-file = "1"
 walkdir = "2"
 roxmltree = "0.20"
 pelite = { version = "0.10", default-features = false, features = ["std", "mmap"] }
+rusty-leveldb = "4.0.2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"

@@ -88,9 +88,23 @@ function groupOf(c: string | null): string {
 let profilesList: Profile[] = [{ id: 1, name: "Default", active: true, enabled: 0 }];
 /** Whether a mod is on in a profile that is not active, by "profile:install". */
 const demoMember = new Map<string, boolean>();
+const demoVortexProfiles = [{ name: "Default", on: 5, active: true }, { name: "Hardcore", on: 3, active: false }, { name: "Photo mode", on: 2, active: false }];
+let demoProfilesIn = false;
+function demoImportProfiles() {
+  const vx = installs.filter((i) => i.source === "vortex");
+  const out = demoVortexProfiles.map((vp) => {
+    let p = profilesList.find((x) => x.name === vp.name);
+    const created = !p;
+    if (!p) { p = { id: profilesList.length + 1, name: vp.name, active: false, enabled: 0 }; profilesList.push(p); }
+    if (!p.active) vx.forEach((i, k) => demoMember.set(`${p!.id}:${i.id}`, k < vp.on));
+    return { name: vp.name, created, on: Math.min(vp.on, vx.length), of: vx.length };
+  });
+  demoProfilesIn = true;
+  return { profiles: out, active: "Default", deployed: 0, removed: 0, notDeployed: [] };
+}
 function demoScan() {
   return { vortex: { staging: "%APPDATA%\\Vortex\\cyberpunk2077\\mods", mods: 6, deployed: 5, alreadyTracked: installs.filter((i) => i.source === "vortex").length ? 6 : 0,
-      sample: fixture.nodes.slice(8, 14).map((n) => n.name) }, found: installs.some((i) => i.source === "found") ? [] : [{ name: "Hand-placed hair", kind: "archive", files: ["archive/pc/mod/hair.archive"], modId: null }] };
+      sample: fixture.nodes.slice(8, 14).map((n) => n.name), profiles: demoVortexProfiles }, found: installs.some((i) => i.source === "found") ? [] : [{ name: "Hand-placed hair", kind: "archive", files: ["archive/pc/mod/hair.archive"], modId: null }] };
 }
 function health(): HealthReport {
   const fw = (key: string, name: string, installed: boolean, version: string | null, latest: string, older = false, neededBy: string[] = []) =>
@@ -290,7 +304,9 @@ export function installDemo() {
       }
       return demoScan();
     },
-    existing_track: async ({ vortexMods, foundMods }) => {
+    vortex_profiles_scan: () => ({ profiles: demoVortexProfiles, imported: demoProfilesIn, tracked: installs.filter((i) => i.source === "vortex").length }),
+    vortex_profiles_import: () => demoImportProfiles(),
+    existing_track: async ({ vortexMods, foundMods, vortexProfiles }) => {
       let n = 0;
       if (vortexMods) {
         const names = fixture.nodes.slice(8, 14).map((x) => x.name);
@@ -312,8 +328,9 @@ export function installDemo() {
       }
       if (foundMods) installs.push({ id: installs.length + 1, modId: 900000001, fileId: 1, name: "Hand-placed hair", version: "", modType: "archive", frameworks: [], staging: "", installedAt: 0, updatedAt: null,
         deployedFiles: 1, enabled: true, loadOrder: installs.length, source: "found", category: null, group: "Other", customGroup: false });
+      const profiles = vortexMods && vortexProfiles !== false ? demoImportProfiles() : null;
       demoEmit("library-changed", null);
-      return { vortex: { tracked: vortexMods ? 6 : 0, matchedOnNexus: vortexMods ? 6 : 0, already: 0 }, found: foundMods ? 1 : 0 };
+      return { vortex: { tracked: vortexMods ? 6 : 0, matchedOnNexus: vortexMods ? 6 : 0, already: 0 }, found: foundMods ? 1 : 0, profiles };
     },
     groups_list: () => ({ presets: ["Core", "Clothing", "Character presets", "Appearance", "Gameplay", "Visuals and places", "Weapons and vehicles", "Audio", "Interface", "Other"], custom: customGroups }),
     groups_set: ({ installIds, group }) => {

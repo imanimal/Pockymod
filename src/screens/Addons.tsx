@@ -143,6 +143,9 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
       {!panel && ix?.source === "offline" && (tab === "themes" || tab === "extensions") && (
         <div className="note warn">The marketplace could not be reached, so this is the copy saved the last time it was. <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>
       )}
+      {!panel && ix?.source === "bundled" && (tab === "themes" || tab === "extensions") && (
+        <div className="note">This is the marketplace that came with this version of the app: the online one is not published yet or could not be reached. Its pictures may be missing. <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>
+      )}
 
       {panel ? <PanelHost key={`${panel.extId}/${panel.id}/${panel.release}`} panel={panel} />
         : tab === "installed" ? (

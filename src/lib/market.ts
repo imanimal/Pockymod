@@ -15,7 +15,7 @@ export const DOCS = {
 };
 const RAW = "https://raw.githubusercontent.com/imanimal/pocket-mods/main/marketplace/";
 
-export interface LoadedIndex { index: MarketIndex; source: "network" | "cache" | "offline"; problems: string[] }
+export interface LoadedIndex { index: MarketIndex; source: "network" | "cache" | "offline" | "bundled"; problems: string[] }
 
 /** The index. Entries that do not check out are left out (and listed in `problems`). */
 export async function loadIndex(fresh = false): Promise<LoadedIndex> {

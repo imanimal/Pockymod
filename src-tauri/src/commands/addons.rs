@@ -2,13 +2,19 @@
 //!
 //! Installed add-ons are JSON files in the app's data folder: `addons/theme/<id>.json`, `addons/extension/<id>.json`.
 //! The marketplace is a folder of JSON files in this project's repository (`marketplace/` on the main branch), read
-//! over HTTPS and cached for an hour so it works offline once seen.
+//! over HTTPS and cached for an hour so it works offline once seen. The folder as it was when the app was built is
+//! also inside the app (build.rs), for when it is not on main yet or GitHub cannot be reached and nothing is saved.
 use crate::state::AppState;
 use pocket_core::{Error, Result};
 use std::path::PathBuf;
 use tauri::{Manager, State};
 
 pub const MARKET_BASE: &str = "https://raw.githubusercontent.com/imanimal/pocket-mods/main/marketplace/";
+
+include!(concat!(env!("OUT_DIR"), "/market_bundle.rs"));
+
+/// A marketplace file as this build of the app has it.
+pub fn bundled(path: &str) -> Option<&'static str> { BUNDLED.iter().find(|(p, _)| *p == path).map(|(_, t)| *t) }
 const MAX: usize = 4 * 1024 * 1024;
 
 fn kind_dir(app: &tauri::AppHandle, kind: &str) -> Result<PathBuf> {
@@ -67,8 +73,8 @@ pub async fn market_get(state: State<'_, AppState>, path: String, fresh: Option<
     Ok(fetch(&state, &path, fresh.unwrap_or(false)).await?.0)
 }
 
-/// A marketplace file with where it came from: `network`, `cache` (fetched in the last hour) or `offline` (an older
-/// copy, used because the marketplace could not be reached).
+/// A marketplace file with where it came from: `network`, `cache` (fetched in the last hour), `offline` (an older
+/// copy, used because the marketplace could not be reached) or `bundled` (the copy inside the app).
 #[derive(serde::Serialize)]
 pub struct MarketFile { text: String, source: &'static str }
 
@@ -96,8 +102,9 @@ async fn fetch(state: &State<'_, AppState>, path: &str, fresh: bool) -> Result<(
             Ok((body, "network"))
         }
         other => {
-            // offline or not published yet: any old copy beats nothing
+            // offline or not published yet: any old copy beats nothing, and the app's own copy beats an error
             if let Some(old) = state.db.lock().unwrap().cache_get(&key, i64::MAX / 4, now)? { return Ok((old, "offline")); }
+            if let Some(b) = bundled(path) { return Ok((b.to_string(), "bundled")); }
             match other {
                 Ok(r) => Err(Error::Http { status: r.status().as_u16(), message: format!("The marketplace has no {path} yet.") }),
                 Err(e) => Err(e.into()),
@@ -108,6 +115,15 @@ async fn fetch(state: &State<'_, AppState>, path: &str, fresh: bool) -> Result<(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn the_marketplace_is_inside_the_app() {
+        let ix: serde_json::Value = serde_json::from_str(super::bundled("index.json").expect("index.json is bundled")).unwrap();
+        assert_eq!(ix["format"], "pocket-mods.marketplace");
+        for key in ["themes", "extensions"] {
+            for e in ix[key].as_array().unwrap() { assert!(super::bundled(e["path"].as_str().unwrap()).is_some(), "{e}"); }
+        }
+    }
+
     #[test]
     fn ids() {
         assert!(super::check_id("my-theme.v2").is_ok());
