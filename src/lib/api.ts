@@ -359,3 +359,39 @@ export const creator = {
   publish: (request: PublishRequest) => call<number>("creator_publish", { request }),
   onProgress: (cb: (p: [number, number]) => void) => listen<[number, number]>("publish-progress", cb),
 };
+
+// ── text files the user picks ──
+
+export const readTextFile = (path: string) => call<string>("text_file_read", { path });
+export const saveTextFile = (path: string, text: string) => call<void>("text_file_save", { path, text });
+/** Ask for a file to open. Outside Tauri, a browser file picker reads it and the content comes back as `text`. */
+export async function pickTextFile(title: string, extensions: string[]): Promise<{ path: string | null; text: string } | null> {
+  if (!("__TAURI_INTERNALS__" in window)) {
+    return new Promise((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = extensions.map((e) => `.${e}`).join(",");
+      input.onchange = () => { const f = input.files?.[0]; if (!f) return resolve(null); f.text().then((text) => resolve({ path: null, text })); };
+      input.click();
+    });
+  }
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ title, filters: [{ name: title, extensions }] });
+  if (typeof r !== "string") return null;
+  return { path: r, text: await readTextFile(r) };
+}
+/** Save text to a file the user picks. Outside Tauri, the browser downloads it. */
+export async function saveTextAs(defaultName: string, text: string, extensions: string[]): Promise<boolean> {
+  if (!("__TAURI_INTERNALS__" in window)) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    a.download = defaultName;
+    a.click();
+    return true;
+  }
+  const { save } = await import("@tauri-apps/plugin-dialog");
+  const p = await save({ defaultPath: defaultName, filters: [{ name: defaultName, extensions }] });
+  if (!p) return false;
+  await saveTextFile(p, text);
+  return true;
+}

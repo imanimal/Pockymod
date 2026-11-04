@@ -69,6 +69,8 @@ pub fn run() {
             commands::collections::local_collection_create,
             commands::collections::local_collection_export,
             commands::collections::local_collection_import,
+            commands::files::text_file_read,
+            commands::files::text_file_save,
             commands::extras::app_update_check,
             commands::extras::modio_has_key,
             commands::extras::modio_set_key,
