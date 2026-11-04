@@ -1,5 +1,6 @@
 // Settings, Appearance: pick a theme, its mode, the effects level and motion; import, export and remove themes; and
 // make one from the current theme with a live preview. The theme engine is lib/theme.ts; docs/themes.md is the guide.
+import { getTextSize, setTextSize } from "../lib/zoom";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Key, Module, Seg, Switch } from "../ui/pocket";
 import { Icon } from "../ui/Icon";
@@ -93,6 +94,8 @@ export function Appearance() {
           </div>
           <span className="lab">Motion</span>
           <Switch checked={t.motion} onChange={setMotion}>Keys travel, LCDs flicker on, views and cards settle in</Switch>
+          <span className="lab">Text size</span>
+          <TextSize />
         </div>
         <div className="actions appear-actions">
           <Key icon="plus" onClick={() => setMaking(true)} disabled={making}>Make your own</Key>
@@ -262,5 +265,19 @@ function ThemeMaker({ onDone }: { onDone: () => void }) {
         </div>
       </div>
     </section>
+  );
+}
+
+/** Text size for the whole app (Ctrl+= and Ctrl+- do the same, Ctrl+0 resets). */
+function TextSize() {
+  const [px, setPx] = useState(getTextSize());
+  useEffect(() => { const h = (e: Event) => setPx((e as CustomEvent<number>).detail); window.addEventListener("pm-text-size", h); return () => window.removeEventListener("pm-text-size", h); }, []);
+  const opts = [{ value: "13", label: "Small" }, { value: "14", label: "Normal" }, { value: "16", label: "Large" }, { value: "18", label: "Larger" }];
+  const value = opts.some((o) => Number(o.value) === px) ? String(px) : "14";
+  return (
+    <span className="actions" style={{ gap: ".5em" }}>
+      <Seg label="Text size" value={value} onChange={(v) => { setTextSize(Number(v)); setPx(Number(v)); }} options={opts} />
+      <span className="dim" style={{ fontSize: ".84em" }}>Ctrl+= and Ctrl+- anywhere</span>
+    </span>
   );
 }
