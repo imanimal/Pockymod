@@ -72,6 +72,8 @@ pub enum InstallOutcome {
 }
 
 const PLAN_FILE: &str = ".pocket-plan.json";
+/// A FOMOD install's picks, next to its plan, so the options can be changed later: `{ "config", "choices" }`.
+const CHOICES_FILE: &str = ".pocket-fomod.json";
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -101,6 +103,8 @@ pub struct InstallRow {
     pub origin: Option<String>,
     /// Files that were already in the game folder when this was installed, set aside (restorable).
     pub replaced: i64,
+    /// Installed through the mod's own installer (FOMOD), whose options can be changed again.
+    pub has_options: bool,
 }
 
 /// The app's own groups, from the Nexus category and the mod type. Users can make their own on top.
@@ -131,13 +135,74 @@ pub fn staged_plan(staging: &Path, name: &str) -> InstallPlan {
     if let Some(files) = fs::read_to_string(staging.join(PLAN_FILE)).ok().and_then(|t| serde_json::from_str::<Vec<crate::cyberpunk::layout::Placement>>(&t).ok()) {
         return crate::cyberpunk::layout::summarize(files);
     }
-    let files: Vec<String> = walkdir::WalkDir::new(staging).into_iter().filter_map(|e| e.ok()).filter(|e| e.file_type().is_file())
+    plan_install(&staged_files(staging), name)
+}
+
+/// The files in a staging folder (as the archive listed them), without the app's own.
+fn staged_files(staging: &Path) -> Vec<String> {
+    let mut files: Vec<String> = walkdir::WalkDir::new(staging).into_iter().filter_map(|e| e.ok()).filter(|e| e.file_type().is_file())
         .filter_map(|e| e.path().strip_prefix(staging).ok().map(|p| p.to_string_lossy().replace('\\', "/")))
         .filter(|p| !p.starts_with(".pocket-"))
         .collect();
-    let mut files = files;
     files.sort();
-    plan_install(&files, name)
+    files
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FomodOptions {
+    pub install_id: i64,
+    pub name: String,
+    pub fomod: crate::fomod::Fomod,
+    /// What was picked last time (or the installer's defaults when that was not saved).
+    pub choices: Vec<[usize; 3]>,
+    pub saved: bool,
+}
+
+/// The installer of a mod installed with one, read again from its staging folder, with the last picks.
+pub fn fomod_options(db: &Db, install_id: i64) -> Result<FomodOptions> {
+    let (staging, name): (String, String) = db.conn.query_row("SELECT staging, name FROM installs WHERE id = ?1", params![install_id], |r| Ok((r.get(0)?, r.get(1)?)))?;
+    let st = Path::new(&staging);
+    let entries = staged_files(st);
+    let cfg = crate::fomod::find_config(&entries).ok_or_else(|| Error::Invalid(format!("{name} has no installer options to change.")))?;
+    let fomod = crate::fomod::parse(&crate::fomod::decode(&fs::read(st.join(&cfg))?), &cfg)?;
+    let saved: Option<Vec<[usize; 3]>> = fs::read_to_string(st.join(CHOICES_FILE)).ok()
+        .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok()).and_then(|v| serde_json::from_value(v["choices"].clone()).ok());
+    // picks that no longer exist in the installer are dropped
+    let valid = |c: &[usize; 3]| fomod.steps.get(c[0]).and_then(|s| s.groups.get(c[1])).and_then(|g| g.plugins.get(c[2])).is_some();
+    let (choices, saved) = match saved { Some(c) => (c.into_iter().filter(valid).collect(), true), None => (crate::fomod::defaults(&fomod), false) };
+    Ok(FomodOptions { install_id, name, fomod, choices, saved })
+}
+
+/// Install a FOMOD mod again with other picks, from the files already staged (no download). A mod that is on
+/// comes out of the game and goes back in with the new files; one that is off just keeps the new picks.
+/// Returns the deploy outcome (None when the mod is off). If deploying fails, the old picks are put back.
+pub fn change_fomod(db: &Db, game: &Path, library: &Path, install_id: i64, choices: &[[usize; 3]], opts: &DeployOptions) -> Result<Option<DeployOutcome>> {
+    let (staging, name, source): (String, String, String) = db.conn.query_row("SELECT staging, name, source FROM installs WHERE id = ?1", params![install_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+    if source != "pocket" { return Err(Error::Invalid(format!("{name} was not installed by Pocket Mods, so its installer is not kept."))); }
+    let st = Path::new(&staging);
+    let entries = staged_files(st);
+    let cfg = crate::fomod::find_config(&entries).ok_or_else(|| Error::Invalid(format!("{name} has no installer options to change.")))?;
+    let f = crate::fomod::parse(&crate::fomod::decode(&fs::read(st.join(&cfg))?), &cfg)?;
+    let files = crate::fomod::resolve(&f, choices, &entries)?;
+    let plan = crate::cyberpunk::layout::summarize(files.clone());
+    let on: bool = db.conn.query_row("SELECT COALESCE((SELECT enabled FROM profile_mods WHERE install_id = ?1 AND profile_id = ?2), 0)", params![install_id, active_profile(db)?], |r| r.get(0))?;
+    let old = (fs::read(st.join(PLAN_FILE)).ok(), fs::read(st.join(CHOICES_FILE)).ok());
+    if on { undeploy_any(db, game, install_id)?; }
+    let write = |plan: &[u8], choices: &[u8]| -> std::io::Result<()> { fs::write(st.join(PLAN_FILE), plan)?; fs::write(st.join(CHOICES_FILE), choices) };
+    write(serde_json::to_string(&files).unwrap_or_default().as_bytes(), serde_json::json!({ "config": cfg, "choices": choices }).to_string().as_bytes())?;
+    let frameworks: Vec<&str> = plan.uses.iter().map(|f| crate::cyberpunk::frameworks::info(*f).key).collect();
+    db.conn.execute("UPDATE installs SET mod_type = ?2, frameworks = ?3 WHERE id = ?1",
+        params![install_id, plan.mod_type.unwrap_or(ModType::Unknown).as_str(), serde_json::to_string(&frameworks).unwrap_or_default()])?;
+    if !on { return Ok(None); }
+    match deploy::deploy(db, game, library, install_id, st, &plan.files, opts) {
+        Ok(d) => Ok(Some(d)),
+        Err(e) => {
+            if let (Some(p), Some(c)) = &old { let _ = write(p, c); } else if let (Some(p), None) = &old { let _ = fs::write(st.join(PLAN_FILE), p); let _ = fs::remove_file(st.join(CHOICES_FILE)); }
+            let _ = redeploy(db, game, library, install_id, opts);
+            Err(e)
+        }
+    }
 }
 
 pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Result<InstallOutcome> {
@@ -169,6 +234,7 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
         if let Some(out) = keep_users_copy(db, game, library, req, &plan)? { let _ = fs::remove_dir_all(&fresh); return Ok(out); }
     }
     if let Some(files) = &chosen { fs::write(fresh.join(PLAN_FILE), serde_json::to_string(files).unwrap_or_default())?; }
+    if let (Some(cfg), Some(c)) = (&fomod_cfg, &req.fomod_choices) { fs::write(fresh.join(CHOICES_FILE), serde_json::json!({ "config": cfg, "choices": c }).to_string())?; }
 
     let existing: Option<i64> = db.conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 AND file_id = ?2", params![req.mod_id, req.file_id], |r| r.get(0)).optional()?;
     if let Some(id) = existing { deploy::undeploy(db, game, id)?; }
@@ -514,9 +580,12 @@ pub fn list_installs(db: &Db) -> Result<Vec<InstallRow>> {
             frameworks: serde_json::from_str(&r.get::<_, String>(6)?).unwrap_or_default(), staging: r.get(7)?, installed_at: r.get(8)?, updated_at: r.get(9)?,
             deployed_files: r.get(10)?, enabled: r.get(11)?, load_order: r.get(12)?, source: r.get(13)?, category, group, custom_group: custom.is_some(), name, picture,
             origin: r.get(17)?, replaced: r.get(18)?,
+            has_options: false,
         })
     })?;
-    Ok(rows.collect::<std::result::Result<_, _>>()?)
+    let mut rows: Vec<InstallRow> = rows.collect::<std::result::Result<_, _>>()?;
+    for r in rows.iter_mut().filter(|r| r.source == "pocket" && !r.staging.is_empty()) { r.has_options = Path::new(&r.staging).join(PLAN_FILE).is_file(); }
+    Ok(rows)
 }
 
 pub fn record_download(db: &Db, mod_id: u32, file_id: u32, name: &str, version: &str, path: &Path, size: u64, md5: &str) -> Result<()> {
@@ -692,6 +761,23 @@ mod tests {
         redeploy(&db, &game, &lib, install_id, &Default::default()).unwrap();
         assert_eq!(fs::read_to_string(game.join("archive/pc/mod/j.archive")).unwrap(), "B");
         assert_eq!(fs::read_dir(game.join("archive/pc/mod")).unwrap().count(), 1);
+
+        // the options can be changed later, from the staged files, starting from the last picks
+        assert!(list_installs(&db).unwrap()[0].has_options);
+        let o = fomod_options(&db, install_id).unwrap();
+        assert!(o.saved);
+        assert_eq!(o.choices, [[0, 0, 1]]);
+        let out = change_fomod(&db, &game, &lib, install_id, &[[0, 0, 0]], &Default::default()).unwrap();
+        assert!(matches!(out, Some(DeployOutcome::Deployed { .. })), "{out:?}");
+        assert_eq!(fs::read_to_string(game.join("archive/pc/mod/j.archive")).unwrap(), "A");
+        assert_eq!(fomod_options(&db, install_id).unwrap().choices, [[0, 0, 0]]);
+        // and the new pick holds when the mod goes off and on
+        deploy::undeploy(&db, &game, install_id).unwrap();
+        redeploy(&db, &game, &lib, install_id, &Default::default()).unwrap();
+        assert_eq!(fs::read_to_string(game.join("archive/pc/mod/j.archive")).unwrap(), "A");
+        // a pick that installs nothing is refused and changes nothing
+        assert!(change_fomod(&db, &game, &lib, install_id, &[], &Default::default()).is_err());
+        assert_eq!(fs::read_to_string(game.join("archive/pc/mod/j.archive")).unwrap(), "A");
     }
 
     #[test]
