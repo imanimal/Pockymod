@@ -166,6 +166,9 @@ pub struct GameInfo {
     pub redmod_available: bool,
     pub frameworks: Vec<FrameworkState>,
     pub writable: bool,
+    /// The Phantom Liberty expansion is installed (its archives are in archive/pc/ep1).
+    #[serde(default)]
+    pub phantom_liberty: bool,
 }
 
 fn mtime(p: &Path) -> Option<i64> {
@@ -186,7 +189,8 @@ pub fn inspect(game: &Path) -> GameInfo {
         FrameworkState { framework: f.id, key: f.key, name: f.name, installed: main.is_some(), version, modified, older_than_game: older }
     }).collect();
     let writable = probe_writable(game);
-    GameInfo { path: game.to_path_buf(), exe_found: exe.exists(), version, detected_patch, exe_modified, redmod_available: game.join(REDMOD_EXE).exists(), frameworks, writable }
+    GameInfo { path: game.to_path_buf(), exe_found: exe.exists(), version, detected_patch, exe_modified, redmod_available: game.join(REDMOD_EXE).exists(), frameworks, writable,
+        phantom_liberty: game.join("archive/pc/ep1").is_dir() }
 }
 
 /// Can this user create files in the game folder? (Program Files installs often say no.)

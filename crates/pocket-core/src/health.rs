@@ -111,7 +111,13 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
     let mods: Vec<(i64, u32, String, Vec<String>, String)> = st.query_map(params![active], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, serde_json::from_str(&r.get::<_, String>(3)?).unwrap_or_default(), r.get(4)?)))?
         .collect::<std::result::Result<_, _>>()?;
     let mut needed: BTreeMap<Framework, Vec<String>> = BTreeMap::new();
+    let mut needs_dlc: Vec<String> = Vec::new();
     for (_, mod_id, name, fws, _) in &mods {
+        if !g.phantom_liberty {
+            if let Some((detail, _)) = db.mod_get(*mod_id, None)? {
+                if serde_json::from_str::<ModDetail>(&detail).is_ok_and(|d| !d.mod_requirements.dlc_requirements.is_empty()) { needs_dlc.push(name.clone()); }
+            }
+        }
         let mut set: BTreeSet<Framework> = fws.iter().filter_map(|k| frameworks::by_key(k)).map(|i| i.id).collect();
         // requirement links from the cached Nexus record
         if let Some((detail, _)) = db.mod_get(*mod_id, None)? {
@@ -123,6 +129,11 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
         let mut all = set.clone();
         for f in &set { all.extend(frameworks::info(*f).needs.iter().copied()); }
         for f in all { if Some(f) != own { needed.entry(f).or_default().push(name.clone()); } }
+    }
+    if !needs_dlc.is_empty() {
+        issues.push(Issue { id: "dlc.missing".into(), severity: Severity::Problem, area: "game", title: "Mods need Phantom Liberty".into(),
+            detail: format!("{} need the Phantom Liberty expansion, which is not installed (no archive/pc/ep1). Turn them off or install the expansion.", list_names(&needs_dlc)),
+            fix: Some(Fix::OpenLibrary) });
     }
     // frameworks need their own requirements too
     for st in &g.frameworks {

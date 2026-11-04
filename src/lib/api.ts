@@ -226,6 +226,7 @@ export async function pickArchive(): Promise<string | null> {
 export interface GameInstall { store: string; path: string; exists: boolean }
 export interface FrameworkState { framework: string; key: FrameworkKey; name: string; installed: boolean; version: string | null; modified: number | null; olderThanGame: boolean }
 export interface GameInfo {
+  phantomLiberty?: boolean;
   path: string; exeFound: boolean; version: { file: string; product: string; productString: string | null } | null;
   detectedPatch: string | null; exeModified: number | null; redmodAvailable: boolean; frameworks: FrameworkState[]; writable: boolean;
 }
