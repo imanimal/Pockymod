@@ -1,0 +1,224 @@
+{
+  "mods": {
+    "facetsData": {
+      "categoryName": {
+        "AI Voices": 122,
+        "Add-On Apartment": 78,
+        "Adverts": 54,
+        "Animations": 628,
+        "Apartment": 142,
+        "Appearance": 2973,
+        "Appearance Change Unlocker Preset": 89,
+        "Appearance Menu Mod Preset": 50,
+        "Armour and Clothing": 4035,
+        "Atelier Shop": 131,
+        "Audio": 1298,
+        "Audio Replacer": 50,
+        "Characters": 1036,
+        "Crafting": 84,
+        "Gameplay": 4447,
+        "Locations": 751,
+        "Miscellaneous": 1132,
+        "Modders Resources": 293,
+        "Props and Decorations": 110,
+        "Scripts": 134,
+        "User Interface": 1256,
+        "Utilities": 444,
+        "Vehicles": 998,
+        "Visuals and Graphics": 1398,
+        "Weapons": 1324
+      },
+      "tag": {
+        "20 Years of Modding 2021": 67,
+        "AI Assisted": 283,
+        "AI Media": 541,
+        "AI-Generated Content": 964,
+        "Android Compatible": 1,
+        "Animation - Modified": 100,
+        "Animation - New": 158,
+        "Armour": 280,
+        "Body": 277,
+        "Bug Fixes": 469,
+        "Camera": 88,
+        "Character Preset": 874
+      }
+    },
+    "nodes": [
+      {
+        "adultContent": false,
+        "author": "yamashi",
+        "category": "Modders Resources",
+        "createdAt": "2020-12-12T22:39:34Z",
+        "downloads": 19823875,
+        "endorsements": 245160,
+        "fileSize": 34051,
+        "modCategory": {
+          "categoryId": 12,
+          "name": "Modders Resources"
+        },
+        "modId": 107,
+        "modRequirements": {
+          "nexusRequirements": {
+            "nodes": [],
+            "totalCount": 0
+          }
+        },
+        "name": "Cyber Engine Tweaks",
+        "status": "published",
+        "summary": "Scripting framework for modders and quality of life fixes.",
+        "tags": [
+          {
+            "id": "1044",
+            "name": "English"
+          },
+          {
+            "id": "1075",
+            "name": "Modder's Resource"
+          },
+          {
+            "id": "1077",
+            "name": "Tutorials for Modders"
+          },
+          {
+            "id": "1079",
+            "name": "User Interface"
+          },
+          {
+            "id": "1080",
+            "name": "Utilities for Modders"
+          },
+          {
+            "id": "1081",
+            "name": "Utilities for Players"
+          },
+          {
+            "id": "3163",
+            "name": "Quality of Life"
+          },
+          {
+            "id": "4902",
+            "name": "AI Assisted"
+          }
+        ],
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/107/107-1613641770-185635979.png",
+        "uid": "14315125997675",
+        "updatedAt": "2026-10-26T01:28:58Z",
+        "uploader": {
+          "memberId": 3386513,
+          "name": "yamashi"
+        },
+        "version": "1.38.1"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "Modders Resources",
+        "createdAt": "2022-03-24T12:22:09Z",
+        "downloads": 13965659,
+        "endorsements": 146758,
+        "fileSize": 1046,
+        "modCategory": {
+          "categoryId": 12,
+          "name": "Modders Resources"
+        },
+        "modId": 4198,
+        "modRequirements": {
+          "nexusRequirements": {
+            "nodes": [
+              {
+                "externalRequirement": false,
+                "modId": "2380",
+                "modName": "RED4ext"
+              }
+            ],
+            "totalCount": 1
+          }
+        },
+        "name": "ArchiveXL",
+        "status": "published",
+        "summary": "Archive extension loader",
+        "tags": [
+          {
+            "id": "1075",
+            "name": "Modder's Resource"
+          },
+          {
+            "id": "1080",
+            "name": "Utilities for Modders"
+          },
+          {
+            "id": "1081",
+            "name": "Utilities for Players"
+          },
+          {
+            "id": "4902",
+            "name": "AI Assisted"
+          }
+        ],
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4198/4198-1648116857-72076015.jpeg",
+        "uid": "14315126001766",
+        "updatedAt": "2026-10-29T12:59:42Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.28.6"
+      },
+      {
+        "adultContent": false,
+        "author": "WopsS",
+        "category": "Modders Resources",
+        "createdAt": "2021-04-19T11:48:03Z",
+        "downloads": 13585321,
+        "endorsements": 163490,
+        "fileSize": 564,
+        "modCategory": {
+          "categoryId": 12,
+          "name": "Modders Resources"
+        },
+        "modId": 2380,
+        "modRequirements": {
+          "nexusRequirements": {
+            "nodes": [],
+            "totalCount": 0
+          }
+        },
+        "name": "RED4ext",
+        "status": "published",
+        "summary": "A script extender for REDengine 4.",
+        "tags": [
+          {
+            "id": "1075",
+            "name": "Modder's Resource"
+          },
+          {
+            "id": "1080",
+            "name": "Utilities for Modders"
+          },
+          {
+            "id": "1081",
+            "name": "Utilities for Players"
+          },
+          {
+            "id": "3163",
+            "name": "Quality of Life"
+          },
+          {
+            "id": "4902",
+            "name": "AI Assisted"
+          }
+        ],
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/2380/2380-1618829826-1376548256.png",
+        "uid": "14315125999948",
+        "updatedAt": "2026-10-24T17:28:10Z",
+        "uploader": {
+          "memberId": 16475274,
+          "name": "WopsS"
+        },
+        "version": "1.31.0"
+      }
+    ],
+    "nodesCount": 22615,
+    "totalCount": 22615
+  }
+}

@@ -4,8 +4,10 @@ import "./styles/pocket-os.css";
 import "./styles/app.css";
 import { App } from "./App";
 import { applyTheme } from "./lib/theme";
+import { installDemo } from "./lib/demo";
 
 applyTheme();
+installDemo();
 
 // Keys spring back when released: add .ack on release, drop it when the animation ends.
 document.addEventListener("pointerup", (e) => {

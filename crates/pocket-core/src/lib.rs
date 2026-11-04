@@ -1,5 +1,12 @@
 //! Pocket Mods core: everything that is not UI. The Tauri app in `src-tauri` is a thin layer of commands over it.
 
+pub mod credentials;
+pub mod cyberpunk;
+pub mod error;
+pub mod nexus;
+
+pub use error::{Error, Result};
+
 /// Name and version sent to Nexus in the `Application-Name` and `Application-Version` headers.
 pub const APP_NAME: &str = "Pocket Mods";
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");

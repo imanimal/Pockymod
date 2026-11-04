@@ -1,0 +1,9 @@
+//! Nexus Mods API.
+pub mod client;
+pub mod graphql;
+pub mod nxm;
+pub mod ratelimit;
+pub mod rest;
+pub mod types;
+
+pub use client::NexusClient;

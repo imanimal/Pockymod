@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "./ui/Icon";
 import type { IconName } from "./ui/icons";
 import { Empty, Key, ProgramKey, type Led } from "./ui/pocket";
@@ -6,6 +6,7 @@ import { Gallery } from "./screens/Gallery";
 import { Settings } from "./screens/Settings";
 import { applyTheme, getThemeChoice, setThemeChoice, watchSystemTheme } from "./lib/theme";
 import { windowAction } from "./lib/tauri";
+import { RateLcd } from "./ui/RateLcd";
 
 export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "gallery";
 
@@ -25,7 +26,6 @@ export interface ShellStatus {
   queueCount: number;
   updates: number;
   healthIssues: number;
-  rail?: ReactNode;
 }
 
 export function App() {
@@ -72,7 +72,7 @@ export function App() {
           ))}
         </div>
         <div className="foot">
-          {status.rail}
+          <RateLcd />
           <ProgramKey icon="gallery" label="Gallery" on={view === "gallery"} onClick={() => setView("gallery")} />
         </div>
       </nav>
