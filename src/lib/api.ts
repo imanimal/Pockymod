@@ -378,6 +378,9 @@ export const vanilla = {
   restore: () => call<number>("game_vanilla_restore"),
   onChange: (cb: (e: { state: "running" | "restored"; out?: number; back?: number }) => void) => listen<{ state: "running" | "restored"; out?: number; back?: number }>("vanilla", cb),
 };
+/** Endorse or track a mod on Nexus (needs the API key). */
+export const endorseMod = (modId: number, version: string, on = true) => call<void>("mod_endorse", { modId, version, on });
+export const trackMod = (modId: number, on = true) => call<void>("mod_track", { modId, on });
 export const resetScripts = () => call<number>("scripts_reset");
 export const openGameFolder = (sub?: string) => call<void>("game_open_folder", { sub: sub ?? null });
 

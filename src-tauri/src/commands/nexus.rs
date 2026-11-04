@@ -60,3 +60,21 @@ pub async fn nexus_clear_key(state: State<'_, AppState>) -> Result<NexusStatus> 
 
 #[tauri::command]
 pub fn rate_limit(state: State<'_, AppState>) -> RateDisplay { state.nexus.rate_limit() }
+
+/// Endorse a mod (or take the endorsement back). Nexus only accepts it from accounts that downloaded the mod.
+#[tauri::command]
+pub async fn mod_endorse(state: State<'_, AppState>, mod_id: u32, version: String, on: bool) -> Result<()> {
+    if !state.nexus.has_key() { return Err(Error::NoKey); }
+    let r = if on { state.nexus.endorse(mod_id, &version).await } else { state.nexus.abstain(mod_id, &version).await };
+    r.map(|_| ()).map_err(|e| match e {
+        Error::Http { status: 403, .. } => Error::Invalid("Nexus accepts endorsements only after you have downloaded the mod (and waited a few minutes).".into()),
+        other => other,
+    })
+}
+
+/// Track a mod on Nexus (its updates show in your Nexus feed), or stop tracking it.
+#[tauri::command]
+pub async fn mod_track(state: State<'_, AppState>, mod_id: u32, on: bool) -> Result<()> {
+    if !state.nexus.has_key() { return Err(Error::NoKey); }
+    if on { state.nexus.track(mod_id).await.map(|_| ()) } else { state.nexus.untrack(mod_id).await.map(|_| ()) }
+}

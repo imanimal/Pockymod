@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../../ui/Icon";
 import { Empty, Key, Lcd, Module, Tag, bytesText, formatCount } from "../../ui/pocket";
-import { FRAMEWORKS, browse, descriptionMedia, errorText, fileBytes, type CardView, type Classification, type DetailView } from "../../lib/api";
+import { FRAMEWORKS, browse, descriptionMedia, endorseMod, errorText, fileBytes, trackMod, type CardView, type Classification, type DetailView } from "../../lib/api";
 import { descriptionText, shortDate } from "../../lib/text";
 import { extractCommands } from "../../lib/commands";
 import { toast } from "../../ui/toast";
@@ -53,6 +53,8 @@ export function Detail({ card, onFlag, onInstall, onOpenPage, onOpen, onClose }:
   return (
     <Module icon="library" title={m.name} count={`v${m.version}`} fill className="detail-mod"
       tools={<>
+        <Key size="sm" variant="ghost" icon="star" onClick={() => endorseMod(m.modId, m.version).then(() => toast(`Endorsed ${m.name}. Thanks from its author.`)).catch((e) => toast(errorText(e), true))} title="Endorse on Nexus" aria-label="Endorse" />
+        <Key size="sm" variant="ghost" icon="eye" onClick={() => trackMod(m.modId).then(() => toast(`Tracking ${m.name} on Nexus.`)).catch((e) => toast(errorText(e), true))} title="Track on Nexus: its updates show in your Nexus feed" aria-label="Track" />
         <Key size="sm" variant="ghost" icon="web" onClick={() => onOpenPage?.(m.modId)} title="Open the Nexus page in the app" aria-label="Open the Nexus page" />
         {onClose && <Key size="sm" variant="ghost" icon="x" onClick={onClose} aria-label="Close" />}
       </>}>

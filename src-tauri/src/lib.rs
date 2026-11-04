@@ -92,6 +92,8 @@ pub fn run() {
             commands::collections::local_collection_import,
             commands::library::library_identify,
             commands::library::queue_cancel,
+            commands::nexus::mod_endorse,
+            commands::nexus::mod_track,
             commands::game::updates_skip,
             commands::game::game_launch_vanilla,
             commands::game::scripts_reset,
