@@ -31,6 +31,7 @@ import { nope } from "./ui/motion";
 import { call, inTauri, listen, windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
 import { BrowserPane } from "./ui/BrowserPane";
+import { useAfterPlayNudge } from "./ui/Endorse";
 
 export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "create" | "gallery" | "addons";
 
@@ -78,6 +79,7 @@ export function App() {
     return () => off?.();
   }, []);
   useEffect(() => installUndoKeys(), []);
+  useAfterPlayNudge();
   // the way out of a theme that hides the app: Ctrl+Alt+Shift+T, wherever the focus is
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); void resetTheme().then(() => toast("Theme reset to Redline.")); } };

@@ -39,7 +39,19 @@ pub struct UpdatedMod {
     pub latest_mod_activity: i64,
 }
 
+/// `GET /v1/user/endorsements.json`: the mods the user endorsed or abstained from, across games. UNVERIFIED live.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Endorsement {
+    pub mod_id: u32,
+    #[serde(default)]
+    pub domain_name: String,
+    #[serde(default)]
+    pub status: String,
+}
+
 impl NexusClient {
+    pub async fn endorsements(&self) -> Result<Vec<Endorsement>> { self.v1_get("/user/endorsements.json").await }
+
     pub async fn validate(&self) -> Result<NexusUser> { self.v1_get("/users/validate.json").await }
 
     /// Premium: a direct link. Free accounts must pass the `key` and `expires` from an nxm:// link.

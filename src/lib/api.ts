@@ -441,7 +441,17 @@ export const vanilla = {
   onChange: (cb: (e: { state: "running" | "restored"; out?: number; back?: number }) => void) => listen<{ state: "running" | "restored"; out?: number; back?: number }>("vanilla", cb),
 };
 /** Endorse or track a mod on Nexus (needs the API key). */
-export const endorseMod = (modId: number, version: string, on = true) => call<void>("mod_endorse", { modId, version, on });
+export const endorseMod = async (modId: number, version: string, on = true) => {
+  await call<void>("mod_endorse", { modId, version, on });
+  if (on) { await call<void>("endorse_mark", { modId }).catch(() => {}); window.dispatchEvent(new Event("pm-endorsed")); }
+};
+export interface EndorseCandidate { modId: number; name: string; version: string }
+/** Endorsing made easy: what is not endorsed yet, endorse many at once, and "not for me". */
+export const endorse = {
+  status: () => call<{ candidates: EndorseCandidate[]; endorsed: number[]; hasKey: boolean }>("endorse_status"),
+  many: (mods: EndorseCandidate[]) => call<[number, string | null]>("endorse_many", { mods: mods.map((m) => [m.modId, m.version]) }).then((r) => { window.dispatchEvent(new Event("pm-endorsed")); return r; }),
+  decline: (modIds: number[]) => call<void>("endorse_decline", { modIds }).then(() => { window.dispatchEvent(new Event("pm-endorsed")); }),
+};
 export const trackMod = (modId: number, on = true) => call<void>("mod_track", { modId, on });
 export const resetScripts = () => call<number>("scripts_reset");
 export const openGameFolder = (sub?: string) => call<void>("game_open_folder", { sub: sub ?? null });

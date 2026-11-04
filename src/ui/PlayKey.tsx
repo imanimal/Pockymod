@@ -1,5 +1,6 @@
 // Play (in the launch deck): checks Health first and says what is broken; runs the REDmod deploy if needed; starts the game modded.
 // Extensions can add launch options, tools and console commands; they are in the menu beside the key (PlayMenu).
+import { notePlayed } from "./Endorse";
 import { plural } from "../lib/text";
 import { useEffect, useRef, useState } from "react";
 import { Dialog } from "./Dialog";
@@ -21,6 +22,7 @@ export function PlayKey({ onHealth }: { onHealth: () => void }) {
     setBusy(true);
     try {
       const r = opt ? await extensionsApi.launch(opt.extId, opt.id) : await launchGame();
+      notePlayed();
       if (!r.started && r.redmod) toast(`The REDmod deploy reported problems: ${r.redmod.problems[0] ?? "see Load order"}. The game was not started.`, true);
       else toast(`${r.modded ? "Starting Cyberpunk 2077 with REDmods" : "Starting Cyberpunk 2077"}${opt ? `: ${opt.name}` : ""}.`);
       setProblems(null);

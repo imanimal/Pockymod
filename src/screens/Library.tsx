@@ -18,6 +18,7 @@ import { installArchive } from "../lib/archives";
 import { installerOptions } from "../lib/api";
 import { record } from "../lib/history";
 import { profilesText } from "./Existing";
+import { EndorseStrip, endorseAll, useCandidates } from "../ui/Endorse";
 
 type Pending =
   | { kind: "conflicts"; installId: number; name: string; conflicts: Conflict[] }
@@ -51,6 +52,12 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   // Vortex's profiles, when its mods were brought in before profiles came along with them
   const [vxp, setVxp] = useState<{ names: string[]; tracked: number } | null>(null);
   const groupRules = useExtensions().active.groupRules;
+  // mods not endorsed yet get a one-click star
+  const toEndorse = new Set(useCandidates().list.map((c) => c.modId));
+  const star = (r: InstallRow) => toEndorse.has(r.modId) && (
+    <Key size="sm" variant="ghost" icon="star" disabled={busy} aria-label={`Endorse ${r.name}`} title={`Endorse ${r.name} on Nexus: tells its author it is liked`}
+      onClick={() => void endorseAll([{ modId: r.modId, name: r.name, version: r.version }])} />
+  );
   const [sortPlan, setSortPlan] = useState<ReturnType<typeof planGroups> | null>(null);
   const [layout, setLayoutState] = useState<"grid" | "list">(() => { try { return localStorage.getItem("pm.libraryLayout") === "list" ? "list" : "grid"; } catch { return "grid"; } });
   const setLayout = (l: "grid" | "list") => { setLayoutState(l); try { localStorage.setItem("pm.libraryLayout", l); } catch { /* storage unavailable */ } };
@@ -203,6 +210,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
           <Key size="sm" icon="minus" disabled={busy} onClick={() => doBulk("disable", [...sel])}>Turn off</Key>
           {selected.some((r) => !!updOf(r)) && <Key size="sm" icon="downloads" disabled={busy} onClick={() => updateMany(selected.filter((r) => !!updOf(r)))}>Update</Key>}
           <Key size="sm" icon="folder" disabled={busy} onClick={() => setMoveOpen(true)}>Move to group</Key>
+          {selected.some((r) => r.modId < 900_000_000) && <Key size="sm" icon="star" disabled={busy} title="Endorse the selected mods on Nexus"
+            onClick={() => run(() => endorseAll(selected.filter((r) => r.modId < 900_000_000).filter((r, n, a) => a.findIndex((x) => x.modId === r.modId) === n).map((r) => ({ modId: r.modId, name: r.name, version: r.version }))))}>Endorse</Key>}
           <Key size="sm" variant="ghost" icon="trash" disabled={busy} onClick={() => doBulk("uninstall", [...sel])}>Remove</Key>
           <span className="sp" />
           <Key size="sm" variant="ghost" onClick={() => setSel(new Set())}>Clear selection</Key>
@@ -210,6 +219,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       )}
 
       {manage && <GroupManager custom={customGroups} onChange={load} />}
+      <EndorseStrip />
 
       {vxp && (
         <Module icon="user" title="Your Vortex profiles" count={vxp.names.length}>
@@ -302,7 +312,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       <span className="lcard-f" onClick={(e) => e.stopPropagation()}>
                         <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}>{r.enabled ? "On" : "Off"}</Switch>
                         {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
-                        {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} aria-label={`Change the options of ${r.name}`} title="Change options" />}
+                        {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} aria-label={`Change the options of ${r.name}`} title="Change its installer options: one page, searchable, no download" />}
+                        {star(r)}
                       </span>
                     </span>
                   </div>
@@ -333,6 +344,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       {updOf(r) && <Key size="sm" variant="ghost" onClick={() => run(async () => { const u = updOf(r)!; await updatesApi.skip(u.modId, u.latest); toast(`Skipping ${r.name} ${u.latest}. A newer version shows again.`); })} disabled={busy} title="Do not offer this version again">Skip</Key>}
                       {r.enabled && r.deployedFiles === 0 && <Key size="sm" onClick={() => deploy(r)} disabled={busy}>Deploy</Key>}
                       {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} title="Pick other installer options; no download needed">Change options</Key>}
+                      {star(r)}
                       <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}><span className="sr-only">On</span></Switch>
                       <Key size="sm" variant="ghost" icon="trash" onClick={() => doBulk("uninstall", [r.id])} disabled={busy} aria-label={`Remove ${r.name}`} title={r.source === "vortex" ? "Remove from the game; it stays in Vortex" : "Remove"} />
                     </span>

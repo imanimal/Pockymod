@@ -422,3 +422,8 @@
 .fomod .fplugin-h .i { color: var(--sel, var(--acc2)); }
 .fomod .fplugin-d { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .shell:has(.ov) .toasts { bottom: auto; top: 3.6em; }
+
+/* the endorse strip in Library: one quiet line, never a popup */
+.endorse-strip { display: flex; align-items: center; gap: .6em; flex-wrap: wrap; padding: .55em .8em; border-radius: var(--radius); background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.endorse-strip .m-main { flex: 1 1 20em; min-width: 0; font-size: .9em; }
+.endorse-star { color: var(--sel, var(--acc2)); font-size: 1.2em; }

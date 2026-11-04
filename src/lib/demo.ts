@@ -86,6 +86,7 @@ function groupOf(c: string | null): string {
   return "Other";
 }
 let profilesList: Profile[] = [{ id: 1, name: "Default", active: true, enabled: 0 }];
+const demoEndorsed = new Set<number>(), demoNo = new Set<number>();
 let demoBrowser = { open: false, popped: false, url: null as string | null, title: null, loading: false, reveal: false };
 function demoOpenPage(url: string) {
   if (store.get("nexus.pages") === "pane") { demoBrowser = { ...demoBrowser, open: true, url, loading: false, reveal: true }; demoEmit("browser", demoBrowser); }
@@ -207,6 +208,11 @@ export function installDemo() {
     open_nexus_page: ({ modId, fileId }) => demoOpenPage(`https://www.nexusmods.com/cyberpunk2077/mods/${modId}${fileId ? `?tab=files&file_id=${fileId}&nmm=1` : ""}`),
     open_nexus_url: ({ url }) => demoOpenPage(String(url)),
     browser_state: () => demoBrowser,
+    endorse_status: () => ({ hasKey: true, endorsed: [...demoEndorsed], candidates: installs.filter((i) => i.modId < 900000000 && !demoEndorsed.has(i.modId) && !demoNo.has(i.modId))
+      .filter((i, n, a) => a.findIndex((x) => x.modId === i.modId) === n).map((i) => ({ modId: i.modId, name: i.name, version: i.version })) }),
+    endorse_many: ({ mods }) => { for (const [id] of mods as Array<[number, string]>) demoEndorsed.add(id); return [(mods as unknown[]).length, null]; },
+    endorse_decline: ({ modIds }) => { for (const id of modIds as number[]) demoNo.add(id); },
+    endorse_mark: ({ modId }) => { demoEndorsed.add(Number(modId)); },
     background_state: () => ({ readyVersion: null, modsReady: 0 }),
     background_check: () => ({ readyVersion: null, modsReady: 0 }),
     app_update_install: () => { throw { kind: "demo", message: "Updates install in the desktop app." }; },
