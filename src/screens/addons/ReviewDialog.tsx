@@ -1,6 +1,7 @@
 // The check before an extension does anything: what it adds and what it can do, shown before install, after an
 // update that needs something new, and for a file the user imports. Nothing runs until the user says yes here.
-import { useState } from "react";
+import { suspendUserCss } from "../../lib/theme";
+import { useState, useEffect } from "react";
 import { Dialog } from "../../ui/Dialog";
 import { Icon } from "../../ui/Icon";
 import { Key } from "../../ui/pocket";
@@ -16,6 +17,8 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
   manifest: ExtensionManifest; text: string; mode: ReviewMode; state?: ExtState | null; fromMarket?: boolean; warnings?: string[];
   onClose: () => void; onDone?: (m: ExtensionManifest) => void;
 }) {
+  // a theme's own css stays out of this dialog, so nothing it shows can be hidden
+  useEffect(() => { suspendUserCss(true); return () => suspendUserCss(false); }, []);
   const [paths, setPaths] = useState<Record<string, string>>(state?.toolPaths ?? {});
   const [busy, setBusy] = useState(false);
   const fresh = mode === "install" ? undefined : newApprovals(m, state);
@@ -59,7 +62,7 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
       <div className="ext-sec">
         <div className="ext-sec-h"><Icon name="key" size={9} /> What it can do</div>
         <PermissionList perms={m.permissions ?? []} fresh={fresh} />
-        {hasPanels && <p className="dim ext-fine">Panels run in a sandbox: no internet, no files, no access to the app except the permissions above.</p>}
+        {hasPanels && <p className="dim ext-fine">Panels run in a sandbox: no web requests, no files, no access to the app except the permissions above.</p>}
       </div>
 
       {picks.length > 0 && (

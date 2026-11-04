@@ -224,6 +224,16 @@ export async function listThemes(): Promise<ThemeInfo[]> {
 }
 
 /** Switch to a theme by id, optionally with a scheme. */
+/** Switch a theme's own css off (and back on): the extension review shows exactly what it is, whatever a theme
+ * would hide. */
+export function suspendUserCss(on: boolean) {
+  const st = document.getElementById("pm-user-theme") as HTMLStyleElement | null;
+  if (st) st.media = on ? "not all" : "";
+}
+
+/** Back to Standard, from anywhere (Ctrl+Alt+Shift+T): the way out when a theme hides the app. */
+export function resetTheme(): Promise<void> { return setTheme("standard", "dark"); }
+
 export async function setTheme(id: string, choice?: SchemeChoice): Promise<void> {
   let info = themeInfo(id);
   if (!info || (!info.builtin && !installed.has(id))) { await loadInstalled(); info = installed.get(id) ?? BUILTIN_THEMES.find((t) => t.id === id); }

@@ -213,3 +213,14 @@ A theme that breaks a rule is not installed, and the app says which rule and whe
 
 To share a theme with others on the marketplace, see [docs/marketplace.md](marketplace.md). The theme file you export
 from the app is the file you share.
+
+## If a theme makes the app hard to use
+
+- Picking a theme you installed asks **Keep this theme?** and goes back to the one you had after 12 seconds unless
+  you press Keep.
+- **Ctrl+Alt+Shift+T** switches back to Standard from anywhere, even when the theme hides the menus.
+- A theme's own css is switched off while the extension review dialog is open, so what an extension asks for always
+  shows as it is.
+- Theme css cannot load anything: `url()`, `image-set()`, `@import` and `@font-face` are refused, and so are
+  backslash escapes, carriage returns and form feeds (they let a checker and the browser read css differently). Put a
+  picture in a token as a `data:image` value instead.

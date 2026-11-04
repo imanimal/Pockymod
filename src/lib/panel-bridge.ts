@@ -7,8 +7,8 @@ import { LIMITS, type Permission } from "./addon-rules.mjs";
 export interface PanelInfo { extId: string; extName: string; release: string; panelId: string; title: string; permissions: Permission[] }
 /** The parts of the app a bridge needs from the screen it is in. */
 export interface PanelHostUi {
-  /** Ask the user to queue a download. Resolves true when they say yes. */
-  confirmQueue: (modId: number, fileId: number | null) => Promise<boolean>;
+  /** Ask the user to queue a download. Resolves true when they say yes; "block" stops the panel asking again. */
+  confirmQueue: (modId: number, fileId: number | null) => Promise<boolean | "block">;
   toast: (text: string, bad?: boolean) => void;
 }
 
@@ -24,6 +24,8 @@ export function panelTheme(): { scheme: string; tokens: Record<string, string> }
 }
 
 export class PanelError extends Error {}
+/** The message for calls over the rate limit: the host drops these without an answer. */
+export const TOO_MANY = "Too many calls. Slow down.";
 const fail = (msg: string): never => { throw new PanelError(msg); };
 
 /** Calls per window, per method group. */
@@ -40,12 +42,14 @@ const PERMISSION_OF: Record<string, Permission | null> = {
 export function makeBridge(info: PanelInfo, ui: PanelHostUi) {
   const stamps = new Map<string, number[]>();
   let confirming = false;
+  // a "no" holds for a minute; three of them, or "Block", hold until the app restarts
+  let refusedAt = 0, refusals = 0, blocked = false;
   const allow = (group: string) => {
     const [max, per] = LIMIT[group] ?? LIMIT.any;
     if (per === 0) return;
     const now = Date.now();
     const list = (stamps.get(group) ?? []).filter((t) => now - t < per);
-    if (list.length >= max) fail("Too many calls. Slow down.");
+    if (list.length >= max) fail(TOO_MANY);
     list.push(now);
     stamps.set(group, list);
   };
@@ -104,9 +108,15 @@ export function makeBridge(info: PanelInfo, ui: PanelHostUi) {
       case "queue.add": {
         const modId = int(p.modId, "modId");
         const fileId = p.fileId === undefined || p.fileId === null ? null : int(p.fileId, "fileId");
+        if (blocked) fail("The user blocked this panel's download requests.");
+        if (Date.now() - refusedAt < 60_000) fail("The user said no a moment ago. Ask again later.");
         if (confirming) fail("The app is already asking about a download.");
         confirming = true;
-        try { return { queued: await ui.confirmQueue(modId, fileId) }; } finally { confirming = false; }
+        try {
+          const answer = await ui.confirmQueue(modId, fileId);
+          if (answer !== true) { refusedAt = Date.now(); refusals++; if (answer === "block" || refusals >= 3) blocked = true; }
+          return { queued: answer === true };
+        } finally { confirming = false; }
       }
       case "toast":
         ui.toast(`${info.extName}: ${text(p.text, "text", 200)}`);

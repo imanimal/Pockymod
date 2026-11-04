@@ -27,7 +27,8 @@ type Sort = "updated" | "name" | "author";
 type Review = { manifest: ExtensionManifest; text: string; mode: ReviewMode; fromMarket: boolean; warnings: string[] };
 
 const TAB_KEY = "pm.addonsTab";
-const readTab = (): Tab => { try { const t = localStorage.getItem(TAB_KEY); if (t === "themes" || t === "extensions" || t === "installed" || t?.startsWith("panel:")) return t as Tab; } catch { /* storage unavailable */ } return "themes"; };
+// a panel tab is never reopened at start: a misbehaving panel must not stand between the user and Installed
+const readTab = (): Tab => { try { const t = localStorage.getItem(TAB_KEY); if (t === "themes" || t === "extensions" || t === "installed") return t as Tab; } catch { /* storage unavailable */ } return "themes"; };
 
 export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
   const ext = useExtensions();

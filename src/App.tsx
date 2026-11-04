@@ -25,7 +25,7 @@ import { Addons } from "./screens/Addons";
 import { Toasts, toast } from "./ui/toast";
 import { installPrefs } from "./lib/prefs";
 import { errorText, game, handler, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
-import { toggleScheme, useTheme, watchSystemTheme } from "./lib/theme";
+import { resetTheme, toggleScheme, useTheme, watchSystemTheme } from "./lib/theme";
 import { channel } from "./ui/fx";
 import { nope } from "./ui/motion";
 import { windowAction } from "./lib/tauri";
@@ -62,6 +62,12 @@ export function App() {
   useEffect(() => watchSystemTheme(() => {}), []);
   useEffect(() => channel(), [view]);
   useEffect(() => installUndoKeys(), []);
+  // the way out of a theme that hides the app: Ctrl+Alt+Shift+T, wherever the focus is
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); void resetTheme().then(() => toast("Theme reset to Standard.")); } };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, []);
   useEffect(() => { applyTextSize(); return installZoomKeys((px) => toast(`Text size ${px}px. Ctrl+0 resets it.`)); }, []);
   useEffect(() => {
     const offs: Array<() => void> = [];

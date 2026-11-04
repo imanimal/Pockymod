@@ -30,7 +30,17 @@ export function Appearance() {
   useEffect(() => { void reload(); }, []);
   useEffect(() => { if (!removing) return; const x = setTimeout(() => setRemoving(null), 4000); return () => clearTimeout(x); }, [removing]);
 
-  const pick = (id: string) => { setTheme(id).catch((e) => toast(errorText(e), true)); };
+  // an installed theme could make the app unreadable: it stays only when kept, else the last one comes back
+  const pick = (id: string) => {
+    const before = t.id;
+    const builtin = BUILTIN_THEMES.some((b) => b.id === id);
+    setTheme(id).then(() => {
+      if (builtin || before === id) return;
+      let kept = false;
+      toast("Keep this theme? It goes back in 12 seconds otherwise (Ctrl+Alt+Shift+T resets to Standard any time).", false, { label: "Keep", run: () => { kept = true; toast("Theme kept."); } });
+      setTimeout(() => { if (!kept) void setTheme(before).then(() => toast("Back to the theme you had.")); }, 12_000);
+    }).catch((e) => toast(errorText(e), true));
+  };
 
   const doImport = async (key: HTMLElement) => {
     let f: { text: string } | null = null;
