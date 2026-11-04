@@ -22,6 +22,8 @@ pub struct LocalFilter {
     pub show_hidden: bool,
     /// Some(true): only mods downloaded here; Some(false): only ones not downloaded.
     pub downloaded: Option<bool>,
+    /// Skip the derived filter counts (discovery shelves do not show them).
+    pub skip_counts: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -78,6 +80,7 @@ pub async fn search(client: &NexusClient, db: &Mutex<Db>, q: &BrowseQuery, local
             }
         };
         let counts_fut = async {
+            if local.skip_counts { return Vec::new(); }
             if let Some(c) = cached_counts.as_deref().and_then(|s| serde_json::from_str::<Vec<(String, u64)>>(s).ok()) { return c; }
             // counts are a nicety: a failure leaves the chips without numbers, the page still shows
             match client.derived_counts(q).await {
@@ -182,4 +185,28 @@ pub fn card_of(d: &ModDetail) -> ModCard {
         updated_at: d.updated_at.clone(), version: d.version.clone(), category: d.category.clone(), mod_category: None, adult_content: d.adult_content,
         status: d.status.clone(), tags: d.tags.clone(), mod_requirements: Some(d.mod_requirements.clone()),
     }
+}
+
+// ── media: the community's screenshots and videos for the game ──
+
+const MEDIA_QUERY: &str = "query Media($filter: MediaSearchFilter, $sort: [MediaSearchSort!], $offset: Int, $count: Int) {
+  media(filter: $filter, sort: $sort, offset: $offset, count: $count) { totalCount
+    nodes { __typename ... on Image { id name title url thumbnailUrl rating views createdAt owner { name } }
+                       ... on Video { id title link thumbnailUrl rating views createdAt owner { name } } } } }";
+
+/// One page of images or videos (checked live: `media` filters on gameId and type, sorts by rating, views, createdAt,
+/// random). There is no per-mod filter, so a mod's own pictures come from its description instead.
+pub async fn media(client: &NexusClient, db: &Mutex<Db>, kind: &str, sort: &str, offset: u32) -> Result<serde_json::Value> {
+    let kind = if kind == "video" { "video" } else { "image" };
+    let sort = match sort { "views" | "createdAt" => sort, _ => "rating" };
+    let vars = json!({ "filter": { "gameId": [{ "value": GAME_ID.to_string() }], "type": [{ "value": kind }], "adultContent": [{ "value": false }] },
+        "sort": [{ sort: { "direction": "DESC" } }], "offset": offset, "count": 30 });
+    let key = format!("media:{vars}");
+    if let Some(s) = db.lock().unwrap().cache_get(&key, PAGE_TTL, now())? {
+        if let Ok(v) = serde_json::from_str(&s) { return Ok(v); }
+    }
+    let (data, _) = client.graphql_raw(MEDIA_QUERY, vars).await?;
+    let page = data.get("media").cloned().unwrap_or(serde_json::Value::Null);
+    db.lock().unwrap().cache_put(&key, &page.to_string(), now())?;
+    Ok(page)
 }

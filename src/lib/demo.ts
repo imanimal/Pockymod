@@ -7,6 +7,7 @@ import browseFixture from "./demo/browse.json";
 import detailFixture from "./demo/details.json";
 import collectionsFixture from "./demo/collections.json";
 import checkFixture from "./demo/collection-check.json";
+import mediaFixture from "./demo/media.json";
 
 const rate: RateDisplay = { level: "unknown", remaining: null, limit: null, window: "hour", resetsAt: null, throttledUntil: null };
 let status: NexusStatus = { hasKey: false, user: null, rateLimit: rate };
@@ -95,6 +96,10 @@ function search(q: BrowseQuery, local: LocalFilter): BrowseResult {
     && q.frameworks.every((f) => n.classification.frameworks.some((x) => x.key === f))
     && (!q.modType || n.classification.modType === q.modType)
     && (!q.updatedAfter || Date.parse(n.updatedAt) / 1000 >= q.updatedAfter)
+    && (!q.createdAfter || Date.parse(n.createdAt) / 1000 >= q.createdAfter)
+    && (!q.createdBefore || Date.parse(n.createdAt) / 1000 <= q.createdBefore)
+    && (!q.endorsementsMin || n.endorsements >= q.endorsementsMin)
+    && (!q.downloadsMax || n.downloads <= q.downloadsMax)
     && (!q.compatibleSince || Date.parse(n.updatedAt) / 1000 >= q.compatibleSince)
     && (!q.downloadsMin || n.downloads >= q.downloadsMin)
     && (!q.sizeMaxKb || (n.fileSize ?? 0) <= q.sizeMaxKb));
@@ -103,6 +108,7 @@ function search(q: BrowseQuery, local: LocalFilter): BrowseResult {
   const key: Record<string, (n: CardView) => number> = {
     downloads: (n) => n.downloads, endorsements: (n) => n.endorsements, updated: (n) => Date.parse(n.updatedAt),
     created: (n) => Date.parse(n.createdAt), size: (n) => n.fileSize ?? 0, relevance: () => 0, name: () => 0,
+    random: (n) => ((n.modId * 2654435761 + (q.seed ?? 1) * 40503) >>> 0) % 1000,
   };
   nodes.sort((a, b) => (key[q.sort](a) - key[q.sort](b)) * (q.ascending ? 1 : -1));
   return { ...fixture, total: nodes.length, offset: 0, nodes: nodes.slice(q.offset, q.offset + q.count), filteredOnPage: before - nodes.length, fromCache: false };
@@ -183,6 +189,7 @@ export function installDemo() {
     modio_clear_key: () => {},
     modio_browse: () => { throw { kind: "invalid", message: "Add a mod.io API key in Settings first." }; },
     collections_browse: () => collectionsFixture,
+    media_browse: ({ kind }) => (mediaFixture as Record<string, unknown>)[String(kind)],
     collection_check: () => new Promise((ok) => setTimeout(() => ok(checkFixture), 300)),
     collection_install: ({ check }) => {
       for (const e of (check as { entries: Array<{ modId: number; fileId: number; name: string; fileName: string; version: string; size: number; uri: string; status: string }> }).entries.filter((x) => x.status !== "installed").slice(0, 5))

@@ -37,3 +37,8 @@ pub fn settings_set(state: State<'_, AppState>, key: String, value: String) -> R
 pub fn patches() -> Vec<(Patch, Option<i64>)> {
     PATCHES.iter().map(|p| (*p, pocket_core::cyberpunk::patches::released_at(p.version))).collect()
 }
+
+#[tauri::command]
+pub async fn media_browse(state: State<'_, AppState>, kind: String, sort: String, offset: u32) -> Result<serde_json::Value> {
+    browse::media(&state.nexus, &state.db, &kind, &sort, offset).await
+}

@@ -1,27 +1,64 @@
-// Browse: search on top, a filter rail of chips with counts, the result rows, and a detail module whose
-// Install key is the screen's one orange key.
+// Browse, built for discovery. With nothing typed it is a front page of shelves (popular now, updated for your
+// patch, surprise me, hidden gems …) and category tiles; typing or filtering turns it into a grid. A mod opens in a
+// drawer whose Install key is the screen's one orange key.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
-import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Tag, bytesText, formatCount } from "../ui/pocket";
+import type { IconName } from "../ui/icons";
+import { Chip, Empty, Key, Module, Pill, SearchField, Seg, Switch, formatCount } from "../ui/pocket";
 import {
-  FRAMEWORKS, MOD_TYPES, browse, errorText, fileBytes, settings,
-  type BrowseQuery, type BrowseResult, type CardView, type Classification, type DetailView, type LocalFilter, type ModTypeFilter, type SortKey,
+  FRAMEWORKS, MOD_TYPES, browse, errorText, game, settings,
+  type BrowseQuery, type BrowseResult, type CardView, type DetailView, type LocalFilter, type ModTypeFilter, type SortKey,
 } from "../lib/api";
-import { daysAgo, descriptionText, shortDate } from "../lib/text";
+import { daysAgo, shortDate } from "../lib/text";
+import { Detail, FrameworkTags, TypeTag } from "./browse/Detail";
 import { Modio } from "./Modio";
+import { MediaWall } from "./browse/Media";
 
 const PAGE = 30;
 const SORTS: Array<{ value: SortKey; label: string }> = [
-  { value: "relevance", label: "Relevance" }, { value: "downloads", label: "Downloads" }, { value: "endorsements", label: "Endorsements" },
-  { value: "updated", label: "Updated" }, { value: "created", label: "Created" }, { value: "size", label: "Size" },
+  { value: "relevance", label: "Best match" }, { value: "endorsements", label: "Most endorsed" }, { value: "downloads", label: "Most downloaded" },
+  { value: "updated", label: "Recently updated" }, { value: "created", label: "Newest" }, { value: "size", label: "Largest" }, { value: "random", label: "Shuffle" },
 ];
 type Since = "any" | "7" | "30" | "365";
 type Dl = "any" | "1000" | "10000" | "100000";
 type Size = "any" | "10" | "100" | "1024";
+type PatchOpt = { version: string; at: number; yours: boolean };
 
 export const emptyQuery = (): BrowseQuery => ({
-  text: "", categories: [], tags: [], excludeTags: [], sort: "downloads", ascending: false, includeAdult: false, frameworks: [], modType: null, offset: 0, count: PAGE,
+  text: "", categories: [], tags: [], excludeTags: [], sort: "endorsements", ascending: false, includeAdult: false, frameworks: [], modType: null, offset: 0, count: PAGE,
 });
+
+const daySeed = () => Math.floor(Date.now() / 86_400_000);
+/** Nexus's trending window for Cyberpunk 2077 (`Game.trendingPeriodDays`, 7 when checked live). */
+const TRENDING_DAYS = 7;
+
+/** Last calendar month as Unix seconds, for "Best of October". Nexus has no Mod of the Month field. */
+function lastMonth(now = new Date()) {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  return { name: start.toLocaleDateString("en-GB", { month: "long", timeZone: "UTC" }), from: start.getTime() / 1000, to: end.getTime() / 1000 - 1 };
+}
+
+type View = "discover" | "trending" | "new" | "updated" | "popular" | "surprise" | "media";
+const VIEWS: Array<{ value: View; label: string }> = [
+  { value: "discover", label: "Discover" }, { value: "trending", label: "Trending" }, { value: "new", label: "New" },
+  { value: "updated", label: "Updated" }, { value: "popular", label: "Popular" }, { value: "surprise", label: "Surprise" }, { value: "media", label: "Media" },
+];
+const VIEW_SORT: Partial<Record<View, SortKey>> = { trending: "endorsements", new: "created", updated: "updated", popular: "endorsements", surprise: "random" };
+
+/** The front page's shelves: one cached `mods()` page each, no extra counts. */
+function shelves(patch: PatchOpt | null, seed: number): Array<{ id: string; title: string; icon: IconName; hint: string; q: Partial<BrowseQuery> }> {
+  return [
+    { id: "trending", title: "Trending", icon: "up", hint: `New in the last ${TRENDING_DAYS} days, most endorsed`, q: { createdAfter: daysAgo(TRENDING_DAYS), sort: "endorsements" } },
+    ...(patch ? [{ id: "patch", title: `Updated for ${patch.version}`, icon: "check" as IconName, hint: `Updated since patch ${patch.version}${patch.yours ? ", your game" : ""}`, q: { compatibleSince: patch.at, sort: "endorsements" as SortKey } }] : []),
+    { id: "surprise", title: "Surprise me", icon: "refresh", hint: "Well liked, picked at random", q: { sort: "random", seed, endorsementsMin: 100 } },
+    { id: "month", title: `Best of ${lastMonth().name}`, icon: "star", hint: `Released in ${lastMonth().name}, most endorsed`, q: { createdAfter: lastMonth().from, createdBefore: lastMonth().to, sort: "endorsements" } },
+    { id: "gems", title: "Hidden gems", icon: "eye", hint: "Loved by the few who found them", q: { endorsementsMin: 150, downloadsMax: 25_000, sort: "endorsements" } },
+    { id: "classics", title: "All-time favourites", icon: "library", hint: "The most endorsed mods ever", q: { sort: "endorsements" } },
+    { id: "new", title: "Just released", icon: "clock", hint: "The newest uploads", q: { sort: "created" } },
+    { id: "frameworks", title: "Frameworks and essentials", icon: "chip", hint: "What other mods build on", q: { modType: "framework", sort: "downloads" } },
+  ];
+}
 
 export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, fileId: number) => void; onOpenPage?: (modId: number) => void }) {
   const [q, setQ] = useState<BrowseQuery>(emptyQuery);
@@ -30,16 +67,22 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
   const [since, setSince] = useState<Since>("any");
   const [dl, setDl] = useState<Dl>("any");
   const [size, setSize] = useState<Size>("any");
-  const [compat, setCompat] = useState(false);
-  const [patch, setPatch] = useState<{ version: string; at: number } | null>(null);
+  const [patches, setPatches] = useState<PatchOpt[]>([]);
+  const [patchSel, setPatchSel] = useState<string>("auto");
+  const [results, setResults] = useState<CardView[]>([]);
   const [res, setRes] = useState<BrowseResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [sel, setSel] = useState<CardView | null>(null);
-  const [moreCats, setMoreCats] = useState(false);
+  const [drawer, setDrawer] = useState(false);
   const [moreTags, setMoreTags] = useState(false);
+  const [explore, setExplore] = useState(false);
   const [source, setSource] = useState<"nexus" | "modio">("nexus");
   const [modioOn, setModioOn] = useState(false);
+  const [seed, setSeed] = useState(daySeed);
+  const [view, setView] = useState<View>("discover");
+  const pickView = (v: View) => { setView(v); setSel(null); if (VIEW_SORT[v]) set({ sort: VIEW_SORT[v]! }); if (v === "discover") clearAll(); };
+
   useEffect(() => {
     const read = () => settings.get("flags.modio").then((v) => setModioOn(v === "1")).catch(() => {});
     read();
@@ -47,54 +90,75 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
     return () => window.removeEventListener("pm-flags", read);
   }, []);
 
-  // the installed patch drives the "works with my game" filter
+  // patches for the dropdown, your game's first: read from the game, else the Settings choice, else the newest
   useEffect(() => {
     (async () => {
       const list = await browse.patches();
-      const saved = await settings.get("game.patch");
-      const pick = list.find(([p]) => p.version === saved) ?? list[list.length - 1];
-      if (pick?.[1]) setPatch({ version: pick[0].version, at: pick[1] });
+      const info = await game.inspect().catch(() => null);
+      const saved = await settings.get("game.patch").catch(() => null);
+      const mine = info?.detectedPatch ?? (saved || null) ?? list[list.length - 1]?.[0].version;
+      const opts: PatchOpt[] = list.filter(([, at]) => at).map(([p, at]) => ({ version: p.version, at: at!, yours: p.version === mine })).reverse();
+      opts.sort((a, b) => Number(b.yours) - Number(a.yours));
+      setPatches(opts);
     })().catch(() => {});
   }, []);
+  const yours = patches.find((p) => p.yours) ?? null;
+  const patch = patchSel === "auto" ? yours : patchSel === "any" ? null : patches.find((p) => p.version === patchSel) ?? null;
 
-  // debounce typing
   useEffect(() => {
-    const t = setTimeout(() => setQ((old) => (old.text ?? "") === text ? old : { ...old, text, offset: 0, sort: text && old.sort === "downloads" ? "relevance" : !text && old.sort === "relevance" ? "downloads" : old.sort }), 350);
+    const t = setTimeout(() => setQ((old) => (old.text ?? "") === text ? old : { ...old, text, offset: 0, sort: text && old.sort === "endorsements" ? "relevance" : !text && old.sort === "relevance" ? "endorsements" : old.sort }), 350);
     return () => clearTimeout(t);
   }, [text]);
 
   const effective = useMemo<BrowseQuery>(() => ({
     ...q,
+    seed: q.sort === "random" ? seed : null,
     updatedAfter: since === "any" ? null : daysAgo(Number(since)),
     downloadsMin: dl === "any" ? null : Number(dl),
     sizeMaxKb: size === "any" ? null : Number(size) * 1024,
-    compatibleSince: compat && patch ? patch.at : null,
-  }), [q, since, dl, size, compat, patch]);
+    compatibleSince: patch?.at ?? null,
+    createdAfter: q.createdAfter ?? (view === "trending" ? daysAgo(TRENDING_DAYS) : null),
+  }), [q, since, dl, size, patch, seed, view]);
+
+  const filtering = !!(q.text || q.categories.length || q.tags.length || q.excludeTags.length || q.frameworks.length || q.modType
+    || since !== "any" || dl !== "any" || size !== "any" || local.downloaded !== null || local.showHidden || explore || view !== "discover");
 
   const seq = useRef(0);
   useEffect(() => {
     const n = ++seq.current;
     setBusy(true); setErr(null);
     browse.search(effective, local)
-      .then((r) => { if (n === seq.current) setRes(r); })
+      .then((r) => { if (n !== seq.current) return; setRes(r); setResults((old) => r.offset > 0 ? [...old, ...r.nodes.filter((x) => !old.some((o) => o.modId === x.modId))] : r.nodes); })
       .catch((e) => { if (n === seq.current) setErr(errorText(e)); })
       .finally(() => { if (n === seq.current) setBusy(false); });
   }, [effective, local]);
 
-  const set = (patch: Partial<BrowseQuery>) => setQ((old) => ({ ...old, ...patch, offset: patch.offset ?? 0 }));
+  const set = (patchQ: Partial<BrowseQuery>) => setQ((old) => ({ ...old, ...patchQ, offset: patchQ.offset ?? 0 }));
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const derived = useMemo(() => new Map(res?.derived ?? []), [res]);
+  const clearAll = () => { setQ({ ...emptyQuery(), text }); setSince("any"); setDl("any"); setSize("any"); setLocal({ showHidden: false, downloaded: null }); setExplore(false); setView("discover"); };
 
   const flag = useCallback(async (c: CardView, which: "hidden" | "ignored", on: boolean) => {
     await browse.setFlag(c.modId, which, on);
-    setRes((r) => r && ({ ...r, nodes: r.nodes.map((n) => n.modId === c.modId ? { ...n, [which]: on } : n).filter((n) => local.showHidden || !n.hidden) }));
-    if (which === "hidden" && on && !local.showHidden) setSel(null);
+    setResults((r) => r.map((n) => n.modId === c.modId ? { ...n, [which]: on } : n).filter((n) => local.showHidden || !n.hidden));
+    if (which === "hidden" && on) setSel(null);
   }, [local.showHidden]);
 
-  const page = res ? Math.floor(res.offset / PAGE) + 1 : 1;
-  const pages = res ? Math.max(1, Math.ceil(res.total / PAGE)) : 1;
-  const activeCount = q.categories.length + q.tags.length + q.excludeTags.length + q.frameworks.length + (q.modType ? 1 : 0)
-    + (since !== "any" ? 1 : 0) + (dl !== "any" ? 1 : 0) + (size !== "any" ? 1 : 0) + (compat ? 1 : 0) + (local.downloaded !== null ? 1 : 0);
+  const openShelf = (sq: Partial<BrowseQuery>) => { set({ ...sq }); setExplore(true); if (sq.compatibleSince === undefined) setPatchSel("any"); };
+
+  // active filters as removable chips
+  const active: Array<{ label: string; off: () => void }> = [
+    ...q.frameworks.map((f) => ({ label: `Needs ${FRAMEWORKS.find((x) => x.key === f)?.short}`, off: () => set({ frameworks: q.frameworks.filter((x) => x !== f) }) })),
+    ...(q.modType ? [{ label: MOD_TYPES.find((t) => t.key === q.modType)?.name ?? "", off: () => set({ modType: null }) }] : []),
+    ...q.categories.map((c) => ({ label: c, off: () => set({ categories: q.categories.filter((x) => x !== c) }) })),
+    ...q.tags.map((t) => ({ label: `#${t}`, off: () => set({ tags: q.tags.filter((x) => x !== t) }) })),
+    ...q.excludeTags.map((t) => ({ label: `not #${t}`, off: () => set({ excludeTags: q.excludeTags.filter((x) => x !== t) }) })),
+    ...(since !== "any" ? [{ label: `Updated in the last ${since === "7" ? "week" : since === "30" ? "month" : "year"}`, off: () => setSince("any") }] : []),
+    ...(dl !== "any" ? [{ label: `${formatCount(Number(dl))}+ downloads`, off: () => setDl("any") }] : []),
+    ...(size !== "any" ? [{ label: `Under ${size === "1024" ? "1 GB" : `${size} MB`}`, off: () => setSize("any") }] : []),
+    ...(local.downloaded !== null ? [{ label: local.downloaded ? "Downloaded" : "Not downloaded", off: () => setLocal({ ...local, downloaded: null }) }] : []),
+    ...(local.showHidden ? [{ label: "Showing hidden", off: () => setLocal({ ...local, showHidden: false }) }] : []),
+  ];
 
   if (modioOn && source === "modio") return (
     <div className="stack">
@@ -104,211 +168,197 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
   );
 
   return (
-    <div className="browse">
+    <div className="disc">
       <div className="browse-top">
         {modioOn && <Seg label="Source" value={source} onChange={setSource} options={[{ value: "nexus", label: "Nexus Mods" }, { value: "modio", label: "mod.io" }]} />}
-        <SearchField value={text} onChange={setText} placeholder="Search Cyberpunk 2077 mods by name or description" />
-        <Seg label="Sort" value={q.sort} onChange={(s) => set({ sort: s })} options={SORTS.filter((s) => s.value !== "relevance" || text)} />
-        <Key size="sm" icon={q.ascending ? "up" : "down"} onClick={() => set({ ascending: !q.ascending })} aria-label={q.ascending ? "Ascending" : "Descending"} title={q.ascending ? "Ascending" : "Descending"} />
+        {filtering && <Key size="sm" variant="ghost" icon="browse" onClick={clearAll} title="Back to the front page">Front page</Key>}
+        <SearchField value={text} onChange={setText} placeholder="Search Cyberpunk 2077 mods" />
+        <label className="patchsel" title="Show mods updated since this game patch">
+          <Icon name="play" size={9} />
+          <select value={patchSel} onChange={(e) => setPatchSel(e.target.value)} aria-label="Game version">
+            <option value="auto">{yours ? `Updated since ${yours.version} (your game)` : "Your game version"}</option>
+            {patches.filter((p) => !p.yours).map((p) => <option key={p.version} value={p.version}>Updated since {p.version}</option>)}
+            <option value="any">Any game version</option>
+          </select>
+        </label>
+        <Key size="sm" icon="filter" latched={drawer} onClick={() => setDrawer(!drawer)}>Filters{active.length ? ` · ${active.length}` : ""}</Key>
       </div>
 
-      <div className="split">
-        <Module icon="filter" title="Filters" count={activeCount ? `${activeCount} on` : undefined} className="filters"
-          tools={activeCount ? <Key size="sm" variant="ghost" onClick={() => { setQ({ ...emptyQuery(), text }); setSince("any"); setDl("any"); setSize("any"); setCompat(false); setLocal({ showHidden: false, downloaded: null }); }}>Clear</Key> : undefined}>
-          <div className="sub-h">Needs framework</div>
-          <div className="chips">
-            {FRAMEWORKS.map((f) => (
-              <Chip key={f.key} on={q.frameworks.includes(f.key)} count={derived.get(`fw_${f.key}`)} onClick={() => set({ frameworks: toggle(q.frameworks, f.key) })} title={f.name}>{f.short}</Chip>
-            ))}
-          </div>
-          <div className="sub-h">Mod type</div>
-          <div className="chips">
-            {MOD_TYPES.map((t) => (
-              <Chip key={t.key} on={q.modType === t.key} count={derived.get(`type_${t.key}`)} onClick={() => set({ modType: q.modType === t.key ? null : t.key as ModTypeFilter })}>{t.name}</Chip>
-            ))}
-          </div>
-          <p className="dim hint">Framework and type are worked out from requirements, tags, text and file lists, not given by Nexus.</p>
+      <div className="vtabs" role="tablist" aria-label="Views">
+        {VIEWS.map((v) => <Chip key={v.value} on={view === v.value} onClick={() => pickView(v.value)}>{v.label}</Chip>)}
+      </div>
 
-          <div className="sub-h">Game version</div>
-          <Switch checked={compat} onChange={setCompat} disabled={!patch}>Updated since patch {patch?.version ?? "?"}</Switch>
-
-          <div className="sub-h">Updated</div>
-          <Seg label="Updated" value={since} onChange={setSince} options={[{ value: "any", label: "Any" }, { value: "7", label: "Week" }, { value: "30", label: "Month" }, { value: "365", label: "Year" }]} />
-          <div className="sub-h">Downloads</div>
-          <Seg label="Downloads" value={dl} onChange={setDl} options={[{ value: "any", label: "Any" }, { value: "1000", label: "1k+" }, { value: "10000", label: "10k+" }, { value: "100000", label: "100k+" }]} />
-          <div className="sub-h">Size</div>
-          <Seg label="Size" value={size} onChange={setSize} options={[{ value: "any", label: "Any" }, { value: "10", label: "<10 MB" }, { value: "100", label: "<100 MB" }, { value: "1024", label: "<1 GB" }]} />
-
-          <div className="sub-h">Category</div>
-          <div className="chips">
-            {(res?.facets.categories ?? []).slice(0, moreCats ? 99 : 10).map(([name, n]) => (
-              <Chip key={name} on={q.categories.includes(name)} count={n} onClick={() => set({ categories: toggle(q.categories, name) })}>{name}</Chip>
-            ))}
-            {q.categories.filter((c) => !res?.facets.categories.some(([n]) => n === c)).map((c) => <Chip key={c} on count={0} onClick={() => set({ categories: toggle(q.categories, c) })}>{c}</Chip>)}
-            {(res?.facets.categories.length ?? 0) > 10 && <Key size="sm" variant="ghost" onClick={() => setMoreCats(!moreCats)}>{moreCats ? "Fewer" : "More"}</Key>}
-          </div>
-          <div className="sub-h">Tags <span className="dim">· shift-click to exclude</span></div>
-          <div className="chips">
-            {q.excludeTags.map((t) => <Chip key={`x${t}`} on onClick={() => set({ excludeTags: toggle(q.excludeTags, t) })} title="Excluded">− {t}</Chip>)}
-            {(res?.facets.tags ?? []).filter(([t]) => !q.excludeTags.includes(t)).slice(0, moreTags ? 120 : 14).map(([name, n]) => (
-              <button key={name} type="button" className={`chip${q.tags.includes(name) ? " on" : ""}`} aria-pressed={q.tags.includes(name)}
-                onClick={(e) => e.shiftKey ? set({ excludeTags: toggle(q.excludeTags, name), tags: q.tags.filter((t) => t !== name) }) : set({ tags: toggle(q.tags, name) })}>
-                {name}<span className="n">{formatCount(n)}</span>
-              </button>
-            ))}
-            {(res?.facets.tags.length ?? 0) > 14 && <Key size="sm" variant="ghost" onClick={() => setMoreTags(!moreTags)}>{moreTags ? "Fewer" : "More"}</Key>}
-          </div>
-
-          <div className="sub-h">On this PC</div>
-          <Seg label="Downloaded" value={local.downloaded === null ? "all" : local.downloaded ? "yes" : "no"}
-            onChange={(v) => setLocal({ ...local, downloaded: v === "all" ? null : v === "yes" })}
-            options={[{ value: "all", label: "All" }, { value: "yes", label: "Downloaded" }, { value: "no", label: "Not downloaded" }]} />
-          <div className="stack" style={{ gap: ".5em", marginTop: ".6em" }}>
-            <Switch checked={local.showHidden} onChange={(v) => setLocal({ ...local, showHidden: v })}>Show hidden mods</Switch>
-            <Switch checked={q.includeAdult} onChange={(v) => set({ includeAdult: v })}>Include adult content</Switch>
-          </div>
-        </Module>
-
-        <Module icon="browse" title="Mods" count={res ? `${formatCount(res.total)}${res.fromCache ? " · cached" : ""}` : busy ? "loading" : undefined} className="results" bodyClass="list"
-          tools={<span className={`led${busy ? " run" : ""}`} aria-label={busy ? "Loading" : "Idle"} />}>
-          {err && <div className="note bad" style={{ margin: ".6em" }}>{err}</div>}
-          {res && res.nodes.length === 0 && !busy && <Empty icon="browse" title="No mods match">Try fewer filters{res.filteredOnPage ? ` (${res.filteredOnPage} on this page are hidden or downloaded)` : ""}.</Empty>}
-          <div className="rows">
-            {res?.nodes.map((c, i) => <ModRow key={c.modId} c={c} i={i} sel={sel?.modId === c.modId} onSel={() => setSel(c)} />)}
-          </div>
-          {res && res.total > PAGE && (
-            <div className="pager">
-              <Key size="sm" icon="up" disabled={res.offset === 0} onClick={() => set({ offset: Math.max(0, res.offset - PAGE) })} aria-label="Previous page" />
-              <div className="display sm inline"><span className="d-lbl">Page</span><span className="d-num">{String(page).padStart(2, "0")}<small>/{pages}</small></span></div>
-              <Key size="sm" icon="down" disabled={res.offset + PAGE >= res.total} onClick={() => set({ offset: res.offset + PAGE })} aria-label="Next page" />
-              {res.filteredOnPage > 0 && <span className="dim" style={{ fontSize: ".82em" }}>{res.filteredOnPage} left out by local filters</span>}
+      {view === "media" ? <MediaWall /> : <div className={`disc-body${drawer ? " with-drawer" : ""}`}>
+        {drawer && (
+          <Module icon="filter" title="Filters" count={active.length ? `${active.length} on` : undefined} className="filters"
+            tools={<Key size="sm" variant="ghost" icon="x" onClick={() => setDrawer(false)} aria-label="Close filters" />}>
+            <div className="sub-h">Needs framework</div>
+            <div className="chips">
+              {FRAMEWORKS.map((f) => <Chip key={f.key} on={q.frameworks.includes(f.key)} count={derived.get(`fw_${f.key}`)} onClick={() => { set({ frameworks: toggle(q.frameworks, f.key) }); setExplore(true); }} title={f.name}>{f.short}</Chip>)}
             </div>
-          )}
-        </Module>
+            <div className="sub-h">Mod type</div>
+            <div className="chips">
+              {MOD_TYPES.map((t) => <Chip key={t.key} on={q.modType === t.key} count={derived.get(`type_${t.key}`)} onClick={() => { set({ modType: q.modType === t.key ? null : t.key as ModTypeFilter }); setExplore(true); }}>{t.name}</Chip>)}
+            </div>
+            <p className="dim hint">Framework and type are worked out from requirements, tags, text and file lists.</p>
+            <div className="sub-h">Updated</div>
+            <Seg label="Updated" value={since} onChange={setSince} options={[{ value: "any", label: "Any" }, { value: "7", label: "Week" }, { value: "30", label: "Month" }, { value: "365", label: "Year" }]} />
+            <div className="sub-h">Downloads</div>
+            <Seg label="Downloads" value={dl} onChange={setDl} options={[{ value: "any", label: "Any" }, { value: "1000", label: "1k+" }, { value: "10000", label: "10k+" }, { value: "100000", label: "100k+" }]} />
+            <div className="sub-h">Size</div>
+            <Seg label="Size" value={size} onChange={setSize} options={[{ value: "any", label: "Any" }, { value: "10", label: "<10 MB" }, { value: "100", label: "<100 MB" }, { value: "1024", label: "<1 GB" }]} />
+            <div className="sub-h">Tags <span className="dim">· shift-click to exclude</span></div>
+            <div className="chips">
+              {(res?.facets.tags ?? []).filter(([t]) => !q.excludeTags.includes(t)).slice(0, moreTags ? 120 : 16).map(([name, n]) => (
+                <button key={name} type="button" className={`chip${q.tags.includes(name) ? " on" : ""}`} aria-pressed={q.tags.includes(name)}
+                  onClick={(e) => { setExplore(true); e.shiftKey ? set({ excludeTags: toggle(q.excludeTags, name), tags: q.tags.filter((t) => t !== name) }) : set({ tags: toggle(q.tags, name) }); }}>
+                  {name}<span className="n">{formatCount(n)}</span>
+                </button>
+              ))}
+              {(res?.facets.tags.length ?? 0) > 16 && <Key size="sm" variant="ghost" onClick={() => setMoreTags(!moreTags)}>{moreTags ? "Fewer" : "More"}</Key>}
+            </div>
+            <div className="sub-h">On this PC</div>
+            <Seg label="Downloaded" value={local.downloaded === null ? "all" : local.downloaded ? "yes" : "no"}
+              onChange={(v) => { setLocal({ ...local, downloaded: v === "all" ? null : v === "yes" }); setExplore(true); }}
+              options={[{ value: "all", label: "All" }, { value: "yes", label: "Downloaded" }, { value: "no", label: "Not yet" }]} />
+            <div className="stack" style={{ gap: ".5em", marginTop: ".6em" }}>
+              <Switch checked={local.showHidden} onChange={(v) => setLocal({ ...local, showHidden: v })}>Show mods I hid</Switch>
+              <Switch checked={q.includeAdult} onChange={(v) => set({ includeAdult: v })}>Include adult content</Switch>
+            </div>
+          </Module>
+        )}
 
-        <div className="detail">
-          {sel ? <Detail card={sel} onFlag={flag} onInstall={onInstall} onOpenPage={onOpenPage} onOpen={(id) => setSel({ ...sel, modId: id, name: "", updatedAt: "" } as CardView)} />
-            : <Module icon="info" title="Mod" fill><Empty icon="browse" title="Pick a mod">Its files, requirements and the Install key show here.</Empty></Module>}
+        <div className="disc-main">
+          {err && <div className="note bad">{err}</div>}
+          {!filtering ? (
+            <FrontPage patch={patch ?? yours} seed={seed} onReshuffle={() => setSeed((s) => s + 1)} onOpen={setSel} onSeeAll={openShelf}
+              categories={res?.facets.categories ?? []} onCategory={(c) => { set({ categories: [c] }); setExplore(true); }} includeAdult={q.includeAdult} />
+          ) : (
+            <>
+              <div className="results-bar">
+                <b className="hi">{res ? `${formatCount(res.total)} mods` : "Searching"}</b>
+                {res?.fromCache && <span className="dim">· from the cache</span>}
+                {active.map((a) => <button key={a.label} type="button" className="chip on" onClick={a.off}>{a.label}<span className="x">×</span></button>)}
+                {active.length > 1 && <Key size="sm" variant="ghost" onClick={clearAll}>Clear all</Key>}
+                <span className="sp" />
+                <select value={q.sort} onChange={(e) => set({ sort: e.target.value as SortKey })} aria-label="Sort">
+                  {SORTS.filter((s) => s.value !== "relevance" || q.text).map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+                {q.sort === "random" && <Key size="sm" icon="refresh" onClick={() => setSeed((s) => s + 1)}>Shuffle again</Key>}
+              </div>
+              {!busy && results.length === 0 && <Empty icon="browse" title="No mods match">Try fewer filters, or a different game version.</Empty>}
+              {(view === "trending" || view === "popular") && active.length === 0 && results.length > 2 && (
+                <div className="hero2">{results.slice(0, 2).map((c) => <HeroCard key={c.modId} c={c} onOpen={() => setSel(c)} />)}</div>
+              )}
+              <div className="mgrid">
+                {results.slice((view === "trending" || view === "popular") && active.length === 0 && results.length > 2 ? 2 : 0).map((c) => <ModCard key={c.modId} c={c} onOpen={() => setSel(c)} />)}
+              </div>
+              {res && results.length < res.total && (
+                <div className="actions" style={{ justifyContent: "center", margin: "1em 0" }}>
+                  <Key icon="down" disabled={busy} onClick={() => set({ offset: results.length })}>{busy ? "Loading" : `Show more (${formatCount(res.total - results.length)} left)`}</Key>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      </div>
+      </div>}
+
+      {sel && (
+        <div className="drawer-ov" onMouseDown={(e) => { if (e.target === e.currentTarget) setSel(null); }}>
+          <div className="drawer" role="dialog" aria-label={sel.name || "Mod"}>
+            <Detail card={sel} onFlag={flag} onInstall={onInstall} onOpenPage={onOpenPage} onClose={() => setSel(null)}
+              onOpen={(id) => setSel({ ...sel, modId: id, name: "", updatedAt: "" } as CardView)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function TypeTag({ c }: { c: Classification }) {
-  const label = c.modType === "redmod" ? "REDmod" : c.modType === "unknown" ? "Type unknown" : c.modType[0].toUpperCase() + c.modType.slice(1);
-  return <Tag kind={c.modType === "unknown" || c.modType === "mixed" ? undefined : c.modType} square>{label}</Tag>;
-}
-
-function FrameworkTags({ c }: { c: Classification }) {
-  return <>{c.frameworks.map((f) => <Tag key={f.key} kind={f.key}>{FRAMEWORKS.find((x) => x.key === f.key)?.short ?? f.name}</Tag>)}</>;
-}
-
-function ModRow({ c, i, sel, onSel }: { c: CardView; i: number; sel: boolean; onSel: () => void }) {
+/** A mod as a card: a small module whose band carries the category and downloads. */
+export function ModCard({ c, onOpen, compact }: { c: CardView; onOpen: () => void; compact?: boolean }) {
   return (
-    <button type="button" className={`row modrow${sel ? " sel" : ""}${c.hidden || c.ignored ? " off" : ""}`} onClick={onSel} style={{ ["--i" as string]: i }}>
-      {c.thumbnailUrl ? <img className="thumb" src={c.thumbnailUrl} alt="" loading="lazy" /> : <span className="thumb ph-img"><Icon name="file" /></span>}
-      <span className="m-main">
-        <span className="m-t">{c.name}</span>
-        <span className="m-meta"><span>{c.author ?? c.uploader?.name ?? "Unknown author"}</span><span>{c.category}</span>
-          {c.downloaded && <span><Pill tone="ok">Downloaded</Pill></span>}{c.hidden && <span>Hidden</span>}{c.ignored && <span>Ignored</span>}</span>
-        <span className="m-tags"><TypeTag c={c.classification} /><FrameworkTags c={c.classification} /></span>
+    <button type="button" className={`mcard panel${c.hidden || c.ignored ? " off" : ""}${compact ? " compact" : ""}`} onClick={onOpen}>
+      <span className="ph"><span className="pt"><Icon name="browse" size={9} />{c.category}</span><span className="sp" /><span className="cnt">↓ {formatCount(c.downloads)}</span></span>
+      <span className="mcard-img">
+        {c.thumbnailUrl ? <img src={c.thumbnailUrl} alt="" loading="lazy" /> : <Icon name="file" size={27} />}
+        {c.downloaded && <span className="mcard-badge"><Pill tone="ok">Downloaded</Pill></span>}
       </span>
-      <span className="m-side">
-        <span>{c.fileSize ? bytesText(c.fileSize * 1024) : ""}</span>
-        <span>{shortDate(c.updatedAt)}</span>
-        <span title={`${c.downloads} downloads`}>↓ {formatCount(c.downloads)}</span>
+      <span className="mcard-b">
+        <span className="mcard-t">{c.name}</span>
+        <span className="m-meta"><span>{c.author ?? c.uploader?.name ?? "Unknown"}</span><span>★ {formatCount(c.endorsements)}</span><span>{shortDate(c.updatedAt)}</span></span>
+        {!compact && <span className="mcard-s">{c.summary}</span>}
+        <span className="m-tags"><TypeTag c={c.classification} /><FrameworkTags c={c.classification} /></span>
       </span>
     </button>
   );
 }
 
-function Detail({ card, onFlag, onInstall, onOpenPage, onOpen }: {
-  card: CardView; onFlag: (c: CardView, f: "hidden" | "ignored", on: boolean) => void;
-  onInstall?: (d: DetailView, fileId: number) => void; onOpenPage?: (modId: number) => void; onOpen: (modId: number) => void;
+function FrontPage({ patch, seed, onReshuffle, onOpen, onSeeAll, categories, onCategory, includeAdult }: {
+  patch: PatchOpt | null; seed: number; onReshuffle: () => void; onOpen: (c: CardView) => void; onSeeAll: (q: Partial<BrowseQuery>) => void;
+  categories: Array<[string, number]>; onCategory: (c: string) => void; includeAdult: boolean;
 }) {
-  const [d, setD] = useState<DetailView | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [fileId, setFileId] = useState<number | null>(null);
-  const [full, setFull] = useState(false);
-  const [showList, setShowList] = useState(false);
+  const list = shelves(patch, seed);
+  return (
+    <div className="stack">
+      {categories.length > 0 && (
+        <section>
+          <div className="grp" style={{ paddingTop: 0 }}>Categories <span>{categories.length}</span></div>
+          <div className="cat-tiles">
+            {categories.slice(0, 14).map(([name, n]) => (
+              <button key={name} type="button" className="cat" onClick={() => onCategory(name)}><b>{name}</b><span>{formatCount(n)}</span></button>
+            ))}
+          </div>
+        </section>
+      )}
+      {list.map((s) => <Shelf key={`${s.id}-${s.id === "surprise" ? seed : ""}`} title={s.title} icon={s.icon} hint={s.hint} q={{ ...emptyQuery(), ...s.q, includeAdult, count: 12 }}
+        onOpen={onOpen} onSeeAll={() => onSeeAll(s.q)} extra={s.id === "surprise" ? <Key size="sm" variant="ghost" icon="refresh" onClick={onReshuffle}>Shuffle</Key> : undefined} />)}
+    </div>
+  );
+}
 
+function Shelf({ title, icon, hint, q, onOpen, onSeeAll, extra }: { title: string; icon: IconName; hint: string; q: BrowseQuery; onOpen: (c: CardView) => void; onSeeAll: () => void; extra?: React.ReactNode }) {
+  const [r, setR] = useState<BrowseResult | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const key = JSON.stringify(q);
+  const empty = r !== null && r.nodes.length === 0;
   useEffect(() => {
     let live = true;
-    setD(null); setErr(null); setFull(false); setShowList(false);
-    browse.detail(card.modId, card.updatedAt || undefined).then((v) => {
-      if (!live) return;
-      setD(v);
-      const main = v.files.filter((f) => f.category === "MAIN").sort((a, b) => b.date - a.date)[0] ?? v.files.filter((f) => ["MAIN", "OPTIONAL", "UPDATE", "MISCELLANEOUS"].includes(f.category)).sort((a, b) => b.date - a.date)[0];
-      setFileId(main?.fileId ?? null);
-    }).catch((e) => live && setErr(errorText(e)));
+    browse.search(q, { showHidden: false, downloaded: null, skipCounts: true }).then((x) => live && setR(x)).catch((e) => live && setErr(errorText(e)));
     return () => { live = false; };
-  }, [card.modId, card.updatedAt]);
-
-  if (err) return <Module icon="warn" title="Mod" band="bad" fill><div className="note bad">{err}</div></Module>;
-  if (!d) return <Module icon="info" title="Mod" count="loading" fill><Empty icon="clock" title="Loading" /></Module>;
-  const m = d.detail;
-  const current = d.files.filter((f) => ["MAIN", "OPTIONAL", "UPDATE", "MISCELLANEOUS"].includes(f.category)).sort((a, b) => b.date - a.date);
-  const file = d.files.find((f) => f.fileId === fileId);
-  const desc = descriptionText(m.description);
-  const view: CardView = { ...card, hidden: d.hidden, ignored: d.ignored };
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  if (empty) return null;
   return (
-    <Module icon="library" title={m.name} count={`v${m.version}`} fill className="detail-mod"
-      tools={<Key size="sm" variant="ghost" icon="web" onClick={() => onOpenPage?.(m.modId)} title="Open the Nexus page in the app" aria-label="Open the Nexus page" />}>
-      {m.pictureUrl && <img className="hero-img" src={m.pictureUrl} alt="" />}
-      <div className="m-meta" style={{ marginTop: ".6em" }}><span>{m.author ?? m.uploader?.name}</span><span>{m.category}</span><span>Updated {shortDate(m.updatedAt)}</span></div>
-      <p style={{ margin: ".5em 0 .2em", color: "var(--text)" }}>{m.summary}</p>
-      <div className="m-tags"><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
-
-      <div className="lcds" style={{ marginTop: ".8em" }}>
-        <Lcd size="sm" label="Downloads" value={formatCount(m.downloads)} />
-        <Lcd size="sm" label="Endorsed" value={formatCount(m.endorsements)} />
-        {file && <Lcd size="sm" label="Size" value={bytesText(fileBytes(file)).split(" ")[0]} unit={bytesText(fileBytes(file)).split(" ")[1]} />}
+    <section className="shelf">
+      <div className="shelf-h">
+        <Icon name={icon} />
+        <span><b className="hi">{title}</b><span className="dim"> · {hint}</span></span>
+        <span className="sp" />
+        {extra}
+        <Key size="sm" variant="ghost" icon="chevron" onClick={onSeeAll}>See all</Key>
       </div>
-
-      <div className="sub-h">File</div>
-      {current.length === 0 ? <p className="dim">No current files. Nexus may have removed them.</p> : (
-        <div className="rows">
-          {current.slice(0, 8).map((f) => (
-            <button key={f.fileId} type="button" className={`row${f.fileId === fileId ? " sel" : ""}`} onClick={() => setFileId(f.fileId)}>
-              <span className="m-main"><span className="m-t">{f.name}</span><span className="m-meta"><span>{f.category.toLowerCase().replace("_", " ")}</span><span>v{f.version}</span><span>{shortDate(new Date(f.date * 1000).toISOString())}</span></span></span>
-              <span className="m-side"><span>{bytesText(fileBytes(f))}</span></span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="actions" style={{ marginTop: ".8em" }}>
-        <Key variant="primary" size="lg" icon="install" disabled={!file} onClick={() => file && onInstall?.(d, file.fileId)}>Install</Key>
-        <Key variant="ghost" icon="hide" onClick={() => { onFlag(view, "hidden", !d.hidden); setD({ ...d, hidden: !d.hidden }); }}>{d.hidden ? "Unhide" : "Hide"}</Key>
-        <Key variant="ghost" icon="x" onClick={() => { onFlag(view, "ignored", !d.ignored); setD({ ...d, ignored: !d.ignored }); }}>{d.ignored ? "Stop ignoring" : "Ignore"}</Key>
+      {err && <p className="dim">{err}</p>}
+      <div className="shelf-row">
+        {r ? r.nodes.map((c) => <ModCard key={c.modId} c={c} compact onOpen={() => onOpen(c)} />) : Array.from({ length: 6 }, (_, i) => <span key={i} className="mcard panel compact skel" />)}
       </div>
+    </section>
+  );
+}
 
-      {m.modRequirements.nexusRequirements.totalCount > 0 && <>
-        <div className="sub-h">Requires</div>
-        <div className="rows">
-          {m.modRequirements.nexusRequirements.nodes.map((r) => (
-            <button key={`${r.modId}-${r.modName}`} type="button" className="row" onClick={() => !r.externalRequirement && onOpen(r.modId)} disabled={r.externalRequirement}>
-              <span className="m-main"><span className="m-t">{r.modName}</span>{r.notes && <span className="m-meta"><span>{r.notes}</span></span>}</span>
-              <span className="m-side">{r.externalRequirement ? <span>Off Nexus</span> : <Icon name="chevron" size={9} />}</span>
-            </button>
-          ))}
-        </div>
-      </>}
-
-      <div className="sub-h">Files in the archive</div>
-      {d.fileList ? (
-        <>
-          <p className="dim" style={{ fontSize: ".86em" }}>{d.fileList.length} paths indexed by Nexus{d.classification.typeSource === "files" ? ", used for the type" : ""}.{" "}
-            <button type="button" className="linkish" onClick={() => setShowList(!showList)}>{showList ? "Hide" : "Show"}</button></p>
-          {showList && <div className="log" style={{ maxHeight: "12em" }}>{d.fileList.slice(0, 200).join("\n")}</div>}
-        </>
-      ) : <p className="dim" style={{ fontSize: ".86em" }}>Nexus has no file list for this file yet. The type is a guess until it is downloaded.</p>}
-
-      <div className="sub-h">Description</div>
-      <div className="desc">{full ? desc : desc.slice(0, 900)}{desc.length > 900 && !full && "…"}</div>
-      {desc.length > 900 && <Key size="sm" variant="ghost" onClick={() => setFull(!full)}>{full ? "Less" : "Read more"}</Key>}
-    </Module>
+/** A big card: the picture behind the name, like a storefront's front row. */
+function HeroCard({ c, onOpen }: { c: CardView; onOpen: () => void }) {
+  return (
+    <button type="button" className="hero panel" onClick={onOpen}>
+      <span className="ph"><span className="pt"><Icon name="up" size={9} />{c.category}</span><span className="sp" /><span className="cnt">★ {formatCount(c.endorsements)}</span></span>
+      <span className="hero-pic">
+        {c.thumbnailUrl && <img src={c.thumbnailUrl.replace("/thumbnails/", "/")} alt="" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = c.thumbnailUrl!; }} />}
+        <span className="hero-txt">
+          <b>{c.name}</b>
+          <span>by {c.author ?? c.uploader?.name} · ↓ {formatCount(c.downloads)}</span>
+          <span className="hero-sum">{c.summary}</span>
+        </span>
+      </span>
+    </button>
   );
 }

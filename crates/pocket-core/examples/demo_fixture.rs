@@ -21,7 +21,7 @@ async fn main() {
     for n in r.nodes.iter().take(8) {
         let mut d = browse::detail(&client, &db, n.card.mod_id, None).await.unwrap();
         // keep the fixture small: the description's first part and the newest files
-        d.detail.description = d.detail.description.chars().take(2400).collect();
+        d.detail.description = d.detail.description.chars().take(6000).collect();
         d.files.sort_by_key(|f| std::cmp::Reverse(f.date));
         d.files.truncate(8);
         details.push(d);
@@ -33,6 +33,9 @@ async fn main() {
     let rev = pocket_core::collections::revision(&client, &cols.nodes[0].slug, None).await.unwrap();
     let mut check = pocket_core::collections::check_revision(&db.lock().unwrap(), &rev, Some("2.5".into()), false).unwrap();
     check.entries.truncate(60);
+    let imgs = browse::media(&client, &db, "image", "rating", 0).await.unwrap();
+    let vids = browse::media(&client, &db, "video", "views", 0).await.unwrap();
+    std::fs::write(out.join("media.json"), serde_json::to_string_pretty(&serde_json::json!({ "image": imgs, "video": vids })).unwrap()).unwrap();
     std::fs::write(out.join("collection-check.json"), serde_json::to_string_pretty(&check).unwrap()).unwrap();
     println!("{} cards, {} details", r.nodes.len(), details.len());
 }

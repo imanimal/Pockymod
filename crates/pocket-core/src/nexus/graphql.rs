@@ -36,7 +36,7 @@ pub const MODS_BY_ID_QUERY: &str = "query ByIds($ids: [CompositeDomainWithIdInpu
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
-pub enum SortKey { #[default] Downloads, Endorsements, Updated, Created, Relevance, Size, Name }
+pub enum SortKey { #[default] Downloads, Endorsements, Updated, Created, Relevance, Size, Name, Random }
 
 /// Mod type: not a Nexus field, so the filter uses tags and text (heuristic; see `mod_type_group`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -72,6 +72,8 @@ pub struct BrowseQuery {
     pub mod_type: Option<ModTypeFilter>,
     /// Derived: updated on or after the installed patch's release (Unix seconds). Heuristic for "works with my game".
     pub compatible_since: Option<i64>,
+    /// Seed for the random sort (the "Surprise me" shelf), so paging and caching stay stable.
+    pub seed: Option<u32>,
     pub offset: u32,
     pub count: u32,
 }
@@ -182,8 +184,13 @@ pub fn build_filter(q: &BrowseQuery) -> Value {
 }
 
 pub fn build_sort(q: &BrowseQuery) -> Value {
+    if q.sort == SortKey::Random {
+        // verified live: `random: { seed }` sorts randomly and repeatably
+        return json!([{ "random": { "seed": q.seed.unwrap_or(1) } }]);
+    }
     let dir = if q.ascending { "ASC" } else { "DESC" };
     let key = match q.sort {
+        SortKey::Random => unreachable!(),
         SortKey::Downloads => "downloads",
         SortKey::Endorsements => "endorsements",
         SortKey::Updated => "updatedAt",
@@ -348,6 +355,12 @@ mod tests {
         assert_eq!(v["sort"][0]["updatedAt"]["direction"], "ASC");
         assert_eq!(v["count"], 100);
         assert_eq!(v["offset"], 60);
+    }
+
+    #[test]
+    fn random_sort_uses_the_seed() {
+        let v = page_variables(&BrowseQuery { sort: SortKey::Random, seed: Some(7), ..Default::default() });
+        assert_eq!(v["sort"][0]["random"]["seed"], 7);
     }
 
     #[test]

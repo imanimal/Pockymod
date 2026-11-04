@@ -33,7 +33,7 @@ export const nexus = {
 export type FrameworkKey = "cet" | "red4ext" | "redscript" | "archivexl" | "tweakxl" | "codeware" | "cybercmd";
 export type ModType = "redmod" | "archive" | "script" | "framework" | "mixed" | "unknown";
 export type ModTypeFilter = "redmod" | "archive" | "script" | "framework";
-export type SortKey = "downloads" | "endorsements" | "updated" | "created" | "relevance" | "size" | "name";
+export type SortKey = "downloads" | "endorsements" | "updated" | "created" | "relevance" | "size" | "name" | "random";
 
 export const FRAMEWORKS: Array<{ key: FrameworkKey; name: string; short: string }> = [
   { key: "cet", name: "Cyber Engine Tweaks", short: "CET" },
@@ -68,10 +68,11 @@ export interface BrowseQuery {
   frameworks: FrameworkKey[];
   modType?: ModTypeFilter | null;
   compatibleSince?: number | null;
+  seed?: number | null;
   offset: number;
   count: number;
 }
-export interface LocalFilter { showHidden: boolean; downloaded: boolean | null }
+export interface LocalFilter { showHidden: boolean; downloaded: boolean | null; skipCounts?: boolean }
 
 export interface FrameworkUse { framework: FrameworkKey; key: FrameworkKey; name: string; source: "files" | "requirements" | "tags" | "text" | "identity" }
 export interface Classification { frameworks: FrameworkUse[]; modType: ModType; typeSource: string | null; isFramework: FrameworkKey | null }
@@ -293,3 +294,26 @@ export const extras = {
   modioClearKey: () => call<void>("modio_clear_key"),
   modioBrowse: (text: string, offset: number) => call<ModioBrowse>("modio_browse", { text, offset }),
 };
+
+// ── media ──
+
+export interface MediaItem {
+  __typename: "Image" | "Video" | "SupporterImage"; id: string; name?: string; title?: string | null; url?: string; link?: string;
+  thumbnailUrl: string; rating: number; views: number; createdAt: string; owner: { name: string };
+}
+export interface MediaPage { totalCount: number; nodes: MediaItem[] }
+export const media = { browse: (kind: "image" | "video", sort: "rating" | "views" | "createdAt", offset: number) => call<MediaPage>("media_browse", { kind, sort, offset }) };
+
+/** Images and videos a mod's description shows: [img] tags, <img> tags, and YouTube links. */
+export function descriptionMedia(src: string, picture?: string | null): Array<{ kind: "image" | "video"; url: string; thumb: string }> {
+  const out: Array<{ kind: "image" | "video"; url: string; thumb: string }> = [];
+  const seen = new Set<string>();
+  const add = (kind: "image" | "video", url: string, thumb = url) => { if (!seen.has(url)) { seen.add(url); out.push({ kind, url, thumb }); } };
+  if (picture) add("image", picture);
+  for (const m of src.matchAll(/\[img[^\]]*\]\s*(https?:\/\/[^\s[\]]+?)\s*\[\/img\]/gi)) add("image", m[1]);
+  for (const m of src.matchAll(/<img[^>]+src=["'](https?:\/\/[^"']+)["']/gi)) add("image", m[1]);
+  const yt = (id: string) => add("video", `https://www.youtube-nocookie.com/embed/${id}`, `https://img.youtube.com/vi/${id}/mqdefault.jpg`);
+  for (const m of src.matchAll(/\[youtube\]\s*([A-Za-z0-9_-]{11})\s*\[\/youtube\]/gi)) yt(m[1]);
+  for (const m of src.matchAll(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/gi)) yt(m[1]);
+  return out.slice(0, 40);
+}

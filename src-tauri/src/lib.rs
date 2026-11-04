@@ -50,6 +50,7 @@ pub fn run() {
             commands::browse::settings_get,
             commands::browse::settings_set,
             commands::browse::patches,
+            commands::browse::media_browse,
             commands::library::paths_get,
             commands::library::paths_set,
             commands::library::library_list,
