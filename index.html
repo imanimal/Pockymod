@@ -5,14 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pocket Mods</title>
     <script>
-      // Apply the theme before first paint: the saved choice, else the system setting.
+      // Apply the theme before first paint, as lib/theme.ts does: the saved theme and scheme (an installed theme from
+      // its cached CSS), else Pocket for someone who used the app before themes, else Standard in dark.
       (function () {
-        var t = "system";
-        try { t = localStorage.getItem("pm.theme") || "system"; } catch (e) {}
-        var night = t === "night" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
         var r = document.documentElement;
-        r.classList.toggle("night", night);
-        r.dataset.scheme = night ? "dark" : "light";
+        var g = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
+        var old = g("pm.theme"), id = g("pm.theme.id") || (old ? "pocket" : "standard"), c = g("pm.theme.scheme");
+        if (!c) c = old === "cream" ? "light" : old === "night" ? "dark" : old === "system" ? "system" : null;
+        var looks = { standard: ["dark", "light"], redline: ["dark"], pocket: ["light", "dark"] };
+        var look = id, schemes = looks[id], css = null;
+        if (!schemes) {
+          try { var k = JSON.parse(g("pm.theme.css") || "null"); if (k && k.id === id && looks[k.look]) { look = k.look; schemes = k.schemes; css = k.css; } } catch (e) {}
+        }
+        if (!schemes) { id = look = "standard"; schemes = looks.standard; }
+        var want = c === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : c || schemes[0];
+        var s = schemes.indexOf(want) >= 0 ? want : schemes[0];
+        r.setAttribute("data-theme", id);
+        r.setAttribute("data-look", look);
+        r.setAttribute("data-scheme", s);
+        if (s === "dark") r.classList.add("night");
+        var m = g("pm.motion");
+        if (m === "0" || m === "1") r.setAttribute("data-motion", m);
+        if (css) { var st = document.createElement("style"); st.id = "pm-user-theme"; st.textContent = css; document.head.appendChild(st); }
       })();
     </script>
   </head>
