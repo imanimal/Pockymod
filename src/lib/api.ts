@@ -162,8 +162,8 @@ export interface InstallRequest {
   fileName?: string | null; origin?: string | null; keepExisting?: boolean; sameFileOnly?: boolean;
 }
 export type Choice = [number, number, number];
-export interface FomodPlugin { name: string; description: string; image: string | null; kind: string }
-export interface Fomod { name: string; root: string; steps: Array<{ name: string; groups: Array<{ name: string; kind: string; plugins: FomodPlugin[] }> }> }
+export interface FomodPlugin { name: string; description: string; image: string | null; kind: string; flags?: Array<[string, string]> }
+export interface Fomod { name: string; root: string; steps: Array<{ name: string; groups: Array<{ name: string; kind: string; plugins: FomodPlugin[] }>; visible?: { flags: Array<[string, string]>; any: boolean } | null }> }
 export interface ChoicesNeeded { request: InstallRequest; fomod: Fomod; defaults: Choice[] }
 export const onChoicesNeeded = (cb: (c: ChoicesNeeded) => void) => listen<ChoicesNeeded>("install-choices", cb);
 
@@ -337,6 +337,9 @@ export interface CollectionCheck {
   missing: number; installed: number; unavailable: number; needsClick: number; downloadBytes: number;
   /** Items hosted outside Nexus, which the user gets by hand. */
   external?: Array<{ name: string; resourceType: string | null; resourceUrl: string | null; optional: boolean; version: string | null; instructions: string | null }>;
+  slug?: string | null; revision?: number | null;
+  /** What the collection's manifest adds: the curator's installer picks (count), rules and notes. */
+  manifest?: { withChoices: number; wins: Array<[number, number]>; conflicts: Array<[number, number]>; requires: Array<[number, number]>; instructions: Record<string, string> } | null;
 }
 export interface LocalCollection {
   format: string; version: number; name: string; description: string; game: string; gameVersion: string | null; createdAt: string;

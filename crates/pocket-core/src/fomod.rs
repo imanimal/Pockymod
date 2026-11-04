@@ -1,8 +1,9 @@
 //! FOMOD installers (`fomod/ModuleConfig.xml`): many Cyberpunk mods ship variants and let the user pick. Supported:
 //! required files, install steps with groups and plugins (SelectExactlyOne, SelectAtMostOne, SelectAtLeastOne,
 //! SelectAll, SelectAny), plugin types (Required, Recommended, Optional, NotUsable), condition flags, and
-//! conditional file installs driven by those flags (And/Or). Not supported: step visibility conditions (every step is
-//! shown) and file or game-version dependencies (treated as met). The file is often UTF-16; both encodings are read.
+//! conditional file installs driven by those flags (And/Or), and step visibility (a step shows only when the flags
+//! set in the steps before it meet its `<visible>` conditions; picks in a hidden step do not count). Not supported:
+//! file or game-version dependencies (treated as met). The file is often UTF-16; both encodings are read.
 
 use crate::cyberpunk::layout::{placement, Placement};
 use crate::error::{Error, Result};
@@ -23,7 +24,56 @@ pub struct Group { pub name: String, pub kind: String, pub plugins: Vec<Plugin> 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Step { pub name: String, pub groups: Vec<Group> }
+pub struct Step {
+    pub name: String,
+    pub groups: Vec<Group>,
+    /// Shown only when these flags are set by earlier steps (all of them, or any with `any`); none: always shown.
+    #[serde(default)]
+    pub visible: Option<Visible>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Visible { pub flags: Vec<(String, String)>, pub any: bool }
+
+impl Visible {
+    pub fn met(&self, flags: &BTreeMap<String, String>) -> bool {
+        let one = |(k, v): &(String, String)| flags.get(k).is_some_and(|x| x == v);
+        if self.any { self.flags.iter().any(one) } else { self.flags.iter().all(one) }
+    }
+}
+
+/// The steps that show for these picks, in order: each step sees the flags set by the visible steps before it.
+pub fn visible_steps(f: &Fomod, choices: &[[usize; 3]]) -> Vec<bool> {
+    let mut flags: BTreeMap<String, String> = BTreeMap::new();
+    let mut out = Vec::new();
+    for (si, s) in f.steps.iter().enumerate() {
+        let shows = s.visible.as_ref().is_none_or(|v| v.met(&flags));
+        out.push(shows);
+        if !shows { continue; }
+        for [csi, gi, pi] in choices.iter().filter(|c| c[0] == si) {
+            if let Some(p) = f.steps.get(*csi).and_then(|s| s.groups.get(*gi)).and_then(|g| g.plugins.get(*pi)) {
+                for (k, v) in &p.flags { flags.insert(k.clone(), v.clone()); }
+            }
+        }
+    }
+    out
+}
+
+/// A collection's picks are by name (Vortex's `choices`: steps, groups and the chosen plugins' names, with their
+/// position as a fallback); these are this installer's indices for them. Names that are not there are left out.
+pub fn choices_by_name(f: &Fomod, picks: &[(String, String, String, Option<usize>)]) -> Vec<[usize; 3]> {
+    let eq = |a: &str, b: &str| a.trim().eq_ignore_ascii_case(b.trim());
+    let mut out = Vec::new();
+    for (step, group, plugin, idx) in picks {
+        let Some(si) = f.steps.iter().position(|s| eq(&s.name, step)) else { continue };
+        let Some(gi) = f.steps[si].groups.iter().position(|g| eq(&g.name, group)) else { continue };
+        let ps = &f.steps[si].groups[gi].plugins;
+        let pi = idx.filter(|i| ps.get(*i).is_some_and(|p| eq(&p.name, plugin))).or_else(|| ps.iter().position(|p| eq(&p.name, plugin)));
+        if let Some(pi) = pi { out.push([si, gi, pi]); }
+    }
+    out
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -81,7 +131,7 @@ pub fn variants(entries: &[String], mod_name: &str) -> Option<Fomod> {
         Plugin { name: k.rsplit('/').next().unwrap_or(k).to_string(), description: format!("{} files", p.len()), image: None, files: maps(p), flags: Vec::new(), kind: "Optional".into() }
     }).collect();
     Some(Fomod { name: mod_name.to_string(), root: String::new(), required,
-        steps: vec![Step { name: "Choose a variant".into(), groups: vec![Group { name: "This archive holds several versions of the mod. Pick one.".into(), kind: "SelectExactlyOne".into(), plugins }] }],
+        steps: vec![Step { name: "Choose a variant".into(), groups: vec![Group { name: "This archive holds several versions of the mod. Pick one.".into(), kind: "SelectExactlyOne".into(), plugins }], visible: None }],
         conditional: Vec::new() })
 }
 
@@ -140,7 +190,15 @@ pub fn parse(xml: &str, config_path: &str) -> Result<Fomod> {
                 }).collect();
                 groups.push(Group { name: g.attribute("name").unwrap_or("").to_string(), kind: g.attribute("type").unwrap_or("SelectAny").to_string(), plugins });
             }
-            steps.push(Step { name: s.attribute("name").unwrap_or("").to_string(), groups });
+            let visible = child(s, "visible").map(|v| {
+                let deps = child(v, "dependencies").unwrap_or(v);
+                Visible {
+                    any: deps.attribute("operator").is_some_and(|o| o.eq_ignore_ascii_case("or")),
+                    flags: deps.descendants().filter(|x| x.has_tag_name("flagDependency"))
+                        .map(|f| (f.attribute("flag").unwrap_or("").to_string(), f.attribute("value").unwrap_or("").to_string())).collect(),
+                }
+            }).filter(|v| !v.flags.is_empty());
+            steps.push(Step { name: s.attribute("name").unwrap_or("").to_string(), groups, visible });
         }
     }
     let mut conditional = Vec::new();
@@ -174,7 +232,8 @@ pub fn defaults(f: &Fomod) -> Vec<[usize; 3]> {
 pub fn resolve(f: &Fomod, choices: &[[usize; 3]], entries: &[String]) -> Result<Vec<Placement>> {
     let mut maps: Vec<FileMap> = f.required.clone();
     let mut flags: BTreeMap<String, String> = BTreeMap::new();
-    for [si, gi, pi] in choices {
+    let shows = visible_steps(f, choices);
+    for [si, gi, pi] in choices.iter().filter(|c| shows.get(c[0]).copied().unwrap_or(true)) {
         let p = f.steps.get(*si).and_then(|s| s.groups.get(*gi)).and_then(|g| g.plugins.get(*pi))
             .ok_or_else(|| Error::Invalid("That installer choice does not exist.".into()))?;
         maps.extend(p.files.iter().cloned());
@@ -209,6 +268,31 @@ pub fn resolve(f: &Fomod, choices: &[[usize; 3]], entries: &[String]) -> Result<
     }
     if out.is_empty() { return Err(Error::Invalid("Those choices install no files. Pick at least one option.".into())); }
     Ok(out.into_values().collect())
+}
+
+#[cfg(test)]
+mod visibility_tests {
+    use super::*;
+    const XML: &str = r#"<config><moduleName>Arms</moduleName><installSteps order="Explicit">
+      <installStep name="Model"><optionalFileGroups><group name="Arm" type="SelectExactlyOne"><plugins>
+        <plugin name="Mantis"><description>blades</description><files><file source="a.archive" destination="archive/pc/mod/a.archive"/></files><conditionFlags><flag name="arm">mantis</flag></conditionFlags><typeDescriptor><type name="Optional"/></typeDescriptor></plugin>
+        <plugin name="Gorilla"><description>fists</description><files><file source="b.archive" destination="archive/pc/mod/b.archive"/></files><conditionFlags><flag name="arm">gorilla</flag></conditionFlags><typeDescriptor><type name="Optional"/></typeDescriptor></plugin>
+      </plugins></group></optionalFileGroups></installStep>
+      <installStep name="Blade colour"><visible><flagDependency flag="arm" value="mantis"/></visible><optionalFileGroups><group name="Colour" type="SelectExactlyOne"><plugins>
+        <plugin name="Red"><description/><files><file source="r.archive" destination="archive/pc/mod/r.archive"/></files><typeDescriptor><type name="Optional"/></typeDescriptor></plugin>
+      </plugins></group></optionalFileGroups></installStep>
+    </installSteps></config>"#;
+    #[test]
+    fn a_step_shows_only_for_the_picks_it_depends_on() {
+        let f = parse(XML, "fomod/ModuleConfig.xml").unwrap();
+        assert_eq!(visible_steps(&f, &[[0, 0, 0]]), [true, true]);
+        assert_eq!(visible_steps(&f, &[[0, 0, 1]]), [true, false]);
+        let entries: Vec<String> = ["a.archive", "b.archive", "r.archive"].iter().map(|s| s.to_string()).collect();
+        // gorilla with a leftover pick in the hidden step: the hidden pick installs nothing
+        let r = resolve(&f, &[[0, 0, 1], [1, 0, 0]], &entries).unwrap();
+        assert_eq!(r.len(), 1);
+        assert_eq!(choices_by_name(&f, &[("model".into(), "ARM".into(), "Gorilla".into(), Some(0))]), [[0, 0, 1]]);
+    }
 }
 
 #[cfg(test)]

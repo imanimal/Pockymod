@@ -326,6 +326,14 @@ pub struct Check {
     /// Items from outside Nexus, listed so nothing is dropped silently; the user gets them by hand.
     #[serde(default)]
     pub external: Vec<External>,
+    /// The Nexus collection it is (none for a local file), for its manifest.
+    #[serde(default)]
+    pub slug: Option<String>,
+    #[serde(default)]
+    pub revision: Option<u32>,
+    /// What the collection's manifest adds: installer picks and rules (collection_manifest.rs).
+    #[serde(default)]
+    pub manifest: Option<crate::collection_manifest::Manifest>,
 }
 
 /// "2.5.0.0" and "2.5" compare as patch 2.5; "3.0.80.51928" (an executable version) cannot be compared.
@@ -351,7 +359,7 @@ fn summarize(name: String, versions: Vec<String>, patch: Option<String>, entries
     let unavailable = entries.iter().filter(|e| e.status == "unavailable" && e.replacement.is_none()).count();
     let needs_click = if premium { open.iter().filter(|e| !is_archive_name(&e.uri)).count() } else { missing };
     let download_bytes = open.iter().map(|e| e.size).sum();
-    Check { name, game_version_ok: compare_versions(&versions, patch.as_deref()), collection_versions: versions, current_patch: patch, missing, installed: entries.len() - open.len(), unavailable, needs_click, download_bytes, entries, external: Vec::new() }
+    Check { name, game_version_ok: compare_versions(&versions, patch.as_deref()), collection_versions: versions, current_patch: patch, missing, installed: entries.len() - open.len(), unavailable, needs_click, download_bytes, entries, external: Vec::new(), slug: None, revision: None, manifest: None }
 }
 
 fn installed_files(db: &Db) -> Result<BTreeSet<(u32, u32)>> {
@@ -372,6 +380,8 @@ pub fn check_revision(db: &Db, rev: &Revision, patch: Option<String>, premium: b
     }).collect();
     let mut c = summarize(rev.collection.name.clone(), rev.game_versions.iter().map(|g| g.reference.clone()).collect(), patch, entries, premium);
     c.external = rev.external_resources.clone();
+    c.slug = Some(rev.collection.slug.clone());
+    c.revision = Some(rev.revision_number);
     Ok(c)
 }
 

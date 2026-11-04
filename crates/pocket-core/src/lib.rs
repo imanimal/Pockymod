@@ -3,6 +3,7 @@
 pub mod appupdate;
 pub mod archive;
 pub mod browse;
+pub mod collection_manifest;
 pub mod collections;
 pub mod creator;
 pub mod credentials;

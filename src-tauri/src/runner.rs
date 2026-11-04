@@ -279,8 +279,21 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         origin: item.required_by.clone(), keep_existing: for_another, file_name: Some(item.file_name.clone()), replace_only: Some(replace_only),
         same_file_only: item.from_collection };
     let db = st.db.clone();
-    let out = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &game, &library, &req)).await
+    let (g2, l2, req2) = (game.clone(), library.clone(), req.clone());
+    let mut out = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &g2, &l2, &req2)).await
         .map_err(|e| Error::Invalid(e.to_string()))??;
+    // a collection's curator picked this mod's installer options: use them instead of asking
+    if let InstallOutcome::NeedsChoices { fomod, .. } = &out {
+        let picks = pocket_core::collection_manifest::choices_for(&st.db.lock().unwrap(), item.mod_id, item.file_id);
+        let mapped = picks.map(|p| pocket_core::fomod::choices_by_name(fomod, &p)).filter(|c| !c.is_empty());
+        if let Some(choices) = mapped {
+            let mut again = req.clone();
+            again.fomod_choices = Some(choices);
+            let db = st.db.clone();
+            out = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &game, &library, &again)).await
+                .map_err(|e| Error::Invalid(e.to_string()))??;
+        }
+    }
     let _ = app.emit("library-changed", ());
     if matches!(out, InstallOutcome::Installed { .. }) && st.db.lock().unwrap().setting("downloads.keep")?.as_deref() == Some("0") {
         let _ = std::fs::remove_file(&archive_for_choices);

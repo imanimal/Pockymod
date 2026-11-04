@@ -483,13 +483,16 @@ const demoFomod = {
         { name: "White", description: "Clean white with grey panels.", image: null, kind: "Optional" } ] },
       { name: "Extras", kind: "SelectAny", plugins: [
         { name: "Matching gloves", description: "Gloves in the same colour.", image: null, kind: "Optional" },
-        { name: "Hood", description: "Adds the hood as a separate item.", image: null, kind: "Optional" } ] } ] },
+        { name: "Hood", description: "Adds the hood as a separate item.", image: null, kind: "Optional", flags: [["hood", "on"]] } ] } ] },
+    { name: "Hood style", visible: { flags: [["hood", "on"]], any: false }, groups: [
+      { name: "Hood", kind: "SelectExactlyOne", plugins: [
+        { name: "Up", description: "Worn up, over the head.", image: null, kind: "Optional" }, { name: "Down", description: "Resting on the shoulders.", image: null, kind: "Recommended" } ] } ] },
     { name: "Fit", groups: [
       { name: "Body", kind: "SelectExactlyOne", plugins: [
         { name: "Vanilla body", description: "", image: null, kind: "Optional" }, { name: "Hyst EBB", description: "For the Hyst EBB body mod.", image: null, kind: "Optional" } ] } ] },
   ],
 };
-let demoChoices: Array<[number, number, number]> = [[0, 0, 1], [0, 1, 0], [1, 0, 0]];
+let demoChoices: Array<[number, number, number]> = [[0, 0, 1], [0, 1, 0], [2, 0, 0]];
 
 function installTroubleshootDemo() {
   registerDemo({

@@ -408,3 +408,17 @@
 .bpane-tab .i { writing-mode: horizontal-tb; }
 .bpane-tab:hover { color: var(--acc2); }
 .bpane-tab:focus-visible { outline: 2px solid var(--focus); }
+
+/* installer options (FomodDialog): every step on one page, a search over all options */
+.dialog.fomod { width: min(62em, 100%); max-height: 92vh; display: flex; flex-direction: column; }
+.dialog.fomod > .pb { display: flex; flex-direction: column; gap: .55em; min-height: 0; overflow: hidden; }
+.fomod-top { display: flex; align-items: center; gap: .5em; flex-wrap: wrap; }
+.fomod-top .fbox { flex: 1 1 18em; }
+.fomod-jump { display: flex; gap: .35em; flex-wrap: wrap; }
+.fomod-body { flex: 1; min-height: 0; overflow: auto; padding-right: .3em; display: flex; flex-direction: column; gap: .4em; }
+.fomod-step h3 { font-size: 1em; margin: .5em 0 .1em; position: sticky; top: 0; background: var(--surface); padding: .25em 0; z-index: 1; }
+.fomod .fplugins { display: grid; grid-template-columns: repeat(auto-fill, minmax(15em, 1fr)); gap: .4em; }
+.fomod .fplugin { text-align: left; }
+.fomod .fplugin-h .i { color: var(--sel, var(--acc2)); }
+.fomod .fplugin-d { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.shell:has(.ov) .toasts { bottom: auto; top: 3.6em; }

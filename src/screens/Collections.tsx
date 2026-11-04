@@ -95,6 +95,8 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
   );
 }
 
+const nameOf = (c: CollectionCheck, modId: number) => c.entries.find((e) => e.modId === modId)?.name ?? `mod ${modId}`;
+
 /** Pre-install checks, then Install. */
 function CheckDialog({ title, load, onClose, onQueued }: { title: string; load: () => Promise<CollectionCheck>; onClose: () => void; onQueued: () => void }) {
   return <Dialog icon="collections" title={title} onClose={onClose}><CheckBody load={load} onClose={onClose} onQueued={onQueued} /></Dialog>;
@@ -132,13 +134,22 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
           {c.gameVersionOk === null && <Pill tone="soon">Game version {c.collectionVersions.join(", ") || "not given"}: cannot compare</Pill>}
         </div>
         {c.gameVersionOk === false && <div className="note warn">Collections made for another patch often need updated frameworks or break. Check Health after installing.</div>}
+        {c.manifest && (c.manifest.withChoices > 0 || c.manifest.wins.length > 0) && (
+          <p className="dim" style={{ fontSize: ".86em" }} title="From the collection's own manifest: the options its curator picked in each mod's installer, and which mod's files win where two want the same ones. Your own choices are never replaced.">
+            <span className="okc">Set up as the curator made it:</span> {c.manifest.withChoices > 0 && <>installer options for {plural(c.manifest.withChoices, "mod")}</>}{c.manifest.withChoices > 0 && c.manifest.wins.length > 0 && ", "}
+            {c.manifest.wins.length > 0 && <>{plural(c.manifest.wins.length, "rule")} for which files win</>}. Nothing to pick.</p>
+        )}
+        {c.manifest && c.manifest.conflicts.length > 0 && (
+          <div className="note warn">The curator marks {plural(c.manifest.conflicts.length, "pair")} of mods as clashing: {c.manifest.conflicts.slice(0, 4).map(([a, b]) => `${nameOf(c, a)} and ${nameOf(c, b)}`).join("; ")}.</div>
+        )}
         {c.needsClick > 20 && <div className="note warn">That is {c.needsClick} clicks on Nexus. Each page opens here in turn, and the queue moves on as soon as you click.</div>}
         <div className="rows" style={all ? undefined : { maxHeight: "16em", overflow: "auto" }}>
           {shown.slice(0, all ? 400 : 80).map((e) => (
             <div key={`${e.modId}-${e.fileId}`} className={`row${e.status === "unavailable" && !e.replacement ? " off" : ""}`}>
               <span className="m-main"><span className="m-t">{e.name}</span>
                 <span className="m-meta"><span>{e.fileName}</span><span>v{e.version}</span>{e.optional && <span>optional</span>}
-                  {e.replacement && <span>file gone: using v{e.replacement[1]}</span>}</span></span>
+                  {e.replacement && <span>file gone: using v{e.replacement[1]}</span>}</span>
+                {c.manifest?.instructions[String(e.modId)] && <span style={{ fontSize: ".82em", whiteSpace: "normal" }} title="The curator's note for this mod">{c.manifest.instructions[String(e.modId)]}</span>}</span>
               <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                 <span>{bytesText(e.size)}</span>
                 {e.status === "installed" && <Pill tone="ok">You have it</Pill>}
@@ -164,7 +175,6 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
             </div>
           </div>
         )}
-        <p className="dim" style={{ fontSize: ".82em" }}>Installer choices and rules saved in the collection are not applied yet; each mod installs with its default layout.</p>
         <div className="actions" style={{ justifyContent: "flex-end" }}>
           {c.entries.some((e) => e.optional) && <Switch checked={optional} onChange={setOptional}>Include optional mods</Switch>}
           {onClose && <Key variant="ghost" onClick={onClose}>Cancel</Key>}
