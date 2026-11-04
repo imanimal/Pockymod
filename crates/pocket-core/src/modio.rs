@@ -1,7 +1,7 @@
 //! mod.io, read-only (spec section 6, a later-phase experiment behind a flag).
 //! Checked here: the REST API at https://api.mod.io/v1 answers 401 without `api_key`, so browsing needs a key.
 //! UNVERIFIED: whether Cyberpunk 2077's game ID and a key are open to third-party apps (the docs suggest keys are
-//! tied to a game; ask developers@mod.io), and every field below, which follows mod.io's public v1 docs.
+//! tied to a game; ask mod.io's developer contact), and every field below, which follows mod.io's public v1 docs.
 //! Installs are left to the game: mod.io mods are subscribed and installed from the game's own Mods menu.
 
 use crate::credentials::{OsKeyring, Secret, SecretStore};
