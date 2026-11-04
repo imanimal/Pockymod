@@ -59,6 +59,7 @@ export function installKeys(opts: { views: string[]; go: (view: string) => void;
 // Every `title` in the app shows as the app's own tip (themed, quick, never off screen) instead of the system's slow
 // one, on hover and on keyboard or controller focus. The title moves to data-tip while shown, so the two never
 // double up.
+const TIPPED = "[title], [data-tip], .btn.icon[aria-label], .wk[aria-label]";
 export function installTips(): () => void {
   let tip: HTMLDivElement | null = null;
   let timer = 0;
@@ -70,12 +71,12 @@ export function installTips(): () => void {
     tip?.remove(); tip = null;
   };
   const show = (el: HTMLElement) => {
-    const text = el.getAttribute("title") || el.dataset.tip;
+    // an icon-only key with no title says what it is with its label
+    const text = el.getAttribute("title") || el.dataset.tip || el.getAttribute("aria-label");
     if (!text) return;
     hide();
     cur = el;
-    el.dataset.tip = text;
-    el.removeAttribute("title");
+    if (el.hasAttribute("title") || el.dataset.tip) { el.dataset.tip = text; el.removeAttribute("title"); }
     timer = window.setTimeout(() => {
       if (cur !== el || !el.isConnected) return;
       tip = document.createElement("div");
@@ -91,11 +92,11 @@ export function installTips(): () => void {
     }, 380);
   };
   const over = (e: Event) => {
-    const el = (e.target as Element | null)?.closest?.("[title], [data-tip]") as HTMLElement | null;
+    const el = (e.target as Element | null)?.closest?.(TIPPED) as HTMLElement | null;
     if (el && el !== cur) show(el);
     else if (!el && cur) hide();
   };
-  const focus = (e: FocusEvent) => { const el = (e.target as Element | null)?.closest?.("[title], [data-tip]") as HTMLElement | null; if (el && document.documentElement.classList.contains("kbd")) show(el); };
+  const focus = (e: FocusEvent) => { const el = (e.target as Element | null)?.closest?.(TIPPED) as HTMLElement | null; if (el && document.documentElement.classList.contains("kbd")) show(el); };
   const out = (e: MouseEvent) => { if (cur && !cur.contains(e.relatedTarget as Node)) hide(); };
   // keyboard or controller in use: focus shows tips and rings; the mouse puts it back
   const kbd = (e: KeyboardEvent) => { if (e.key === "Tab" || e.key.startsWith("Arrow")) document.documentElement.classList.add("kbd"); };
