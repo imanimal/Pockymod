@@ -138,7 +138,6 @@ export function App() {
         <div className="foot">
           <LaunchDeck onHealth={() => setView("health")} />
           <RateLcd />
-          <ProgramKey icon="gallery" label="Gallery" on={view === "gallery"} onClick={() => setView("gallery")} />
         </div>
       </nav>
 
@@ -149,7 +148,7 @@ export function App() {
             onOpenPage={(modId) => nexusPages.mod(modId).catch((e) => toast(errorText(e), true))} />
         </div>
         {view === "gallery" ? <Gallery />
-          : view === "settings" ? <Settings />
+          : view === "settings" ? <Settings onGallery={() => setView("gallery")} />
           : view === "downloads" ? <Downloads snap={snap} />
           : view === "library" ? <Library updates={updates} onExisting={() => setExistingOpen(true)} />
           : view === "health" ? <Health onNavigate={setView} onIssues={setHealthIssues} />

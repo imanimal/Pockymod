@@ -203,9 +203,9 @@
 @keyframes scanLn { from { clip-path: inset(0 100% 0 0); } }
 .scan-bar { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; height: 8px; }
 .scan-bar b { background: color-mix(in srgb, var(--chrome-fg) 14%, transparent); border-radius: 1px; transition: background calc(var(--m) * 120ms) steps(2, end); }
-.scan-bar b.on { background: var(--disp-bg); box-shadow: 0 0 4px color-mix(in srgb, var(--disp-bg) 60%, transparent); }
+.scan-bar b.on { background: var(--acc2); box-shadow: 0 0 4px color-mix(in srgb, var(--acc2) 50%, transparent); }
 .scan-bar.sweep { display: block; position: relative; background: color-mix(in srgb, var(--chrome-fg) 10%, transparent); border-radius: 2px; overflow: hidden; }
-.scan-bar.sweep i { position: absolute; top: 0; bottom: 0; width: 22%; background: var(--disp-bg); animation: scanSweep calc(var(--m) * 1400ms + 1ms) steps(18, end) infinite alternate; }
+.scan-bar.sweep i { position: absolute; top: 0; bottom: 0; width: 22%; background: var(--acc2); animation: scanSweep calc(var(--m) * 1400ms + 1ms) steps(18, end) infinite alternate; }
 @keyframes scanSweep { from { left: 0; } to { left: 78%; } }
 .scan-sub { font-size: .8em; color: color-mix(in srgb, var(--chrome-fg) 60%, transparent); }
 

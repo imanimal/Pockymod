@@ -7,7 +7,7 @@ import { GameFolders } from "./GameFolders";
 import { About, Experiments } from "./About";
 import { InstallPrefs } from "./InstallPrefs";
 
-export function Settings() {
+export function Settings({ onGallery }: { onGallery?: () => void }) {
   return (
     <div className="cols">
       <NexusAccount />
@@ -15,7 +15,7 @@ export function Settings() {
       <InstallPrefs />
       <Appearance />
       <Experiments />
-      <About />
+      <About onGallery={onGallery} />
     </div>
   );
 }

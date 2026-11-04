@@ -4,7 +4,7 @@ import { Key, Module, Pill, Switch } from "../ui/pocket";
 import { errorText, extras, settings, type AppUpdate } from "../lib/api";
 import { toast } from "../ui/toast";
 
-export function About() {
+export function About({ onGallery }: { onGallery?: () => void }) {
   const [u, setU] = useState<AppUpdate | null>(null);
   const [busy, setBusy] = useState(false);
   return (
@@ -13,6 +13,7 @@ export function About() {
       <div className="actions" style={{ marginTop: ".6em" }}>
         <Key size="sm" icon="refresh" disabled={busy} onClick={async () => { setBusy(true); try { setU(await extras.appUpdate()); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); } }}>Check for a new version</Key>
         {u && <Pill tone={u.newer ? "soon" : "ok"}>{u.message}</Pill>}
+        {onGallery && <Key size="sm" variant="ghost" icon="gallery" onClick={onGallery} title="Every part of the interface in the current theme, for theme makers">Design gallery</Key>}
       </div>
       {u?.newer && u.url && <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}>Download it from <code>{u.url}</code>. Updates do not install themselves yet.</p>}
       {u?.notes && <div className="desc" style={{ marginTop: ".4em", maxHeight: "10em", overflow: "auto" }}>{u.notes}</div>}
