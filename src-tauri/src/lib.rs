@@ -31,6 +31,12 @@ pub fn run() {
             state.nexus.set_observer(std::sync::Arc::new(move |rl| { let _ = handle.emit("rate-limit", rl); }));
             app.manage(state);
             runner::start(app.handle().clone());
+            // half-finished extractions from a crash (<library>/staging/*.new) are never used again
+            if let Ok((_, lib)) = state::Paths::load(&app.state::<state::AppState>().db.lock().unwrap()).require() {
+                for e in std::fs::read_dir(lib.join("staging")).into_iter().flatten().flatten() {
+                    if e.path().extension().is_some_and(|x| x == "new") { let _ = std::fs::remove_dir_all(e.path()); }
+                }
+            }
             // the app was closed while the game ran without mods: put them back once the game is gone
             let h = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -85,6 +91,7 @@ pub fn run() {
             commands::collections::local_collection_export,
             commands::collections::local_collection_import,
             commands::game::game_launch_vanilla,
+            commands::game::scripts_reset,
             commands::game::game_vanilla_restore,
             commands::game::game_vanilla_pending,
             commands::game::game_open_folder,

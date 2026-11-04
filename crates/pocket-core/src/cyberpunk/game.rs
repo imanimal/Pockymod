@@ -257,3 +257,29 @@ mod tests {
         assert!(!info.frameworks.iter().find(|f| f.key == "cet").unwrap().installed);
     }
 }
+
+/// redscript compiles every script into r6/cache/final.redscripts and keeps the game's own as .bk. Without
+/// redscript (removed, or after a game patch) a stale compiled file breaks the game; this puts the game's own
+/// back and empties the modded cache. Returns how many files it changed.
+pub fn reset_scripts(game: &Path) -> std::io::Result<usize> {
+    let cache = game.join("r6/cache");
+    let mut n = 0;
+    let bk = cache.join("final.redscripts.bk");
+    if bk.is_file() {
+        let fin = cache.join("final.redscripts");
+        let _ = std::fs::remove_file(&fin);
+        std::fs::rename(&bk, &fin)?;
+        n += 1;
+    }
+    if let Ok(rd) = std::fs::read_dir(cache.join("modded")) {
+        for e in rd.flatten() {
+            if e.path().is_file() && std::fs::remove_file(e.path()).is_ok() { n += 1; }
+        }
+    }
+    Ok(n)
+}
+
+/// Compiled scripts are left over from a redscript that is gone.
+pub fn stale_scripts(game: &Path) -> bool {
+    game.join("r6/cache/final.redscripts.bk").is_file() && !game.join("engine/tools/scc.exe").is_file()
+}

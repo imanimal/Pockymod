@@ -21,7 +21,7 @@ import { FomodDialog } from "./screens/FomodDialog";
 import { Create } from "./screens/Create";
 import { Toasts, toast } from "./ui/toast";
 import { installPrefs } from "./lib/prefs";
-import { errorText, game, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
+import { errorText, game, handler, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
 import { applyTheme, getThemeChoice, setThemeChoice, watchSystemTheme } from "./lib/theme";
 import { windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
@@ -68,7 +68,14 @@ export function App() {
     const t1 = setTimeout(check, 4000);
     const t2 = setInterval(check, 6 * 3600 * 1000);
     game.health().then((h) => setHealthIssues(h.problems)).catch(() => {});
-    return () => { offs.forEach((f) => f()); clearTimeout(t1); clearInterval(t2); };
+    // another manager (often Vortex on its own start) took the browser's download links: offer them back once
+    const t3 = setTimeout(() => {
+      Promise.all([handler.status(), settings.get("onboarded"), settings.get("links.other")]).then(([h, ob, other]) => {
+        if (ob !== "1" || other === "1" || !h.supported || h.ours || !h.owner) return;
+        toast(`${h.owner} now opens Mod Manager Download links from your browser.`, false, { label: "Take them back", run: () => { void handler.register().then(() => toast("Browser links open in Pocket Mods again.")).catch((e) => toast(errorText(e), true)); } });
+      }).catch(() => {});
+    }, 2500);
+    return () => { offs.forEach((f) => f()); clearTimeout(t1); clearInterval(t2); clearTimeout(t3); };
   }, []);
 
   const s = snap?.summary;

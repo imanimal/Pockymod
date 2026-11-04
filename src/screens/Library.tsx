@@ -5,7 +5,7 @@ import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
 import { Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Tag, bytesText } from "../ui/pocket";
 import {
-  FRAMEWORKS, errorText, groups as groupsApi, library, pickArchive, profiles, queueMod,
+  FRAMEWORKS, errorText, groups as groupsApi, library, pickArchive, profiles, queue, queueMod,
   type Conflict, type DeployOutcome, type DownloadRow, type InstallOutcome, type InstallPlan, type InstallRow, type Update,
 } from "../lib/api";
 import { toast } from "../ui/toast";
@@ -90,9 +90,11 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     if (action === "uninstall") { await ops.remove(list); setSel(new Set()); }
     else await ops.setEnabled(list, action === "enable");
   });
+  // an update queues the file that follows the installed one (2K stays 2K)
+  const queueUpdate = (r: InstallRow) => { const u = upd.get(r.modId); return u?.fileId ? queue.add(u.modId, u.fileId, true) : queueMod(r.modId); };
   const updateMany = (list: InstallRow[]) => run(async () => {
     let n = 0;
-    for (const r of list) { try { await queueMod(r.modId); n++; } catch { /* reported by the queue */ } }
+    for (const r of list) { try { await queueUpdate(r); n++; } catch { /* reported by the queue */ } }
     toast(`${n} ${n === 1 ? "update" : "updates"} queued.`);
   });
   const moveTo = (g: string | null) => run(async () => { await ops.moveToGroup(selected, g); setMoveOpen(false); setNewGroup(""); });
@@ -254,7 +256,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       <span className="m-meta">{r.version && <span>v{r.version}</span>}{SOURCE[r.source] && <span>{SOURCE[r.source]}</span>}</span>
                       <span className="lcard-f" onClick={(e) => e.stopPropagation()}>
                         <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}>{r.enabled ? "On" : "Off"}</Switch>
-                        {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueMod(r.modId); toast(`${r.name} update queued.`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
+                        {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
                       </span>
                     </span>
                   </div>
@@ -281,7 +283,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       </span>
                     </span>
                     <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
-                      {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueMod(r.modId); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
+                      {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
                       {r.enabled && r.deployedFiles === 0 && <Key size="sm" onClick={() => deploy(r)} disabled={busy}>Deploy</Key>}
                       <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}><span className="sr-only">On</span></Switch>
                       <Key size="sm" variant="ghost" icon="trash" onClick={() => doBulk("uninstall", [r.id])} disabled={busy} aria-label={`Remove ${r.name}`} title={r.source === "vortex" ? "Remove from the game; it stays in Vortex" : "Remove"} />

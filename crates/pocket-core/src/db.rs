@@ -43,6 +43,9 @@ const MIGRATIONS: &[&str] = &[
     // 6: removed mods, kept for a while so a removal (or an update) can be undone
     "CREATE TABLE trash (id INTEGER PRIMARY KEY, install_id INTEGER NOT NULL, name TEXT NOT NULL, mod_id INTEGER NOT NULL, version TEXT NOT NULL,
         source TEXT NOT NULL, reason TEXT NOT NULL, data TEXT NOT NULL, kept TEXT, size INTEGER NOT NULL DEFAULT 0, removed_at INTEGER NOT NULL);",
+    // 7: the Nexus file's own name (its line: 2K or 4K, main or optional), and faster per-install lookups
+    "ALTER TABLE installs ADD COLUMN file_name TEXT;
+     CREATE INDEX IF NOT EXISTS deployed_by_install ON deployed_files (install_id);",
 ];
 
 pub struct Db { pub conn: Connection }

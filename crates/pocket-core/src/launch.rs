@@ -92,7 +92,7 @@ mod tests {
         }
         let db = crate::db::Db::memory().unwrap();
         let req = crate::install::InstallRequest { mod_id: 1, file_id: 1, name: "A".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true,
-            options: Default::default(), fomod_choices: None, origin: None, keep_existing: false };
+            options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
         crate::install::install(&db, &game, &lib, &req).unwrap();
         let (out, _) = vanilla_prepare(&db, &game).unwrap();
         assert_eq!(out, 1);

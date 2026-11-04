@@ -227,7 +227,7 @@ export interface GameInfo {
 }
 export type Fix =
   | { kind: "installMod"; modId: number; name: string } | { kind: "updateMod"; modId: number; name: string }
-  | { kind: "runRedmodDeploy" } | { kind: "redeploy"; installId: number } | { kind: "openLibrary" } | { kind: "openSettings" };
+  | { kind: "runRedmodDeploy" } | { kind: "redeploy"; installId: number } | { kind: "openLibrary" } | { kind: "openSettings" } | { kind: "resetScripts" };
 export interface Issue { id: string; severity: "problem" | "warning" | "info"; area: "game" | "frameworks" | "deploy" | "redmod" | "conflicts"; title: string; detail: string; fix: Fix | null }
 export interface FrameworkRow extends FrameworkState { latest: string | null; updateAvailable: boolean; neededBy: string[] }
 export interface HealthReport { game: GameInfo | null; patch: string | null; patchSource: "detected" | "settings" | "assumed"; frameworks: FrameworkRow[]; issues: Issue[]; problems: number; warnings: number }
@@ -235,7 +235,7 @@ export interface RedmodResult { ok: boolean; mods: string[]; problems: string[];
 export interface RedmodEntry { installId: number; name: string; folders: string[]; enabled: boolean; loadOrder: number }
 export interface Profile { id: number; name: string; active: boolean; enabled: number }
 export interface SwitchReport { removed: number[]; deployed: number[]; notDeployed: Array<[number, string]> }
-export interface Update { modId: number; name: string; installed: string; latest: string; updatedAt: string }
+export interface Update { modId: number; name: string; installed: string; latest: string; updatedAt: string; installId?: number; fileId?: number }
 
 export const game = {
   detect: () => call<GameInstall[]>("game_detect"),
@@ -367,6 +367,7 @@ export const vanilla = {
   restore: () => call<number>("game_vanilla_restore"),
   onChange: (cb: (e: { state: "running" | "restored"; out?: number; back?: number }) => void) => listen<{ state: "running" | "restored"; out?: number; back?: number }>("vanilla", cb),
 };
+export const resetScripts = () => call<number>("scripts_reset");
 export const openGameFolder = (sub?: string) => call<void>("game_open_folder", { sub: sub ?? null });
 
 export const downloadsUsage = () => call<{ files: number; bytes: number; installedFiles: number; installedBytes: number }>("downloads_usage");

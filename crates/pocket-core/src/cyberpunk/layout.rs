@@ -82,7 +82,8 @@ fn anchor(parts: &[&str]) -> Option<usize> {
         match s {
             "archive" => next == "pc",
             "bin" => next == "x64",
-            "r6" => matches!(next, "scripts" | "tweaks" | "config" | "input" | "cache"),
+            // audioware keeps its .yml files in r6/audioware (they are not TweakXL tweaks)
+            "r6" => matches!(next, "scripts" | "tweaks" | "config" | "input" | "cache" | "audioware" | "storages"),
             "red4ext" => true,
             "engine" => matches!(next, "config" | "tools"),
             // REDmod: mods/<name>/... with an info.json somewhere at mods/<name>/info.json (checked by the caller)
@@ -260,6 +261,14 @@ pub fn safe_folder(name: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn audioware_files_stay_in_their_folder() {
+        let p = plan_install(&["MyRadio/r6/audioware/MyRadio/sounds.yml".to_string(), "MyRadio/r6/audioware/MyRadio/a.wav".to_string()], "MyRadio");
+        let t: Vec<&str> = p.files.iter().map(|f| f.target.as_str()).collect();
+        assert_eq!(t.len(), 2);
+        assert!(t.iter().all(|x| x.starts_with("r6/audioware/MyRadio/")), "{t:?}");
+    }
+
     use super::*;
     fn v(a: &[&str]) -> Vec<String> { a.iter().map(|s| s.to_string()).collect() }
     fn targets(p: &InstallPlan) -> Vec<&str> { p.files.iter().map(|f| f.target.as_str()).collect() }

@@ -82,7 +82,7 @@ export function GameFolders() {
       {h?.supported && (
         <div className="actions">
           {h.ours ? <Pill tone="ok">Pocket Mods opens nxm:// links</Pill> : <Pill tone="soon">{h.owner ? `${h.owner} opens nxm:// links` : "No app opens nxm:// links"}</Pill>}
-          {!h.ours && <Key size="sm" icon="link" onClick={() => handler.register().then((s) => { setH(s); toast("Pocket Mods now opens nxm:// links."); }).catch((e) => toast(errorText(e), true))}>Use Pocket Mods</Key>}
+          {!h.ours && <Key size="sm" icon="link" onClick={() => handler.register().then((s) => { setH(s); void settings.set("links.other", "0"); toast("Pocket Mods now opens nxm:// links."); }).catch((e) => toast(errorText(e), true))}>Use Pocket Mods</Key>}
           <Key size="sm" variant="ghost" onClick={() => testHandler().then(() => toast("Test link sent. If Pocket Mods gets it, a note says so in a moment.")).catch((e) => toast(errorText(e), true))}>Test</Key>
         </div>
       )}

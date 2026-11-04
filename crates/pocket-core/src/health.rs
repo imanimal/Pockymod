@@ -27,6 +27,7 @@ pub enum Fix {
     Redeploy { install_id: i64 },
     OpenLibrary,
     OpenSettings,
+    ResetScripts,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -126,6 +127,23 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
     // frameworks need their own requirements too
     for st in &g.frameworks {
         if st.installed { for need in frameworks::info(st.framework).needs { needed.entry(*need).or_default().push(st.name.to_string()); } }
+    }
+
+    if crate::cyberpunk::game::stale_scripts(&g.path) {
+        issues.push(Issue { id: "scripts.stale".into(), severity: Severity::Problem, area: "game", title: "Compiled scripts are left from redscript".into(),
+            detail: "redscript is gone but the scripts it compiled are still in r6/cache, which can stop the game from starting. Resetting puts the game's own scripts back.".into(),
+            fix: Some(Fix::ResetScripts) });
+    }
+    // RED4ext 1.13 and newer do what cybercmd did; the redmodding wiki says to uninstall cybercmd then
+    let red4 = g.frameworks.iter().find(|f| f.framework == Framework::Red4ext);
+    let red4_covers_cybercmd = red4.is_some_and(|r| r.installed && r.version.as_deref().is_none_or(|v| version_key(v) >= version_key("1.13")));
+    if red4_covers_cybercmd {
+        needed.remove(&Framework::Cybercmd);
+        if g.frameworks.iter().any(|f| f.framework == Framework::Cybercmd && f.installed) {
+            issues.push(Issue { id: "fw.cybercmd.obsolete".into(), severity: Severity::Warning, area: "frameworks", title: "cybercmd is no longer needed".into(),
+                detail: "RED4ext 1.13 and newer do its job. The modding wiki advises removing cybercmd; turn it off in Library and check the game still starts.".into(),
+                fix: Some(Fix::OpenLibrary) });
+        }
     }
 
     let exe_patch_time = g.exe_modified;

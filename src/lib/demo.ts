@@ -232,6 +232,7 @@ export function installDemo() {
     game_launch: () => { throw { kind: "demo", message: "Starting the game needs the desktop app." }; },
     game_launch_vanilla: () => { throw { kind: "demo", message: "Starting the game needs the desktop app." }; },
     game_vanilla_pending: () => false,
+    scripts_reset: () => 2,
     game_vanilla_restore: () => 0,
     game_open_folder: () => { throw { kind: "demo", message: "Opening folders needs the desktop app." }; },
     app_update_check: () => ({ current: "0.1.0", latest: null, newer: false, notes: null, url: null, message: "No published release found yet." }),

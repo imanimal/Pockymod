@@ -107,7 +107,16 @@ impl Queue {
     pub fn set(&mut self, id: u64, state: ItemState) { if let Some(i) = self.get_mut(id) { i.state = state; } }
     pub fn remove(&mut self, id: u64) { self.items.retain(|i| i.id != id || i.is_busy()); }
     pub fn clear_finished(&mut self) { self.items.retain(|i| i.is_open()); }
-    pub fn retry(&mut self, id: u64) { if let Some(i) = self.get_mut(id) { if matches!(i.state, ItemState::Failed { .. }) { i.state = ItemState::Waiting; i.nxm = None; } } }
+    /// Try a failed item again. Its Nexus link is kept while it is still valid, so a retry needs no new click.
+    pub fn retry(&mut self, id: u64) {
+        if let Some(i) = self.get_mut(id) {
+            if matches!(i.state, ItemState::Failed { .. }) {
+                i.state = ItemState::Waiting;
+                let now = crate::db::now();
+                i.nxm = i.nxm.take().filter(|l| !l.expired(now));
+            }
+        }
+    }
 
     pub fn summary(&self) -> Summary {
         let open: Vec<&QueueItem> = self.items.iter().filter(|i| i.is_open()).collect();

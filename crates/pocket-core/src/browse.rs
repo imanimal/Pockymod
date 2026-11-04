@@ -136,6 +136,60 @@ pub fn main_file(files: &[ModFile]) -> Option<&ModFile> {
         .or_else(|| files.iter().filter(|f| f.is_current()).max_by_key(|f| f.date))
 }
 
+/// A file's "line": its name without version numbers and filler words, so "Body 4K v1.2" and "Body 4K 1.3" are
+/// one line and "Body 2K" another. Updates follow a line; installing an optional file does not replace the main one.
+pub fn file_line(name: &str) -> String {
+    let lower = name.to_lowercase();
+    let words: Vec<String> = lower.split(|c: char| !c.is_alphanumeric() && c != '.').filter(|w| !w.is_empty())
+        .filter(|w| {
+            let v = w.trim_start_matches('v');
+            let version = !v.is_empty() && v.chars().all(|c| c.is_ascii_digit() || c == '.') && (v.contains('.') || w.starts_with('v') || v.len() >= 3);
+            !version && !["main", "file", "files", "update", "version", "ver", "the", "latest", "new"].contains(w)
+        })
+        .map(|w| w.trim_matches('.').to_string()).filter(|w| !w.is_empty()).collect();
+    words.join(" ")
+}
+
+/// The file that updates `old` (by its id, or its name when Nexus no longer lists it): the newest current file of
+/// the same line; else, for a mod with a single main file, that file.
+pub fn successor<'a>(files: &'a [ModFile], old_file_id: u32, old_name: Option<&str>) -> Option<&'a ModFile> {
+    let old = files.iter().find(|f| f.file_id == old_file_id);
+    let line = old.map(|f| file_line(&f.name)).or_else(|| old_name.map(file_line)).filter(|l| !l.is_empty());
+    let current = || files.iter().filter(|f| f.is_current());
+    if let Some(l) = &line {
+        if let Some(f) = current().filter(|f| &file_line(&f.name) == l).max_by_key(|f| f.date) { return Some(f); }
+    }
+    let mains: Vec<&ModFile> = files.iter().filter(|f| f.category == "MAIN").collect();
+    // an optional file with no newer copy of its own has no update
+    if old.is_some_and(|f| f.category == "OPTIONAL" || f.category == "MISCELLANEOUS") { return None; }
+    if mains.len() == 1 { return Some(mains[0]); }
+    if old.is_none() && line.is_none() { return main_file(files); }
+    None
+}
+
+/// Whether installing `new` should take out an install of `old_file_id` of the same mod: same line, or (for a
+/// mod with a single main file) the old main file. An optional file never takes out the main one.
+pub fn replaces(files: &[ModFile], new: &ModFile, old_file_id: u32, old_name: Option<&str>) -> bool {
+    if new.file_id == old_file_id { return true; }
+    if new.category == "OPTIONAL" || new.category == "MISCELLANEOUS" {
+        let old_line = files.iter().find(|f| f.file_id == old_file_id).map(|f| file_line(&f.name)).or_else(|| old_name.map(file_line));
+        return old_line.is_some_and(|l| l == file_line(&new.name));
+    }
+    successor(files, old_file_id, old_name).is_some_and(|f| f.file_id == new.file_id)
+}
+
+/// A mod and its file list, from the cache when it matches `updated_at` (or any cached copy when None), else one
+/// request. No file-content lookups: for update checks and matching.
+pub async fn mod_files(client: &NexusClient, db: &Mutex<Db>, mod_id: u32, updated_at: Option<&str>) -> Result<(ModDetail, Vec<ModFile>)> {
+    let cached = db.lock().unwrap().mod_get(mod_id, updated_at)?;
+    if let Some((d, f)) = cached {
+        if let (Ok(d), Ok(f)) = (serde_json::from_str(&d), serde_json::from_str(&f)) { return Ok((d, f)); }
+    }
+    let (d, f) = client.mod_detail(mod_id).await?;
+    db.lock().unwrap().mod_put(mod_id, &d.updated_at, &serde_json::to_string(&d).unwrap_or_default(), &serde_json::to_string(&f).unwrap_or_default(), now())?;
+    Ok((d, f))
+}
+
 pub async fn detail(client: &NexusClient, db: &Mutex<Db>, mod_id: u32, updated_at: Option<&str>) -> Result<DetailView> {
     let cached = db.lock().unwrap().mod_get(mod_id, updated_at)?;
     let (detail, files) = match cached.and_then(|(d, f)| Some((serde_json::from_str::<ModDetail>(&d).ok()?, serde_json::from_str::<Vec<ModFile>>(&f).ok()?))) {
@@ -209,4 +263,30 @@ pub async fn media(client: &NexusClient, db: &Mutex<Db>, kind: &str, sort: &str,
     let page = data.get("media").cloned().unwrap_or(serde_json::Value::Null);
     db.lock().unwrap().cache_put(&key, &page.to_string(), now())?;
     Ok(page)
+}
+
+#[cfg(test)]
+mod line_tests {
+    use super::*;
+    fn f(id: u32, name: &str, cat: &str, date: i64) -> ModFile {
+        ModFile { file_id: id, name: name.into(), version: "1".into(), category: cat.into(), size: 1, size_in_bytes: None, date, primary: 0, uri: format!("{id}.zip"), description: None }
+    }
+    #[test]
+    fn updates_follow_the_variant_and_optionals_stay() {
+        assert_eq!(file_line("Body Mod 4K v1.2.3"), "body mod 4k");
+        assert_eq!(file_line("Body Mod 4K - 1.3"), "body mod 4k");
+        assert_ne!(file_line("Body Mod 2K 1.3"), file_line("Body Mod 4K 1.3"));
+        let files = vec![f(1, "Body 2K 1.0", "OLD_VERSION", 1), f(2, "Body 4K 1.0", "OLD_VERSION", 1), f(3, "Body 2K 1.1", "MAIN", 2), f(4, "Body 4K 1.1", "MAIN", 3),
+                         f(5, "Extra colours", "OPTIONAL", 2)];
+        assert_eq!(successor(&files, 1, None).map(|x| x.file_id), Some(3), "the 2K user stays on 2K");
+        assert_eq!(successor(&files, 2, None).map(|x| x.file_id), Some(4));
+        assert!(!replaces(&files, &files[4], 3, None), "an optional file does not take out the main one");
+        assert!(replaces(&files, &files[2], 1, None));
+        assert!(!replaces(&files, &files[3], 1, None), "4K does not replace 2K");
+        // a single-main mod that renamed its file between versions
+        let one = vec![f(10, "TweakXL", "OLD_VERSION", 1), f(11, "TweakXL Release", "MAIN", 2)];
+        assert_eq!(successor(&one, 10, None).map(|x| x.file_id), Some(11));
+        // a file Nexus no longer lists, known only by an old name
+        assert_eq!(successor(&files, 999, Some("Body 4K 0.9")).map(|x| x.file_id), Some(4));
+    }
 }

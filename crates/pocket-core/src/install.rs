@@ -48,6 +48,12 @@ pub struct InstallRequest {
     /// Vortex or tracked from either), keep the user's copy and install nothing.
     #[serde(default)]
     pub keep_existing: bool,
+    /// The Nexus file's name ("Main file 4K"), kept so updates follow the same file.
+    #[serde(default)]
+    pub file_name: Option<String>,
+    /// With `replace_older`: take out only these installs of the mod (the ones this file updates), not every one.
+    #[serde(default)]
+    pub replace_only: Option<Vec<i64>>,
 }
 fn yes() -> bool { true }
 
@@ -185,14 +191,14 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
     if let Some(g) = db.conn.query_row("SELECT group_name FROM installs WHERE mod_id = ?1 AND id != ?2 AND group_name IS NOT NULL", params![req.mod_id, install_id], |r| r.get::<_, String>(0)).optional()? {
         db.conn.execute("UPDATE installs SET group_name = ?2 WHERE id = ?1", params![install_id, g])?;
     }
-    db.conn.execute("UPDATE installs SET origin = ?2 WHERE id = ?1", params![install_id, req.origin])?;
+    db.conn.execute("UPDATE installs SET origin = ?2, file_name = COALESCE(?3, file_name) WHERE id = ?1", params![install_id, req.origin, req.file_name])?;
     add_to_active_profile(db, install_id)?;
 
     // an update: take the older file of the same mod out first, put it back if the new one fails
     let older: Vec<i64> = if req.replace_older {
         let mut st = db.conn.prepare("SELECT id FROM installs WHERE mod_id = ?1 AND id != ?2")?;
         let ids = st.query_map(params![req.mod_id, install_id], |r| r.get(0))?.collect::<std::result::Result<Vec<i64>, _>>()?;
-        ids
+        match &req.replace_only { Some(only) => ids.into_iter().filter(|i| only.contains(i)).collect(), None => ids }
     } else { Vec::new() };
     for id in &older { undeploy_any(db, game, *id)?; }
 
@@ -312,8 +318,11 @@ pub fn redeploy(db: &Db, game: &Path, library: &Path, install_id: i64, opts: &De
 /// Remove a mod. A mod tracked from Vortex leaves the game and Vortex's manifest, but its folder in Vortex's
 /// staging folder is kept (it is Vortex's), so it is still there in Vortex.
 pub fn uninstall(db: &Db, game: &Path, install_id: i64) -> Result<UndeployReport> {
+    let is_redscript: bool = db.conn.query_row("SELECT mod_id = 1511 FROM installs WHERE id = ?1", params![install_id], |r| r.get(0)).optional()?.unwrap_or(false);
     let rep = undeploy_any(db, game, install_id)?;
     remove_install_record(db, install_id)?;
+    // without redscript its compiled scripts break the game: put the game's own back
+    if is_redscript { let _ = crate::cyberpunk::game::reset_scripts(game); }
     Ok(rep)
 }
 
@@ -359,12 +368,12 @@ fn dir_size(p: &Path) -> u64 { walkdir::WalkDir::new(p).into_iter().flatten().fi
 /// into `<library>/trash`. The caller has already taken it out of the game.
 pub fn to_trash(db: &Db, install_id: i64, reason: &str) -> Result<Option<i64>> {
     let row: Option<serde_json::Value> = db.conn.query_row(
-        "SELECT mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, updated_at, source, external, category, group_name, origin FROM installs WHERE id = ?1",
+        "SELECT mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, updated_at, source, external, category, group_name, origin, file_name FROM installs WHERE id = ?1",
         params![install_id], |r| Ok(serde_json::json!({
             "modId": r.get::<_, u32>(0)?, "fileId": r.get::<_, u32>(1)?, "name": r.get::<_, String>(2)?, "version": r.get::<_, String>(3)?, "modType": r.get::<_, String>(4)?,
             "frameworks": r.get::<_, String>(5)?, "staging": r.get::<_, String>(6)?, "installedAt": r.get::<_, i64>(7)?, "updatedAt": r.get::<_, Option<String>>(8)?,
             "source": r.get::<_, String>(9)?, "external": r.get::<_, Option<String>>(10)?, "category": r.get::<_, Option<String>>(11)?, "group": r.get::<_, Option<String>>(12)?,
-            "origin": r.get::<_, Option<String>>(13)?,
+            "origin": r.get::<_, Option<String>>(13)?, "fileName": r.get::<_, Option<String>>(14)?,
         }))).optional()?;
     let Some(mut row) = row else { return Ok(None) };
     let profiles: Vec<serde_json::Value> = {
@@ -423,11 +432,11 @@ pub fn restore_trash(db: &Db, game: &Path, library: &Path, trash_id: i64, opts: 
     }
     let free: bool = db.conn.query_row("SELECT NOT EXISTS(SELECT 1 FROM installs WHERE id = ?1)", params![old_id], |r| r.get(0))?;
     db.conn.execute(
-        "INSERT INTO installs (id, mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, updated_at, source, external, category, group_name, origin)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+        "INSERT INTO installs (id, mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, updated_at, source, external, category, group_name, origin, file_name)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
         params![if free { Some(old_id) } else { None }, mod_id, file_id, v["name"].as_str(), v["version"].as_str(), v["modType"].as_str(), v["frameworks"].as_str().unwrap_or("[]"),
             v["staging"].as_str(), v["installedAt"].as_i64().unwrap_or_else(now), v["updatedAt"].as_str(), v["source"].as_str().unwrap_or("pocket"), v["external"].as_str(),
-            v["category"].as_str(), v["group"].as_str(), v["origin"].as_str()])?;
+            v["category"].as_str(), v["group"].as_str(), v["origin"].as_str(), v["fileName"].as_str()])?;
     let id = db.conn.last_insert_rowid();
     for p in v["profiles"].as_array().into_iter().flatten() {
         let _ = db.conn.execute("INSERT OR IGNORE INTO profile_mods (profile_id, install_id, enabled, load_order) VALUES (?1, ?2, ?3, ?4)",
@@ -555,7 +564,7 @@ mod tests {
         zip(&a, &[("red4ext/plugins/TweakXL/TweakXL.dll", "theirs"), ("r6/scripts/TweakXL/TweakXL.reds", "x")]);
         let db = Db::memory().unwrap();
         let req = InstallRequest { mod_id: 4197, file_id: 9, name: "TweakXL".into(), version: "1.10".into(), archive: a, accept_unknown: false, replace_older: true,
-            options: Default::default(), fomod_choices: None, origin: Some("requirement".into()), keep_existing: true };
+            options: Default::default(), fomod_choices: None, origin: Some("requirement".into()), keep_existing: true, file_name: None, replace_only: None };
         let out = install(&db, &game, &lib, &req).unwrap();
         let InstallOutcome::AlreadyHave { install_id: Some(id), .. } = out else { panic!("{out:?}") };
         assert_eq!(fs::read_to_string(&mine).unwrap(), "mine", "the user's file is untouched");
@@ -582,7 +591,7 @@ mod tests {
         let db = Db::memory().unwrap();
         // an install from before this fix: the user's file was set aside
         let req = InstallRequest { mod_id: 4198, file_id: 3, name: "ArchiveXL".into(), version: "1.2".into(), archive: a, accept_unknown: false, replace_older: true,
-            options: Default::default(), fomod_choices: None, origin: Some("requirement".into()), keep_existing: false };
+            options: Default::default(), fomod_choices: None, origin: Some("requirement".into()), keep_existing: false, file_name: None, replace_only: None };
         let InstallOutcome::Installed { install_id, .. } = install(&db, &game, &lib, &req).unwrap() else { panic!() };
         assert_eq!(fs::read_to_string(&mine).unwrap(), "theirs");
         assert_eq!(list_installs(&db).unwrap()[0].replaced, 1);
@@ -604,7 +613,7 @@ mod tests {
         zip(&a, &[("archive/pc/mod/coat.archive", "coat")]);
         let db = Db::memory().unwrap();
         let req = InstallRequest { mod_id: 7, file_id: 70, name: "Coat".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true,
-            options: Default::default(), fomod_choices: None, origin: None, keep_existing: false };
+            options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
         let InstallOutcome::Installed { install_id, .. } = install(&db, &game, &lib, &req).unwrap() else { panic!() };
         set_group(&db, &[install_id], Some("Night look")).unwrap();
         uninstall(&db, &game, install_id).unwrap();
@@ -636,7 +645,7 @@ mod tests {
         let db = Db::memory().unwrap();
         let a1 = dir.path().join("v1.zip");
         zip(&a1, &[("Mod/archive/pc/mod/m.archive", "v1"), ("Mod/readme.txt", "hi")]);
-        let req = InstallRequest { mod_id: 5, file_id: 10, name: "My Mod".into(), version: "1".into(), archive: a1, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false };
+        let req = InstallRequest { mod_id: 5, file_id: 10, name: "My Mod".into(), version: "1".into(), archive: a1, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
         let out = install(&db, &game, &lib, &req).unwrap();
         let InstallOutcome::Installed { install_id: first, files, .. } = out else { panic!("{out:?}") };
         assert_eq!(files, 1);
@@ -671,7 +680,7 @@ mod tests {
             </plugins></group></optionalFileGroups></installStep></installSteps></config>"#;
         zip(&a, &[("fomod/ModuleConfig.xml", xml), ("a/j.archive", "A"), ("b/j.archive", "B")]);
         let db = Db::memory().unwrap();
-        let req = InstallRequest { mod_id: 3, file_id: 3, name: "J".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false };
+        let req = InstallRequest { mod_id: 3, file_id: 3, name: "J".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
         let InstallOutcome::NeedsChoices { fomod, defaults } = install(&db, &game, &lib, &req).unwrap() else { panic!() };
         assert_eq!(fomod.steps[0].groups[0].plugins[1].name, "B");
         assert_eq!(defaults, [[0, 0, 0]]);
@@ -713,7 +722,7 @@ mod tests {
         let a = dir.path().join("x.zip");
         zip(&a, &[("a.archive", "x"), ("tool.exe", "x")]);
         let db = Db::memory().unwrap();
-        let req = InstallRequest { mod_id: 1, file_id: 1, name: "X".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false };
+        let req = InstallRequest { mod_id: 1, file_id: 1, name: "X".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
         assert!(matches!(install(&db, &game, &dir.path().join("lib"), &req).unwrap(), InstallOutcome::NeedsReview { .. }));
         let ok = install(&db, &game, &dir.path().join("lib"), &InstallRequest { accept_unknown: true, ..req }).unwrap();
         assert!(matches!(ok, InstallOutcome::Installed { .. }));
@@ -725,7 +734,7 @@ mod tests {
         let a = dir.path().join("x.zip");
         zip(&a, &[("a.archive", "x")]);
         let db = Db::memory().unwrap();
-        let req = InstallRequest { mod_id: 1, file_id: 1, name: "X".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false };
+        let req = InstallRequest { mod_id: 1, file_id: 1, name: "X".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
         assert!(install(&db, dir.path(), &dir.path().join("lib"), &req).is_err());
     }
 }

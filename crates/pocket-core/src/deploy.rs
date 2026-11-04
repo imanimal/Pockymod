@@ -148,7 +148,18 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
             let mut prev_install = None;
             let mut in_place = false;
             match owner_of(db, &tkey)? {
-                Some((owner, _)) if owner == install_id => { remove_file(&dst, game)?; }
+                Some((owner, _)) if owner == install_id => {
+                    // ours on record, but changed since (edited in place, or replaced): keep that copy aside, never delete it
+                    let changed = dst.exists() && !same_file::is_same_file(&src, &dst).unwrap_or(false)
+                        && fs::metadata(&dst).map(|m| m.len()).ok() != Some(size);
+                    if changed {
+                        let b = backup_root.join("changed").join(&p.target);
+                        if let Some(parent) = b.parent() { fs::create_dir_all(parent)?; }
+                        let _ = fs::remove_file(&b);
+                        move_file(&dst, &b)?;
+                        backed_up.push(p.target.clone());
+                    } else { remove_file(&dst, game)?; }
+                }
                 // already this very file (a hard link to the staged one, as Vortex leaves it): nothing to move
                 None if dst.exists() && same_file::is_same_file(&src, &dst).unwrap_or(false) => { in_place = true; }
                 Some((owner, _)) => { prev_install = Some(owner); remove_file(&dst, game)?; }
@@ -156,7 +167,9 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
                     // a file no mod owns (the game's, or put there by hand): keep it to put back later
                     let b = backup_root.join(&p.target);
                     if let Some(parent) = b.parent() { fs::create_dir_all(parent)?; }
-                    if !b.exists() { move_file(&dst, &b)?; } else { remove_file(&dst, game)?; }
+                    // an older copy kept from before: this one is newer (a game patch rewrote it), so it is the one to put back
+                    if b.exists() { let _ = fs::remove_file(&b); }
+                    move_file(&dst, &b)?;
                     backup = Some(b.to_string_lossy().into_owned());
                     backed_up.push(p.target.clone());
                 }

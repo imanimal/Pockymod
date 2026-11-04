@@ -153,7 +153,7 @@ function LinksStep({ onNext }: { onNext: () => void }) {
     <Module icon="link" title="Download links from your browser" band="hot">
       <p>{h.owner} opens "Mod Manager Download" links clicked in a web browser. Pages opened inside Pocket Mods always come here, whatever you choose.</p>
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
-        <Key variant="ghost" onClick={onNext}>Keep {h.owner}</Key>
+        <Key variant="ghost" onClick={() => { void settings.set("links.other", "1"); onNext(); }}>Keep {h.owner}</Key>
         <Key variant="dark" icon="link" onClick={() => handler.register().then(() => { toast("Browser links now open in Pocket Mods."); onNext(); }).catch((e) => toast(errorText(e), true))}>Use Pocket Mods</Key>
       </div>
     </Module>

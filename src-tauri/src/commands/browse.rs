@@ -18,18 +18,18 @@ pub async fn browse_detail(state: State<'_, AppState>, mod_id: u32, updated_at: 
 }
 
 #[tauri::command]
-pub fn set_mod_flag(state: State<'_, AppState>, mod_id: u32, flag: Flag, on: bool) -> Result<()> {
+pub async fn set_mod_flag(state: State<'_, AppState>, mod_id: u32, flag: Flag, on: bool) -> Result<()> {
     state.db.lock().unwrap().set_flag(mod_id, flag, on)
 }
 
 /// Settings the UI keeps in the local database (game patch, deploy method and so on). Not for secrets.
 #[tauri::command]
-pub fn settings_get(state: State<'_, AppState>, key: String) -> Result<Option<String>> {
+pub async fn settings_get(state: State<'_, AppState>, key: String) -> Result<Option<String>> {
     state.db.lock().unwrap().setting(&key)
 }
 
 #[tauri::command]
-pub fn settings_set(state: State<'_, AppState>, key: String, value: String) -> Result<()> {
+pub async fn settings_set(state: State<'_, AppState>, key: String, value: String) -> Result<()> {
     state.db.lock().unwrap().set_setting(&key, &value)
 }
 

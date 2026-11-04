@@ -16,41 +16,65 @@ pub fn safe_file_name(name: &str) -> String {
     if s.is_empty() { "download.bin".into() } else { s }
 }
 
-/// `progress(received, total)` is called as bytes arrive.
+/// `progress(received, total)` is called as bytes arrive. A connection that drops is picked up again where it
+/// stopped (a Range request), up to five times with a growing pause, so a long download on a free account survives
+/// a hiccup without a new click on Nexus.
 pub async fn download(http: &reqwest::Client, url: &str, dir: &Path, file_name: &str, mut progress: impl FnMut(u64, Option<u64>)) -> Result<Downloaded> {
     tokio::fs::create_dir_all(dir).await?;
     let path = dir.join(safe_file_name(file_name));
     let part = path.with_extension(format!("{}part", path.extension().map(|e| format!("{}.", e.to_string_lossy())).unwrap_or_default()));
-    // a .part left by an interrupted download: ask for the rest
-    let have = tokio::fs::metadata(&part).await.map(|m| m.len()).unwrap_or(0);
+    let mut attempt = 0u32;
+    loop {
+        match try_download(http, url, &part, &mut progress).await {
+            Ok(()) => break,
+            Err(e @ Error::Network(_)) if attempt < 5 => {
+                attempt += 1;
+                tracing_pause(attempt).await;
+                let _ = e;
+            }
+            Err(e) => return Err(e),
+        }
+    }
+    // hash the finished file in one pass (it may have arrived in pieces)
+    let (size, md5) = hash_file(&part).await?;
+    tokio::fs::rename(&part, &path).await?;
+    Ok(Downloaded { path, size, md5 })
+}
+
+async fn tracing_pause(attempt: u32) { tokio::time::sleep(std::time::Duration::from_secs(2u64.pow(attempt.min(4)))).await; }
+
+async fn hash_file(p: &Path) -> Result<(u64, String)> {
+    let mut f = tokio::fs::File::open(p).await?;
+    let mut hash = Md5::new();
+    let mut buf = vec![0u8; 1 << 20];
+    let mut n_all = 0u64;
+    loop {
+        let n = tokio::io::AsyncReadExt::read(&mut f, &mut buf).await?;
+        if n == 0 { break; }
+        hash.update(&buf[..n]);
+        n_all += n as u64;
+    }
+    Ok((n_all, hex::encode(hash.finalize())))
+}
+
+/// One request: from the start, or the rest of a `.part` left by an earlier try.
+async fn try_download(http: &reqwest::Client, url: &str, part: &Path, progress: &mut impl FnMut(u64, Option<u64>)) -> Result<()> {
+    let have = tokio::fs::metadata(part).await.map(|m| m.len()).unwrap_or(0);
     let mut req = http.get(url);
     if have > 0 { req = req.header("Range", format!("bytes={have}-")); }
-    let resp = req.send().await?;
+    let resp = req.send().await.map_err(|e| Error::Network(format!("{}. Retry to resume the download.", e.without_url())))?;
+    // asked for the rest of a file that is already complete
+    if have > 0 && resp.status().as_u16() == 416 { progress(have, Some(have)); return Ok(()); }
     if !resp.status().is_success() {
         return Err(Error::Http { status: resp.status().as_u16(), message: "The download server refused the link. Links from Nexus expire; try the file again.".into() });
     }
     let resumed = have > 0 && resp.status().as_u16() == 206;
-    let mut hash = Md5::new();
-    let mut received = 0u64;
-    let mut file = if resumed {
-        // hash what is already on disk, then append
-        let mut f = tokio::fs::File::open(&part).await?;
-        let mut buf = vec![0u8; 1 << 20];
-        loop {
-            let n = tokio::io::AsyncReadExt::read(&mut f, &mut buf).await?;
-            if n == 0 { break; }
-            hash.update(&buf[..n]);
-            received += n as u64;
-        }
-        tokio::fs::OpenOptions::new().append(true).open(&part).await?
-    } else {
-        tokio::fs::File::create(&part).await?
-    };
+    let mut received = if resumed { have } else { 0 };
+    let mut file = if resumed { tokio::fs::OpenOptions::new().append(true).open(part).await? } else { tokio::fs::File::create(part).await? };
     let total = resp.content_length().map(|l| l + received);
     let mut stream = resp.bytes_stream();
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| Error::Network(format!("{}. Retry to resume the download.", e.without_url())))?;
-        hash.update(&chunk);
         file.write_all(&chunk).await?;
         received += chunk.len() as u64;
         progress(received, total);
@@ -61,8 +85,7 @@ pub async fn download(http: &reqwest::Client, url: &str, dir: &Path, file_name: 
         // keep the part: the next try asks for the rest
         return Err(Error::Network(format!("The download stopped early ({received} of {} bytes). Retry to resume it.", total.unwrap_or(0))));
     }
-    tokio::fs::rename(&part, &path).await?;
-    Ok(Downloaded { path, size: received, md5: hex::encode(hash.finalize()) })
+    Ok(())
 }
 
 #[cfg(test)]

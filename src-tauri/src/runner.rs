@@ -154,7 +154,9 @@ async fn step(app: &AppHandle, action: Action) -> bool {
                     q.set(id, ItemState::Waiting);
                 }
                 Err(e) => {
-                    if let Some(i) = q.get_mut(id) { i.nxm = None; }
+                    // a refused or expired link is useless; one that broke mid-download still works for a retry
+                    let link_bad = matches!(e, Error::Http { .. }) || e.to_string().contains("expired");
+                    if let Some(i) = q.get_mut(id) { if link_bad { i.nxm = None; } }
                     q.set(id, ItemState::Failed { message: e.to_string() });
                 }
             }
@@ -163,6 +165,23 @@ async fn step(app: &AppHandle, action: Action) -> bool {
             true
         }
     }
+}
+
+/// Installs of the item's mod that the item's file updates, from the cached file list.
+pub fn replaced_by(db: &pocket_core::db::Db, item: &QueueItem) -> Vec<i64> { replaced_by_file(db, item.mod_id, item.file_id) }
+
+pub fn replaced_by_file(db: &pocket_core::db::Db, mod_id: u32, file_id: u32) -> Vec<i64> {
+    let files: Vec<pocket_core::nexus::types::ModFile> = db.mod_get(mod_id, None).ok().flatten()
+        .and_then(|(_, f)| serde_json::from_str(&f).ok()).unwrap_or_default();
+    let others: Vec<(i64, u32, Option<String>)> = db.conn.prepare("SELECT id, file_id, file_name FROM installs WHERE mod_id = ?1").and_then(|mut q| {
+        let v = q.query_map(rusqlite::params![mod_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?.collect::<std::result::Result<Vec<_>, _>>();
+        v
+    }).unwrap_or_default();
+    let Some(new) = files.iter().find(|f| f.file_id == file_id) else {
+        // no file list: the old behaviour, one copy of the mod
+        return others.into_iter().map(|o| o.0).collect();
+    };
+    others.into_iter().filter(|(_, fid, name)| pocket_core::browse::replaces(&files, new, *fid, name.as_deref())).map(|o| o.0).collect()
 }
 
 async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Result<ItemState> {
@@ -190,7 +209,7 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
             let mut last = Instant::now();
             let id = item.id;
             let app2 = app.clone();
-            let dl = download::download(st.nexus.http(), &url, &library.join("downloads"), &pocket_core::queue::download_name(item.mod_id, item.file_id, &item.uri), move |rec, total| {
+            let dl = download::download(st.nexus.download_http(), &url, &library.join("downloads"), &pocket_core::queue::download_name(item.mod_id, item.file_id, &item.uri), move |rec, total| {
                 if last.elapsed().as_millis() >= 250 {
                     last = Instant::now();
                     let s = app2.state::<AppState>();
@@ -207,14 +226,26 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         }
     };
 
+    // the game locks its files: an install waits until it is closed
+    if pocket_core::launch::game_running() {
+        return Err(Error::Invalid("Downloaded. Close Cyberpunk 2077, then press Retry to install it.".into()));
+    }
     st.queue.lock().unwrap().set(item.id, ItemState::Installing);
     emit(app);
 
     // an update to a mod tracked from Vortex: replace its files inside Vortex's folder so Vortex keeps it
     let keep_vortex = st.db.lock().unwrap().setting("vortex.keepFormat")?.as_deref() != Some("0");
+    // the installs of this mod that this file updates (same file line); the others (an optional file, another
+    // variant) stay
+    let replace_only = replaced_by(&st.db.lock().unwrap(), item);
     let vortex_id: Option<i64> = if keep_vortex {
-        st.db.lock().unwrap().conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 AND source = 'vortex' ORDER BY installed_at DESC LIMIT 1",
-            rusqlite::params![item.mod_id], |r| r.get(0)).ok()
+        let ids: Vec<i64> = {
+            let d = st.db.lock().unwrap();
+            let mut q = d.conn.prepare("SELECT id FROM installs WHERE mod_id = ?1 AND source = 'vortex' ORDER BY installed_at DESC")?;
+            let v = q.query_map(rusqlite::params![item.mod_id], |r| r.get(0))?.collect::<std::result::Result<Vec<i64>, _>>()?;
+            v
+        };
+        ids.into_iter().find(|i| replace_only.contains(i))
     } else { None };
     // installer options are asked through the normal path, so the Vortex in-place update is for plain archives
     let has_options = pocket_core::archive::list(&archive).map(|e| pocket_core::fomod::find_config(&e).is_some()).unwrap_or(false);
@@ -231,7 +262,7 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
     }
     let archive_for_choices = archive.to_string_lossy().into_owned();
     let req = InstallRequest { mod_id: item.mod_id, file_id: item.file_id, name: item.mod_name.clone(), version: item.version.clone(), archive, accept_unknown: false, replace_older: true, options: paths.deploy_options(), fomod_choices: None,
-        origin: item.required_by.clone(), keep_existing: for_another };
+        origin: item.required_by.clone(), keep_existing: for_another, file_name: Some(item.file_name.clone()), replace_only: Some(replace_only) };
     let db = st.db.clone();
     let out = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &game, &library, &req)).await
         .map_err(|e| Error::Invalid(e.to_string()))??;

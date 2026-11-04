@@ -23,30 +23,31 @@ pub struct PathsView {
 }
 
 #[tauri::command]
-pub fn paths_get(state: State<'_, AppState>) -> PathsView {
+pub async fn paths_get(state: State<'_, AppState>) -> Result<PathsView> {
     let p = Paths::load(&state.db.lock().unwrap());
     let game_looks_right = p.game_dir.as_ref().is_some_and(|g| g.join("bin/x64/Cyberpunk2077.exe").exists() || g.join("bin/x64").exists());
     let same_volume = match (&p.game_dir, &p.library_dir) { (Some(g), Some(l)) => Some(deploy::same_volume(g, l)), _ => None };
     let in_program_files = p.game_dir.as_ref().is_some_and(|g| g.to_string_lossy().to_lowercase().contains("program files"));
-    PathsView { default_library: p.game_dir.as_deref().map(install::default_library), game_dir: p.game_dir, library_dir: p.library_dir, allow_copy: p.allow_copy, game_looks_right, same_volume, in_program_files }
+    Ok(PathsView { default_library: p.game_dir.as_deref().map(install::default_library), game_dir: p.game_dir, library_dir: p.library_dir, allow_copy: p.allow_copy, game_looks_right, same_volume, in_program_files })
 }
 
 #[tauri::command]
-pub fn paths_set(state: State<'_, AppState>, game_dir: Option<String>, library_dir: Option<String>, allow_copy: Option<bool>) -> Result<PathsView> {
+pub async fn paths_set(state: State<'_, AppState>, game_dir: Option<String>, library_dir: Option<String>, allow_copy: Option<bool>) -> Result<PathsView> {
     {
         let db = state.db.lock().unwrap();
         if let Some(g) = game_dir { db.set_setting("game.dir", g.trim())?; }
         if let Some(l) = library_dir { db.set_setting("library.dir", l.trim())?; }
         if let Some(c) = allow_copy { db.set_setting("deploy.allowCopy", if c { "1" } else { "0" })?; }
     }
-    Ok(paths_get(state))
+    paths_get(state).await
 }
 
 #[tauri::command]
-pub fn library_list(state: State<'_, AppState>) -> Result<Vec<InstallRow>> { install::list_installs(&state.db.lock().unwrap()) }
+pub async fn library_list(state: State<'_, AppState>) -> Result<Vec<InstallRow>> { install::list_installs(&state.db.lock().unwrap()) }
 
 #[tauri::command]
 pub async fn library_uninstall(app: AppHandle, state: State<'_, AppState>, install_id: i64) -> Result<UndeployReport> {
+    crate::commands::not_while_running()?;
     let (game, _) = Paths::load(&state.db.lock().unwrap()).require()?;
     let db = state.db.clone();
     let r = tauri::async_runtime::spawn_blocking(move || install::uninstall(&db.lock().unwrap(), &game, install_id)).await.map_err(|e| Error::Invalid(e.to_string()))??;
@@ -57,6 +58,7 @@ pub async fn library_uninstall(app: AppHandle, state: State<'_, AppState>, insta
 /// Deploy a staged install after the user decided on conflicts or the copy fallback.
 #[tauri::command]
 pub async fn library_deploy(app: AppHandle, state: State<'_, AppState>, install_id: i64, options: DeployOptions) -> Result<DeployOutcome> {
+    crate::commands::not_while_running()?;
     let (game, library) = Paths::load(&state.db.lock().unwrap()).require()?;
     let db = state.db.clone();
     let r = tauri::async_runtime::spawn_blocking(move || install::redeploy_any(&db.lock().unwrap(), &game, &library, install_id, &options)).await.map_err(|e| Error::Invalid(e.to_string()))??;
@@ -66,7 +68,8 @@ pub async fn library_deploy(app: AppHandle, state: State<'_, AppState>, install_
 
 /// Install an archive from disk: a manual download, or a queued download that needed review.
 #[tauri::command]
-pub async fn library_install_file(app: AppHandle, state: State<'_, AppState>, request: InstallRequest) -> Result<InstallOutcome> {
+pub async fn library_install_file(app: AppHandle, state: State<'_, AppState>, mut request: InstallRequest) -> Result<InstallOutcome> {
+    if request.replace_only.is_none() { request.replace_only = Some(runner::replaced_by_file(&state.db.lock().unwrap(), request.mod_id, request.file_id)); }
     let paths = Paths::load(&state.db.lock().unwrap());
     let (game, library) = paths.require()?;
     let db = state.db.clone();
@@ -80,7 +83,7 @@ pub async fn library_install_file(app: AppHandle, state: State<'_, AppState>, re
 pub struct DownloadRow { pub mod_id: u32, pub file_id: u32, pub name: String, pub version: String, pub path: String, pub size: i64, pub md5: String, pub installed: bool }
 
 #[tauri::command]
-pub fn library_downloads(state: State<'_, AppState>) -> Result<Vec<DownloadRow>> {
+pub async fn library_downloads(state: State<'_, AppState>) -> Result<Vec<DownloadRow>> {
     let db = state.db.lock().unwrap();
     let mut st = db.conn.prepare("SELECT d.mod_id, d.file_id, d.name, d.version, d.path, d.size, d.md5, EXISTS(SELECT 1 FROM installs i WHERE i.mod_id = d.mod_id AND i.file_id = d.file_id) FROM downloads d ORDER BY d.downloaded_at DESC")?;
     let rows = st.query_map([], |r| Ok(DownloadRow { mod_id: r.get(0)?, file_id: r.get(1)?, name: r.get(2)?, version: r.get(3)?, path: r.get(4)?, size: r.get(5)?, md5: r.get(6)?, installed: r.get(7)? }))?;
@@ -119,7 +122,11 @@ pub async fn queue_add(app: AppHandle, state: State<'_, AppState>, mod_id: u32, 
 #[tauri::command]
 pub async fn queue_add_mod(app: AppHandle, state: State<'_, AppState>, mod_id: u32) -> Result<QueueSnapshot> {
     let d = pocket_core::browse::detail(&state.nexus, &state.db, mod_id, None).await?;
-    let file = pocket_core::browse::main_file(&d.files).ok_or_else(|| Error::Invalid(format!("{} has no current file on Nexus.", d.detail.name)))?.file_id;
+    // an update follows the installed file (2K stays 2K); a missing mod gets its main file
+    let have: Option<(u32, Option<String>)> = state.db.lock().unwrap().conn.query_row(
+        "SELECT file_id, file_name FROM installs WHERE mod_id = ?1 ORDER BY installed_at DESC LIMIT 1", [mod_id], |r| Ok((r.get(0)?, r.get(1)?))).ok();
+    let next = have.as_ref().and_then(|(fid, name)| pocket_core::browse::successor(&d.files, *fid, name.as_deref()));
+    let file = next.or_else(|| pocket_core::browse::main_file(&d.files)).ok_or_else(|| Error::Invalid(format!("{} has no current file on Nexus.", d.detail.name)))?.file_id;
     queue_add(app, state, mod_id, file, true).await
 }
 
@@ -166,6 +173,8 @@ pub fn present_mod_ids(db: &std::sync::Mutex<pocket_core::db::Db>) -> Result<std
             if f.files.iter().any(|p| g.join(p).exists()) { ids.insert(f.nexus_mod_id); }
         }
         if let Some(setup) = pocket_core::vortex::find(&g) { ids.extend(pocket_core::vortex::likely_mod_ids(&setup, &g)); }
+        // RED4ext (1.13 and newer) replaces cybercmd: a mod that still lists cybercmd does not need it downloaded
+        if g.join("red4ext/RED4ext.dll").exists() { ids.insert(5176); }
     }
     Ok(ids)
 }
@@ -184,8 +193,8 @@ pub struct DownloadsUsage { pub files: usize, pub bytes: u64, pub installed_file
 
 /// How much space downloaded archives take, and how much of it is archives already installed.
 #[tauri::command]
-pub fn downloads_usage(state: State<'_, AppState>) -> Result<DownloadsUsage> {
-    let rows = library_downloads(state)?;
+pub async fn downloads_usage(state: State<'_, AppState>) -> Result<DownloadsUsage> {
+    let rows = library_downloads(state).await?;
     let on_disk: Vec<&DownloadRow> = rows.iter().filter(|r| std::path::Path::new(&r.path).exists()).collect();
     let inst: Vec<&&DownloadRow> = on_disk.iter().filter(|r| r.installed).collect();
     Ok(DownloadsUsage { files: on_disk.len(), bytes: on_disk.iter().map(|r| r.size as u64).sum(), installed_files: inst.len(), installed_bytes: inst.iter().map(|r| r.size as u64).sum() })
@@ -193,8 +202,8 @@ pub fn downloads_usage(state: State<'_, AppState>) -> Result<DownloadsUsage> {
 
 /// Delete archives of mods that are installed (the staged copy is what the game uses). Reinstalling downloads again.
 #[tauri::command]
-pub fn downloads_cleanup(state: State<'_, AppState>) -> Result<u64> {
-    let rows = library_downloads(state)?;
+pub async fn downloads_cleanup(state: State<'_, AppState>) -> Result<u64> {
+    let rows = library_downloads(state).await?;
     let mut freed = 0;
     for r in rows.iter().filter(|r| r.installed) {
         if std::fs::remove_file(&r.path).is_ok() { freed += r.size as u64; }

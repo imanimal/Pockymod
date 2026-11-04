@@ -101,29 +101,29 @@ pub async fn existing_track(app: AppHandle, state: State<'_, AppState>, vortex_m
 pub struct Groups { pub presets: Vec<&'static str>, pub custom: Vec<String> }
 
 #[tauri::command]
-pub fn groups_list(state: State<'_, AppState>) -> Result<Groups> {
+pub async fn groups_list(state: State<'_, AppState>) -> Result<Groups> {
     Ok(Groups { presets: PRESET_GROUPS.to_vec(), custom: install::custom_groups(&state.db.lock().unwrap())? })
 }
 
 #[tauri::command]
-pub fn groups_set(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>, group: Option<String>) -> Result<()> {
+pub async fn groups_set(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>, group: Option<String>) -> Result<()> {
     install::set_group(&state.db.lock().unwrap(), &install_ids, group.as_deref())?;
     let _ = app.emit("library-changed", ());
     Ok(())
 }
 
 #[tauri::command]
-pub fn group_create(state: State<'_, AppState>, name: String) -> Result<()> { install::create_group(&state.db.lock().unwrap(), &name) }
+pub async fn group_create(state: State<'_, AppState>, name: String) -> Result<()> { install::create_group(&state.db.lock().unwrap(), &name) }
 
 #[tauri::command]
-pub fn group_rename(app: AppHandle, state: State<'_, AppState>, from: String, to: String) -> Result<()> {
+pub async fn group_rename(app: AppHandle, state: State<'_, AppState>, from: String, to: String) -> Result<()> {
     install::rename_group(&state.db.lock().unwrap(), &from, &to)?;
     let _ = app.emit("library-changed", ());
     Ok(())
 }
 
 #[tauri::command]
-pub fn group_delete(app: AppHandle, state: State<'_, AppState>, name: String) -> Result<()> {
+pub async fn group_delete(app: AppHandle, state: State<'_, AppState>, name: String) -> Result<()> {
     install::delete_group(&state.db.lock().unwrap(), &name)?;
     let _ = app.emit("library-changed", ());
     Ok(())
@@ -136,6 +136,7 @@ pub struct BulkReport { pub done: usize, pub failed: Vec<(i64, String)> }
 /// Turn many mods on or off, or remove them, in one go. Each is done on its own, so one failure stops nothing.
 #[tauri::command]
 pub async fn library_bulk(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>, action: String) -> Result<BulkReport> {
+    super::not_while_running()?;
     let p = Paths::load(&state.db.lock().unwrap());
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
@@ -161,6 +162,7 @@ pub async fn library_bulk(app: AppHandle, state: State<'_, AppState>, install_id
 /// Go back to the user's own files that an install set aside, keeping them tracked as the user's copy.
 #[tauri::command]
 pub async fn library_restore_replaced(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>) -> Result<usize> {
+    super::not_while_running()?;
     let (game, library) = Paths::load(&state.db.lock().unwrap()).require()?;
     let db = state.db.clone();
     let n = blocking(move || {
@@ -175,12 +177,13 @@ pub async fn library_restore_replaced(app: AppHandle, state: State<'_, AppState>
 
 /// Sets of installs of the same Nexus mod: the one to keep first, then the extra copies.
 #[tauri::command]
-pub fn library_duplicates(state: State<'_, AppState>) -> Result<Vec<Vec<i64>>> { install::duplicates(&state.db.lock().unwrap()) }
+pub async fn library_duplicates(state: State<'_, AppState>) -> Result<Vec<Vec<i64>>> { install::duplicates(&state.db.lock().unwrap()) }
 
 /// Keep one install of a mod and remove the other copies. A copy from Vortex stays in Vortex; the kept one is put
 /// back in the game if it is on, so files the removed copies held go back to it.
 #[tauri::command]
 pub async fn library_keep_one(app: AppHandle, state: State<'_, AppState>, keep: i64, remove: Vec<i64>) -> Result<()> {
+    super::not_while_running()?;
     let p = Paths::load(&state.db.lock().unwrap());
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
@@ -200,11 +203,12 @@ pub async fn library_keep_one(app: AppHandle, state: State<'_, AppState>, keep: 
 // ── recently removed ──
 
 #[tauri::command]
-pub fn library_trash_list(state: State<'_, AppState>) -> Result<Vec<install::TrashRow>> { install::list_trash(&state.db.lock().unwrap()) }
+pub async fn library_trash_list(state: State<'_, AppState>) -> Result<Vec<install::TrashRow>> { install::list_trash(&state.db.lock().unwrap()) }
 
 /// Put removed mods back. Returns the install ids, in the same order (0 for one that could not be).
 #[tauri::command]
 pub async fn library_trash_restore(app: AppHandle, state: State<'_, AppState>, trash_ids: Vec<i64>) -> Result<Vec<i64>> {
+    super::not_while_running()?;
     let p = Paths::load(&state.db.lock().unwrap());
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
@@ -224,7 +228,7 @@ pub async fn library_trash_restore(app: AppHandle, state: State<'_, AppState>, t
 
 /// Delete removed mods for good: one, or (without an id) everything past the time and size limits.
 #[tauri::command]
-pub fn library_trash_purge(state: State<'_, AppState>, trash_id: Option<i64>, all: Option<bool>) -> Result<usize> {
+pub async fn library_trash_purge(state: State<'_, AppState>, trash_id: Option<i64>, all: Option<bool>) -> Result<usize> {
     let d = state.db.lock().unwrap();
     if all.unwrap_or(false) {
         let ids: Vec<i64> = install::list_trash(&d)?.into_iter().map(|t| t.id).collect();

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Tag } from "../ui/pocket";
 import type { IconName } from "../ui/icons";
-import { errorText, game, library, queueMod, type Fix, type HealthReport, type Issue } from "../lib/api";
+import { errorText, game, library, queueMod, resetScripts, type Fix, type HealthReport, type Issue } from "../lib/api";
 import { toast } from "../ui/toast";
 
 const AREAS: Array<{ id: Issue["area"]; title: string; icon: IconName }> = [
@@ -37,6 +37,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         case "redeploy": await library.deploy(f.installId, { allowCopy: false, takeConflicts: false }); toast("Deployed again."); break;
         case "openLibrary": onNavigate("library"); return;
         case "openSettings": onNavigate("settings"); return;
+        case "resetScripts": { const n = await resetScripts(); toast(n ? "The game's own scripts are back." : "Nothing needed resetting."); break; }
       }
       load();
     } catch (e) { toast(errorText(e), true); setBusy(false); }
@@ -96,6 +97,7 @@ function fixLabel(f: Fix): string {
     case "redeploy": return "Deploy again";
     case "openLibrary": return "Open Library";
     case "openSettings": return "Open Settings";
+    case "resetScripts": return "Reset scripts";
   }
 }
 

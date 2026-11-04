@@ -59,22 +59,23 @@ pub async fn redmod_deploy(app: AppHandle, state: State<'_, AppState>) -> Result
 }
 
 #[tauri::command]
-pub fn redmod_order(state: State<'_, AppState>) -> Result<Vec<RedmodEntry>> { profiles::redmod_order(&state.db.lock().unwrap()) }
+pub async fn redmod_order(state: State<'_, AppState>) -> Result<Vec<RedmodEntry>> { profiles::redmod_order(&state.db.lock().unwrap()) }
 
 #[tauri::command]
-pub fn profiles_list(state: State<'_, AppState>) -> Result<Vec<Profile>> { profiles::list(&state.db.lock().unwrap()) }
+pub async fn profiles_list(state: State<'_, AppState>) -> Result<Vec<Profile>> { profiles::list(&state.db.lock().unwrap()) }
 
 #[tauri::command]
-pub fn profile_create(state: State<'_, AppState>, name: String, copy_from: Option<i64>) -> Result<i64> { profiles::create(&state.db.lock().unwrap(), &name, copy_from) }
+pub async fn profile_create(state: State<'_, AppState>, name: String, copy_from: Option<i64>) -> Result<i64> { profiles::create(&state.db.lock().unwrap(), &name, copy_from) }
 
 #[tauri::command]
-pub fn profile_rename(state: State<'_, AppState>, id: i64, name: String) -> Result<()> { profiles::rename(&state.db.lock().unwrap(), id, &name) }
+pub async fn profile_rename(state: State<'_, AppState>, id: i64, name: String) -> Result<()> { profiles::rename(&state.db.lock().unwrap(), id, &name) }
 
 #[tauri::command]
-pub fn profile_delete(state: State<'_, AppState>, id: i64) -> Result<()> { profiles::delete(&state.db.lock().unwrap(), id) }
+pub async fn profile_delete(state: State<'_, AppState>, id: i64) -> Result<()> { profiles::delete(&state.db.lock().unwrap(), id) }
 
 #[tauri::command]
 pub async fn profile_activate(app: AppHandle, state: State<'_, AppState>, id: i64) -> Result<SwitchReport> {
+    crate::commands::not_while_running()?;
     let p = Paths::load(&state.db.lock().unwrap());
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
@@ -86,6 +87,7 @@ pub async fn profile_activate(app: AppHandle, state: State<'_, AppState>, id: i6
 
 #[tauri::command]
 pub async fn mod_set_enabled(app: AppHandle, state: State<'_, AppState>, install_id: i64, on: bool) -> Result<Option<DeployOutcome>> {
+    crate::commands::not_while_running()?;
     let p = Paths::load(&state.db.lock().unwrap());
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
@@ -96,7 +98,7 @@ pub async fn mod_set_enabled(app: AppHandle, state: State<'_, AppState>, install
 }
 
 #[tauri::command]
-pub fn load_order_set(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>) -> Result<()> {
+pub async fn load_order_set(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>) -> Result<()> {
     profiles::set_order(&state.db.lock().unwrap(), &install_ids)?;
     let _ = app.emit("library-changed", ());
     Ok(())
@@ -110,7 +112,7 @@ pub async fn updates_check(app: AppHandle, state: State<'_, AppState>) -> Result
 }
 
 #[tauri::command]
-pub fn updates_last(state: State<'_, AppState>) -> Vec<Update> { updates::last(&state.db.lock().unwrap()) }
+pub async fn updates_last(state: State<'_, AppState>) -> Result<Vec<Update>> { Ok(updates::last(&state.db.lock().unwrap())) }
 
 /// Start the game, after running the REDmod deploy when REDmods changed. The UI runs the health check first.
 #[tauri::command]
@@ -182,7 +184,7 @@ pub async fn game_vanilla_restore(app: tauri::AppHandle, state: State<'_, AppSta
 
 /// Whether mods are out of the game for a start without mods.
 #[tauri::command]
-pub fn game_vanilla_pending(state: State<'_, AppState>) -> Result<bool> { Ok(state.db.lock().unwrap().setting(pocket_core::launch::VANILLA_KEY)?.is_some()) }
+pub async fn game_vanilla_pending(state: State<'_, AppState>) -> Result<bool> { Ok(state.db.lock().unwrap().setting(pocket_core::launch::VANILLA_KEY)?.is_some()) }
 
 /// Open the game folder in Explorer.
 #[tauri::command]
@@ -194,4 +196,12 @@ pub async fn game_open_folder(state: State<'_, AppState>, sub: Option<String>) -
     #[cfg(not(windows))]
     { let _ = dir; }
     Ok(())
+}
+
+/// Put the game's own compiled scripts back (after redscript is removed, or when Health says they are stale).
+#[tauri::command]
+pub async fn scripts_reset(state: State<'_, AppState>) -> Result<usize> {
+    let (game, _) = Paths::load(&state.db.lock().unwrap()).require()?;
+    crate::commands::not_while_running()?;
+    blocking(move || game::reset_scripts(&game).map_err(Error::from)).await
 }
