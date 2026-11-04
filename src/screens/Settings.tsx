@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Key, Lcd, Module, Pill, Seg, Switch } from "../ui/pocket";
 import { applyTheme, getThemeChoice, setMotion, setThemeChoice, type ThemeChoice } from "../lib/theme";
-import { errorText, nexus, type NexusStatus } from "../lib/api";
+import { errorText, nexus, nexusPages, type NexusStatus } from "../lib/api";
+import { API_KEY_PAGE } from "./Onboarding";
 import { GameFolders } from "./GameFolders";
 import { About, Experiments } from "./About";
 import { InstallPrefs } from "./InstallPrefs";
@@ -69,6 +70,7 @@ function NexusAccount() {
           </label>
           <div className="actions">
             <Key icon="check" onClick={save} disabled={busy || !key}>Check and save</Key>
+            {!st?.hasKey && <Key variant="ghost" icon="web" onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => setErr(errorText(e)))}>Get my key</Key>}
             {st?.hasKey && <Key variant="ghost" icon="trash" onClick={clear} disabled={busy}>Remove key</Key>}
           </div>
           {err && <div className="note bad">{err}</div>}

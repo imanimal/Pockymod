@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Switch, Tag } from "../ui/pocket";
 import { errorText, game, library, profiles, type InstallRow, type Profile, type RedmodEntry, type RedmodResult } from "../lib/api";
 import { toast } from "../ui/toast";
+import * as ops from "../lib/ops";
 
 export function LoadOrder() {
   const [list, setList] = useState<Profile[]>([]);
@@ -30,14 +31,15 @@ export function LoadOrder() {
     const next = [...rows];
     const j = i + d;
     if (j < 0 || j >= next.length) return;
+    const before = rows.map((r) => r.id);
     [next[i], next[j]] = [next[j], next[i]];
     setRows(next);
-    void run(() => profiles.setOrder(next.map((r) => r.id)));
+    void run(() => ops.setOrder(before, next.map((r) => r.id), `${rows[i].name} ${d < 0 ? "earlier" : "later"}`));
   };
   const active = list.find((p) => p.active);
 
   return (
-    <div className="grid2" style={{ alignItems: "start", maxWidth: "80em" }}>
+    <div className="grid2 lo" style={{ alignItems: "start" }}>
       <div className="stack">
         <Module icon="loadorder" title="REDmod deploy" count={`${redmods.filter((r) => r.enabled).length} REDmods`}>
           <p>The game only sees REDmods after its REDmod tool compiles them, in the order below. Run it after adding, removing or reordering REDmods.</p>
@@ -62,7 +64,7 @@ export function LoadOrder() {
                 <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{p.enabled} mods on</span></span></span>
                 <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                   {p.active ? <span className="led run" aria-label="Active" /> : <>
-                    <Key size="sm" onClick={() => run(async () => { const r = await profiles.activate(p.id); toast(`${p.name} is on: ${r.removed.length} mods out, ${r.deployed.length} in${r.notDeployed.length ? `, ${r.notDeployed.length} need a decision in Library` : ""}.`); })} disabled={busy}>Switch</Key>
+                    <Key size="sm" onClick={() => run(async () => { const r = await ops.switchProfile(active, p); if (r.notDeployed.length) toast(`${r.notDeployed.length} mods need a decision in Library.`); })} disabled={busy}>Switch</Key>
                     <Key size="sm" variant="ghost" icon="trash" aria-label={`Delete ${p.name}`} onClick={() => run(() => profiles.remove(p.id))} disabled={busy} />
                   </>}
                 </span>
@@ -88,7 +90,7 @@ export function LoadOrder() {
                   {!r.enabled && <Pill>Off</Pill>}</span>
               </span>
               <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".3em" }}>
-                <Switch checked={r.enabled} onChange={(on) => run(() => profiles.setEnabled(r.id, on))} disabled={busy}><span className="sr-only">On</span></Switch>
+                <Switch checked={r.enabled} onChange={(on) => run(() => ops.setEnabled([r], on))} disabled={busy}><span className="sr-only">On</span></Switch>
                 <Key size="sm" variant="ghost" icon="up" aria-label="Earlier" onClick={() => move(i, -1)} disabled={busy || i === 0} />
                 <Key size="sm" variant="ghost" icon="down" aria-label="Later" onClick={() => move(i, 1)} disabled={busy || i === rows.length - 1} />
               </span>

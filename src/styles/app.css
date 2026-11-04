@@ -184,3 +184,27 @@
 .fplugin-h { display: flex; align-items: center; gap: .4em; flex-wrap: wrap; }
 .fplugin-h b { color: var(--text); }
 .fplugin-d { font-size: .82em; opacity: .85; white-space: pre-wrap; }
+
+/* ───────────── scanner: a busy readout that shows what is being looked at ───────────── */
+.scanner { display: flex; flex-direction: column; gap: .55em; padding: .8em .9em; border-radius: 10px; background: var(--chrome-bg); color: var(--chrome-fg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chrome-fg) 12%, transparent); position: relative; overflow: hidden; }
+.scanner::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, transparent 0 2px, color-mix(in srgb, #000 22%, transparent) 2px 3px); opacity: .5; }
+.scan-head { display: flex; align-items: center; gap: .6em; }
+.scan-t { font-weight: 700; flex: 1; min-width: 0; }
+.scan-eye { color: var(--accent); display: inline-grid; animation: scanSpin calc(var(--m) * 1200ms + 1ms) steps(8, end) infinite; }
+@keyframes scanSpin { to { transform: rotate(360deg); } }
+.scan-clock { flex: none; }
+.scan-log { font: .8em/1.5 var(--font-mono); min-height: 6.2em; display: flex; flex-direction: column; justify-content: flex-end; }
+.scan-ln { display: flex; gap: .6em; white-space: nowrap; overflow: hidden; color: color-mix(in srgb, var(--chrome-fg) 55%, transparent); animation: scanLn calc(var(--m) * 240ms + 1ms) steps(6, end) backwards; }
+.scan-ln.now { color: var(--chrome-fg); }
+.scan-ln.ok .scan-mk { color: var(--ok); }
+.scan-mk { width: 1.6em; flex: none; text-align: right; color: var(--accent); }
+.scan-tx { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.scan-ln.now .scan-tx::after { content: ""; display: inline-block; width: .55em; height: 1em; margin-left: .2em; vertical-align: -.15em; background: var(--accent); animation: blink calc(var(--m) * 900ms + 1ms) steps(1, end) infinite; }
+@keyframes scanLn { from { clip-path: inset(0 100% 0 0); } }
+.scan-bar { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; height: 8px; }
+.scan-bar b { background: color-mix(in srgb, var(--chrome-fg) 14%, transparent); border-radius: 1px; transition: background calc(var(--m) * 120ms) steps(2, end); }
+.scan-bar b.on { background: var(--disp-bg); box-shadow: 0 0 4px color-mix(in srgb, var(--disp-bg) 60%, transparent); }
+.scan-bar.sweep { display: block; position: relative; background: color-mix(in srgb, var(--chrome-fg) 10%, transparent); border-radius: 2px; overflow: hidden; }
+.scan-bar.sweep i { position: absolute; top: 0; bottom: 0; width: 22%; background: var(--disp-bg); animation: scanSweep calc(var(--m) * 1400ms + 1ms) steps(18, end) infinite alternate; }
+@keyframes scanSweep { from { left: 0; } to { left: 78%; } }
+.scan-sub { font-size: .8em; color: color-mix(in srgb, var(--chrome-fg) 60%, transparent); }

@@ -69,6 +69,10 @@ function planFor(modId: number, fileId: number): QueueItem[] {
 }
 
 const customGroups: string[] = [];
+type DemoTrash = { id: number; row: InstallRow; reason: string; removedAt: number };
+const demoTrash: DemoTrash[] = [];
+let trashSeq = 0;
+function toTrash(i: InstallRow, reason = "removed") { demoTrash.unshift({ id: ++trashSeq, row: { ...i }, reason, removedAt: Math.floor(Date.now() / 1000) }); }
 function groupOf(c: string | null): string {
   const x = (c ?? "").toLowerCase();
   if (x.includes("preset")) return "Character presets";
@@ -80,6 +84,10 @@ function groupOf(c: string | null): string {
   return "Other";
 }
 let profilesList: Profile[] = [{ id: 1, name: "Default", active: true, enabled: 0 }];
+function demoScan() {
+  return { vortex: { staging: "%APPDATA%\\Vortex\\cyberpunk2077\\mods", mods: 6, deployed: 5, alreadyTracked: installs.filter((i) => i.source === "vortex").length ? 6 : 0,
+      sample: fixture.nodes.slice(8, 14).map((n) => n.name) }, found: installs.some((i) => i.source === "found") ? [] : [{ name: "Hand-placed hair", kind: "archive", files: ["archive/pc/mod/hair.archive"], modId: null }] };
+}
 function health(): HealthReport {
   const fw = (key: string, name: string, installed: boolean, version: string | null, latest: string, older = false, neededBy: string[] = []) =>
     ({ framework: key, key: key as never, name, installed, version, modified: null, olderThanGame: older, latest, updateAvailable: !!version && version !== latest, neededBy });
@@ -172,7 +180,27 @@ export function installDemo() {
     open_nexus_url: () => { throw { kind: "demo", message: "Nexus pages open in their own window in the desktop app." }; },
     library_list: () => installs,
     library_downloads: () => [],
-    library_uninstall: ({ installId }) => { const i = installs.findIndex((x) => x.id === installId); if (i >= 0) installs.splice(i, 1); return { removed: 3, restored: [], leftAlone: [] }; },
+    library_uninstall: ({ installId }) => { const i = installs.findIndex((x) => x.id === installId); if (i >= 0) { toTrash(installs[i]); installs.splice(i, 1); } return { removed: 3, restored: [], leftAlone: [] }; },
+    library_trash_list: () => demoTrash.map((t) => ({ id: t.id, installId: t.row.id, name: t.row.name, modId: t.row.modId, version: t.row.version, source: t.row.source, reason: t.reason, size: 18_400_000, removedAt: t.removedAt })),
+    library_trash_restore: ({ trashIds }) => {
+      const out: number[] = [];
+      for (const id of trashIds as number[]) {
+        const k = demoTrash.findIndex((t) => t.id === id);
+        if (k < 0) { out.push(0); continue; }
+        installs.push(demoTrash[k].row); out.push(demoTrash[k].row.id); demoTrash.splice(k, 1);
+      }
+      installs.sort((a, b) => a.loadOrder - b.loadOrder);
+      demoEmit("library-changed", null);
+      return out;
+    },
+    library_trash_purge: ({ trashId, all }) => { const before = demoTrash.length; for (let k = demoTrash.length - 1; k >= 0; k--) if (all || demoTrash[k].id === trashId) demoTrash.splice(k, 1); return before - demoTrash.length; },
+    library_duplicates: () => {
+      const by = new Map<number, InstallRow[]>();
+      for (const i of installs.filter((x) => x.modId < 900_000_000)) by.set(i.modId, [...(by.get(i.modId) ?? []), i]);
+      return [...by.values()].filter((v) => v.length > 1).map((v) => v.sort((a, b) => Number(b.enabled) - Number(a.enabled) || Number(!!a.origin) - Number(!!b.origin) || Number(a.source === "pocket") - Number(b.source === "pocket")).map((x) => x.id));
+    },
+    library_keep_one: ({ keep, remove }) => { for (const id of remove as number[]) { const k = installs.findIndex((x) => x.id === id && id !== keep); if (k >= 0) { toTrash(installs[k], "extra copy"); installs.splice(k, 1); } } demoEmit("library-changed", null); },
+    library_restore_replaced: ({ installIds }) => { let n = 0; for (const i of installs) if ((installIds as number[]).includes(i.id) && i.replaced) { i.replaced = 0; i.source = "found"; i.origin = null; n++; } demoEmit("library-changed", null); return n; },
     library_deploy: () => ({ outcome: "deployed", linked: 3, copied: 0, backedUp: [], tookFrom: [] }),
     library_install_file: () => { throw { kind: "demo", message: "Installing from a file needs the desktop app." }; },
     paths_get: () => pathsView,
@@ -224,14 +252,32 @@ export function installDemo() {
     },
     local_collection_export: () => {},
     local_collection_import: () => { throw { kind: "demo", message: "Importing a file needs the desktop app." }; },
-    existing_scan: () => ({ vortex: { staging: "C:\\Users\\you\\AppData\\Roaming\\Vortex\\cyberpunk2077\\mods", mods: 6, deployed: 5, alreadyTracked: installs.filter((i) => i.source === "vortex").length ? 6 : 0,
-      sample: fixture.nodes.slice(8, 14).map((n) => n.name) }, found: installs.some((i) => i.source === "found") ? [] : [{ name: "Hand-placed hair", kind: "archive", files: ["archive/pc/mod/hair.archive"], modId: null }] }),
-    existing_track: ({ vortexMods, foundMods }) => {
+    existing_scan: async () => {
+      for (const d of ["%APPDATA%\\Vortex", "archive\\pc\\mod", "mods", "r6\\scripts", "r6\\tweaks", "bin\\x64\\plugins\\cyber_engine_tweaks\\mods", "red4ext\\plugins"]) {
+        demoEmit("existing-progress", { stage: d.startsWith("%") ? "vortex" : "folder", done: 0, total: 0, name: d.startsWith("%") ? d : `D:\\SteamLibrary\\steamapps\\common\\Cyberpunk 2077\\${d}` });
+        await new Promise((r) => setTimeout(r, 140));
+      }
+      return demoScan();
+    },
+    existing_track: async ({ vortexMods, foundMods }) => {
       let n = 0;
+      if (vortexMods) {
+        const names = fixture.nodes.slice(8, 14).map((x) => x.name);
+        for (let k = 0; k < names.length; k++) { demoEmit("existing-progress", { stage: "matching", done: k + 1, total: names.length, name: names[k] }); await new Promise((r) => setTimeout(r, 260)); }
+        demoEmit("existing-progress", { stage: "tracking", done: names.length, total: names.length, name: "" });
+      }
+      if (foundMods) { demoEmit("existing-progress", { stage: "linking", done: 0, total: 0, name: "" }); await new Promise((r) => setTimeout(r, 300)); }
       if (vortexMods) for (const c of fixture.nodes.slice(8, 14)) {
         installs.push({ id: installs.length + 1, modId: c.modId, fileId: 1, name: c.name, version: c.version, modType: c.classification.modType, frameworks: c.classification.frameworks.map((f) => f.key),
           staging: "", installedAt: 0, updatedAt: null, deployedFiles: 4, enabled: n !== 5, loadOrder: installs.length, source: "vortex", category: c.category, group: groupOf(c.category), customGroup: false, picture: c.thumbnailUrl?.replace("/thumbnails/", "/") });
         n++;
+      }
+      if (vortexMods) {
+        // what the old behaviour left behind, so the clean-up notices have something to show
+        const v = installs.find((i) => i.source === "vortex");
+        if (v) installs.push({ ...v, id: installs.length + 1, source: "pocket", enabled: false, origin: "Better Netrunning", loadOrder: installs.length });
+        installs.push({ id: installs.length + 1, modId: 4198, fileId: 77, name: "ArchiveXL", version: "1.21.1", modType: "framework", frameworks: [], staging: "", installedAt: 0, updatedAt: null,
+          deployedFiles: 3, enabled: true, loadOrder: installs.length, source: "pocket", category: "Modders Resources", group: "Core", customGroup: false, origin: "Hand-placed hair", replaced: 3 });
       }
       if (foundMods) installs.push({ id: installs.length + 1, modId: 900000001, fileId: 1, name: "Hand-placed hair", version: "", modType: "archive", frameworks: [], staging: "", installedAt: 0, updatedAt: null,
         deployedFiles: 1, enabled: true, loadOrder: installs.length, source: "found", category: null, group: "Other", customGroup: false });
@@ -249,7 +295,7 @@ export function installDemo() {
     group_delete: ({ name }) => { const k = customGroups.indexOf(String(name)); if (k >= 0) customGroups.splice(k, 1); for (const i of installs) if (i.group === name) { i.group = groupOf(i.category); i.customGroup = false; } },
     library_bulk: ({ installIds, action }) => {
       const ids = installIds as number[];
-      for (const i of [...installs]) if (ids.includes(i.id)) { if (action === "uninstall") installs.splice(installs.indexOf(i), 1); else i.enabled = action === "enable"; }
+      for (const i of [...installs]) if (ids.includes(i.id)) { if (action === "uninstall") { toTrash(i); installs.splice(installs.indexOf(i), 1); } else i.enabled = action === "enable"; }
       demoEmit("library-changed", null);
       return { done: ids.length, failed: [] };
     },

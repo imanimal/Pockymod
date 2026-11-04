@@ -4,6 +4,7 @@ import { Icon } from "./Icon";
 import { Key } from "./pocket";
 import { errorText, library, profiles, type Profile } from "../lib/api";
 import { toast } from "./toast";
+import * as ops from "../lib/ops";
 
 export function ProfileSwitch({ onManage }: { onManage: () => void }) {
   const [list, setList] = useState<Profile[]>([]);
@@ -24,9 +25,8 @@ export function ProfileSwitch({ onManage }: { onManage: () => void }) {
   const run = async (f: () => Promise<void>) => { setBusy(true); try { await f(); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); load(); } };
   const make = (copy: boolean) => run(async () => {
     const id = await profiles.create(name || `${active?.name ?? "Profile"} ${copy ? "copy" : "new"}`, copy ? active?.id : undefined);
-    const r = await profiles.activate(id);
+    await ops.switchProfile(active, { id, name: name || "new" });
     setName(""); setOpen(false);
-    toast(`Now on ${name || "the new profile"}${r.removed.length ? `: ${r.removed.length} mods turned off` : ""}.`);
   });
   return (
     <div className="pswitch" ref={ref}>
@@ -39,7 +39,7 @@ export function ProfileSwitch({ onManage }: { onManage: () => void }) {
           <div className="pb">
             {list.map((p) => (
               <button key={p.id} type="button" role="menuitemradio" aria-checked={p.active} className={`row${p.active ? " sel" : ""}`} disabled={busy}
-                onClick={() => p.active ? setOpen(false) : run(async () => { const r = await profiles.activate(p.id); setOpen(false); toast(`Now on ${p.name}: ${r.deployed.length} mods on, ${r.removed.length} off.`); })}>
+                onClick={() => p.active ? setOpen(false) : run(async () => { setOpen(false); await ops.switchProfile(active, p); })}>
                 <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{p.enabled} mods on</span></span></span>
                 {p.active && <span className="led run" />}
               </button>

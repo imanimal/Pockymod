@@ -141,7 +141,7 @@ mod tests {
             a
         };
         for (i, n) in ["a", "b"].iter().enumerate() {
-            let req = install::InstallRequest { mod_id: i as u32 + 1, file_id: 1, name: n.to_string(), version: "1".into(), archive: mk(n), accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None };
+            let req = install::InstallRequest { mod_id: i as u32 + 1, file_id: 1, name: n.to_string(), version: "1".into(), archive: mk(n), accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false };
             install::install(&db, &game, &lib, &req).unwrap();
         }
         let default = install::active_profile(&db).unwrap();

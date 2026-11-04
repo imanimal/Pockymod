@@ -31,6 +31,21 @@ pub fn run() {
             state.nexus.set_observer(std::sync::Arc::new(move |rl| { let _ = handle.emit("rate-limit", rl); }));
             app.manage(state);
             runner::start(app.handle().clone());
+            // the app was closed while the game ran without mods: put them back once the game is gone
+            let h = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                let st = h.state::<state::AppState>();
+                if st.db.lock().unwrap().setting(pocket_core::launch::VANILLA_KEY).ok().flatten().is_none() { return; }
+                while tauri::async_runtime::spawn_blocking(pocket_core::launch::game_running).await.unwrap_or(false) {
+                    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                }
+                let p = state::Paths::load(&st.db.lock().unwrap());
+                if let Ok((g, l)) = p.require() {
+                    let n = pocket_core::launch::vanilla_restore(&st.db.lock().unwrap(), &g, &l, &p.deploy_options()).unwrap_or(0);
+                    let _ = h.emit("library-changed", ());
+                    let _ = h.emit("vanilla", serde_json::json!({ "state": "restored", "back": n }));
+                }
+            });
             // started by Windows for an nxm:// link
             for a in std::env::args().filter(|a| a.starts_with("nxm://")) {
                 let h = app.handle().clone();
@@ -69,6 +84,16 @@ pub fn run() {
             commands::collections::local_collection_create,
             commands::collections::local_collection_export,
             commands::collections::local_collection_import,
+            commands::game::game_launch_vanilla,
+            commands::game::game_vanilla_restore,
+            commands::game::game_vanilla_pending,
+            commands::game::game_open_folder,
+            commands::existing::library_restore_replaced,
+            commands::existing::library_trash_list,
+            commands::existing::library_trash_restore,
+            commands::existing::library_trash_purge,
+            commands::existing::library_duplicates,
+            commands::existing::library_keep_one,
             commands::addons::addon_list,
             commands::addons::addon_save,
             commands::addons::addon_remove,

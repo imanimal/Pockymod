@@ -133,33 +133,39 @@ pub fn queue_retry(app: AppHandle, state: State<'_, AppState>, id: u64) -> Queue
 pub fn queue_clear_finished(app: AppHandle, state: State<'_, AppState>) -> QueueSnapshot { state.queue.lock().unwrap().clear_finished(); runner::emit(&app); runner::snapshot(&app) }
 
 /// Show the Nexus page of the item waiting for a click again (the window was closed).
+// Commands that open a window are async: on Windows a window made from a synchronous command never finishes loading
+// (WebView2 needs the main thread the command would be blocking), which shows as a blank white window.
 #[tauri::command]
-pub fn queue_show_page(app: AppHandle, state: State<'_, AppState>, id: u64) -> Result<()> {
+pub async fn queue_show_page(app: AppHandle, state: State<'_, AppState>, id: u64) -> Result<()> {
     let item = state.queue.lock().unwrap().get(id).cloned().ok_or_else(|| Error::Invalid("That download is no longer queued.".into()))?;
     runner::open_nexus(&app, &runner::file_page(item.mod_id, (!item.manual_only).then_some(item.file_id))).map_err(|e| Error::Invalid(e.to_string()))
 }
 
 #[tauri::command]
-pub fn open_nexus_page(app: AppHandle, mod_id: u32, file_id: Option<u32>) -> Result<()> {
+pub async fn open_nexus_page(app: AppHandle, mod_id: u32, file_id: Option<u32>) -> Result<()> {
     runner::open_nexus(&app, &runner::file_page(mod_id, file_id)).map_err(|e| Error::Invalid(e.to_string()))
 }
 
 /// Pages on nexusmods.com the app links to (account settings, API keys), opened in the Nexus window.
 #[tauri::command]
-pub fn open_nexus_url(app: AppHandle, url: String) -> Result<()> {
+pub async fn open_nexus_url(app: AppHandle, url: String) -> Result<()> {
     let ok = url.starts_with("https://www.nexusmods.com/") || url.starts_with("https://next.nexusmods.com/") || url.starts_with("https://users.nexusmods.com/");
     if !ok { return Err(Error::Invalid("Only Nexus Mods pages open in the Nexus window.".into())); }
     runner::open_nexus(&app, &url).map_err(|e| Error::Invalid(e.to_string()))
 }
 
-fn installed_or_present(state: &State<'_, AppState>) -> Result<std::collections::BTreeSet<u32>> {
-    let mut ids = install::installed_mod_ids(&state.db.lock().unwrap())?;
-    // frameworks found in the game folder count as installed even when another manager put them there
-    let paths = Paths::load(&state.db.lock().unwrap());
+fn installed_or_present(state: &State<'_, AppState>) -> Result<std::collections::BTreeSet<u32>> { present_mod_ids(&state.db) }
+
+/// Nexus mods the user already has in any form: installed or tracked here, a framework whose files are in the game
+/// folder (whoever put them there), or a mod Vortex has deployed. Requirements in this set are never downloaded.
+pub fn present_mod_ids(db: &std::sync::Mutex<pocket_core::db::Db>) -> Result<std::collections::BTreeSet<u32>> {
+    let mut ids = install::installed_mod_ids(&db.lock().unwrap())?;
+    let paths = Paths::load(&db.lock().unwrap());
     if let Some(g) = paths.game_dir {
         for f in pocket_core::cyberpunk::frameworks::FRAMEWORKS {
             if f.files.iter().any(|p| g.join(p).exists()) { ids.insert(f.nexus_mod_id); }
         }
+        if let Some(setup) = pocket_core::vortex::find(&g) { ids.extend(pocket_core::vortex::likely_mod_ids(&setup, &g)); }
     }
     Ok(ids)
 }

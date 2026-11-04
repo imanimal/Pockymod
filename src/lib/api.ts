@@ -128,7 +128,13 @@ export interface InstallRow {
   id: number; modId: number; fileId: number; name: string; version: string; modType: ModType; frameworks: string[]; staging: string;
   installedAt: number; updatedAt: string | null; deployedFiles: number; enabled: boolean; loadOrder: number;
   source: "pocket" | "vortex" | "found"; category: string | null; group: string; customGroup: boolean; picture?: string | null;
+  /** The mod or collection it was installed for, when the user did not pick it. */
+  origin?: string | null;
+  /** Files that were already in the game when it went in, set aside (they can go back). */
+  replaced?: number;
 }
+export interface TrashRow { id: number; installId: number; name: string; modId: number; version: string; source: InstallRow["source"]; reason: string; size: number; removedAt: number }
+export interface ExistingProgress { stage: "vortex" | "folder" | "matching" | "tracking" | "linking"; done: number; total: number; name: string }
 export interface Conflict { target: string; ownerInstall: number; ownerName: string }
 export type DeployOutcome =
   | { outcome: "deployed"; linked: number; copied: number; backedUp: string[]; tookFrom: Conflict[] }
@@ -147,7 +153,8 @@ export type InstallOutcome =
   | { status: "installed"; installId: number; modType: ModType; files: number; needsRedmodDeploy: boolean; deploy: DeployOutcome; replaced: number[]; warnings: string[] }
   | { status: "needsReview"; plan: InstallPlan }
   | { status: "staged"; installId: number; deploy: DeployOutcome }
-  | { status: "needsChoices"; fomod: Fomod; defaults: Choice[] };
+  | { status: "needsChoices"; fomod: Fomod; defaults: Choice[] }
+  | { status: "alreadyHave"; installId: number | null; files: number };
 export interface InstallRequest { modId: number; fileId: number; name: string; version: string; archive: string; acceptUnknown?: boolean; replaceOlder?: boolean; options?: DeployOptions; fomodChoices?: Choice[] }
 export type Choice = [number, number, number];
 export interface FomodPlugin { name: string; description: string; image: string | null; kind: string }
@@ -162,7 +169,16 @@ export const library = {
   installFile: (request: InstallRequest) => call<InstallOutcome>("library_install_file", { request }),
   downloads: () => call<DownloadRow[]>("library_downloads"),
   onChanged: (cb: () => void) => listen<null>("library-changed", () => cb()),
+  /** Give the user's own files back from installs that set them aside; their copy is then tracked. */
+  restoreReplaced: (installIds: number[]) => call<number>("library_restore_replaced", { installIds }),
+  /** Sets of installs of one Nexus mod: the one to keep first. */
+  duplicates: () => call<number[][]>("library_duplicates"),
+  keepOne: (keep: number, remove: number[]) => call<void>("library_keep_one", { keep, remove }),
+  trash: () => call<TrashRow[]>("library_trash_list"),
+  restore: (trashIds: number[]) => call<number[]>("library_trash_restore", { trashIds }),
+  purge: (trashId?: number, all = false) => call<number>("library_trash_purge", { trashId: trashId ?? null, all }),
 };
+export const onExistingProgress = (cb: (p: ExistingProgress) => void) => listen<ExistingProgress>("existing-progress", cb);
 export const queue = {
   get: () => call<QueueSnapshot>("queue_get"),
   plan: (modId: number, fileId: number) => call<QueueItem[]>("queue_plan", { modId, fileId }),

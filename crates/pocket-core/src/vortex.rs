@@ -418,23 +418,51 @@ mod tests {
 }
 
 /// Match Vortex's mods to Nexus: each reading of the folder name is tried until the mod's file list has a file
-/// whose archive name is the folder. Six lookups at a time; each is cached like any mod detail.
-pub async fn resolve(client: &crate::nexus::NexusClient, db: &std::sync::Mutex<Db>, mods: Vec<VortexMod>) -> Vec<Resolved> {
+/// whose archive name is the folder. One request per mod (the mod and its files), eight at a time, each cached
+/// like any mod detail, so a second run is instant. `progress(done, total, name)` follows along.
+pub async fn resolve(client: &crate::nexus::NexusClient, db: &std::sync::Mutex<Db>, mods: Vec<VortexMod>, progress: impl Fn(usize, usize, &str) + Send + Sync) -> Vec<Resolved> {
     use futures_util::stream::{self, StreamExt};
+    let total = mods.len();
+    let done = std::sync::atomic::AtomicUsize::new(0);
+    let (done, progress) = (&done, &progress);
     stream::iter(mods.into_iter().map(|m| async move {
-        for c in &m.candidates {
-            let Ok(d) = crate::browse::detail(client, db, c.mod_id, None).await else { continue };
-            let stem = |u: &str| u.rsplit_once('.').map(|(a, _)| a.to_string()).unwrap_or_else(|| u.to_string());
-            let base = m.folder.rsplit_once('.').filter(|(_, n)| n.chars().all(|x| x.is_ascii_digit())).map(|(a, _)| a).unwrap_or(&m.folder);
-            if let Some(f) = d.files.iter().find(|f| stem(&f.uri) == base || stem(&f.uri) == m.folder) {
-                return Resolved { name: d.detail.name.clone(), version: f.version.clone(), category: Some(d.detail.category.clone()), mod_id: Some(c.mod_id), file_id: Some(f.file_id), vortex: m.clone() };
-            }
-            // the mod matches by name but the file was removed from Nexus: keep the mod, not the file
-            if d.detail.name.to_lowercase().replace(' ', "") .starts_with(&c.name.to_lowercase().replace(' ', "").chars().take(6).collect::<String>()) {
-                return Resolved { name: d.detail.name.clone(), version: c.version.clone(), category: Some(d.detail.category.clone()), mod_id: Some(c.mod_id), file_id: None, vortex: m.clone() };
-            }
+        let r = resolve_one(client, db, m).await;
+        let n = done.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+        progress(n, total, &r.name);
+        r
+    })).buffer_unordered(8).collect().await
+}
+
+/// The mod and its files, from the cache or one request; no file-content lookups.
+async fn mod_and_files(client: &crate::nexus::NexusClient, db: &std::sync::Mutex<Db>, mod_id: u32) -> Option<(crate::nexus::types::ModDetail, Vec<crate::nexus::types::ModFile>)> {
+    let cached = db.lock().unwrap().mod_get(mod_id, None).ok().flatten();
+    if let Some((d, f)) = cached {
+        if let (Ok(d), Ok(f)) = (serde_json::from_str(&d), serde_json::from_str(&f)) { return Some((d, f)); }
+    }
+    let (d, f) = client.mod_detail(mod_id).await.ok()?;
+    let _ = db.lock().unwrap().mod_put(mod_id, &d.updated_at, &serde_json::to_string(&d).unwrap_or_default(), &serde_json::to_string(&f).unwrap_or_default(), crate::db::now());
+    Some((d, f))
+}
+
+async fn resolve_one(client: &crate::nexus::NexusClient, db: &std::sync::Mutex<Db>, m: VortexMod) -> Resolved {
+    for c in &m.candidates {
+        let Some((d, files)) = mod_and_files(client, db, c.mod_id).await else { continue };
+        let stem = |u: &str| u.rsplit_once('.').map(|(a, _)| a.to_string()).unwrap_or_else(|| u.to_string());
+        let base = m.folder.rsplit_once('.').filter(|(_, n)| n.chars().all(|x| x.is_ascii_digit())).map(|(a, _)| a).unwrap_or(&m.folder);
+        if let Some(f) = files.iter().find(|f| stem(&f.uri) == base || stem(&f.uri) == m.folder) {
+            return Resolved { name: d.name.clone(), version: f.version.clone(), category: Some(d.category.clone()), mod_id: Some(c.mod_id), file_id: Some(f.file_id), vortex: m.clone() };
         }
-        let first = m.candidates.first();
-        Resolved { name: first.map(|c| c.name.clone()).unwrap_or_else(|| m.folder.clone()), version: first.map(|c| c.version.clone()).unwrap_or_default(), category: None, mod_id: None, file_id: None, vortex: m }
-    })).buffer_unordered(6).collect().await
+        // the mod matches by name but the file was removed from Nexus: keep the mod, not the file
+        if d.name.to_lowercase().replace(' ', "").starts_with(&c.name.to_lowercase().replace(' ', "").chars().take(6).collect::<String>()) {
+            return Resolved { name: d.name.clone(), version: c.version.clone(), category: Some(d.category.clone()), mod_id: Some(c.mod_id), file_id: None, vortex: m.clone() };
+        }
+    }
+    let first = m.candidates.first();
+    Resolved { name: first.map(|c| c.name.clone()).unwrap_or_else(|| m.folder.clone()), version: first.map(|c| c.version.clone()).unwrap_or_default(), category: None, mod_id: None, file_id: None, vortex: m }
+}
+
+/// Nexus mod ids that Vortex's deployed mods probably are, read from their folder names (no network). Used so a
+/// requirement the user already has through Vortex is not downloaded again.
+pub fn likely_mod_ids(setup: &Setup, game: &Path) -> std::collections::BTreeSet<u32> {
+    list_mods(setup, game).into_iter().filter(|m| m.deployed && m.candidates.len() <= 3).flat_map(|m| m.candidates.into_iter().map(|c| c.mod_id)).collect()
 }

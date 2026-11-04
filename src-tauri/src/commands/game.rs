@@ -130,3 +130,68 @@ pub async fn game_launch(state: State<'_, AppState>) -> Result<serde_json::Value
     pocket_core::launch::launch(&game, redmods)?;
     Ok(serde_json::json!({ "started": true, "modded": redmods, "redmod": deployed }))
 }
+
+/// Start the game without mods: they come out, the game starts, and they go back when it closes (watched here).
+#[tauri::command]
+pub async fn game_launch_vanilla(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<serde_json::Value> {
+    use tauri::Manager;
+    let p = Paths::load(&state.db.lock().unwrap());
+    let (game, library) = p.require()?;
+    let opts = p.deploy_options();
+    let db = state.db.clone();
+    let g = game.clone();
+    let (out, left) = blocking(move || pocket_core::launch::vanilla_prepare(&db.lock().unwrap(), &g)).await?;
+    let _ = app.emit("library-changed", ());
+    if let Err(e) = pocket_core::launch::launch(&game, false) {
+        let db = state.db.clone();
+        let _ = blocking(move || pocket_core::launch::vanilla_restore(&db.lock().unwrap(), &game, &library, &opts)).await;
+        return Err(e);
+    }
+    let _ = app.emit("vanilla", serde_json::json!({ "state": "running", "out": out }));
+    // watch for the game to close: seen running, then gone; or never seen within two minutes (it did not start)
+    let app2 = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let mut seen = false;
+        let started = std::time::Instant::now();
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(4)).await;
+            let running = tauri::async_runtime::spawn_blocking(pocket_core::launch::game_running).await.unwrap_or(false);
+            if running { seen = true; continue; }
+            if seen || started.elapsed().as_secs() > 120 { break; }
+        }
+        let st = app2.state::<AppState>();
+        let db = st.db.clone();
+        let n = tauri::async_runtime::spawn_blocking(move || pocket_core::launch::vanilla_restore(&db.lock().unwrap(), &game, &library, &opts)).await.ok().and_then(|r| r.ok()).unwrap_or(0);
+        let _ = app2.emit("library-changed", ());
+        let _ = app2.emit("vanilla", serde_json::json!({ "state": "restored", "back": n }));
+    });
+    Ok(serde_json::json!({ "out": out, "untracked": left }))
+}
+
+/// Put mods back now (the game closed while the app was not watching, or the user asks).
+#[tauri::command]
+pub async fn game_vanilla_restore(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<usize> {
+    let p = Paths::load(&state.db.lock().unwrap());
+    let (game, library) = p.require()?;
+    let opts = p.deploy_options();
+    let db = state.db.clone();
+    let n = blocking(move || pocket_core::launch::vanilla_restore(&db.lock().unwrap(), &game, &library, &opts)).await?;
+    let _ = app.emit("library-changed", ());
+    Ok(n)
+}
+
+/// Whether mods are out of the game for a start without mods.
+#[tauri::command]
+pub fn game_vanilla_pending(state: State<'_, AppState>) -> Result<bool> { Ok(state.db.lock().unwrap().setting(pocket_core::launch::VANILLA_KEY)?.is_some()) }
+
+/// Open the game folder in Explorer.
+#[tauri::command]
+pub async fn game_open_folder(state: State<'_, AppState>, sub: Option<String>) -> Result<()> {
+    let (game, _) = Paths::load(&state.db.lock().unwrap()).require()?;
+    let dir = match sub.as_deref() { Some(s) if !s.contains("..") => game.join(s), _ => game };
+    #[cfg(windows)]
+    { std::process::Command::new("explorer").arg(&dir).spawn().map_err(|e| pocket_core::Error::Invalid(format!("Could not open the folder: {e}")))?; }
+    #[cfg(not(windows))]
+    { let _ = dir; }
+    Ok(())
+}

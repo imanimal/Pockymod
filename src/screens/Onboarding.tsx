@@ -1,10 +1,14 @@
 // First run: the app finds the game and sets itself up, asking only what only the user can answer.
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
-import { Empty, Key, Lcd, Module, Pill } from "../ui/pocket";
+import { Key, Lcd, Module, Pill } from "../ui/pocket";
 import { errorText, game, handler, nexus, nexusPages, paths, pickFolder, settings, type GameInstall, type HandlerStatus, type PathsView } from "../lib/api";
 import { ExistingBody } from "./Existing";
+import { Scanner, type ScanLine } from "../ui/Scanner";
 import { toast } from "../ui/toast";
+
+/** Nexus's personal API key page (its account settings). */
+export const API_KEY_PAGE = "https://next.nexusmods.com/settings/api-keys";
 
 type Step = "game" | "account" | "existing" | "links" | "done";
 const STEPS: Array<{ id: Step; label: string }> = [
@@ -34,8 +38,14 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 function GameStep({ onNext }: { onNext: () => void }) {
   const [found, setFound] = useState<GameInstall[] | null>(null);
   const [p, setP] = useState<PathsView | null>(null);
+  const [lines, setLines] = useState<ScanLine[]>([]);
   useEffect(() => {
+    // the stores are read in one quick call; the lines say what it looks at
+    const where = ["Steam: libraryfolders.vdf in every Steam library", "GOG Galaxy: the GOG.com registry entries", "Epic Games: the launcher's install manifests"];
+    where.forEach((w, i) => setTimeout(() => setLines((l) => [...l.map((x) => ({ ...x, done: true })), { text: w }]), i * 220));
+    const started = Date.now();
     game.detect().then(async (list) => {
+      await new Promise((r) => setTimeout(r, Math.max(0, 700 - (Date.now() - started))));
       setFound(list);
       const cur = await paths.get();
       // one install found and nothing set yet: just use it
@@ -47,7 +57,7 @@ function GameStep({ onNext }: { onNext: () => void }) {
   const use = async (dir: string) => setP(await paths.set({ gameDir: dir }));
   return (
     <Module icon="play" title="Find the game" band="hot" count={p?.gameLooksRight ? "found" : undefined}>
-      {!found && <Empty icon="clock" title="Looking for Cyberpunk 2077" />}
+      {!found && <Scanner title="Looking for Cyberpunk 2077" icon="play" lines={lines} />}
       {p?.gameDir && p.gameLooksRight ? (
         <>
           <p>Cyberpunk 2077 is at <code>{p.gameDir}</code>.</p>
@@ -95,7 +105,9 @@ function AccountStep({ onNext }: { onNext: () => void }) {
             <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Personal API key" aria-label="Nexus API key" onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} /></label>
             <Key icon="check" disabled={!key || busy} onClick={save}>Connect</Key>
           </div>
-          <button type="button" className="linkish" style={{ marginTop: ".4em", fontSize: ".86em" }} onClick={() => nexusPages.url("https://www.nexusmods.com/settings/api-keys").catch((e) => toast(errorText(e), true))}>Open the API key page in the app</button>
+          <button type="button" className="linkish" style={{ marginTop: ".4em", fontSize: ".86em" }}
+            onClick={() => nexusPages.url(API_KEY_PAGE).then(() => toast("The API key page opens in a Nexus window. Sign in there if asked, then copy the Personal API key.")).catch((e) => toast(errorText(e), true))}>Open the API key page in the app</button>
+          <p className="dim" style={{ fontSize: ".8em", marginTop: ".2em" }}>Or in any browser: nexusmods.com, your avatar, Site preferences, API keys.</p>
         </>
       )}
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
@@ -107,15 +119,36 @@ function AccountStep({ onNext }: { onNext: () => void }) {
 
 function LinksStep({ onNext }: { onNext: () => void }) {
   const [h, setH] = useState<HandlerStatus | null>(null);
+  const [lines, setLines] = useState<ScanLine[]>([{ text: "Reading which app opens nxm:// links (HKEY_CURRENT_USER\\Software\\Classes\\nxm)" }]);
+  const [took, setTook] = useState(false);
+  const say = (text: string) => setLines((l) => [...l.map((x) => ({ ...x, done: true })), { text }]);
   useEffect(() => {
+    const started = Date.now();
+    const settle = async (r: HandlerStatus) => { await new Promise((ok) => setTimeout(ok, Math.max(0, 900 - (Date.now() - started)))); setLines((l) => l.map((x) => ({ ...x, done: true }))); setH(r); };
     handler.status().then(async (s) => {
+      if (!s.supported) { say("Not on Windows: links are handled by the system"); return settle(s); }
+      if (s.ours) { say("Pocket Mods already opens them"); return settle(s); }
       // nobody handles nxm:// links: take them without asking; another manager does: ask
-      if (s.supported && !s.ours && !s.owner) { const r = await handler.register().catch(() => s); setH(r); } else setH(s);
-    }).catch(() => setH({ supported: false, ours: false, owner: null, command: null }));
+      if (!s.owner) {
+        say("No app opens them yet: registering Pocket Mods");
+        const r = await handler.register().catch(() => s);
+        setTook(r.ours);
+        return settle(r);
+      }
+      say(`${s.owner} opens them now`);
+      return settle(s);
+    }).catch(() => settle({ supported: false, ours: false, owner: null, command: null }));
   }, []);
   const settled = !!h && (!h.supported || h.ours);
-  useEffect(() => { if (settled) onNext(); }, [settled, onNext]);
-  if (!h || settled) return <Module icon="link" title="Download links"><Empty icon="clock" title="Checking" /></Module>;
+  useEffect(() => { if (!settled) return; const t = setTimeout(onNext, 2600); return () => clearTimeout(t); }, [settled, onNext]);
+  if (!h) return <Module icon="link" title="Download links"><Scanner title="Checking browser download links" icon="link" lines={lines} /></Module>;
+  if (settled) return (
+    <Module icon="link" title="Download links" count="done">
+      <p><Icon name="check" size={9} /> {h.supported ? (took ? "Mod Manager Download buttons on nexusmods.com now open in Pocket Mods." : "Mod Manager Download buttons on nexusmods.com open in Pocket Mods.") : "Browser links are handled by your system."}</p>
+      <p className="dim" style={{ fontSize: ".86em", marginTop: ".3em" }}>You can test or change this any time in Settings, Download links.</p>
+      <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}><Key variant="dark" icon="chevron" onClick={onNext}>Next</Key></div>
+    </Module>
+  );
   return (
     <Module icon="link" title="Download links from your browser" band="hot">
       <p>{h.owner} opens "Mod Manager Download" links clicked in a web browser. Pages opened inside Pocket Mods always come here, whatever you choose.</p>

@@ -27,6 +27,8 @@ impl AppState {
         let db = Db::open(&data_dir.join("pocket-mods.sqlite"))?;
         // old pages are useless once their TTL has passed; keep the file small
         let _ = db.cache_prune(pocket_core::db::now() - 7 * 86400);
+        // removed mods past their time (or past the size limit) go for good
+        let _ = pocket_core::install::purge_trash(&db, None);
         Ok(AppState {
             nexus: Arc::new(NexusClient::new(key)?), keys, user: RwLock::new(None), db: Arc::new(Mutex::new(db)),
             queue: Arc::new(Mutex::new(Queue::default())), pump: Arc::new(Notify::new()),

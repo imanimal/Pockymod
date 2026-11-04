@@ -49,10 +49,18 @@ pub fn open_nexus(app: &AppHandle, url: &str) -> tauri::Result<()> {
         return Ok(());
     }
     let handle = app.clone();
+    let loading = app.clone();
+    let _ = app.emit("nexus-window", "loading");
     WebviewWindowBuilder::new(app, "nexus", WebviewUrl::External(url))
         .title("Nexus Mods · Pocket Mods")
         .inner_size(1180.0, 820.0)
         .min_inner_size(720.0, 520.0)
+        // Nexus's own dark grey while the page loads, not a white flash
+        .background_color(tauri::window::Color(0x1d, 0x1d, 0x21, 0xff))
+        .on_page_load(move |_, p| {
+            let state = if matches!(p.event(), tauri::webview::PageLoadEvent::Finished) { "ready" } else { "loading" };
+            let _ = loading.emit("nexus-window", state);
+        })
         .on_navigation(move |u| {
             if u.scheme() == "nxm" {
                 let s = u.to_string();
@@ -161,6 +169,11 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
     let st = app.state::<AppState>();
     let paths = Paths::load(&st.db.lock().unwrap());
     let (game, library) = paths.require()?;
+    // added for another mod, and the user has it by now (from Vortex, by hand, or an earlier install): keep theirs
+    let for_another = item.required_by.is_some();
+    if for_another && crate::commands::library::present_mod_ids(&st.db)?.contains(&item.mod_id) {
+        return Ok(ItemState::Done { install_id: None, note: Some(format!("You already have {}. Kept yours.", item.mod_name)) });
+    }
     st.queue.lock().unwrap().set(item.id, ItemState::Downloading { received: 0, total: Some(item.size) });
     emit(app);
 
@@ -217,7 +230,8 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         });
     }
     let archive_for_choices = archive.to_string_lossy().into_owned();
-    let req = InstallRequest { mod_id: item.mod_id, file_id: item.file_id, name: item.mod_name.clone(), version: item.version.clone(), archive, accept_unknown: false, replace_older: true, options: paths.deploy_options(), fomod_choices: None };
+    let req = InstallRequest { mod_id: item.mod_id, file_id: item.file_id, name: item.mod_name.clone(), version: item.version.clone(), archive, accept_unknown: false, replace_older: true, options: paths.deploy_options(), fomod_choices: None,
+        origin: item.required_by.clone(), keep_existing: for_another };
     let db = st.db.clone();
     let out = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &game, &library, &req)).await
         .map_err(|e| Error::Invalid(e.to_string()))??;
@@ -230,6 +244,7 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
             install_id: Some(install_id),
             note: if needs_redmod_deploy { Some("REDmod deploy needed: run it from Health or Load order.".into()) } else { warnings.first().cloned() },
         },
+        InstallOutcome::AlreadyHave { install_id, .. } => ItemState::Done { install_id, note: Some(format!("You already have {}. Kept yours; nothing was replaced.", item.mod_name)) },
         InstallOutcome::Staged { install_id, .. } => ItemState::Done { install_id: Some(install_id), note: Some("Downloaded, not deployed yet: it clashes with installed mods. Decide in Library.".into()) },
         InstallOutcome::NeedsReview { plan } => ItemState::Failed { message: format!("{} files have no known place in the game folder. Open Library, Downloads to install it anyway.", plan.unknown.len()) },
         InstallOutcome::NeedsChoices { fomod, defaults } => {

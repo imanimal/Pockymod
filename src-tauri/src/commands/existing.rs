@@ -22,10 +22,12 @@ pub struct ExistingScan { pub vortex: Option<VortexSummary>, pub found: Vec<Foun
 
 /// What is already in the game: Vortex's mods and mods no manager owns. Reads only; nothing changes.
 #[tauri::command]
-pub async fn existing_scan(state: State<'_, AppState>) -> Result<ExistingScan> {
+pub async fn existing_scan(app: AppHandle, state: State<'_, AppState>) -> Result<ExistingScan> {
     let Some(game) = Paths::load(&state.db.lock().unwrap()).game_dir else { return Ok(ExistingScan { vortex: None, found: Vec::new() }) };
     let db = state.db.clone();
     blocking(move || {
+        let say = |stage: &str, name: String| { let _ = app.emit("existing-progress", serde_json::json!({ "stage": stage, "done": 0, "total": 0, "name": name })); };
+        say("vortex", std::env::var("APPDATA").map(|a| format!("{a}\\Vortex")).unwrap_or_else(|_| "Vortex".into()));
         let setup = vortex::find(&game);
         let (summary, vortex_files) = match &setup {
             Some(s) => {
@@ -45,6 +47,9 @@ pub async fn existing_scan(state: State<'_, AppState>) -> Result<ExistingScan> {
             }
             None => (None, BTreeSet::new()),
         };
+        for d in ["archive\\pc\\mod", "mods", "r6\\scripts", "r6\\tweaks", "bin\\x64\\plugins\\cyber_engine_tweaks\\mods", "red4ext\\plugins"] {
+            say("folder", format!("{}\\{d}", game.display()));
+        }
         let found = found::scan(&db.lock().unwrap(), &game, &vortex_files)?;
         Ok(ExistingScan { vortex: summary.filter(|s| s.mods > 0), found })
     }).await
@@ -63,13 +68,20 @@ pub async fn existing_track(app: AppHandle, state: State<'_, AppState>, vortex_m
     if vortex_mods {
         if let Some(setup) = vortex::find(&game) {
             let list = vortex::list_mods(&setup, &game);
-            let resolved = vortex::resolve(&state.nexus, &state.db, list).await;
+            let total = list.len();
+            let _ = app.emit("existing-progress", serde_json::json!({ "stage": "matching", "done": 0, "total": total, "name": "" }));
+            let app2 = app.clone();
+            let resolved = vortex::resolve(&state.nexus, &state.db, list, move |done, total, name| {
+                let _ = app2.emit("existing-progress", serde_json::json!({ "stage": "matching", "done": done, "total": total, "name": name }));
+            }).await;
+            let _ = app.emit("existing-progress", serde_json::json!({ "stage": "tracking", "done": total, "total": total, "name": "" }));
             let db = state.db.clone();
             let g = game.clone();
             res.vortex = blocking(move || vortex::track(&db.lock().unwrap(), &g, &setup, &resolved)).await?;
         }
     }
     if found_mods {
+        let _ = app.emit("existing-progress", serde_json::json!({ "stage": "linking", "done": 0, "total": 0, "name": "" }));
         let db = state.db.clone();
         let (g, l) = (game.clone(), library.clone());
         res.found = blocking(move || {
@@ -144,4 +156,81 @@ pub async fn library_bulk(app: AppHandle, state: State<'_, AppState>, install_id
     }).await?;
     let _ = app.emit("library-changed", ());
     Ok(rep)
+}
+
+/// Go back to the user's own files that an install set aside, keeping them tracked as the user's copy.
+#[tauri::command]
+pub async fn library_restore_replaced(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>) -> Result<usize> {
+    let (game, library) = Paths::load(&state.db.lock().unwrap()).require()?;
+    let db = state.db.clone();
+    let n = blocking(move || {
+        let d = db.lock().unwrap();
+        let mut n = 0;
+        for id in install_ids { if install::restore_replaced(&d, &game, &library, id).is_ok() { n += 1; } }
+        Ok(n)
+    }).await?;
+    let _ = app.emit("library-changed", ());
+    Ok(n)
+}
+
+/// Sets of installs of the same Nexus mod: the one to keep first, then the extra copies.
+#[tauri::command]
+pub fn library_duplicates(state: State<'_, AppState>) -> Result<Vec<Vec<i64>>> { install::duplicates(&state.db.lock().unwrap()) }
+
+/// Keep one install of a mod and remove the other copies. A copy from Vortex stays in Vortex; the kept one is put
+/// back in the game if it is on, so files the removed copies held go back to it.
+#[tauri::command]
+pub async fn library_keep_one(app: AppHandle, state: State<'_, AppState>, keep: i64, remove: Vec<i64>) -> Result<()> {
+    let p = Paths::load(&state.db.lock().unwrap());
+    let (game, library) = p.require()?;
+    let opts = p.deploy_options();
+    let db = state.db.clone();
+    blocking(move || {
+        let d = db.lock().unwrap();
+        // removing a copy puts back whatever it had set aside, then the kept one takes its files again
+        for id in remove.iter().filter(|x| **x != keep) { install::uninstall(&d, &game, *id)?; }
+        let on: bool = d.conn.query_row("SELECT COALESCE((SELECT enabled FROM profile_mods WHERE install_id = ?1 AND profile_id = (SELECT id FROM profiles WHERE active = 1 LIMIT 1)), 0)", [keep], |r| r.get(0))?;
+        if on { let _ = install::redeploy_any(&d, &game, &library, keep, &opts); }
+        Ok(())
+    }).await?;
+    let _ = app.emit("library-changed", ());
+    Ok(())
+}
+
+// ── recently removed ──
+
+#[tauri::command]
+pub fn library_trash_list(state: State<'_, AppState>) -> Result<Vec<install::TrashRow>> { install::list_trash(&state.db.lock().unwrap()) }
+
+/// Put removed mods back. Returns the install ids, in the same order (0 for one that could not be).
+#[tauri::command]
+pub async fn library_trash_restore(app: AppHandle, state: State<'_, AppState>, trash_ids: Vec<i64>) -> Result<Vec<i64>> {
+    let p = Paths::load(&state.db.lock().unwrap());
+    let (game, library) = p.require()?;
+    let opts = p.deploy_options();
+    let db = state.db.clone();
+    let out = blocking(move || {
+        let d = db.lock().unwrap();
+        let mut out = Vec::new();
+        let mut first_err = None;
+        for id in trash_ids {
+            match install::restore_trash(&d, &game, &library, id, &opts) { Ok(i) => out.push(i), Err(e) => { out.push(0); first_err.get_or_insert(e); } }
+        }
+        match first_err { Some(e) if out.iter().all(|x| *x == 0) => Err(e), _ => Ok(out) }
+    }).await?;
+    let _ = app.emit("library-changed", ());
+    Ok(out)
+}
+
+/// Delete removed mods for good: one, or (without an id) everything past the time and size limits.
+#[tauri::command]
+pub fn library_trash_purge(state: State<'_, AppState>, trash_id: Option<i64>, all: Option<bool>) -> Result<usize> {
+    let d = state.db.lock().unwrap();
+    if all.unwrap_or(false) {
+        let ids: Vec<i64> = install::list_trash(&d)?.into_iter().map(|t| t.id).collect();
+        let mut n = 0;
+        for id in ids { n += install::purge_trash(&d, Some(id))?; }
+        return Ok(n);
+    }
+    install::purge_trash(&d, trash_id)
 }

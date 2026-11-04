@@ -2,8 +2,27 @@
 import { useEffect, useState } from "react";
 import { Dialog } from "../ui/Dialog";
 import { Empty, Key, Lcd, Switch } from "../ui/pocket";
-import { errorText, existing, updates, type ExistingScan } from "../lib/api";
+import { Scanner, type ScanLine } from "../ui/Scanner";
+import { errorText, existing, onExistingProgress, updates, type ExistingProgress, type ExistingScan } from "../lib/api";
 import { toast } from "../ui/toast";
+
+/** The progress events as readable lines: each folder looked in, each Vortex mod matched on Nexus. */
+function useProgress() {
+  const [lines, setLines] = useState<ScanLine[]>([]);
+  const [p, setP] = useState<ExistingProgress | null>(null);
+  useEffect(() => {
+    let off: (() => void) | undefined;
+    onExistingProgress((e) => {
+      setP(e);
+      const text = e.stage === "vortex" ? `Vortex: ${e.name}` : e.stage === "folder" ? e.name
+        : e.stage === "matching" ? (e.name ? `Matched on Nexus: ${e.name}` : "Matching Vortex's mods on Nexus")
+        : e.stage === "tracking" ? "Recording them in your library" : "Linking hand-installed mods into the library";
+      setLines((l) => [...l.map((x) => ({ ...x, done: true })), { text }].slice(-40));
+    }).then((u) => { off = u; });
+    return () => off?.();
+  }, []);
+  return { lines, p, reset: () => { setLines([]); setP(null); } };
+}
 
 export function ExistingBody({ onDone, compact, quiet }: { onDone: (tracked: number) => void; compact?: boolean; quiet?: boolean }) {
   const [scan, setScan] = useState<ExistingScan | null>(null);
@@ -11,14 +30,21 @@ export function ExistingBody({ onDone, compact, quiet }: { onDone: (tracked: num
   const [vx, setVx] = useState(true);
   const [fd, setFd] = useState(true);
   const [busy, setBusy] = useState(false);
+  const prog = useProgress();
   useEffect(() => { existing.scan().then(setScan).catch((e) => setErr(errorText(e))); }, []);
   if (err) return <div className="note bad">{err}</div>;
-  if (!scan) return <Empty icon="clock" title="Looking in the game folder" />;
+  if (!scan) return <Scanner title="Looking for mods you already have" icon="folder" lines={prog.lines} sub="Vortex's records and the game's mod folders. Nothing is changed." />;
+  if (busy) {
+    const matching = prog.p?.stage === "matching";
+    return <Scanner title="Bringing your mods in" icon="library" lines={prog.lines} done={matching ? prog.p?.done : undefined} total={matching ? prog.p?.total : undefined}
+      sub={matching ? "Each Vortex mod is looked up once on Nexus so it can get update checks; next time this is instant." : "Nothing in the game folder moves."} />;
+  }
   const v = scan.vortex;
   const newVortex = v ? v.mods - v.alreadyTracked : 0;
   const nothing = newVortex === 0 && scan.found.length === 0;
   const go = async () => {
     setBusy(true);
+    prog.reset();
     try {
       const r = await existing.track(vx && newVortex > 0, fd && scan.found.length > 0);
       const n = r.vortex.tracked + r.found;

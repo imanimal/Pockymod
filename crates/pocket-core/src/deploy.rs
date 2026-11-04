@@ -146,8 +146,11 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
             }
             let mut backup = None;
             let mut prev_install = None;
+            let mut in_place = false;
             match owner_of(db, &tkey)? {
                 Some((owner, _)) if owner == install_id => { remove_file(&dst, game)?; }
+                // already this very file (a hard link to the staged one, as Vortex leaves it): nothing to move
+                None if dst.exists() && same_file::is_same_file(&src, &dst).unwrap_or(false) => { in_place = true; }
                 Some((owner, _)) => { prev_install = Some(owner); remove_file(&dst, game)?; }
                 None if dst.exists() => {
                     // a file no mod owns (the game's, or put there by hand): keep it to put back later
@@ -159,7 +162,7 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
                 }
                 None => {}
             }
-            let method = match fs::hard_link(&src, &dst) {
+            let method = if in_place { linked += 1; Method::Hardlink } else { match fs::hard_link(&src, &dst) {
                 Ok(()) => { linked += 1; Method::Hardlink }
                 Err(e) if e.kind() == ErrorKind::PermissionDenied => return Err(permission_error(&dst, game)),
                 Err(e) if opts.allow_copy => {
@@ -169,7 +172,7 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
                     Method::Copy
                 }
                 Err(e) => return Err(Error::Invalid(format!("Could not hard-link {}: {e}. Allow the copy fallback in Settings to copy instead.", p.target))),
-            };
+            } };
             let row = Row { target_key: tkey, target_path: p.target.clone(), source: src.to_string_lossy().into_owned(), method: method.as_str().into(), backup, prev_install, size };
             db.conn.execute(
                 "INSERT INTO deployed_files (target, install_id, source, method, size, deployed_at, target_path, backup, prev_install) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)

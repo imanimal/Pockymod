@@ -38,6 +38,11 @@ const MIGRATIONS: &[&str] = &[
      ALTER TABLE installs ADD COLUMN group_name TEXT;
      CREATE TABLE groups (name TEXT PRIMARY KEY, sort INTEGER NOT NULL DEFAULT 0);
      CREATE TABLE queue_items (id INTEGER PRIMARY KEY, data TEXT NOT NULL);",
+    // 5: what an install was made for (the mod needing it, or the collection), so the user's own copies win over ones added for them
+    "ALTER TABLE installs ADD COLUMN origin TEXT;",
+    // 6: removed mods, kept for a while so a removal (or an update) can be undone
+    "CREATE TABLE trash (id INTEGER PRIMARY KEY, install_id INTEGER NOT NULL, name TEXT NOT NULL, mod_id INTEGER NOT NULL, version TEXT NOT NULL,
+        source TEXT NOT NULL, reason TEXT NOT NULL, data TEXT NOT NULL, kept TEXT, size INTEGER NOT NULL DEFAULT 0, removed_at INTEGER NOT NULL);",
 ];
 
 pub struct Db { pub conn: Connection }
