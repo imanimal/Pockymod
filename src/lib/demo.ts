@@ -233,6 +233,11 @@ export function installDemo() {
     game_launch_vanilla: () => { throw { kind: "demo", message: "Starting the game needs the desktop app." }; },
     game_vanilla_pending: () => false,
     scripts_reset: () => 2,
+    library_identify: ({ path }) => {
+      const stem = String(path).split(/[\\/]/).pop()!.replace(/\.(zip|7z|rar)$/i, "");
+      const m = /^(.+?)-(\d+)-([\d-]+)-(\d{9,11})$/.exec(stem);
+      return m ? { modId: Number(m[2]), fileId: null, name: m[1].replace(/[_-]/g, " "), version: m[3].replace(/-/g, "."), fileName: null } : { modId: null, fileId: null, name: stem.replace(/[_-]/g, " "), version: "", fileName: null };
+    },
     game_vanilla_restore: () => 0,
     game_open_folder: () => { throw { kind: "demo", message: "Opening folders needs the desktop app." }; },
     app_update_check: () => ({ current: "0.1.0", latest: null, newer: false, notes: null, url: null, message: "No published release found yet." }),

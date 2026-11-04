@@ -255,3 +255,10 @@
 @keyframes toastOut { to { opacity: 0; transform: translateX(12%); } }
 .toast .tt { animation: print calc(var(--m) * 260ms + 1ms) steps(8, end); }
 @keyframes print { from { clip-path: inset(0 100% 0 0); } }
+
+/* files dragged over the window */
+.dropzone { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; pointer-events: none; background: color-mix(in srgb, var(--bg) 60%, transparent); }
+.dropzone.over { box-shadow: inset 0 0 0 3px var(--accent); }
+.dropzone-card { display: flex; flex-direction: column; align-items: center; gap: .5em; padding: 1.4em 2em; border-radius: var(--radius); background: var(--surface); box-shadow: var(--drop); text-align: center; max-width: 28em; animation: comeDrop calc(var(--m) * 240ms + 1ms) var(--ease-back); }
+.dropzone-card .i { color: var(--accent); }
+@keyframes comeDrop { from { opacity: 0; transform: translateY(-.55em) scale(.98); } }

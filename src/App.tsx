@@ -17,6 +17,7 @@ import { Onboarding } from "./screens/Onboarding";
 import { LaunchDeck } from "./ui/LaunchDeck";
 import { HistoryMenu } from "./ui/HistoryMenu";
 import { installUndoKeys } from "./lib/history";
+import { DropZone } from "./ui/DropZone";
 import { FomodDialog } from "./screens/FomodDialog";
 import { Create } from "./screens/Create";
 import { Toasts, toast } from "./ui/toast";
@@ -159,6 +160,7 @@ export function App() {
       {choices && <FomodDialog need={choices} onClose={() => setChoices(null)} />}
       {existingOpen && <ExistingDialog onClose={() => setExistingOpen(false)} />}
       {onboard && <Onboarding onDone={() => { setOnboard(false); game.health().then((h) => setHealthIssues(h.problems)).catch(() => {}); }} />}
+      <DropZone onChoices={setChoices} />
       <Toasts />
     </div>
   );

@@ -224,3 +224,28 @@ pub fn nxm_handler_test() -> Result<()> {
     #[cfg(not(windows))]
     { Err(Error::Invalid("The link test runs on Windows.".into())) }
 }
+
+// ── archives from outside the queue (Install from file, dropped files, manual downloads) ──
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Identified { pub mod_id: Option<u32>, pub file_id: Option<u32>, pub name: String, pub version: String, pub file_name: Option<String> }
+
+/// Which Nexus mod and file an archive is, from its Nexus file name (`Name-<mod>-<version>-<time>.zip`) and the
+/// mod's file list, so a mod installed from a file still gets update checks.
+#[tauri::command]
+pub async fn library_identify(state: State<'_, AppState>, path: String) -> Result<Identified> {
+    let file = std::path::Path::new(&path).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let stem = file.rsplit_once('.').map(|(a, _)| a.to_string()).unwrap_or(file.clone());
+    let plain = || stem.replace(['_', '-'], " ").trim().to_string();
+    for c in pocket_core::vortex::parse_archive_name(&stem) {
+        let Ok((d, files)) = pocket_core::browse::mod_files(&state.nexus, &state.db, c.mod_id, None).await else { continue };
+        let f = files.iter().find(|f| f.uri.rsplit_once('.').map(|(a, _)| a) == Some(stem.as_str()));
+        let name_fits = d.name.to_lowercase().replace(' ', "").starts_with(&c.name.to_lowercase().replace(['_', '-', ' '], "").chars().take(5).collect::<String>());
+        if f.is_some() || name_fits {
+            return Ok(Identified { mod_id: Some(c.mod_id), file_id: f.map(|f| f.file_id), name: d.name.clone(),
+                version: f.map(|f| f.version.clone()).unwrap_or(c.version.clone()), file_name: f.map(|f| f.name.clone()) });
+        }
+    }
+    Ok(Identified { name: plain(), ..Default::default() })
+}

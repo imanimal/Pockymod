@@ -57,6 +57,29 @@ pub fn open_nexus(app: &AppHandle, url: &str) -> tauri::Result<()> {
         .min_inner_size(720.0, 520.0)
         // Nexus's own dark grey while the page loads, not a white flash
         .background_color(tauri::window::Color(0x1d, 0x1d, 0x21, 0xff))
+        // "Manual download" on a Nexus page: the file goes to the library's downloads folder, and the app offers to
+        // install it when it is done (instead of it landing in Windows' Downloads, forgotten)
+        .on_download({
+            let h = app.clone();
+            move |_, ev| {
+                match ev {
+                    tauri::webview::DownloadEvent::Requested { destination, .. } => {
+                        let paths = { let st = h.state::<AppState>(); let p = Paths::load(&st.db.lock().unwrap()); p };
+                        if let Ok((_, lib)) = paths.require() {
+                            let name = destination.file_name().map(|n| n.to_os_string()).unwrap_or_else(|| "download.zip".into());
+                            let dir = lib.join("downloads");
+                            let _ = std::fs::create_dir_all(&dir);
+                            *destination = dir.join(name);
+                        }
+                    }
+                    tauri::webview::DownloadEvent::Finished { path, success, .. } => {
+                        let _ = h.emit("manual-download", serde_json::json!({ "path": path.map(|p| p.to_string_lossy().into_owned()), "success": success }));
+                    }
+                    _ => {}
+                }
+                true
+            }
+        })
         .on_page_load(move |_, p| {
             let state = if matches!(p.event(), tauri::webview::PageLoadEvent::Finished) { "ready" } else { "loading" };
             let _ = loading.emit("nexus-window", state);

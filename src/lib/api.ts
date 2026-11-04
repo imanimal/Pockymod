@@ -155,7 +155,7 @@ export type InstallOutcome =
   | { status: "staged"; installId: number; deploy: DeployOutcome }
   | { status: "needsChoices"; fomod: Fomod; defaults: Choice[] }
   | { status: "alreadyHave"; installId: number | null; files: number };
-export interface InstallRequest { modId: number; fileId: number; name: string; version: string; archive: string; acceptUnknown?: boolean; replaceOlder?: boolean; options?: DeployOptions; fomodChoices?: Choice[] }
+export interface InstallRequest { modId: number; fileId: number; name: string; version: string; archive: string; acceptUnknown?: boolean; replaceOlder?: boolean; options?: DeployOptions; fomodChoices?: Choice[]; fileName?: string | null }
 export type Choice = [number, number, number];
 export interface FomodPlugin { name: string; description: string; image: string | null; kind: string }
 export interface Fomod { name: string; root: string; steps: Array<{ name: string; groups: Array<{ name: string; kind: string; plugins: FomodPlugin[] }> }> }
@@ -178,6 +178,10 @@ export const library = {
   restore: (trashIds: number[]) => call<number[]>("library_trash_restore", { trashIds }),
   purge: (trashId?: number, all = false) => call<number>("library_trash_purge", { trashId: trashId ?? null, all }),
 };
+export interface Identified { modId: number | null; fileId: number | null; name: string; version: string; fileName: string | null }
+/** Which Nexus mod an archive is, from its Nexus file name. */
+export const identifyArchive = (path: string) => call<Identified>("library_identify", { path });
+export const onManualDownload = (cb: (e: { path: string | null; success: boolean }) => void) => listen<{ path: string | null; success: boolean }>("manual-download", cb);
 export const onExistingProgress = (cb: (p: ExistingProgress) => void) => listen<ExistingProgress>("existing-progress", cb);
 export const queue = {
   get: () => call<QueueSnapshot>("queue_get"),

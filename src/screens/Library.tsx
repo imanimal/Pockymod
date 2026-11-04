@@ -12,6 +12,7 @@ import { toast } from "../ui/toast";
 import { FomodDialog } from "./FomodDialog";
 import type { ChoicesNeeded, TrashRow } from "../lib/api";
 import * as ops from "../lib/ops";
+import { installArchive } from "../lib/archives";
 
 type Pending =
   | { kind: "conflicts"; installId: number; name: string; conflicts: Conflict[] }
@@ -133,10 +134,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const installFromFile = () => run(async () => {
     const archive = await pickArchive();
     if (!archive) return;
-    const name = archive.split(/[\\/]/).pop()?.replace(/\.(zip|7z|rar)$/i, "") ?? "Mod";
-    const local = 900_000_000 + (Array.from(name).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % 90_000_000);
-    const d = { modId: local, fileId: local, name, version: "local", archive };
-    handleOutcome(await library.installFile(d), name, d);
+    const { outcome, request } = await installArchive(archive);
+    handleOutcome(outcome, request.name, request);
   });
 
   const notInstalled = downloads.filter((d) => !d.installed);
