@@ -1,0 +1,1036 @@
+{
+  "m18839": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Updated compatibility to game patch 2.5 (thanks to arm4ni)"
+      ],
+      "date": 1793345239,
+      "description": "Thanks to arm4ni (https://www.nexusmods.com/profile/arm4ni) for helping with this update",
+      "fileId": 170889,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 332,
+      "sizeInBytes": "340778",
+      "totalDownloads": 39046,
+      "uniqueDownloads": 33367,
+      "uri": "c8/cc/d8/c8ccd808-fb86-414c-9b6c-b6fe0fa3c289",
+      "version": "1.5.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Added ability to adjust step of position sliders (photo_mode.character.position_adjust_step)"
+      ],
+      "date": 1778256050,
+      "description": "",
+      "fileId": 144627,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 326,
+      "sizeInBytes": "334319",
+      "totalDownloads": 285161,
+      "uniqueDownloads": 178566,
+      "uri": "PhotoMode-EX-18839-1-4-1-1778256050.zip",
+      "version": "1.4.1"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Updated compatibility to game patch 2.3"
+      ],
+      "date": 1755552524,
+      "description": "",
+      "fileId": 118330,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320005",
+      "totalDownloads": 351445,
+      "uniqueDownloads": 223145,
+      "uri": "PhotoMode-EX-18839-1-4-0-1755552524.zip",
+      "version": "1.4.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Added \"Look At Camera\" preset for eyes only",
+        "Fixed NPCs using their own inventory for poses"
+      ],
+      "date": 1741787851,
+      "description": "",
+      "fileId": 103825,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320869",
+      "totalDownloads": 100169,
+      "uniqueDownloads": 73573,
+      "uri": "PhotoMode-EX-18839-1-3-2-1741787851.zip",
+      "version": "1.3.2"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Updated compatibility to game patch 2.21"
+      ],
+      "date": 1737653472,
+      "description": "",
+      "fileId": 99130,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320577",
+      "totalDownloads": 10,
+      "uniqueDownloads": 7,
+      "uri": "PhotoMode-EX-18839-1-3-1-1737653472.zip",
+      "version": "1.3.1"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Updated compatibility to game patch 2.21"
+      ],
+      "date": 1737653440,
+      "description": "",
+      "fileId": 99129,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320577",
+      "totalDownloads": 83140,
+      "uniqueDownloads": 63870,
+      "uri": "PhotoMode-EX-18839-1-3-1-1737653440.zip",
+      "version": "1.3.1"
+    }
+  ],
+  "m2881": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Fixed new perks validation",
+        "Fixed Korean localization"
+      ],
+      "date": 1696453985,
+      "description": "",
+      "fileId": 51100,
+      "groupId": 2515579,
+      "name": "NeureSpec",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 35,
+      "sizeInBytes": "35658",
+      "totalDownloads": 361063,
+      "uniqueDownloads": 234093,
+      "uri": "NeureSpec-2881-1-2-1-1696453985.zip",
+      "version": "1.2.1"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Support patch 2.0"
+      ],
+      "date": 1696307544,
+      "description": "",
+      "fileId": 50745,
+      "groupId": 2515579,
+      "name": "NeureSpec",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 35,
+      "sizeInBytes": "36086",
+      "totalDownloads": 3247,
+      "uniqueDownloads": 3026,
+      "uri": "NeureSpec-2881-1-2-0-1696307544.zip",
+      "version": "1.2.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [],
+      "date": 1669976864,
+      "description": "",
+      "fileId": 34710,
+      "groupId": 2515579,
+      "name": "Neu-Re-Spec",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 34,
+      "sizeInBytes": "35273",
+      "totalDownloads": 136555,
+      "uniqueDownloads": 94458,
+      "uri": "Neu-Re-Spec-2881-1-1-0-1669976864.zip",
+      "version": "1.1.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [],
+      "date": 1646304791,
+      "description": "Compatible with patch 1.5",
+      "fileId": 21241,
+      "groupId": 2515579,
+      "name": "Neu-Re-Spec",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 33,
+      "sizeInBytes": "34175",
+      "totalDownloads": 112081,
+      "uniqueDownloads": 84816,
+      "uri": "Neu-Re-Spec-2881-1-0-0-1646304791.zip",
+      "version": "1.0.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [],
+      "date": 1630777996,
+      "description": "",
+      "fileId": 16486,
+      "groupId": 2515579,
+      "name": "NeureSpec",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 33,
+      "sizeInBytes": "33847",
+      "totalDownloads": 5363,
+      "uniqueDownloads": 4514,
+      "uri": "NeureSpec-2881-0-9-5-1630777996.zip",
+      "version": "0.9.5"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [],
+      "date": 1626778895,
+      "description": "",
+      "fileId": 15171,
+      "groupId": 2515579,
+      "name": "NeureSpec",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 32,
+      "sizeInBytes": "32739",
+      "totalDownloads": 1755,
+      "uniqueDownloads": 1574,
+      "uri": "NeureSpec-2881-0-9-4-1626778895.zip",
+      "version": "0.9.4"
+    }
+  ],
+  "m4197": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Updated compatibility to game patch 2.5"
+      ],
+      "date": 1792915838,
+      "description": "",
+      "fileId": 168221,
+      "groupId": 2583823,
+      "name": "TweakXL",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 1045,
+      "sizeInBytes": "1070421",
+      "totalDownloads": 629165,
+      "uniqueDownloads": 456018,
+      "uri": "6a/a4/d6/6aa4d6f0-fabc-476d-9e5c-e312e806ce50",
+      "version": "1.12.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Improved hash collision diagnostics"
+      ],
+      "date": 1792493527,
+      "description": "",
+      "fileId": 167254,
+      "groupId": 2583823,
+      "name": "TweakXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1040,
+      "sizeInBytes": "1065616",
+      "totalDownloads": 262842,
+      "uniqueDownloads": 191133,
+      "uri": "99/79/87/997987ad-20d6-4966-9c14-c20dba4d1e3d",
+      "version": "1.11.5"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Improved error handling and logging"
+      ],
+      "date": 1785439921,
+      "description": "",
+      "fileId": 154092,
+      "groupId": 2583823,
+      "name": "TweakXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1021,
+      "sizeInBytes": null,
+      "totalDownloads": 766932,
+      "uniqueDownloads": 504569,
+      "uri": "77/9f/d7/779fd729-8ab5-4e22-b27b-49501d20d50e",
+      "version": "1.11.4"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fixed bug when array mutations can be interpreted incorrectly inside template"
+      ],
+      "date": 1766690034,
+      "description": "",
+      "fileId": 130803,
+      "groupId": 2583823,
+      "name": "TweakXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1005,
+      "sizeInBytes": "1028720",
+      "totalDownloads": 1710884,
+      "uniqueDownloads": 1066994,
+      "uri": "TweakXL-4197-1-11-3-1766690034.zip",
+      "version": "1.11.3"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Optimized YAML templates processing"
+      ],
+      "date": 1763807957,
+      "description": "",
+      "fileId": 128147,
+      "groupId": 2583823,
+      "name": "TweakXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1005,
+      "sizeInBytes": "1028881",
+      "totalDownloads": 301637,
+      "uniqueDownloads": 223262,
+      "uri": "TweakXL-4197-1-11-2-1763807957.zip",
+      "version": "1.11.2"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fixed bug when incorrect element can be deleted from array",
+        "Fixed bug when hot reload without mods doesn't restore initial TweakDB state"
+      ],
+      "date": 1763055933,
+      "description": "",
+      "fileId": 127456,
+      "groupId": 2583823,
+      "name": "TweakXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1003,
+      "sizeInBytes": "1027453",
+      "totalDownloads": 68430,
+      "uniqueDownloads": 56365,
+      "uri": "TweakXL-4197-1-11-1-1763055933.zip",
+      "version": "1.11.1"
+    }
+  ],
+  "m4198": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Added temporary fix for Panam hair"
+      ],
+      "date": 1793278782,
+      "description": "",
+      "fileId": 170440,
+      "groupId": 2583817,
+      "name": "ArchiveXL",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 1046,
+      "sizeInBytes": "1072116",
+      "totalDownloads": 351551,
+      "uniqueDownloads": 278178,
+      "uri": "a1/f3/28/a1f328af-5991-4e62-8da3-08c32814ad18",
+      "version": "1.28.6"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fixed rendering of patched static materials"
+      ],
+      "date": 1793276426,
+      "description": "",
+      "fileId": 170431,
+      "groupId": 2583817,
+      "name": "ArchiveXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1048,
+      "sizeInBytes": "1073445",
+      "totalDownloads": 5000,
+      "uniqueDownloads": 4706,
+      "uri": "3a/f9/b9/3af9b943-1b95-41c1-9df3-691025e4090d",
+      "version": "1.28.5"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Added auto fix for meshes with broken/missing materials"
+      ],
+      "date": 1793271740,
+      "description": "",
+      "fileId": 170409,
+      "groupId": 2583817,
+      "name": "ArchiveXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1048,
+      "sizeInBytes": "1073435",
+      "totalDownloads": 7206,
+      "uniqueDownloads": 6747,
+      "uri": "00/57/70/005770d3-f622-4bf4-ad7c-9dc8aff0ac80",
+      "version": "1.28.4"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fixed character feet state detection in some scenarios",
+        "Fixed rendering of some eye and hair customization",
+        "Fixed instanced mesh world node mutations"
+      ],
+      "date": 1793215019,
+      "description": "",
+      "fileId": 170117,
+      "groupId": 2583817,
+      "name": "ArchiveXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1046,
+      "sizeInBytes": "1071586",
+      "totalDownloads": 108595,
+      "uniqueDownloads": 91106,
+      "uri": "fa/89/4f/fa894ffe-7cf4-4af1-963e-fdb43bb6c208",
+      "version": "1.28.3"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fixed rendering of some clothing and character meshes"
+      ],
+      "date": 1793177224,
+      "description": "",
+      "fileId": 169881,
+      "groupId": 2583817,
+      "name": "ArchiveXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1046,
+      "sizeInBytes": "1071426",
+      "totalDownloads": 53979,
+      "uniqueDownloads": 48463,
+      "uri": "e5/a5/63/e5a563d6-00ac-4a13-8764-81317d9903ab",
+      "version": "1.28.2"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Improved support of cooked world nodes",
+        "Fixed forced hair visual tag",
+        "Fixed randomly missing meshes"
+      ],
+      "date": 1793123964,
+      "description": "",
+      "fileId": 169484,
+      "groupId": 2583817,
+      "name": "ArchiveXL",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1045,
+      "sizeInBytes": "1070699",
+      "totalDownloads": 84874,
+      "uniqueDownloads": 73668,
+      "uri": "c9/56/b8/c956b8f5-6526-4dd6-9ba1-59209a90fdb8",
+      "version": "1.28.1"
+    }
+  ],
+  "m6945": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Updated requirements to match game patch 2.5"
+      ],
+      "date": 1792962438,
+      "description": "",
+      "fileId": 168539,
+      "groupId": 2663014,
+      "name": "Equipment-EX",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 87,
+      "sizeInBytes": "89560",
+      "totalDownloads": 369945,
+      "uniqueDownloads": 272333,
+      "uri": "8b/73/d6/8b73d6bd-e9b8-40e2-8e75-ee48bb605e3e",
+      "version": "1.2.10"
+    },
+    {
+      "category": "OPTIONAL",
+      "changelogText": [],
+      "date": 1778915785,
+      "description": "This optional patch hides the HUB menu buttons, leaving the wardrobe accessible only from apartments.",
+      "fileId": 145554,
+      "groupId": 7424867,
+      "name": "Equipment-EX Hide Hub Buttons Patch",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1,
+      "sizeInBytes": "798",
+      "totalDownloads": 13378,
+      "uniqueDownloads": 11410,
+      "uri": "EquipmentEx-HideHubButtons-6945-1-0-1778915785.zip",
+      "version": "1.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Added public function to get outfit parts",
+        "Improved compatibility with redscript 1",
+        "Updated requirements and conflicts"
+      ],
+      "date": 1773737132,
+      "description": "",
+      "fileId": 139837,
+      "groupId": 2663014,
+      "name": "Equipment-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 87,
+      "sizeInBytes": "89413",
+      "totalDownloads": 1211054,
+      "uniqueDownloads": 734143,
+      "uri": "Equipment-EX-6945-1-2-9-1773737132.zip",
+      "version": "1.2.9"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Updated compatibility to game patch 2.21"
+      ],
+      "date": 1737652896,
+      "description": "",
+      "fileId": 99128,
+      "groupId": 2663014,
+      "name": "Equipment-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 87,
+      "sizeInBytes": "89340",
+      "totalDownloads": 2057536,
+      "uniqueDownloads": 1131291,
+      "uri": "Equipment-EX-6945-1-2-8-1737652896.zip",
+      "version": "1.2.8"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Updated compatibility to game patch 2.2",
+        "Fixed NPC outfits in photo mode"
+      ],
+      "date": 1734071331,
+      "description": "",
+      "fileId": 94659,
+      "groupId": 2663014,
+      "name": "Equipment-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 79,
+      "sizeInBytes": "81128",
+      "totalDownloads": 273361,
+      "uniqueDownloads": 213138,
+      "uri": "Equipment-EX-6945-1-2-7-1734071331.zip",
+      "version": "1.2.7"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Added compatibility with New Game Plus"
+      ],
+      "date": 1728938996,
+      "description": "",
+      "fileId": 89416,
+      "groupId": 2663014,
+      "name": "Equipment-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 79,
+      "sizeInBytes": "81119",
+      "totalDownloads": 228631,
+      "uniqueDownloads": 174229,
+      "uri": "Equipment-EX-6945-1-2-6-1728938996.zip",
+      "version": "1.2.6"
+    }
+  ],
+  "m7780": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Improved support of cooked world nodes",
+        "Fixed native implementation of inkWidgetLibraryResource"
+      ],
+      "date": 1793276558,
+      "description": "",
+      "fileId": 170432,
+      "groupId": 2682862,
+      "name": "Codeware",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 1915,
+      "sizeInBytes": "1961325",
+      "totalDownloads": 346825,
+      "uniqueDownloads": 274382,
+      "uri": "f3/7a/64/f37a64cb-1592-4e56-b516-443779b8140f",
+      "version": "1.21.2"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fixed node setup to support different versions of streaming sectors",
+        "Fixed event propagation for scripted ink widgets"
+      ],
+      "date": 1792962366,
+      "description": "",
+      "fileId": 168538,
+      "groupId": 2682862,
+      "name": "Codeware",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1907,
+      "sizeInBytes": "1953350",
+      "totalDownloads": 339638,
+      "uniqueDownloads": 260125,
+      "uri": "5a/ad/e8/5aade8c2-9674-4498-96ef-b9ada88a841e",
+      "version": "1.21.1"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Updated compatibility to game patch 2.5"
+      ],
+      "date": 1792915835,
+      "description": "",
+      "fileId": 168220,
+      "groupId": 2682862,
+      "name": "Codeware",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1901,
+      "sizeInBytes": "1947045",
+      "totalDownloads": 109802,
+      "uniqueDownloads": 92855,
+      "uri": "b7/f4/95/b7f49597-632e-4c8c-bea2-0d5a5b752acf",
+      "version": "1.21.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fixed entSkinnedMeshComponent native field import"
+      ],
+      "date": 1792493541,
+      "description": "",
+      "fileId": 167255,
+      "groupId": 2682862,
+      "name": "Codeware",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1897,
+      "sizeInBytes": "1943237",
+      "totalDownloads": 267055,
+      "uniqueDownloads": 190242,
+      "uri": "ab/82/06/ab820667-cf10-4a78-a1d7-de4b416e9433",
+      "version": "1.20.6"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fix world state system initialization"
+      ],
+      "date": 1789892426,
+      "description": "",
+      "fileId": 161780,
+      "groupId": 2682862,
+      "name": "Codeware",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1916,
+      "sizeInBytes": "1962550",
+      "totalDownloads": 303897,
+      "uniqueDownloads": 214852,
+      "uri": "09/02/32/0902320b-ef94-4de7-ad42-755049838dae",
+      "version": "1.20.5"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Added fail-safe check for world nodes toggling prior to world state system initialization",
+        "Added fail-safe check and logging when loading appearance for uninitialized component",
+        "Fixed potential crashes in static and dynamic entity systems",
+        "Updated native types imports"
+      ],
+      "date": 1789738215,
+      "description": "",
+      "fileId": 161439,
+      "groupId": 2682862,
+      "name": "Codeware",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1916,
+      "sizeInBytes": "1962661",
+      "totalDownloads": 24689,
+      "uniqueDownloads": 21526,
+      "uri": "55/f3/71/55f37110-2f51-4751-90b2-1f3c30d0e7d6",
+      "version": "1.20.4"
+    }
+  ],
+  "m8340": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Support patch 2.01"
+      ],
+      "date": 1697203025,
+      "description": "",
+      "fileId": 52766,
+      "groupId": 2697877,
+      "name": "Find-EX",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 6,
+      "sizeInBytes": "5720",
+      "totalDownloads": 1408524,
+      "uniqueDownloads": 641921,
+      "uri": "Find-EX-8340-1-2-0-1697203025.zip",
+      "version": "1.2.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [],
+      "date": 1684932368,
+      "description": "",
+      "fileId": 44735,
+      "groupId": 2697877,
+      "name": "Find-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 6,
+      "sizeInBytes": "6232",
+      "totalDownloads": 53345,
+      "uniqueDownloads": 37099,
+      "uri": "Find-EX-8340-1-1-0-1684932368.zip",
+      "version": "1.1.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [],
+      "date": 1684827896,
+      "description": "",
+      "fileId": 44683,
+      "groupId": 2697877,
+      "name": "Find-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 6,
+      "sizeInBytes": "6132",
+      "totalDownloads": 507,
+      "uniqueDownloads": 493,
+      "uri": "Find-EX-8340-1-0-1-1684827896.zip",
+      "version": "1.0.1"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [],
+      "date": 1684270100,
+      "description": "",
+      "fileId": 44357,
+      "groupId": 2697877,
+      "name": "Find-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 6,
+      "sizeInBytes": "6117",
+      "totalDownloads": 2916,
+      "uniqueDownloads": 2541,
+      "uri": "Find-EX-8340-1-0-0-1684270100.zip",
+      "version": "1.0.0"
+    }
+  ],
+  "m9302": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Added ability to drop cyberware"
+      ],
+      "date": 1697144960,
+      "description": "",
+      "fileId": 52667,
+      "groupId": 2718679,
+      "name": "RipperDeck",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 2,
+      "sizeInBytes": "2278",
+      "totalDownloads": 901874,
+      "uniqueDownloads": 467694,
+      "uri": "RipperDeck-9302-1-1-0-1697144960.zip",
+      "version": "1.1.0"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Fixed possible issues with first visit to ripperdoc"
+      ],
+      "date": 1697099575,
+      "description": "",
+      "fileId": 52586,
+      "groupId": 2718679,
+      "name": "RipperDeck",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 2,
+      "sizeInBytes": "1968",
+      "totalDownloads": 5811,
+      "uniqueDownloads": 5352,
+      "uri": "RipperDeck-9302-1-0-3-1697099575.zip",
+      "version": "1.0.3"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Fixed possible issues with first quest in new game"
+      ],
+      "date": 1696803044,
+      "description": "",
+      "fileId": 51930,
+      "groupId": 2718679,
+      "name": "RipperDeck",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 2,
+      "sizeInBytes": "1952",
+      "totalDownloads": 11007,
+      "uniqueDownloads": 10134,
+      "uri": "RipperDeck-9302-1-0-2-1696803044.zip",
+      "version": "1.0.2"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Fixed tutorial triggered in new game"
+      ],
+      "date": 1696313767,
+      "description": "",
+      "fileId": 50759,
+      "groupId": 2718679,
+      "name": "RipperDeck",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 2,
+      "sizeInBytes": "1976",
+      "totalDownloads": 18137,
+      "uniqueDownloads": 15327,
+      "uri": "RipperDeck-9302-1-0-1-1696313767.zip",
+      "version": "1.0.1"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Fixed tutorial triggered in new game"
+      ],
+      "date": 1696313588,
+      "description": "",
+      "fileId": 50758,
+      "groupId": 2718679,
+      "name": "RipperDeck",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 2,
+      "sizeInBytes": "1971",
+      "totalDownloads": 9,
+      "uniqueDownloads": 9,
+      "uri": "RipperDeck-9302-1-0-1-1696313588.zip",
+      "version": "1.0.1"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [],
+      "date": 1696176934,
+      "description": "",
+      "fileId": 50474,
+      "groupId": 2718679,
+      "name": "RipperDeck",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 2,
+      "sizeInBytes": "1869",
+      "totalDownloads": 6298,
+      "uniqueDownloads": 5886,
+      "uri": "RipperDeck-9302-1-0-0-1696176934.zip",
+      "version": "1.0.0"
+    }
+  ],
+  "m9429": [
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "- Updated compatibility to game patch 2.5"
+      ],
+      "date": 1792918421,
+      "description": "Special thanks to MysteriousLetters for help with bug fixes",
+      "fileId": 168239,
+      "groupId": 2718592,
+      "name": "Cyberware-EX",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 16,
+      "sizeInBytes": "17264",
+      "totalDownloads": 232087,
+      "uniqueDownloads": 177077,
+      "uri": "51/ce/b2/51ceb261-492b-45c6-a99c-cc8c3a463029",
+      "version": "1.6.0"
+    },
+    {
+      "category": "MISCELLANEOUS",
+      "changelogText": [],
+      "date": 1697310603,
+      "description": "User configuration template for Override Mode (slots unlockable with money)",
+      "fileId": 52998,
+      "groupId": 2718601,
+      "name": "CyberwareEx-Config-OverrideMode",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1,
+      "sizeInBytes": "980",
+      "totalDownloads": 25665,
+      "uniqueDownloads": 18825,
+      "uri": "CyberwareEx-Config-OverrideMode-9429-1-0-4-1697310603.zip",
+      "version": "1.0.4"
+    },
+    {
+      "category": "MISCELLANEOUS",
+      "changelogText": [],
+      "date": 1696584762,
+      "description": "User configuration template for Expansion Mode (slots unlockable by perks)",
+      "fileId": 51398,
+      "groupId": 2718598,
+      "name": "CyberwareEx-Config-ExpansionMode",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1,
+      "sizeInBytes": "1049",
+      "totalDownloads": 33265,
+      "uniqueDownloads": 24333,
+      "uri": "CyberwareEx-Config-ExpansionMode-9429-1-0-2-1696584762.zip",
+      "version": "1.0.2"
+    },
+    {
+      "category": "MISCELLANEOUS",
+      "changelogText": [],
+      "date": 1696420767,
+      "description": "Removes all cyberware slots added using Cyberware-EX (use to properly uninstall the mod)",
+      "fileId": 51006,
+      "groupId": 4434469,
+      "name": "CyberwareEx-Reset",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1,
+      "sizeInBytes": "801",
+      "totalDownloads": 16920,
+      "uniqueDownloads": 13210,
+      "uri": "CyberwareEx-Reset-9429-1-0-0-1696420767.zip",
+      "version": "1.0.0"
+    },
+    {
+      "category": "OPTIONAL",
+      "changelogText": [],
+      "date": 1696174758,
+      "description": "Adds 10 new cyberware slots in expansion mode\n<br />\n<br />INCOMPATIBLE WITH OVERRIDE MODE\n<br />DO NOT INSTALL TOGETHER",
+      "fileId": 50472,
+      "groupId": 4434466,
+      "name": "CyberwareEx-Addon-ExtendedSlots",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1,
+      "sizeInBytes": "682",
+      "totalDownloads": 1078551,
+      "uniqueDownloads": 558196,
+      "uri": "CyberwareEx-ExtendedMode-9429-1-0-0-1696174758.zip",
+      "version": "1.0.0"
+    },
+    {
+      "category": "OPTIONAL",
+      "changelogText": [],
+      "date": 1696161416,
+      "description": "Activates override mode (allows to buy slots with money, slots aren't locked behind perks)\n<br />\n<br />INCOMPATIBLE WITH EXTENDED SLOTS ADDON\n<br />DO NOT INSTALL TOGETHER",
+      "fileId": 50436,
+      "groupId": 4434460,
+      "name": "CyberwareEx-Addon-OverrideMode",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 1,
+      "sizeInBytes": "682",
+      "totalDownloads": 382468,
+      "uniqueDownloads": 231300,
+      "uri": "CyberwareEx-OverrideMode-9429-1-0-0-1696161416.zip",
+      "version": "1.0.0"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "- Updated compatibility to game patch 2.5"
+      ],
+      "date": 1792918293,
+      "description": "Special thanks to MysteriousLetters for help with bug fixes",
+      "fileId": 168238,
+      "groupId": 2718592,
+      "name": "Cyberware-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 16,
+      "sizeInBytes": "17264",
+      "totalDownloads": 52,
+      "uniqueDownloads": 46,
+      "uri": "b8/a2/89/b8a289e1-66b8-4b9a-a4dc-bd10d7a4476f",
+      "version": "1.6.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Fixed animations and tooltips in cyberware hub menu",
+        "Fixed cyberware info not displayed property in radial wheel",
+        "Fixed skeleton extra slots not working properly in some cases",
+        "Improved compatibility with redscript 1"
+      ],
+      "date": 1777717378,
+      "description": "Special thanks to MysteriousLetters for help with bug fixes",
+      "fileId": 144031,
+      "groupId": 2718592,
+      "name": "Cyberware-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 17,
+      "sizeInBytes": "17127",
+      "totalDownloads": 567863,
+      "uniqueDownloads": 370206,
+      "uri": "Cyberware-EX-9429-1-5-6-1777717378.zip",
+      "version": "1.5.6"
+    }
+  ]
+}

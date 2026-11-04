@@ -52,3 +52,22 @@ async fn collections_browse_revision_and_check() {
     collections::resolve_files(&client, &db, &mut check, 3, false).await.unwrap();
     println!("{}: {} mods, {} missing, {} unavailable, {} clicks, game ok {:?}", check.name, check.entries.len(), check.missing, check.unavailable, check.needs_click, check.game_version_ok);
 }
+
+#[tokio::test]
+#[ignore]
+async fn author_tools() {
+    use pocket_core::creator::mods;
+    let client = NexusClient::new(None).unwrap();
+    let db = Mutex::new(Db::memory().unwrap());
+    // the uploader of ArchiveXL, by name and by id
+    let id = mods::resolve_member(&client, "psiberx").await.unwrap();
+    assert_eq!(id, 108159138);
+    let my = mods::my_mods(&client, &db, id, &[], false, false).await.unwrap();
+    assert!(my.mods.iter().any(|m| m.mod_id == 4198), "ArchiveXL is theirs");
+    assert!(my.mods.iter().all(|m| m.uploader.as_ref().is_some_and(|u| u.member_id == id)));
+    assert!(my.mods.iter().any(|m| m.unique_downloads.is_some()), "unique downloads from v3");
+    assert!(my.mods.iter().all(|m| m.files.iter().all(|f| f.group_id.is_some())));
+    let m = mods::manage(&client, &db, 4198).await.unwrap();
+    assert!(m.required_by_total > 100 && !m.changelog.is_empty());
+    println!("{}: {} mods, {} downloads; ArchiveXL required by {}", my.author.name, my.totals.mods, my.totals.downloads, m.required_by_total);
+}

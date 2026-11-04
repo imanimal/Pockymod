@@ -1,0 +1,288 @@
+{
+  "mods": {
+    "nodes": [
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "Utilities",
+        "createdAt": "2025-01-05T00:27:08Z",
+        "downloads": 881067,
+        "endorsements": 4625,
+        "modId": 18839,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 190
+          },
+          "nexusRequirements": {
+            "totalCount": 3
+          }
+        },
+        "name": "PhotoMode-EX",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/18839/18839-1736036811-20136042.png",
+        "status": "published",
+        "summary": "Custom characters framework and QOL tweaks for Photo Mode",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/18839/18839-1736036811-20136042.png",
+        "uid": "14315126016407",
+        "updatedAt": "2026-10-30T07:27:19Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.5.0"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "Modders Resources",
+        "createdAt": "2022-03-24T12:22:09Z",
+        "downloads": 13970512,
+        "endorsements": 146795,
+        "modId": 4198,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 7763
+          },
+          "nexusRequirements": {
+            "totalCount": 1
+          }
+        },
+        "name": "ArchiveXL",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/4198/4198-1648116857-72076015.jpeg",
+        "status": "published",
+        "summary": "Archive extension loader",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4198/4198-1648116857-72076015.jpeg",
+        "uid": "14315126001766",
+        "updatedAt": "2026-10-29T12:59:42Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.28.6"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "Modders Resources",
+        "createdAt": "2023-03-15T14:02:39Z",
+        "downloads": 11382045,
+        "endorsements": 106795,
+        "modId": 7780,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 2058
+          },
+          "nexusRequirements": {
+            "totalCount": 1
+          }
+        },
+        "name": "Codeware",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/7780/7780-1678888364-446201648.jpeg",
+        "status": "published",
+        "summary": "Script extensions",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/7780/7780-1678888364-446201648.jpeg",
+        "uid": "14315126005348",
+        "updatedAt": "2026-10-29T12:22:38Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.21.2"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx and DJ_Kovrik",
+        "category": "Appearance",
+        "createdAt": "2023-01-03T21:35:43Z",
+        "downloads": 6479865,
+        "endorsements": 56206,
+        "modId": 6945,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 2218
+          },
+          "nexusRequirements": {
+            "totalCount": 5
+          }
+        },
+        "name": "Equipment-EX",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/6945/6945-1672583521-2028780239.jpeg",
+        "status": "published",
+        "summary": "Powerful transmog system and outfit manager",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/6945/6945-1672583521-2028780239.jpeg",
+        "uid": "14315126004513",
+        "updatedAt": "2026-10-25T21:07:19Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.2.10"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "Gameplay",
+        "createdAt": "2023-10-01T11:58:21Z",
+        "downloads": 4677646,
+        "endorsements": 28647,
+        "modId": 9429,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 58
+          },
+          "nexusRequirements": {
+            "totalCount": 3
+          }
+        },
+        "name": "Cyberware-EX",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/9429/9429-1696160681-150367609.jpeg",
+        "status": "published",
+        "summary": "Cyberware slot expansions / Install Cyberdeck, Sandevistan, Berserk at the same time",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/9429/9429-1696160681-150367609.jpeg",
+        "uid": "14315126006997",
+        "updatedAt": "2026-10-25T08:53:41Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.6.0"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "Modders Resources",
+        "createdAt": "2022-03-24T12:21:53Z",
+        "downloads": 11984299,
+        "endorsements": 134573,
+        "modId": 4197,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 6654
+          },
+          "nexusRequirements": {
+            "totalCount": 1
+          }
+        },
+        "name": "TweakXL",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/4197/4197-1648116989-1847614261.jpeg",
+        "status": "published",
+        "summary": "TweakDB modifications loader and script extensions",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4197/4197-1648116989-1847614261.jpeg",
+        "uid": "14315126001765",
+        "updatedAt": "2026-10-25T08:10:38Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.12.0"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "User Interface",
+        "createdAt": "2023-05-16T20:55:07Z",
+        "downloads": 1466188,
+        "endorsements": 3089,
+        "modId": 8340,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 1
+          },
+          "nexusRequirements": {
+            "totalCount": 3
+          }
+        },
+        "name": "Find-EX",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/8340/8340-1684269882-418357170.jpeg",
+        "status": "published",
+        "summary": "Search codex / shards / quests / messages",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/8340/8340-1684269882-418357170.jpeg",
+        "uid": "14315126005908",
+        "updatedAt": "2023-10-13T13:17:05Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.2.0"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "Gameplay",
+        "createdAt": "2023-10-01T16:16:15Z",
+        "downloads": 943508,
+        "endorsements": 6018,
+        "modId": 9302,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 3
+          },
+          "nexusRequirements": {
+            "totalCount": 1
+          }
+        },
+        "name": "RipperDeck",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/9302/9302-1696176516-2102545836.jpeg",
+        "status": "published",
+        "summary": "Manage cyberware without visiting ripperdoc",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/9302/9302-1696176516-2102545836.jpeg",
+        "uid": "14315126006870",
+        "updatedAt": "2023-10-12T21:09:20Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.1.0"
+      },
+      {
+        "adultContent": false,
+        "author": "psiberx",
+        "category": "Gameplay",
+        "createdAt": "2021-07-03T12:49:13Z",
+        "downloads": 621381,
+        "endorsements": 7150,
+        "modId": 2881,
+        "modRequirements": {
+          "modsRequiringThisMod": {
+            "totalCount": 5
+          },
+          "nexusRequirements": {
+            "totalCount": 1
+          }
+        },
+        "name": "Neu-ReSpec",
+        "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/2881/2881-1625247955-545206607.jpeg",
+        "status": "published",
+        "summary": "Respec / Manage attributes, perks and skills / Integrates into Hub menu",
+        "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/2881/2881-1625247955-545206607.jpeg",
+        "uid": "14315126000449",
+        "updatedAt": "2023-10-04T21:13:05Z",
+        "uploader": {
+          "memberId": 108159138,
+          "name": "psiberx"
+        },
+        "version": "1.2.1"
+      }
+    ],
+    "totalCount": 9
+  },
+  "user": {
+    "avatar": "https://avatars.nexusmods.com/108159138/100",
+    "joined": "2021-01-26T12:56:02Z",
+    "kudos": 1818,
+    "memberId": 108159138,
+    "modAnalyticsByMonth": {
+      "nodes": [
+        {
+          "month": 11,
+          "totalDownloads": "755315",
+          "uniqueDownloads": "192977",
+          "year": 2026
+        }
+      ]
+    },
+    "modCount": 9,
+    "name": "psiberx",
+    "recognizedAuthor": true,
+    "uniqueModDownloads": 17204613
+  }
+}
