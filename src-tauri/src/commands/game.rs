@@ -97,6 +97,20 @@ pub async fn mod_set_enabled(app: AppHandle, state: State<'_, AppState>, install
     Ok(r)
 }
 
+/// Whether a mod is on in each profile.
+#[tauri::command]
+pub async fn profile_memberships(state: State<'_, AppState>, install_id: i64) -> Result<Vec<profiles::Membership>> { profiles::memberships(&state.db.lock().unwrap(), install_id) }
+
+/// Turn a mod on or off in any profile: the active one deploys or takes it out, another only changes what it holds.
+#[tauri::command]
+pub async fn profile_mod_set(app: AppHandle, state: State<'_, AppState>, profile_id: i64, install_id: i64, on: bool) -> Result<Option<DeployOutcome>> {
+    let active = pocket_core::install::active_profile(&state.db.lock().unwrap())?;
+    if active == profile_id { return mod_set_enabled(app, state, install_id, on).await; }
+    profiles::set_in_profile(&state.db.lock().unwrap(), profile_id, install_id, on)?;
+    let _ = app.emit("library-changed", ());
+    Ok(None)
+}
+
 #[tauri::command]
 pub async fn load_order_set(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>) -> Result<()> {
     profiles::set_order(&state.db.lock().unwrap(), &install_ids)?;

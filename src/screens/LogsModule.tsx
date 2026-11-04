@@ -54,6 +54,16 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
       load(); onChanged();
     } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
   };
+  // every mod with errors in the last start, turned off in one go (one undo puts them all back)
+  const turnOffAll = async (list: ModErrors[]) => {
+    setBusy(true);
+    try {
+      const rows = (await library.list()).filter((x) => list.some((m) => m.installId === x.id));
+      await ops.setEnabled(rows, false);
+      toast(`Turned off ${plural(rows.length, "mod")} with errors. Ctrl+Z turns them back on.`);
+      load(); onChanged();
+    } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
+  };
   const copyReport = async () => {
     try { await copyText(await logs.report()); toast("Report copied. Paste it in a forum post or on the mod's bugs page."); }
     catch (e) { toast(errorText(e), true); }
@@ -68,6 +78,9 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
     <Module icon="file" title="Logs" className="span logs-mod" band={r.errors ? "bad" : undefined}
       count={r.logs.length ? `${plural(r.logs.length, "log")}${older ? `, ${older} older` : ""}` : "none yet"}
       tools={<>
+        {r.mods.filter((m) => m.enabled && m.errors > 0).length > 1 && <Key size="sm" variant="dark" icon="power" disabled={busy}
+          onClick={() => turnOffAll(r.mods.filter((m) => m.enabled && m.errors > 0))} title="Turn off every mod the logs name with an error; Ctrl+Z turns them back on">
+          Turn off all {r.mods.filter((m) => m.enabled && m.errors > 0).length} with errors</Key>}
         <Key size="sm" icon="share" onClick={copyReport} disabled={!r.logs.length} title="A plain-text summary for a forum post: game version, frameworks, mods on, errors">Copy report</Key>
       </>}>
       {r.logs.length === 0 ? (
@@ -89,7 +102,7 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
                 const isOpen = open.has(m.installId);
                 const tools = [...new Set(m.entries.map((e) => e.tool))];
                 return (
-                  <div key={m.installId} className={`row logrow${m.enabled ? "" : " off"}`}>
+                  <div key={`${m.installId}-${m.name}`} className={`row logrow${m.enabled ? "" : " off"}`}>
                     <span className="m-main">
                       <span className="m-t">{m.name}</span>
                       <span className="m-meta">

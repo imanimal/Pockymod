@@ -163,7 +163,7 @@ export function App() {
       <main className="view">
         {/* Browse stays mounted so its search and filters survive a trip to another view */}
         <div className="keep" style={{ display: view === "browse" ? "contents" : "none" }}>
-          <Browse onInstall={(d, fileId) => void startInstall(d.detail.modId, fileId, d.detail.name)}
+          <Browse onInstall={(d, fileId) => void startInstall(d.detail.modId, fileId, d.detail.name)} updates={updates} onLibrary={() => setView("library")}
             onOpenPage={(modId) => nexusPages.mod(modId).catch((e) => toast(errorText(e), true))} />
         </div>
         {view === "gallery" ? <Gallery />

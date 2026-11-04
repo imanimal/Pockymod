@@ -86,6 +86,8 @@ function groupOf(c: string | null): string {
   return "Other";
 }
 let profilesList: Profile[] = [{ id: 1, name: "Default", active: true, enabled: 0 }];
+/** Whether a mod is on in a profile that is not active, by "profile:install". */
+const demoMember = new Map<string, boolean>();
 function demoScan() {
   return { vortex: { staging: "%APPDATA%\\Vortex\\cyberpunk2077\\mods", mods: 6, deployed: 5, alreadyTracked: installs.filter((i) => i.source === "vortex").length ? 6 : 0,
       sample: fixture.nodes.slice(8, 14).map((n) => n.name) }, found: installs.some((i) => i.source === "found") ? [] : [{ name: "Hand-placed hair", kind: "archive", files: ["archive/pc/mod/hair.archive"], modId: null }] };
@@ -228,7 +230,15 @@ export function installDemo() {
     profile_rename: () => {},
     profile_delete: ({ id }) => { profilesList = profilesList.filter((p) => p.id !== id || p.active); },
     profile_activate: ({ id }) => { profilesList = profilesList.map((p) => ({ ...p, active: p.id === id })); return { removed: [], deployed: [], notDeployed: [] }; },
-    mod_set_enabled: ({ installId, on }) => { const i = installs.find((x) => x.id === installId); if (i) i.enabled = Boolean(on); return null; },
+    mod_set_enabled: ({ installId, on }) => { const i = installs.find((x) => x.id === installId); if (i) i.enabled = Boolean(on); demoEmit("library-changed", null); return null; },
+    profile_memberships: ({ installId }) => [...profilesList].sort((a, b) => Number(b.active) - Number(a.active)).map((p) => ({
+      profileId: p.id, name: p.name, active: p.active,
+      enabled: p.active ? !!installs.find((x) => x.id === installId)?.enabled : demoMember.get(`${p.id}:${installId}`) ?? false })),
+    profile_mod_set: ({ profileId, installId, on }) => {
+      const p = profilesList.find((x) => x.id === profileId);
+      if (p?.active) { const i = installs.find((x) => x.id === installId); if (i) i.enabled = Boolean(on); } else demoMember.set(`${profileId}:${installId}`, Boolean(on));
+      demoEmit("library-changed", null); return null;
+    },
     load_order_set: ({ installIds }) => { (installIds as number[]).forEach((id, n) => { const i = installs.find((x) => x.id === id); if (i) i.loadOrder = n; }); installs.sort((a, b) => a.loadOrder - b.loadOrder); },
     updates_check: () => [],
     updates_last: () => installs.filter((i) => i.source === "vortex").slice(0, 2).map((i) => ({ modId: i.modId, name: i.name, installed: i.version, latest: `${i.version}.1`, updatedAt: "2026-11-01T00:00:00Z" })),
@@ -255,6 +265,10 @@ export function installDemo() {
     collections_browse: () => collectionsFixture,
     media_browse: ({ kind }) => (mediaFixture as Record<string, unknown>)[String(kind)],
     collection_check: () => new Promise((ok) => setTimeout(() => ok(checkFixture), 300)),
+    collection_detail: ({ slug }) => {
+      const c = collectionsFixture.nodes.find((n) => n.slug === slug);
+      return { headerImage: c?.tileImage?.url ?? null, description: c ? `${c.summary}\n\n[b]What is in it[/b]\nEvery mod in this collection is listed below, with what you already have. Install adds the rest to the download queue.\n\n[img]${c.tileImage?.url ?? ""}[/img]` : null };
+    },
     collection_install: ({ check }) => {
       for (const e of (check as { entries: Array<{ modId: number; fileId: number; name: string; fileName: string; version: string; size: number; uri: string; status: string }> }).entries.filter((x) => x.status !== "installed").slice(0, 5))
         q.push({ id: ++qid, modId: e.modId, fileId: e.fileId, modName: e.name, fileName: e.fileName, version: e.version, uri: e.uri, size: e.size, requiredBy: "collection", manualOnly: false, state: { state: "waiting" } });

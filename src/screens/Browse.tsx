@@ -1,19 +1,26 @@
 // Browse, built for discovery. With nothing typed it is a front page of shelves (popular now, updated for your
-// patch, surprise me, hidden gems …) and category tiles; typing or filtering turns it into a grid. A mod opens in a
-// drawer whose Install key is the screen's one orange key.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+// patch, surprise me, hidden gems …) and category tiles; typing or filtering turns it into a grid. Every card has a
+// key: Quick install, or for a mod you have, the menu of what the app can do to it. A mod opens in a drawer whose
+// Install key is the screen's one orange key, or expanded as a page like the mod's Nexus page.
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { ICONS, type IconName } from "../ui/icons";
 import { Chip, Empty, Key, Module, Pill, SearchField, Seg, Switch, formatCount } from "../ui/pocket";
 import {
   FRAMEWORKS, MOD_TYPES, browse, errorText, game, settings,
-  type BrowseQuery, type BrowseResult, type CardView, type DetailView, type LocalFilter, type ModTypeFilter, type SortKey,
+  type BrowseQuery, type BrowseResult, type CardView, type DetailView, type InstallRow, type LocalFilter, type ModTypeFilter, type SortKey, type Update,
 } from "../lib/api";
 import { daysAgo, shortDate } from "../lib/text";
 import { Detail, FrameworkTags, TypeTag } from "./browse/Detail";
 import { shelfQuery, useExtensions } from "../lib/extensions";
 import { Modio } from "./Modio";
 import { MediaWall } from "./browse/Media";
+import { ModKey, useInstalled } from "./browse/ModActions";
+
+/** What the cards need to show their key: the user's copies of each mod, the queue, updates and the flag setter. */
+interface CardCtx { byMod: Map<number, InstallRow[]>; queued: Map<number, string>; updates: Update[]; onLibrary?: () => void; onFlag: (c: CardView, f: "hidden" | "ignored", on: boolean) => void }
+const Cards = createContext<CardCtx | null>(null);
+const pageKey = "pm.modPage";
 
 const PAGE = 30;
 const SORTS: Array<{ value: SortKey; label: string }> = [
@@ -61,7 +68,9 @@ function shelves(patch: PatchOpt | null, seed: number): Array<{ id: string; titl
   ];
 }
 
-export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, fileId: number) => void; onOpenPage?: (modId: number) => void }) {
+export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
+  onInstall?: (d: DetailView, fileId: number) => void; onOpenPage?: (modId: number) => void; updates?: Update[]; onLibrary?: () => void;
+}) {
   const [q, setQ] = useState<BrowseQuery>(emptyQuery);
   const [text, setText] = useState("");
   const [local, setLocal] = useState<LocalFilter>({ showHidden: false, downloaded: null });
@@ -82,7 +91,25 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
   const [modioOn, setModioOn] = useState(false);
   const [seed, setSeed] = useState(daySeed);
   const [view, setView] = useState<View>("discover");
-  const pickView = (v: View) => { setView(v); setSel(null); if (VIEW_SORT[v]) set({ sort: VIEW_SORT[v]! }); if (v === "discover") clearAll(); };
+  const inst = useInstalled();
+  // a mod opens in the drawer, or as a page (the last choice is kept); a page remembers the mods it came through
+  const [wide, setWideState] = useState(() => { try { return localStorage.getItem(pageKey) === "page"; } catch { return false; } });
+  const [trail, setTrail] = useState<CardView[]>([]);
+  const listTop = useRef(0);
+  const viewEl = () => document.querySelector<HTMLElement>(".shell > .view");
+  const setWide = (w: boolean) => {
+    setWideState(w);
+    try { localStorage.setItem(pageKey, w ? "page" : "drawer"); } catch { /* storage unavailable */ }
+    if (w) { listTop.current = viewEl()?.scrollTop ?? 0; requestAnimationFrame(() => viewEl()?.scrollTo({ top: 0 })); }
+    else requestAnimationFrame(() => viewEl()?.scrollTo({ top: listTop.current }));
+  };
+  const open = (c: CardView | null) => {
+    if (c && wide && !sel) { listTop.current = viewEl()?.scrollTop ?? 0; requestAnimationFrame(() => viewEl()?.scrollTo({ top: 0 })); }
+    if (!c && wide && sel) requestAnimationFrame(() => viewEl()?.scrollTo({ top: listTop.current }));
+    setTrail([]);
+    setSel(c);
+  };
+  const pickView = (v: View) => { setView(v); open(null); if (VIEW_SORT[v]) set({ sort: VIEW_SORT[v]! }); if (v === "discover") clearAll(); };
 
   useEffect(() => {
     const read = () => settings.get("flags.modio").then((v) => setModioOn(v === "1")).catch(() => {});
@@ -142,8 +169,9 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
   const flag = useCallback(async (c: CardView, which: "hidden" | "ignored", on: boolean) => {
     await browse.setFlag(c.modId, which, on);
     setResults((r) => r.map((n) => n.modId === c.modId ? { ...n, [which]: on } : n).filter((n) => local.showHidden || !n.hidden));
-    if (which === "hidden" && on) setSel(null);
-  }, [local.showHidden]);
+    if (which === "hidden" && on && !wide) setSel(null);
+  }, [local.showHidden, wide]);
+  const cards = useMemo<CardCtx>(() => ({ byMod: inst.byMod, queued: inst.queued, updates: updates ?? [], onLibrary, onFlag: (c, f, on) => void flag(c, f, on) }), [inst.byMod, inst.queued, updates, onLibrary, flag]);
 
   const openShelf = (sq: Partial<BrowseQuery>) => { set({ ...sq }); setExplore(true); if (sq.compatibleSince === undefined) setPatchSel("any"); };
 
@@ -169,8 +197,23 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
     </div>
   );
 
+  const detail = sel && (
+    <Detail card={sel} onFlag={flag} onInstall={onInstall} onOpenPage={onOpenPage} wide={wide} onWide={setWide}
+      onClose={() => { if (wide && trail.length) { setSel(trail[trail.length - 1]); setTrail(trail.slice(0, -1)); } else open(null); }}
+      installed={inst.byMod.get(sel.modId) ?? []} updates={updates} queued={inst.queued.get(sel.modId)} onLibrary={onLibrary}
+      onOpen={(id) => { if (wide) setTrail([...trail, sel]); setSel({ ...sel, modId: id, name: "", updatedAt: "" } as CardView); }} />
+  );
+  const paged = !!sel && wide;
   return (
-    <div className="disc">
+    <Cards.Provider value={cards}>
+    {paged && <div className="mpage-wrap">
+      <div className="actions">
+        <Key size="sm" variant="ghost" icon="chevron" className="flip" onClick={() => { if (trail.length) { setSel(trail[trail.length - 1]); setTrail(trail.slice(0, -1)); } else open(null); }}>
+          {trail.length ? `Back to ${trail[trail.length - 1].name || "the last mod"}` : "Back to the list"}</Key>
+      </div>
+      {detail}
+    </div>}
+    <div className="disc" style={paged ? { display: "none" } : undefined}>
       <div className="browse-top">
         {modioOn && <Seg label="Source" value={source} onChange={setSource} options={[{ value: "nexus", label: "Nexus Mods" }, { value: "modio", label: "mod.io" }]} />}
         {filtering && <Key size="sm" variant="ghost" icon="browse" onClick={clearAll} title="Back to the front page">Front page</Key>}
@@ -233,7 +276,7 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
         <div className="disc-main">
           {err && <div className="note bad">{err}</div>}
           {!filtering ? (
-            <FrontPage patch={patch ?? yours} seed={seed} onReshuffle={() => setSeed((s) => s + 1)} onOpen={setSel} onSeeAll={openShelf}
+            <FrontPage patch={patch ?? yours} seed={seed} onReshuffle={() => setSeed((s) => s + 1)} onOpen={open} onSeeAll={openShelf}
               categories={res?.facets.categories ?? []} onCategory={(c) => { set({ categories: [c] }); setExplore(true); }} includeAdult={q.includeAdult} />
           ) : (
             <>
@@ -250,10 +293,10 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
               </div>
               {!busy && results.length === 0 && <Empty icon="browse" title="No mods match">Try fewer filters, or a different game version.</Empty>}
               {(view === "trending" || view === "popular") && active.length === 0 && results.length > 2 && (
-                <div className="hero2">{results.slice(0, 2).map((c) => <HeroCard key={c.modId} c={c} onOpen={() => setSel(c)} />)}</div>
+                <div className="hero2">{results.slice(0, 2).map((c) => <HeroCard key={c.modId} c={c} onOpen={() => open(c)} />)}</div>
               )}
               <div className="mgrid">
-                {results.slice((view === "trending" || view === "popular") && active.length === 0 && results.length > 2 ? 2 : 0).map((c) => <ModCard key={c.modId} c={c} onOpen={() => setSel(c)} />)}
+                {results.slice((view === "trending" || view === "popular") && active.length === 0 && results.length > 2 ? 2 : 0).map((c) => <ModCard key={c.modId} c={c} onOpen={() => open(c)} />)}
                 {busy && results.length === 0 && Array.from({ length: 8 }, (_, i) => <span key={`skel${i}`} className="mcard panel skel" aria-hidden="true" />)}
               </div>
               {res && results.length < res.total && (
@@ -266,26 +309,32 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
         </div>
       </div>}
 
-      {sel && (
-        <div className="drawer-ov" onMouseDown={(e) => { if (e.target === e.currentTarget) setSel(null); }}>
-          <div className="drawer" role="dialog" aria-label={sel.name || "Mod"}>
-            <Detail card={sel} onFlag={flag} onInstall={onInstall} onOpenPage={onOpenPage} onClose={() => setSel(null)}
-              onOpen={(id) => setSel({ ...sel, modId: id, name: "", updatedAt: "" } as CardView)} />
-          </div>
+      {sel && !wide && (
+        <div className="drawer-ov" onMouseDown={(e) => { if (e.target === e.currentTarget) open(null); }}>
+          <div className="drawer" role="dialog" aria-label={sel.name || "Mod"}>{detail}</div>
         </div>
       )}
     </div>
+    </Cards.Provider>
   );
 }
 
-/** A mod as a card: a small module whose band carries the category and downloads. */
+/** A mod as a card: a small module whose band carries the category and downloads. The whole card opens the mod;
+ *  the key on its picture installs it, or opens the menu for a mod you have. */
 export function ModCard({ c, onOpen, compact }: { c: CardView; onOpen: () => void; compact?: boolean }) {
+  const ctx = useContext(Cards);
+  const rows = ctx?.byMod.get(c.modId) ?? [];
   return (
-    <button type="button" className={`mcard panel${c.hidden || c.ignored ? " off" : ""}${compact ? " compact" : ""}`} onClick={onOpen}>
+    <div role="button" tabIndex={0} className={`mcard panel${c.hidden || c.ignored ? " off" : ""}${compact ? " compact" : ""}${rows.length ? " have" : ""}`} onClick={onOpen}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(); } }} aria-label={c.name}>
       <span className="ph"><span className="pt"><Icon name="browse" size={9} />{c.category}</span><span className="sp" /><span className="cnt">↓ {formatCount(c.downloads)}</span></span>
       <span className="mcard-img">
         {c.thumbnailUrl ? <img src={c.thumbnailUrl} alt="" loading="lazy" /> : <Icon name="file" size={27} />}
-        {c.downloaded && <span className="mcard-badge"><Pill tone="ok">Downloaded</Pill></span>}
+        {c.downloaded && !rows.length && <span className="mcard-badge"><Pill tone="ok">Downloaded</Pill></span>}
+        {ctx && <span className="mcard-q">
+          <ModKey mod={{ modId: c.modId, name: c.name, version: c.version }} rows={rows} queued={ctx.queued.get(c.modId)} updates={ctx.updates}
+            onDetail={onOpen} onLibrary={ctx.onLibrary} onFlag={(f, on) => ctx.onFlag(c, f, on)} flags={{ hidden: c.hidden, ignored: c.ignored }} />
+        </span>}
       </span>
       <span className="mcard-b">
         <span className="mcard-t">{c.name}</span>
@@ -293,7 +342,7 @@ export function ModCard({ c, onOpen, compact }: { c: CardView; onOpen: () => voi
         {!compact && <span className="mcard-s">{c.summary}</span>}
         <span className="m-tags"><TypeTag c={c.classification} /><FrameworkTags c={c.classification} /></span>
       </span>
-    </button>
+    </div>
   );
 }
 

@@ -161,6 +161,28 @@ pub async fn revision(client: &NexusClient, slug: &str, revision: Option<u32>) -
     Ok(d.collection_revision)
 }
 
+/// What a collection's own page shows beyond the browse card: its description and header picture.
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Detail { pub description: Option<String>, pub header_image: Option<String> }
+
+/// UNVERIFIED: `Collection.description` and `Collection.headerImage { url }` are what Vortex's collection pages ask
+/// for; they were not checked against the live schema. Each is fetched on its own, so a field the API does not have
+/// costs only that field: the page then shows the summary and the tile picture.
+pub async fn detail(client: &NexusClient, slug: &str) -> Detail {
+    #[derive(Deserialize)]
+    struct D { collection: Option<Value> }
+    let one = |field: &'static str| {
+        let q = format!("query CollectionDetail($slug: String!) {{ collection(slug: $slug, domainName: \"cyberpunk2077\") {{ {field} }} }}");
+        async move { client.graphql::<D>(&q, json!({ "slug": slug })).await.ok().and_then(|d| d.collection) }
+    };
+    let (d, h) = futures_util::join!(one("description"), one("headerImage { url }"));
+    Detail {
+        description: d.and_then(|v| v["description"].as_str().map(str::to_owned)).filter(|s| !s.trim().is_empty()),
+        header_image: h.and_then(|v| v["headerImage"]["url"].as_str().map(str::to_owned)).filter(|s| s.starts_with("https://")),
+    }
+}
+
 // ── the local, shareable format ──
 
 pub const FORMAT: &str = "pocket-mods.collection";

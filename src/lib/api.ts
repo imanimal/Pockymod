@@ -212,6 +212,14 @@ export const nexusPages = {
   mod: (modId: number, fileId?: number) => call<void>("open_nexus_page", { modId, fileId }),
   url: (url: string) => call<void>("open_nexus_url", { url }),
 };
+/** Nexus pages by address, for "Open in browser" (the user's own browser: their sign-in, saved passwords and
+ *  extensions). UNVERIFIED: the collection address is the site's current form (www.nexusmods.com/games/…); older
+ *  next.nexusmods.com links redirect there. */
+export const nexusUrl = {
+  mod: (modId: number) => `https://www.nexusmods.com/cyberpunk2077/mods/${modId}`,
+  file: (modId: number, fileId: number) => `https://www.nexusmods.com/cyberpunk2077/mods/${modId}?tab=files&file_id=${fileId}`,
+  collection: (slug: string) => `https://www.nexusmods.com/games/cyberpunk2077/collections/${encodeURIComponent(slug)}`,
+};
 export const onToast = (cb: (msg: string) => void) => listen<string>("toast", cb);
 
 /** A folder picker, through the dialog plugin. Outside Tauri it asks with a prompt. */
@@ -265,7 +273,12 @@ export const profiles = {
   activate: (id: number) => call<SwitchReport>("profile_activate", { id }),
   setEnabled: (installId: number, on: boolean) => call<DeployOutcome | null>("mod_set_enabled", { installId, on }),
   setOrder: (installIds: number[]) => call<void>("load_order_set", { installIds }),
+  /** Whether a mod is on in each profile, the active one first. */
+  memberships: (installId: number) => call<Membership[]>("profile_memberships", { installId }),
+  /** Turn a mod on or off in any profile; the active one deploys or takes it out. */
+  setIn: (profileId: number, installId: number, on: boolean) => call<DeployOutcome | null>("profile_mod_set", { profileId, installId, on }),
 };
+export interface Membership { profileId: number; name: string; active: boolean; enabled: boolean }
 export const updates = {
   check: () => call<Update[]>("updates_check"),
   last: () => call<Update[]>("updates_last"),
@@ -302,6 +315,8 @@ export interface LocalCollection {
 export const collections = {
   browse: (query: CollectionQuery) => call<CollectionsPage>("collections_browse", { query }),
   check: (slug: string, revision?: number) => call<CollectionCheck>("collection_check", { slug, revision }),
+  /** The collection's description and header picture, when Nexus gives them (unverified fields; null otherwise). */
+  detail: (slug: string) => call<{ description: string | null; headerImage: string | null }>("collection_detail", { slug }),
   install: (check: CollectionCheck, includeOptional: boolean) => call<QueueSnapshot>("collection_install", { check, includeOptional }),
   createLocal: (name: string, description: string) => call<LocalCollection>("local_collection_create", { name, description }),
   exportLocal: (collection: LocalCollection, path: string) => call<void>("local_collection_export", { collection, path }),

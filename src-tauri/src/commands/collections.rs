@@ -22,6 +22,12 @@ pub async fn collection_revision(state: State<'_, AppState>, slug: String, revis
     collections::revision(&state.nexus, &slug, revision).await
 }
 
+/// A collection's description and header picture, for its page.
+#[tauri::command]
+pub async fn collection_detail(state: State<'_, AppState>, slug: String) -> Result<collections::Detail> {
+    Ok(collections::detail(&state.nexus, &slug).await)
+}
+
 /// Pre-install checks for a Nexus collection: game version, what is missing, unavailable files and their
 /// replacements (checked for up to 40 mods), clicks needed and download size.
 #[tauri::command]

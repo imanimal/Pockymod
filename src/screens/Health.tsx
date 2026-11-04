@@ -30,34 +30,59 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
   }, [onIssues]);
   useEffect(() => { load(); }, [load]);
 
-  const fix = async (f: Fix) => {
-    try {
-      switch (f.kind) {
-        case "installMod": case "updateMod": await queueMod(f.modId); toast(`${f.name} is queued.`); onNavigate("downloads"); return;
-        case "runRedmodDeploy": {
-          setBusy(true);
-          const res = await game.redmodDeploy();
-          toast(res.ok ? `REDmod deploy done (${plural(res.mods.length, "mod")}).` : `REDmod deploy reported ${plural(res.problems.length, "problem")}.`, !res.ok);
-          break;
-        }
-        case "redeploy": await library.deploy(f.installId, { allowCopy: false, takeConflicts: false }); toast("Deployed again."); break;
-        case "openLibrary": onNavigate("library"); return;
-        case "openSettings": onNavigate("settings"); return;
-        case "resetScripts": { const n = await resetScripts(); toast(n ? "The game's own scripts are back." : "Nothing needed resetting."); break; }
-        case "turnOff": {
-          const row = (await library.list()).find((x) => x.id === f.installId);
-          if (row) await ops.setEnabled([row], false);
-          break;
-        }
-        case "disableModlist": { const done = await archives.disableModlist(); toast(done ? "modlist.txt is set aside (modlist.txt.off). File names decide the order again." : "modlist.txt is already gone."); break; }
+  /** Run one fix; with `quiet` it neither navigates nor reloads (Fix all does that once at the end). */
+  const run = async (f: Fix, quiet = false): Promise<boolean> => {
+    switch (f.kind) {
+      case "installMod": case "updateMod": await queueMod(f.modId); if (!quiet) { toast(`${f.name} is queued.`); onNavigate("downloads"); } return true;
+      case "runRedmodDeploy": {
+        const res = await game.redmodDeploy();
+        toast(res.ok ? `REDmod deploy done (${plural(res.mods.length, "mod")}).` : `REDmod deploy reported ${plural(res.problems.length, "problem")}.`, !res.ok);
+        return res.ok;
       }
-      load();
-    } catch (e) { toast(errorText(e), true); setBusy(false); }
+      case "redeploy": { const d = await library.deploy(f.installId, { allowCopy: false, takeConflicts: false }); if (!quiet) toast("Deployed again."); return d.outcome === "deployed"; }
+      case "resetScripts": { const n = await resetScripts(); if (!quiet) toast(n ? "The game's own scripts are back." : "Nothing needed resetting."); return true; }
+      case "turnOff": {
+        const row = (await library.list()).find((x) => x.id === f.installId);
+        if (row) await ops.setEnabled([row], false);
+        return true;
+      }
+      case "disableModlist": { const done = await archives.disableModlist(); if (!quiet) toast(done ? "modlist.txt is set aside (modlist.txt.off). File names decide the order again." : "modlist.txt is already gone."); return true; }
+      case "openLibrary": case "openSettings": return false;
+    }
   };
+  /** Every fix the app can do by itself, in order: downloads first, files next, the REDmod deploy last (and only
+   *  when nothing was queued, since Play deploys again once the queue has installed). Turning a mod off and the
+   *  fixes that only open a screen are left to you. */
+  const fixAll = async (list: Fix[]) => {
+    setBusy(true);
+    const order: Fix["kind"][] = ["installMod", "updateMod", "redeploy", "resetScripts", "disableModlist", "runRedmodDeploy"];
+    const todo = [...list].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
+    let ok = 0, failed = 0, queued = 0;
+    for (const f of todo) {
+      if (f.kind === "runRedmodDeploy" && queued) continue;
+      try { if (await run(f, true)) ok++; else failed++; if (f.kind === "installMod" || f.kind === "updateMod") queued++; } catch { failed++; }
+    }
+    toast(`${plural(ok, "fix", "fixes")} done${queued ? `, ${plural(queued, "download")} queued` : ""}${failed ? `; ${failed} could not be fixed here` : ""}.`, failed > 0);
+    load();
+    if (queued) onNavigate("downloads");
+  };
+
+  const fix = async (f: Fix) => {
+    if (f.kind === "openLibrary") return onNavigate("library");
+    if (f.kind === "openSettings") return onNavigate("settings");
+    setBusy(true);
+    try { await run(f); if (f.kind !== "installMod" && f.kind !== "updateMod") load(); else setBusy(false); }
+    catch (e) { toast(errorText(e), true); setBusy(false); }
+  };
+
 
   if (err) return <Module icon="health" title="Health" band="bad"><div className="note bad">{err}</div></Module>;
   if (!r) return <Module icon="health" title="Health" count="checking"><Empty icon="clock" title="Checking the game" /></Module>;
-  const first = r.issues.find((i) => i.fix && i.severity !== "info" && i.area !== "logs");
+  const auto = (i: Issue): i is Issue & { fix: Fix } => !!i.fix && AUTO.includes(i.fix.kind) && i.area !== "logs";
+  const fixable = unique(r.issues.filter((i) => auto(i) && i.severity !== "info").map((i) => i.fix!));
+  const fwFixes = unique(r.issues.filter((i) => i.area === "frameworks" && (i.fix?.kind === "updateMod" || i.fix?.kind === "installMod")).map((i) => i.fix!));
+  // with two or more fixes the orange key is Fix all; with one it is that fix
+  const first = fixable.length > 1 ? undefined : r.issues.find((i) => i.fix && i.severity !== "info" && i.area !== "logs");
   const g = r.game;
 
   return (
@@ -68,6 +93,8 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         <Lcd label="Game patch" value={r.patch ?? "?"} sub={r.patchSource === "detected" ? "Read from the game" : r.patchSource === "settings" ? "Set in Settings" : "Assumed: set it in Settings"} tone={r.patchSource === "assumed" ? "hot" : "ok"} />
       </div>
       <div className="actions span">
+        {fixable.length > 1 && <Key variant="primary" icon="check" onClick={() => fixAll(fixable)} disabled={busy}
+          title="Every fix the app can do by itself: installs and updates, deploys, scripts, then the REDmod deploy">Fix all {fixable.length}</Key>}
         <Key size="sm" icon="refresh" onClick={() => load(true)} disabled={busy}>Check again</Key>
         {g?.version && <span className="dim mono" style={{ fontSize: ".8em" }}>Cyberpunk2077.exe {g.version.productString ?? g.version.product}</span>}
       </div>
@@ -78,7 +105,9 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         if (a.id === "logs") return g ? <LogsModule key="logs" stamp={stamp} onChanged={() => load()} /> : null;
         const bad = list.some((i) => i.severity === "problem");
         return (
-          <Module key={a.id} icon={a.icon} title={a.title} band={bad ? "bad" : undefined} count={list.length ? `${list.length} ${list.length === 1 ? "item" : "items"}` : "ok"}>
+          <Module key={a.id} icon={a.icon} title={a.title} band={bad ? "bad" : undefined} count={list.length ? `${list.length} ${list.length === 1 ? "item" : "items"}` : "ok"}
+            tools={a.id === "frameworks" && fwFixes.length > 1 ? <Key size="sm" variant="dark" icon="downloads" disabled={busy} onClick={() => fixAll(fwFixes)}
+              title="Queue every framework update and every missing framework">{fwFixes.every((f) => f.kind === "updateMod") ? `Update all ${fwFixes.length}` : `Install and update all ${fwFixes.length}`}</Key> : undefined}>
             {a.id === "frameworks" && <FrameworkTable r={r} />}
             {list.length === 0 && a.id !== "frameworks" && <p className="dim">{a.id === "redmod" ? (g?.redmodAvailable ? "REDmod is installed and up to date." : "No REDmods installed.") : "All good."}</p>}
             <div className="rows" style={{ marginTop: a.id === "frameworks" && list.length ? ".6em" : 0 }}>
@@ -100,6 +129,14 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
       })}
     </div>
   );
+}
+
+/** The fixes Fix all runs by itself. */
+const AUTO: Fix["kind"][] = ["installMod", "updateMod", "runRedmodDeploy", "redeploy", "resetScripts", "disableModlist"];
+/** One of each fix (two issues can ask for the same download or the same deploy). */
+function unique(list: Fix[]): Fix[] {
+  const seen = new Set<string>();
+  return list.filter((f) => { const k = JSON.stringify(f.kind === "installMod" || f.kind === "updateMod" ? { k: "mod", id: f.modId } : f); if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
 function fixLabel(f: Fix): string {

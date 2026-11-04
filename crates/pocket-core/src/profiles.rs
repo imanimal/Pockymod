@@ -87,6 +87,29 @@ pub fn set_enabled(db: &Db, game: &Path, library: &Path, install_id: i64, on: bo
     if on { Ok(Some(install::redeploy_any(db, game, library, install_id, opts)?)) } else { install::undeploy_any(db, game, install_id)?; Ok(None) }
 }
 
+/// Whether a mod is on in each profile, active one first.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Membership { pub profile_id: i64, pub name: String, pub active: bool, pub enabled: bool }
+
+pub fn memberships(db: &Db, install_id: i64) -> Result<Vec<Membership>> {
+    let mut st = db.conn.prepare("SELECT p.id, p.name, p.active, COALESCE((SELECT m.enabled FROM profile_mods m WHERE m.profile_id = p.id AND m.install_id = ?1), 0)
+                                  FROM profiles p ORDER BY p.active DESC, p.id")?;
+    let rows = st.query_map(params![install_id], |r| Ok(Membership { profile_id: r.get(0)?, name: r.get(1)?, active: r.get(2)?, enabled: r.get(3)? }))?;
+    Ok(rows.collect::<std::result::Result<_, _>>()?)
+}
+
+/// Turn a mod on or off in a profile that is not the active one. Nothing in the game changes until that profile is
+/// switched to; for the active profile use `set_enabled`, which deploys.
+pub fn set_in_profile(db: &Db, profile_id: i64, install_id: i64, on: bool) -> Result<()> {
+    let active: bool = db.conn.query_row("SELECT active FROM profiles WHERE id = ?1", params![profile_id], |r| r.get(0))
+        .map_err(|_| Error::Invalid("That profile no longer exists.".into()))?;
+    if active { return Err(Error::Invalid("That is the active profile: turn the mod on or off in Library instead.".into())); }
+    db.conn.execute("INSERT INTO profile_mods (profile_id, install_id, enabled, load_order) VALUES (?1, ?2, ?3, (SELECT COALESCE(MAX(load_order), -1) + 1 FROM profile_mods WHERE profile_id = ?1))
+                     ON CONFLICT(profile_id, install_id) DO UPDATE SET enabled = ?3", params![profile_id, install_id, on as i32])?;
+    Ok(())
+}
+
 /// Set the order of the active profile's mods (first loads first).
 pub fn set_order(db: &Db, install_ids: &[i64]) -> Result<()> {
     let p = install::active_profile(db)?;
@@ -126,6 +149,22 @@ pub fn redmod_needs_deploy(db: &Db) -> Result<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_mod_is_turned_on_in_another_profile_without_touching_the_active_one() {
+        let db = Db::memory().unwrap();
+        db.conn.execute("INSERT INTO installs (mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at) VALUES (1, 1, 'a', '1', 'archive', '[]', '', 0)", []).unwrap();
+        let install = db.conn.last_insert_rowid();
+        let active = install::active_profile(&db).unwrap();
+        db.conn.execute("INSERT INTO profile_mods (profile_id, install_id, enabled, load_order) VALUES (?1, ?2, 1, 0)", params![active, install]).unwrap();
+        let other = create(&db, "Other", None).unwrap();
+        let m = memberships(&db, install).unwrap();
+        assert_eq!(m.len(), 2);
+        assert!(m[0].active && m[0].enabled && !m[1].enabled);
+        set_in_profile(&db, other, install, true).unwrap();
+        assert!(memberships(&db, install).unwrap().iter().all(|x| x.enabled));
+        assert!(set_in_profile(&db, active, install, false).is_err(), "the active profile goes through set_enabled");
+    }
     use std::fs;
     use std::io::Write;
 

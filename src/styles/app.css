@@ -117,11 +117,29 @@
 .gplay { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; }
 .gplay .i { width: 27px; height: 27px; padding: 6px; box-sizing: content-box; background: var(--chrome-bg); border-radius: 8px; color: var(--accent); }
 .lightbox { position: fixed; inset: 0; z-index: 70; background: #0b0a09; display: flex; flex-direction: column; animation: scrimIn calc(var(--m) * 160ms + 1ms) ease-out; }
-.lb-stage { flex: 1; min-height: 0; display: grid; place-items: center; padding: 1.2em; }
-.lb-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+/* the picture fits the stage (inset by a margin) until zoomed; ZoomImage moves and scales it with a transform */
+.lb-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none; }
+.lb-stage .lb-img { position: absolute; left: 50%; top: 50%; max-width: calc(100% - 2.4em); max-height: calc(100% - 2.4em); transform-origin: center; cursor: zoom-in; user-select: none; -webkit-user-drag: none; }
+.lb-stage.zoomed .lb-img { cursor: grab; }
+.lb-stage.dragging .lb-img { cursor: grabbing; }
+.lb-stage.video { display: grid; place-items: center; padding: 1.2em; }
 .lb-stage iframe { width: min(100%, 160vh); aspect-ratio: 16 / 9; border: 0; border-radius: 8px; }
-.lb-bar { flex: none; display: flex; align-items: center; justify-content: center; gap: .7em; padding: .6em 1em 1em; background: #0b0a09; color: #ece6da; }
-.lb-cap { font-size: .86em; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-bar { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .7em; padding: .6em 1em 1em; background: #0b0a09; color: #ece6da; }
+.lb-cap { font-size: .86em; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-zoom { display: inline-flex; align-items: center; gap: .35em; padding-left: .7em; border-left: 1px solid rgba(236, 230, 218, .18); }
+
+/* a page's big picture with its strip (MediaStage) */
+.mstage { position: relative; display: flex; flex-direction: column; gap: .5em; min-width: 0; }
+.mstage-pic { all: unset; position: relative; cursor: zoom-in; display: grid; place-items: center; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #0b0a09; box-shadow: inset 0 0 0 1px var(--line); }
+.mstage-pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.mstage-pic:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.mstage-hint { position: absolute; right: .6em; bottom: .6em; display: inline-flex; align-items: center; gap: .35em; padding: .25em .55em; border-radius: 6px; font: .72em var(--font-mono); background: var(--chrome-bg); color: var(--chrome-fg); opacity: 0; transition: opacity calc(var(--m) * 120ms); }
+.mstage-pic:hover .mstage-hint, .mstage-pic:focus-visible .mstage-hint { opacity: 1; }
+.mstage-prev, .mstage-next { position: absolute; top: calc((100% - 6.4em) / 2); }
+.mstage-prev { left: .5em; } .mstage-next { right: .5em; }
+.mstage .gthumb img { height: 4.6em; }
+.mstage .gthumb:first-child img { height: 4.6em; }
+.gthumb.on { box-shadow: 0 0 0 2px var(--sel, var(--acc2)); }
 .btn.flip .i { rotate: 180deg; }
 .mwall { display: grid; grid-template-columns: repeat(auto-fill, minmax(16em, 1fr)); gap: .6em; }
 .mtile { all: unset; position: relative; cursor: pointer; display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; background: var(--surface); box-shadow: var(--card-shadow); }
@@ -324,3 +342,48 @@
 .row.ovrow { align-items: start; }
 .ovhow { font-size: .82em; color: var(--text-3); white-space: normal; margin-top: .2em; }
 .mvpath { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* a card's key on its picture (Quick install, or the installed menu): always readable over any picture */
+.mcard-q { position: absolute; right: .45em; bottom: .45em; z-index: 1; }
+.mcard-q .btn { box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+.mcard.have .mcard-img::after { content: ""; position: absolute; inset: auto 0 0; height: 3px; background: var(--ok); }
+.modkey { display: inline-flex; }
+.modkey .btn .i:last-child:not(:first-child) { margin-left: .1em; }
+
+/* floating menus (ui/Popover.tsx): placed in the shell by script, scrolling inside when long */
+.pmenu.popover { position: fixed; right: auto; z-index: 65; overflow: auto; overscroll-behavior: contain; }
+.modmenu { gap: .55em !important; }
+.modmenu .sub-h { display: block; margin: 0 0 .3em; }
+.mm-file { display: flex; flex-direction: column; gap: .45em; padding-bottom: .55em; border-bottom: 1px solid var(--line); }
+.mm-line { display: flex; align-items: center; gap: .6em; }
+.mm-line .m-main { flex: 1; min-width: 0; }
+.mm-sec { display: flex; flex-direction: column; gap: .35em; }
+.mm-sec select { width: 100%; padding: .4em .5em; border-radius: 8px; border: 1px solid var(--line); background: var(--bg2); color: var(--text); font: inherit; }
+.modmenu .actions .btn { flex: 0 1 auto; }
+
+/* a mod as a page, laid out like its Nexus page: the banner, then the media and description beside the files */
+.mpage-wrap { display: flex; flex-direction: column; gap: .6em; }
+.mpage .pb { padding: 0; }
+.mpage-banner { position: relative; min-height: 15em; max-height: 21em; overflow: hidden; border-radius: 0 0 var(--radius) var(--radius); background: var(--surface-2); display: flex; align-items: flex-end; }
+.mpage-banner:not(:has(> img)) { min-height: 0; }
+.mpage-banner > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mpage-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 20%, color-mix(in srgb, var(--surface) 82%, transparent) 70%, var(--surface)); }
+.mpage-head { position: relative; z-index: 1; display: flex; flex-direction: column; gap: .35em; padding: 1.2em 1.3em 1em; max-width: 62em; }
+.mpage-head h2 { font-size: 1.7em; line-height: 1.15; }
+.mpage-head p { color: var(--text); }
+.mpage-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(19em, 25em); gap: 1.3em; padding: 1em 1.3em 1.3em; align-items: start; }
+.mpage-main { display: flex; flex-direction: column; gap: .5em; min-width: 0; }
+.mpage-main .desc { font-size: .95em; max-width: 72em; }
+.mpage-side { display: flex; flex-direction: column; gap: .6em; position: sticky; top: 0; min-width: 0; }
+.mpage-side .sub-h { margin: .6em 0 0; }
+.mpage-side .lcds > .display { flex-basis: 6em; }
+@media (max-width: 1100px) { .mpage-body { grid-template-columns: minmax(0, 1fr); } .mpage-side { position: static; } }
+
+/* a collection card opens its page from anywhere on it; Check stays in its band */
+.ccard { cursor: pointer; border-radius: var(--radius); outline: none; display: flex; min-width: 0; }
+.ccard > .panel { flex: 1; min-width: 0; transition: translate calc(var(--m) * 120ms) var(--ease), box-shadow calc(var(--m) * 120ms); }
+.ccard:focus-visible > .panel { box-shadow: 0 0 0 2px var(--focus); }
+@media (hover: hover) { .ccard:hover > .panel { translate: 0 -2px; } }
+.ccard:active > .panel { translate: 0 1px; }
+.mpage-side .lcds + .actions, .mpage-side > .actions { margin-top: .2em; }
+.grid3 > .ccard { animation: modIn calc(var(--m) * 320ms + 1ms) var(--ease) backwards; animation-delay: calc(var(--m) * var(--i, 0) * 45ms); }

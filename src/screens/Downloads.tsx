@@ -52,7 +52,10 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
       )}
 
       <Module icon="downloads" title="Queue" count={items.length ? plural(items.length, "item") : undefined} bodyClass="list"
-        tools={items.some((i) => ["done", "failed"].includes(i.state.state)) ? <Key size="sm" variant="ghost" onClick={() => act(queue.clearFinished())}>Clear finished</Key> : undefined}>
+        tools={<>
+          {items.filter((i) => i.state.state === "failed").length > 1 && <Key size="sm" icon="refresh" onClick={() => act((async () => { let s = null; for (const i of items.filter((x) => x.state.state === "failed")) s = await queue.retry(i.id); return s!; })())}>Retry all {items.filter((i) => i.state.state === "failed").length} failed</Key>}
+          {items.some((i) => ["done", "failed"].includes(i.state.state)) && <Key size="sm" variant="ghost" onClick={() => act(queue.clearFinished())}>Clear finished</Key>}
+        </>}>
         {items.length === 0 && <Empty icon="downloads" title="Nothing queued">Press Install on a mod in Browse. Its requirements come along.</Empty>}
         <div className="rows">
           {items.map((i) => <QueueRow key={i.id} i={i} onRetry={() => act(queue.retry(i.id))} onRemove={() => act(queue.remove(i.id))} />)}

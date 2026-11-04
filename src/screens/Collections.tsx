@@ -1,14 +1,19 @@
-// Collections: browse Nexus collections and check one before installing; make, export and import local ones.
-import { plural } from "../lib/text";
-import { useEffect, useState } from "react";
+// Collections: browse Nexus collections, open one as a page (its picture, description, media and every mod in it,
+// against what you have) or check it quickly before installing; make, export and import local ones.
+import { descriptionText, plural } from "../lib/text";
+import { useEffect, useRef, useState } from "react";
 import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
 import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, bytesText, formatCount } from "../ui/pocket";
 import {
-  collections, errorText, pickCollectionFile, pickSavePath, settings,
+  collections, descriptionMedia, errorText, nexusPages, nexusUrl, openExternal, pickCollectionFile, pickSavePath, settings,
   type CollectionCard, type CollectionCheck, type CollectionsPage, type LocalCollection,
 } from "../lib/api";
 import { toast } from "../ui/toast";
+import { MediaStage } from "./browse/Media";
+
+const inBrowser = (slug: string) => openExternal(nexusUrl.collection(slug)).catch((e) => toast(errorText(e), true));
+const onNexus = (slug: string) => nexusPages.url(nexusUrl.collection(slug)).catch((e) => toast(errorText(e), true));
 
 type Tab = "nexus" | "mine";
 
@@ -28,10 +33,19 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
   const [page, setPage] = useState<CollectionsPage | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [open, setOpen] = useState<CollectionCard | null>(null);
+  const [shown, setShown] = useState<CollectionCard | null>(null);
+  const listTop = useRef(0);
+  const viewEl = () => document.querySelector<HTMLElement>(".shell > .view");
+  const show = (c: CollectionCard | null) => {
+    if (c) { listTop.current = viewEl()?.scrollTop ?? 0; requestAnimationFrame(() => viewEl()?.scrollTo({ top: 0 })); }
+    else requestAnimationFrame(() => viewEl()?.scrollTo({ top: listTop.current }));
+    setShown(c);
+  };
   useEffect(() => { const t = setTimeout(() => setQ((o) => ({ ...o, text, offset: 0 })), 350); return () => clearTimeout(t); }, [text]);
   useEffect(() => { collections.browse(q).then((p) => { setPage(p); setErr(null); }).catch((e) => setErr(errorText(e))); }, [q]);
   const versions = Object.entries(page?.facetsData?.gameVersion ?? {}).filter(([v]) => v).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
+  if (shown) return <CollectionPage c={shown} onBack={() => show(null)} onQueued={() => { show(null); onQueued(); }} />;
   return (
     <>
       <div className="browse-top">
@@ -49,8 +63,13 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
         {page?.nodes.map((c) => {
           const r = c.latestPublishedRevision;
           return (
-            <Module key={c.id} icon="collections" title={c.name} count={r ? plural(r.modCount, "mod") : undefined}
-              tools={<Key size="sm" variant="ghost" onClick={() => setOpen(c)}>Check</Key>}>
+            <div key={c.id} className="ccard" role="button" tabIndex={0} aria-label={`${c.name}: open its page`} onClick={() => show(c)}
+              onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); show(c); } }}>
+            <Module icon="collections" title={c.name} count={r ? plural(r.modCount, "mod") : undefined}
+              tools={<span className="actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <Key size="sm" variant="ghost" icon="link" onClick={() => inBrowser(c.slug)} aria-label={`Open ${c.name} in your browser`} title="Open in your own browser: your sign-in, saved passwords and extensions" />
+                <Key size="sm" icon="check" onClick={() => setOpen(c)} title="A quick check: what you have, what is missing, clicks and size">Check</Key>
+              </span>}>
               {c.tileImage && <img className="hero-img" src={c.tileImage.thumbnailUrl ?? c.tileImage.url} alt="" loading="lazy" />}
               <b className="hi" style={{ display: "block", marginTop: ".5em" }}>{c.name}</b>
               <div className="m-meta"><span>{c.user.name}</span>{c.category && <span>{c.category.name}</span>}</div>
@@ -60,6 +79,7 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
                 <span className="mono dim" style={{ fontSize: ".78em" }}>★ {formatCount(c.endorsements)} · ↓ {formatCount(c.totalDownloads)} · {r ? bytesText(r.totalSize) : ""}</span>
               </div>
             </Module>
+            </div>
           );
         })}
       </div>
@@ -77,6 +97,11 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
 
 /** Pre-install checks, then Install. */
 function CheckDialog({ title, load, onClose, onQueued }: { title: string; load: () => Promise<CollectionCheck>; onClose: () => void; onQueued: () => void }) {
+  return <Dialog icon="collections" title={title} onClose={onClose}><CheckBody load={load} onClose={onClose} onQueued={onQueued} /></Dialog>;
+}
+
+/** The checks and Install, in the quick dialog or beside a collection's page (`all` lists the mods you have too). */
+function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<CollectionCheck>; onClose?: () => void; onQueued: () => void; all?: boolean }) {
   const [c, setC] = useState<CollectionCheck | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [optional, setOptional] = useState(false);
@@ -89,9 +114,9 @@ function CheckDialog({ title, load, onClose, onQueued }: { title: string; load: 
     setBusy(true);
     try { await collections.install(c, optional); toast(`${c.name} is queued: ${plural(c.missing, "mod")}.`); onQueued(); } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
-  const shown = c?.entries.filter((e) => e.status !== "installed") ?? [];
+  const shown = (all ? c?.entries : c?.entries.filter((e) => e.status !== "installed")) ?? [];
   return (
-    <Dialog icon="collections" title={title} onClose={onClose}>
+    <>
       {err && <div className="note bad">{err}</div>}
       {!c && !err && <Empty icon="clock" title="Checking the collection" />}
       {c && <>
@@ -108,20 +133,21 @@ function CheckDialog({ title, load, onClose, onQueued }: { title: string; load: 
         </div>
         {c.gameVersionOk === false && <div className="note warn">Collections made for another patch often need updated frameworks or break. Check Health after installing.</div>}
         {c.needsClick > 20 && <div className="note warn">That is {c.needsClick} clicks on Nexus. Each page opens here in turn, and the queue moves on as soon as you click.</div>}
-        <div className="rows" style={{ maxHeight: "16em", overflow: "auto" }}>
-          {shown.slice(0, 80).map((e) => (
+        <div className="rows" style={all ? undefined : { maxHeight: "16em", overflow: "auto" }}>
+          {shown.slice(0, all ? 400 : 80).map((e) => (
             <div key={`${e.modId}-${e.fileId}`} className={`row${e.status === "unavailable" && !e.replacement ? " off" : ""}`}>
               <span className="m-main"><span className="m-t">{e.name}</span>
                 <span className="m-meta"><span>{e.fileName}</span><span>v{e.version}</span>{e.optional && <span>optional</span>}
                   {e.replacement && <span>file gone: using v{e.replacement[1]}</span>}</span></span>
               <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                 <span>{bytesText(e.size)}</span>
+                {e.status === "installed" && <Pill tone="ok">You have it</Pill>}
                 {e.status === "other" && <Pill tone="soon">Other version installed</Pill>}
                 {e.status === "unavailable" && <Pill tone={e.replacement ? "soon" : "over"}>{e.replacement ? "Replaced" : "Unavailable"}</Pill>}
               </span>
             </div>
           ))}
-          {shown.length > 80 && <p className="dim" style={{ padding: ".5em" }}>and {shown.length - 80} more</p>}
+          {shown.length > (all ? 400 : 80) && <p className="dim" style={{ padding: ".5em" }}>and {shown.length - (all ? 400 : 80)} more</p>}
         </div>
         {(c.external?.length ?? 0) > 0 && (
           <div className="note warn">
@@ -141,11 +167,62 @@ function CheckDialog({ title, load, onClose, onQueued }: { title: string; load: 
         <p className="dim" style={{ fontSize: ".82em" }}>Installer choices and rules saved in the collection are not applied yet; each mod installs with its default layout.</p>
         <div className="actions" style={{ justifyContent: "flex-end" }}>
           {c.entries.some((e) => e.optional) && <Switch checked={optional} onChange={setOptional}>Include optional mods</Switch>}
-          <Key variant="ghost" onClick={onClose}>Cancel</Key>
+          {onClose && <Key variant="ghost" onClick={onClose}>Cancel</Key>}
           <Key variant="primary" icon="install" disabled={busy || c.missing === 0} onClick={install}>{c.missing ? `Install ${plural(c.missing, "mod")}` : "All installed"}</Key>
         </div>
       </>}
-    </Dialog>
+    </>
+  );
+}
+
+/** A collection as a page, like its Nexus page: the picture across the top, the description and its media, and
+ *  beside them every mod in it against what you have, with Install. */
+function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: () => void; onQueued: () => void }) {
+  const [more, setMore] = useState<{ description: string | null; headerImage: string | null } | null>(null);
+  useEffect(() => { collections.detail(c.slug).then(setMore).catch(() => setMore({ description: null, headerImage: null })); }, [c.slug]);
+  const r = c.latestPublishedRevision;
+  const raw = more?.description ?? "";
+  const desc = raw ? descriptionText(raw) : c.summary;
+  const shots = descriptionMedia(raw, null);
+  const banner = more?.headerImage ?? c.tileImage?.url ?? null;
+  return (
+    <div className="mpage-wrap">
+      <div className="actions"><Key size="sm" variant="ghost" icon="chevron" className="flip" onClick={onBack}>Back to collections</Key></div>
+      <Module icon="collections" title={c.name} count={r ? plural(r.modCount, "mod") : undefined} className="mpage"
+        tools={<>
+          <Key size="sm" variant="ghost" icon="web" onClick={() => onNexus(c.slug)} title="The collection's Nexus page, where Settings says pages open" aria-label="Open the Nexus page" />
+          <Key size="sm" variant="ghost" icon="link" onClick={() => inBrowser(c.slug)} title="Open in your own browser: your sign-in, saved passwords and extensions" aria-label="Open in browser" />
+          <Key size="sm" variant="ghost" icon="x" onClick={onBack} aria-label="Close" />
+        </>}>
+        <div className="mpage-banner">
+          {banner && <img src={banner} alt="" />}
+          <div className="mpage-head">
+            <h2>{c.name}</h2>
+            <div className="m-meta"><span>by {c.user.name}</span>{c.category && <span>{c.category.name}</span>}{r && <span>revision {r.revisionNumber}</span>}</div>
+            {c.summary && <p>{c.summary}</p>}
+            <div className="actions">{r?.gameVersions.map((g) => <Pill key={g.reference}>Game {g.reference}</Pill>)}{(c.adultContent || r?.adultContent) && <Pill tone="over">Adult content</Pill>}</div>
+          </div>
+        </div>
+        <div className="mpage-body">
+          <div className="mpage-main">
+            <div className="lcds">
+              <Lcd size="sm" label="Mods" value={String(r?.modCount ?? 0).padStart(2, "0")} />
+              {r && <Lcd size="sm" label="Size" value={bytesText(r.totalSize).split(" ")[0]} unit={bytesText(r.totalSize).split(" ")[1]} />}
+              <Lcd size="sm" label="Endorsed" value={formatCount(c.endorsements)} />
+              <Lcd size="sm" label="Downloads" value={formatCount(c.totalDownloads)} />
+            </div>
+            {shots.length > 0 && <MediaStage items={shots.map((s) => ({ ...s, caption: c.name }))} />}
+            <div className="sub-h">Description</div>
+            {more === null ? <p className="dim">Loading the description</p> : <div className="desc">{desc || <span className="dim">No description.</span>}</div>}
+            {more && !more.description && <p className="dim" style={{ fontSize: ".84em" }}>Only the summary is shown: Nexus did not give the full description here. Open the page for it.</p>}
+          </div>
+          <aside className="mpage-side">
+            <div className="sub-h">Before you install</div>
+            <CheckBody load={() => collections.check(c.slug)} onQueued={onQueued} all />
+          </aside>
+        </div>
+      </Module>
+    </div>
   );
 }
 
