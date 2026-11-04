@@ -219,6 +219,10 @@ from the app is the file you share.
 
 - Picking a theme you installed asks **Keep this theme?** and goes back to the one you had after 12 seconds unless
   you press Keep.
+- **Customize** (Settings, Appearance) changes the colours of the theme in use, built-in or installed, without making a
+  new one: five swatches (accent, highlight, background, text, displays; the shades around them follow), one-click
+  palettes, and every colour under Advanced. They are kept per theme and mode; Reset takes them off, and Save as a
+  new theme turns them into a file to share.
 - **Ctrl+Alt+Shift+T** switches back to Redline, the default, from anywhere, even when the theme hides the menus.
 - A theme's own css is switched off while the extension review dialog is open, so what an extension asks for always
   shows as it is.

@@ -165,6 +165,7 @@ function paint(info: ThemeInfo, choice: SchemeChoice) {
   const icons: IconStyle = cs.getPropertyValue("--icons").trim() === "line" ? "line" : "pixel";
   root.dataset.icons = icons;
 
+  applyCustom();
   state = { id: info.id, name: info.name, look: info.look, choice, scheme, schemes: info.schemes, fx, fxChoice, fxTheme, icons, motion: motionOn() };
   subs.forEach((f) => f());
   appIcon(info);
@@ -404,6 +405,62 @@ export function exportTheme(id = state.id): { file: string; text: string } {
 }
 
 /** Show draft tokens over the whole app while a theme is being made; null takes the draft away. */
+// ── your colours on any theme ──
+// Colour changes kept per theme and scheme, layered over the theme itself (built-in or installed), so tweaking a
+// theme never means making a new one. Kept in local storage; Reset takes them off.
+
+const CUSTOM = "pm.theme.custom";
+export type Custom = Partial<Record<Scheme, Record<string, string>>>;
+function allCustom(): Record<string, Custom> { try { return JSON.parse(read(CUSTOM) ?? "{}") ?? {}; } catch { return {}; } }
+export const customFor = (id: string): Custom => allCustom()[id] ?? {};
+/** Set (or with null, clear) your colours for a theme in a scheme, and show them. */
+export function setCustom(id: string, scheme: Scheme, tokens: Record<string, string> | null) {
+  const all = allCustom();
+  const c: Custom = { ...(all[id] ?? {}) };
+  if (tokens && Object.keys(tokens).length) c[scheme] = tokens; else delete c[scheme];
+  if (Object.keys(c).length) all[id] = c; else delete all[id];
+  write(CUSTOM, Object.keys(all).length ? JSON.stringify(all) : null);
+  applyCustom();
+  state = { ...state }; // a new snapshot, so screens showing the colours draw again
+  subs.forEach((f) => f());
+}
+const safeTok = (k: string) => /^--[a-zA-Z0-9_-]+$/.test(k);
+const safeVal = (v: string) => String(v).replace(/[;{}<>\\]/g, "").replace(/url\(|@import|image-set/gi, "");
+/** The style for every theme's own colours; it beats the themes (the :not(#_) adds weight), not a draft. */
+export function applyCustom() {
+  let st = document.getElementById("pm-theme-custom") as HTMLStyleElement | null;
+  const css = Object.entries(allCustom()).flatMap(([id, c]) => (["dark", "light"] as Scheme[]).map((s) => {
+    const t = c[s];
+    if (!t || !/^[a-z0-9.-]+$/.test(id)) return "";
+    const body = Object.entries(t).filter(([k]) => safeTok(k)).map(([k, v]) => `${k}: ${safeVal(v)};`).join(" ");
+    return `html:root[data-theme="${id}"][data-scheme="${s}"]:not(#_) { ${body} }`;
+  })).filter(Boolean).join("\n");
+  if (!css) { st?.remove(); return; }
+  if (!st) { st = document.createElement("style"); st.id = "pm-theme-custom"; }
+  st.textContent = css;
+  const draft = document.getElementById("pm-theme-draft");
+  if (draft) document.head.insertBefore(st, draft); else document.head.appendChild(st);
+}
+/** The few colours most people want, and the shades worked out from them. */
+export const SIMPLE: Array<{ key: string; label: string; tip: string; tokens: (v: string) => Record<string, string> }> = [
+  { key: "--accent", label: "Accent", tip: "The one key to press first (Install, Play) and its glow.", tokens: (v) => ({ "--accent": v }) },
+  { key: "--acc2", label: "Highlight", tip: "What is selected or focused, and links.", tokens: (v) => ({ "--acc2": v, "--sel": v, "--focus": v }) },
+  { key: "--bg", label: "Background", tip: "The window; modules, fields and lines are shaded from it.", tokens: (v) => ({
+    "--bg": v, "--bg2": `color-mix(in srgb, ${v} 88%, var(--text))`, "--surface": `color-mix(in srgb, ${v} 93%, var(--text))`,
+    "--surface-2": `color-mix(in srgb, ${v} 86%, var(--text))`, "--line": `color-mix(in srgb, ${v} 72%, var(--text))`,
+  }) },
+  { key: "--text", label: "Text", tip: "Titles; body and quiet text are shaded from it.", tokens: (v) => ({
+    "--text": v, "--text-2": `color-mix(in srgb, ${v} 80%, var(--bg))`, "--text-3": `color-mix(in srgb, ${v} 60%, var(--bg))`,
+  }) },
+  { key: "--disp-bg", label: "Displays", tip: "The LCDs that show numbers; their digits stay readable.", tokens: (v) => ({ "--disp-bg": v }) },
+];
+/** One-click accent pairs. */
+export const PALETTES: Array<{ name: string; accent: string; acc2: string }> = [
+  { name: "Signal red", accent: "#ff4f4f", acc2: "#45f0ff" }, { name: "Hazard yellow", accent: "#f5d742", acc2: "#4fd6df" },
+  { name: "Toxic green", accent: "#7dff4f", acc2: "#ff4fd8" }, { name: "Ice blue", accent: "#4fb6ff", acc2: "#f5f5f5" },
+  { name: "Violet", accent: "#a56bff", acc2: "#ffd24f" }, { name: "Orange", accent: "#ff6a2b", acc2: "#2f6fde" },
+];
+
 export function previewDraft(maps: Partial<Record<Scheme, Record<string, string>>> | null) {
   let st = document.getElementById("pm-theme-draft") as HTMLStyleElement | null;
   if (!maps) { st?.remove(); return; }

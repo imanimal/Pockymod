@@ -69,3 +69,9 @@ html .screen .tmake-l code { font-size: .72em; padding: 0; background: none; col
 .gal-theme .tprev { height: 6.2em; border-radius: min(var(--radius), 6px); box-shadow: 0 0 0 1px var(--line); }
 .gal-theme.on .tprev { box-shadow: 0 0 0 2px var(--focus); }
 .gal-theme:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Customize: five swatches and palettes, every colour under Advanced */
+.cust-swatches { display: flex; flex-wrap: wrap; gap: .7em; }
+.cust-sw { display: flex; flex-direction: column; align-items: center; gap: .3em; cursor: pointer; font-size: .82em; }
+.cust-sw input { width: 3.2em; height: 3.2em; padding: 0; border: 0; border-radius: 10px; background: none; cursor: pointer; box-shadow: 0 0 0 1px var(--line); }
+.cust-pal i { display: inline-block; width: .9em; height: .9em; border-radius: 3px; margin-right: .15em; box-shadow: 0 0 0 1px rgba(0, 0, 0, .3); }

@@ -8,7 +8,7 @@ import { toast } from "../ui/toast";
 import { nope, saved } from "../ui/motion";
 import { errorText, pickTextFile, saveTextAs } from "../lib/api";
 import {
-  BUILTIN_THEMES, COLOR_TOKENS, exportTheme, installThemePackage, listThemes, previewDraft, previewScheme, readTokens, setFx, setMotion,
+  BUILTIN_THEMES, COLOR_TOKENS, PALETTES, SIMPLE, customFor, setCustom, exportTheme, installThemePackage, listThemes, previewDraft, previewScheme, readTokens, setFx, setMotion,
   setSchemeChoice, setTheme, themeInfo, toHex, uninstallTheme, useTheme, type FxLevel, type Scheme, type SchemeChoice, type ThemeInfo, type ThemePackage,
 } from "../lib/theme";
 import "./Appearance.css";
@@ -25,6 +25,7 @@ export function Appearance() {
   const t = useTheme();
   const [themes, setThemes] = useState<ThemeInfo[]>(BUILTIN_THEMES);
   const [making, setMaking] = useState(false);
+  const [custom, setCustomOpen] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
   const reload = () => listThemes().then(setThemes).catch(() => {});
   useEffect(() => { void reload(); }, []);
@@ -108,12 +109,15 @@ export function Appearance() {
           <TextSize />
         </div>
         <div className="actions appear-actions">
-          <Key icon="plus" onClick={() => setMaking(true)} disabled={making}>Make your own</Key>
+          <Key icon="gallery" variant="dark" onClick={() => setCustomOpen(!custom)} latched={custom}
+            title={`Change ${t.name}'s colours in place: a few swatches, or every colour under Advanced. Reset any time.`}>Customize {t.name}</Key>
+          <Key icon="plus" onClick={() => setMaking(true)} disabled={making} title="A new theme of your own, saved as a file you can share">Make your own</Key>
           <Key icon="folder" onClick={(e) => void doImport(e.currentTarget)}>Import theme file</Key>
           <Key icon="share" onClick={() => void doExport()}>Export current theme</Key>
           <span className="dim hint">A theme is a small JSON file. docs/themes.md in the project explains how to write one.</span>
         </div>
       </Module>
+      {custom && <Customizer onClose={() => setCustomOpen(false)} onSaveAs={() => { setCustomOpen(false); setMaking(true); }} />}
       {making && <ThemeMaker onDone={() => { setMaking(false); void reload(); }} />}
     </>
   );
@@ -289,5 +293,68 @@ function TextSize() {
       <Seg label="Text size" value={value} onChange={(v) => { setTextSize(Number(v)); setPx(Number(v)); }} options={opts} />
       <span className="dim" style={{ fontSize: ".84em" }}>Ctrl+= and Ctrl+- anywhere</span>
     </span>
+  );
+}
+
+/** Your colours on the theme in use, kept for that theme and mode: five swatches and palettes, every colour under
+ *  Advanced. Each change shows at once; Reset puts the theme's own colours back. */
+function Customizer({ onClose, onSaveAs }: { onClose: () => void; onSaveAs: () => void }) {
+  const t = useTheme();
+  const info = themeInfo(t.id) ?? BUILTIN_THEMES[0];
+  const [adv, setAdv] = useState(false);
+  const mine = customFor(t.id)[t.scheme] ?? {};
+  const base = useMemo(() => {
+    const v = readTokens(info, t.scheme);
+    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, toHex(x)]));
+    // read the theme's own colours once per theme and mode, before yours are layered on
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t.id, t.scheme]);
+  const live = (tok: string) => { const v = mine[tok]; return v && /^#/.test(v) ? v : toHex(getComputedStyle(document.documentElement).getPropertyValue(tok).trim() || base[tok] || "#000000"); };
+  const put = (tokens: Record<string, string>) => setCustom(t.id, t.scheme, { ...mine, ...tokens });
+  const changed = Object.keys(mine).length;
+  return (
+    <section className="panel tmake" aria-label={`Customize ${t.name}`}>
+      <header className="ph">
+        <span className="pt"><Icon name="gallery" />Customize {t.name}</span>
+        <span className="cnt">{SCHEME_NAME[t.scheme]}{changed ? ` · ${changed} changed` : ""}</span>
+        <span className="sp" />
+        <Key variant="ghost" size="sm" icon="x" onClick={onClose} aria-label="Close" title="Close; your colours stay" />
+      </header>
+      <div className="pb">
+        <div className="cust-swatches">
+          {SIMPLE.map((x) => (
+            <label key={x.key} className="cust-sw" title={x.tip}>
+              <input type="color" value={live(x.key)} onChange={(e) => put(x.tokens(e.target.value))} aria-label={x.label} />
+              <span>{x.label}</span>
+            </label>
+          ))}
+        </div>
+        <div className="sub-h">Palettes</div>
+        <div className="chips">
+          {PALETTES.map((p) => (
+            <button key={p.name} type="button" className="chip cust-pal" onClick={() => put({ "--accent": p.accent, "--acc2": p.acc2, "--sel": p.acc2, "--focus": p.acc2 })} title={`${p.name}: accent and highlight`}>
+              <i style={{ background: p.accent }} /><i style={{ background: p.acc2 }} />{p.name}
+            </button>
+          ))}
+        </div>
+        <div className="actions" style={{ marginTop: ".6em" }}>
+          <Key size="sm" variant="ghost" icon="undo" disabled={!changed} onClick={() => setCustom(t.id, t.scheme, null)} title={`Back to ${t.name}'s own colours`}>Reset</Key>
+          <Key size="sm" variant="ghost" icon="chevron" className={adv ? "rot-key" : ""} onClick={() => setAdv(!adv)} aria-expanded={adv} title="Every colour the theme has">Advanced</Key>
+          <Key size="sm" variant="ghost" icon="plus" onClick={onSaveAs} title="Make these colours into a theme of your own, as a file to share">Save as a new theme</Key>
+          <span className="dim hint">Kept for {t.name} in {SCHEME_NAME[t.scheme].toLowerCase()} mode; other themes keep theirs.</span>
+        </div>
+        {adv && (
+          <div className="tmake-grid" style={{ marginTop: ".6em" }}>
+            {COLOR_TOKENS.map(({ token, label }) => (
+              <label key={token} className="tmake-tok" title={`${label} (${token})`}>
+                <input type="color" value={live(token)} onChange={(e) => put({ [token]: e.target.value })} aria-label={label} />
+                <span>{label}</span>
+                {mine[token] && <button type="button" className="linkish" onClick={() => { const n = { ...mine }; delete n[token]; setCustom(t.id, t.scheme, n); }} title="Back to the theme's own">reset</button>}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
