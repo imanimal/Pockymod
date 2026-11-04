@@ -4,6 +4,7 @@ import { applyTheme, getThemeChoice, setMotion, setThemeChoice, type ThemeChoice
 import { errorText, nexus, type NexusStatus } from "../lib/api";
 import { GameFolders } from "./GameFolders";
 import { About, Experiments } from "./About";
+import { InstallPrefs } from "./InstallPrefs";
 
 export function Settings({ onScheme }: { scheme: "cream" | "night"; onScheme: (s: "cream" | "night") => void }) {
   const [theme, setTheme] = useState<ThemeChoice>(getThemeChoice());
@@ -13,6 +14,7 @@ export function Settings({ onScheme }: { scheme: "cream" | "night"; onScheme: (s
     <div className="stack" style={{ maxWidth: "56em" }}>
       <NexusAccount />
       <GameFolders />
+      <InstallPrefs />
       <Module icon="settings" title="Look" count="Pocket">
         <div className="fgrid">
           <span className="lab">Theme</span>

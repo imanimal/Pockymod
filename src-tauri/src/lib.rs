@@ -74,6 +74,18 @@ pub fn run() {
             commands::extras::modio_set_key,
             commands::extras::modio_clear_key,
             commands::extras::modio_browse,
+            commands::extras::creator_check,
+            commands::extras::creator_package,
+            commands::extras::creator_publish,
+            commands::existing::existing_scan,
+            commands::existing::existing_track,
+            commands::existing::groups_list,
+            commands::existing::groups_set,
+            commands::existing::group_create,
+            commands::existing::group_rename,
+            commands::existing::group_delete,
+            commands::existing::library_bulk,
+            commands::game::game_launch,
             commands::game::game_detect,
             commands::game::game_inspect,
             commands::game::health_check,
@@ -96,6 +108,9 @@ pub fn run() {
             commands::library::open_nexus_url,
             commands::library::nxm_handler_status,
             commands::library::nxm_handler_register,
+            commands::library::nxm_handler_test,
+            commands::library::downloads_usage,
+            commands::library::downloads_cleanup,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Pocket Mods");

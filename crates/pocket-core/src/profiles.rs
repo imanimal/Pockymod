@@ -2,7 +2,7 @@
 //! turns off and deploys what it turns on, so the game folder always matches the active profile.
 
 use crate::db::{now, Db};
-use crate::deploy::{self, DeployOptions, DeployOutcome};
+use crate::deploy::{DeployOptions, DeployOutcome};
 use crate::error::{Error, Result};
 use crate::install::{self, staged_plan};
 use rusqlite::params;
@@ -61,10 +61,10 @@ pub fn activate(db: &Db, game: &Path, library: &Path, id: i64, opts: &DeployOpti
     let before = enabled_set(db, old)?;
     let after = enabled_set(db, id)?;
     let mut rep = SwitchReport::default();
-    for i in before.iter().filter(|i| !after.contains(i)) { deploy::undeploy(db, game, *i)?; rep.removed.push(*i); }
+    for i in before.iter().filter(|i| !after.contains(i)) { install::undeploy_any(db, game, *i)?; rep.removed.push(*i); }
     db.conn.execute("UPDATE profiles SET active = (id = ?1)", params![id])?;
     for i in after.iter().filter(|i| !before.contains(i)) {
-        match install::redeploy(db, game, library, *i, opts)? {
+        match install::redeploy_any(db, game, library, *i, opts)? {
             DeployOutcome::Deployed { .. } => rep.deployed.push(*i),
             DeployOutcome::Conflicts { conflicts } => rep.not_deployed.push((*i, format!("{} files clash with other mods", conflicts.len()))),
             DeployOutcome::NeedsCopy { reason } => rep.not_deployed.push((*i, reason)),
@@ -80,7 +80,7 @@ pub fn set_enabled(db: &Db, game: &Path, library: &Path, install_id: i64, on: bo
     db.conn.execute("INSERT INTO profile_mods (profile_id, install_id, enabled, load_order) VALUES (?1, ?2, ?3, (SELECT COALESCE(MAX(load_order), -1) + 1 FROM profile_mods WHERE profile_id = ?1))
                      ON CONFLICT(profile_id, install_id) DO UPDATE SET enabled = ?3", params![p, install_id, on as i32])?;
     db.set_setting("loadorder.changedAt", &now().to_string())?;
-    if on { Ok(Some(install::redeploy(db, game, library, install_id, opts)?)) } else { deploy::undeploy(db, game, install_id)?; Ok(None) }
+    if on { Ok(Some(install::redeploy_any(db, game, library, install_id, opts)?)) } else { install::undeploy_any(db, game, install_id)?; Ok(None) }
 }
 
 /// Set the order of the active profile's mods (first loads first).
@@ -141,7 +141,7 @@ mod tests {
             a
         };
         for (i, n) in ["a", "b"].iter().enumerate() {
-            let req = install::InstallRequest { mod_id: i as u32 + 1, file_id: 1, name: n.to_string(), version: "1".into(), archive: mk(n), accept_unknown: false, replace_older: true, options: Default::default() };
+            let req = install::InstallRequest { mod_id: i as u32 + 1, file_id: 1, name: n.to_string(), version: "1".into(), archive: mk(n), accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None };
             install::install(&db, &game, &lib, &req).unwrap();
         }
         let default = install::active_profile(&db).unwrap();

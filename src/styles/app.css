@@ -129,3 +129,58 @@
 .mtile-cap { padding: .4em .6em; font-size: .78em; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mtile:focus-visible { outline: 2px solid var(--accent); }
 @media (max-width: 900px) { .disc-body.with-drawer { grid-template-columns: minmax(0, 1fr); } .disc-body > .filters { position: static; max-height: none; } }
+
+/* Library: bulk bar and rows with a pick box */
+.bulkbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: .5em; padding: .45em .6em; border-radius: var(--radius); background: var(--chrome-bg); color: var(--chrome-fg); box-shadow: var(--card-shadow); }
+.bulkbar .sp { flex: 1; }
+.bulkbar .btn.ghost { color: var(--chrome-fg); }
+.bulkbar .display { margin: 4px 6px 4px 4px; }
+.row.librow { grid-template-columns: auto minmax(0, 1fr) auto; }
+.pick { width: 1.15em; height: 1.15em; accent-color: var(--accent); margin: 0 .2em; }
+.btn.rot-key .i { rotate: 90deg; }
+
+/* the profile switcher in the title bar */
+.pswitch { position: relative; }
+.pswitch-k { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: .45em; padding: .4em .7em; border-radius: 9px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 2px 0 var(--line); font-size: .86em; color: var(--text); }
+.pswitch-k .dim { font-size: .9em; }
+.pswitch-k:focus-visible { outline: 2px solid var(--accent); }
+.pmenu { position: absolute; right: 0; top: calc(100% + .5em); width: 19em; z-index: 60; box-shadow: var(--drop); }
+.pmenu .pb { display: flex; flex-direction: column; gap: 2px; }
+
+/* onboarding: one module at a time on the desk */
+.ov.full.onboard { place-items: center; overflow: auto; }
+.onb { width: min(40em, 100%); display: flex; flex-direction: column; gap: 1em; }
+.onb-steps { display: flex; gap: .35em; flex-wrap: wrap; }
+.onb-dot { font: 700 .72em/1 var(--font-mono); text-transform: uppercase; letter-spacing: .08em; padding: .45em .7em; border-radius: 6px; background: var(--surface-2); color: var(--text-3); box-shadow: inset 0 0 0 1px var(--line); }
+.onb-dot.on { background: var(--chrome-bg); color: var(--chrome-fg); }
+.onb-dot.done { color: var(--ok); }
+.onb-skip { align-self: center; font-size: .84em; color: var(--text-3); }
+.ov.full { background: radial-gradient(color-mix(in srgb, var(--text) 10%, transparent) 1px, transparent 1.5px) 0 0 / 16px 16px, var(--bg); }
+
+/* Library grid: picture cards; a click selects, the switch turns a mod on or off */
+.lgrid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5em, 1fr)); gap: .7em; padding: .6em .4em .4em; }
+.lcard { position: relative; display: flex; flex-direction: column; cursor: pointer; border-radius: 10px; overflow: hidden; background: var(--bg2); box-shadow: 0 0 0 1px var(--line); outline: none; }
+.lcard:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.lcard.sel { box-shadow: 0 0 0 2px var(--accent), 0 4px 12px rgba(0, 0, 0, .12); background: var(--accent-soft); }
+.lcard.off .lcard-img img { filter: grayscale(1); opacity: .55; }
+.lcard.off .m-t { color: var(--text-3); }
+.lcard-img { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); display: grid; place-items: center; color: var(--line); }
+.lcard-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lcard-img .pick { position: absolute; top: .45em; left: .45em; width: 1.25em; height: 1.25em; }
+.lcard-badge { position: absolute; top: .45em; right: .45em; }
+.lcard-b { display: flex; flex-direction: column; gap: .2em; padding: .5em .6em .55em; min-width: 0; }
+.lcard-b .m-t { font-size: .9em; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lcard-f { display: flex; align-items: center; justify-content: space-between; gap: .4em; margin-top: .2em; font-size: .9em; }
+.lcard-f .btn { margin-bottom: 0; }
+
+/* installer options */
+.fgroup { display: flex; flex-direction: column; gap: .3em; }
+.fplugins { display: grid; grid-template-columns: repeat(auto-fill, minmax(14em, 1fr)); gap: .45em; }
+.fplugin { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: .25em; padding: .6em .7em; border-radius: 9px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 2px 0 var(--line); }
+.fplugin.on { background: var(--chrome-bg); color: var(--chrome-fg); box-shadow: 0 0 0 1px #000, 0 2px 0 #000; }
+.fplugin.on b { color: var(--chrome-fg); }
+.fplugin[disabled] { opacity: .5; cursor: default; }
+.fplugin:focus-visible { outline: 2px solid var(--accent); }
+.fplugin-h { display: flex; align-items: center; gap: .4em; flex-wrap: wrap; }
+.fplugin-h b { color: var(--text); }
+.fplugin-d { font-size: .82em; opacity: .85; white-space: pre-wrap; }

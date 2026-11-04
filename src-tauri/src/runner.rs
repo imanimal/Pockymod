@@ -24,7 +24,12 @@ pub fn snapshot(app: &AppHandle) -> QueueSnapshot {
     QueueSnapshot { items: q.items.clone(), summary: q.summary() }
 }
 
-pub fn emit(app: &AppHandle) { let _ = app.emit("queue", snapshot(app)); }
+pub fn emit(app: &AppHandle) {
+    // every change is saved, so a restart picks the queue up where it was
+    let st = app.state::<AppState>();
+    { let q = st.queue.lock().unwrap(); let d = st.db.lock().unwrap(); let _ = pocket_core::queue::save(&d, &q); }
+    let _ = app.emit("queue", snapshot(app));
+}
 
 /// UNVERIFIED: `nmm=1` asks the Files tab to open the "Mod Manager Download" flow for that file (as Vortex does).
 pub fn file_page(mod_id: u32, file_id: Option<u32>) -> String {
@@ -65,6 +70,7 @@ pub fn open_nexus(app: &AppHandle, url: &str) -> tauri::Result<()> {
 pub async fn handle_nxm(app: &AppHandle, raw: &str) {
     let st = app.state::<AppState>();
     let link = match NxmLink::parse(raw) {
+        Ok(l) if l.is_for_this_game() && l.mod_id == 0 && l.file_id == 0 => { let _ = app.emit("toast", "The test link reached Pocket Mods: browser downloads will come here."); return; }
         Ok(l) if l.is_for_this_game() => l,
         Ok(l) => { let _ = app.emit("toast", format!("That link is for {}, not Cyberpunk 2077.", l.game)); return; }
         Err(e) => { let _ = app.emit("toast", e.to_string()); return; }
@@ -92,8 +98,17 @@ pub async fn handle_nxm(app: &AppHandle, raw: &str) {
 
 /// Start the runner. It sleeps until woken, then works through the queue one item at a time.
 pub fn start(app: AppHandle) {
+    {
+        let st = app.state::<AppState>();
+        let saved = { let d = st.db.lock().unwrap(); pocket_core::queue::load(&d) };
+        if let Ok(saved) = saved {
+            if !saved.items.is_empty() { *st.queue.lock().unwrap() = saved; }
+        }
+    }
     tauri::async_runtime::spawn(async move {
         let pump = app.state::<AppState>().pump.clone();
+        // a saved queue starts again by itself (Premium) or shows its next page (free)
+        pump.notify_one();
         loop {
             pump.notified().await;
             loop {
@@ -181,11 +196,35 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
 
     st.queue.lock().unwrap().set(item.id, ItemState::Installing);
     emit(app);
-    let req = InstallRequest { mod_id: item.mod_id, file_id: item.file_id, name: item.mod_name.clone(), version: item.version.clone(), archive, accept_unknown: false, replace_older: true, options: paths.deploy_options() };
+
+    // an update to a mod tracked from Vortex: replace its files inside Vortex's folder so Vortex keeps it
+    let keep_vortex = st.db.lock().unwrap().setting("vortex.keepFormat")?.as_deref() != Some("0");
+    let vortex_id: Option<i64> = if keep_vortex {
+        st.db.lock().unwrap().conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 AND source = 'vortex' ORDER BY installed_at DESC LIMIT 1",
+            rusqlite::params![item.mod_id], |r| r.get(0)).ok()
+    } else { None };
+    // installer options are asked through the normal path, so the Vortex in-place update is for plain archives
+    let has_options = pocket_core::archive::list(&archive).map(|e| pocket_core::fomod::find_config(&e).is_some()).unwrap_or(false);
+    if let (Some(vid), Some(setup), false) = (vortex_id, pocket_core::vortex::find(&game), has_options) {
+        let db = st.db.clone();
+        let (g, l, a, uri, fid, ver) = (game.clone(), library.clone(), archive.clone(), pocket_core::queue::download_name(item.mod_id, item.file_id, &item.uri), item.file_id, item.version.clone());
+        let out = tauri::async_runtime::spawn_blocking(move || pocket_core::vortex::update_in_place(&db.lock().unwrap(), &g, &l, &setup, vid, &a, &uri, fid, &ver)).await
+            .map_err(|e| Error::Invalid(e.to_string()))??;
+        let _ = app.emit("library-changed", ());
+        return Ok(match out {
+            pocket_core::deploy::DeployOutcome::Deployed { .. } => ItemState::Done { install_id: Some(vid), note: Some("Updated inside Vortex's folder, so Vortex keeps it.".into()) },
+            _ => ItemState::Done { install_id: Some(vid), note: Some("Not updated: the new files clash with other mods. The old version is back.".into()) },
+        });
+    }
+    let archive_for_choices = archive.to_string_lossy().into_owned();
+    let req = InstallRequest { mod_id: item.mod_id, file_id: item.file_id, name: item.mod_name.clone(), version: item.version.clone(), archive, accept_unknown: false, replace_older: true, options: paths.deploy_options(), fomod_choices: None };
     let db = st.db.clone();
     let out = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &game, &library, &req)).await
         .map_err(|e| Error::Invalid(e.to_string()))??;
     let _ = app.emit("library-changed", ());
+    if matches!(out, InstallOutcome::Installed { .. }) && st.db.lock().unwrap().setting("downloads.keep")?.as_deref() == Some("0") {
+        let _ = std::fs::remove_file(&archive_for_choices);
+    }
     Ok(match out {
         InstallOutcome::Installed { install_id, needs_redmod_deploy, warnings, .. } => ItemState::Done {
             install_id: Some(install_id),
@@ -193,5 +232,12 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         },
         InstallOutcome::Staged { install_id, .. } => ItemState::Done { install_id: Some(install_id), note: Some("Downloaded, not deployed yet: it clashes with installed mods. Decide in Library.".into()) },
         InstallOutcome::NeedsReview { plan } => ItemState::Failed { message: format!("{} files have no known place in the game folder. Open Library, Downloads to install it anyway.", plan.unknown.len()) },
+        InstallOutcome::NeedsChoices { fomod, defaults } => {
+            // ask now: the app opens the installer's options
+            let _ = app.emit("install-choices", serde_json::json!({
+                "request": { "modId": item.mod_id, "fileId": item.file_id, "name": item.mod_name, "version": item.version, "archive": archive_for_choices },
+                "fomod": fomod, "defaults": defaults }));
+            ItemState::Done { install_id: None, note: Some("This mod has installer options. Choose them in the window that opened (or in Library, Downloaded).".into()) }
+        }
     })
 }

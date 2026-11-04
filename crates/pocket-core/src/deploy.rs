@@ -32,6 +32,9 @@ pub struct DeployOptions {
     pub allow_copy: bool,
     /// Take paths another install owns. The other install gets them back when this one is removed.
     pub take_conflicts: bool,
+    /// Do not write `.pocket-manifest.json` into the staging folder (a Vortex mod folder: Vortex would deploy it).
+    #[serde(skip)]
+    pub no_manifest: bool,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -182,7 +185,7 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
         for r in done.iter().rev() { let _ = undo_row(db, game, r); }
         return Err(e);
     }
-    write_manifest(staging, db, install_id)?;
+    if !opts.no_manifest { write_manifest(staging, db, install_id)?; }
     Ok(DeployOutcome::Deployed { linked, copied, backed_up, took_from: conflicts })
 }
 
@@ -225,7 +228,7 @@ pub fn undeploy(db: &Db, game: &Path, install_id: i64) -> Result<UndeployReport>
         let dst = game.join(&r.target_path);
         let ours = match fs::metadata(&dst) {
             Err(_) => true, // already gone
-            Ok(m) => if r.method == "hardlink" { same_file::is_same_file(&dst, &r.source).unwrap_or(false) } else { m.len() == r.size },
+            Ok(m) => still_ours(&dst, &r.source, &r.method, m.len(), r.size),
         };
         if !ours {
             rep.left_alone.push(r.target_path.clone());
@@ -293,6 +296,16 @@ fn manifest_source(staging: &Path, target_key: &str) -> Option<PathBuf> {
     v["files"].as_array()?.iter().find(|f| f["target"] == target_key).and_then(|f| f["source"].as_str()).map(PathBuf::from)
 }
 
+/// Is the file in the game still the one the mod put there? Hard links must be the same file; copies the same size;
+/// Vortex's files (hard links by default, copies or moves otherwise) either.
+fn still_ours(dst: &Path, source: &str, method: &str, len: u64, size: u64) -> bool {
+    match method {
+        "hardlink" => same_file::is_same_file(dst, source).unwrap_or(false),
+        "vortex" => same_file::is_same_file(dst, source).unwrap_or(false) || len == size,
+        _ => len == size,
+    }
+}
+
 /// Deployed files that are missing or no longer the mod's (for the health panel).
 pub fn verify(db: &Db, game: &Path) -> Result<Vec<(i64, String)>> {
     let mut st = db.conn.prepare("SELECT install_id, target_path, source, method, size FROM deployed_files")?;
@@ -301,7 +314,7 @@ pub fn verify(db: &Db, game: &Path) -> Result<Vec<(i64, String)>> {
         let dst = game.join(t);
         match fs::metadata(&dst) {
             Err(_) => true,
-            Ok(m) => if method == "hardlink" { !same_file::is_same_file(&dst, src).unwrap_or(false) } else { m.len() as i64 != *size },
+            Ok(m) => !still_ours(&dst, src, method, m.len(), *size as u64),
         }
     }).map(|(i, t, ..)| (i, t)).collect())
 }

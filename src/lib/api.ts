@@ -127,6 +127,7 @@ export interface QueueSnapshot { items: QueueItem[]; summary: QueueSummary }
 export interface InstallRow {
   id: number; modId: number; fileId: number; name: string; version: string; modType: ModType; frameworks: string[]; staging: string;
   installedAt: number; updatedAt: string | null; deployedFiles: number; enabled: boolean; loadOrder: number;
+  source: "pocket" | "vortex" | "found"; category: string | null; group: string; customGroup: boolean; picture?: string | null;
 }
 export interface Conflict { target: string; ownerInstall: number; ownerName: string }
 export type DeployOutcome =
@@ -145,8 +146,14 @@ export interface InstallPlan { files: Array<{ source: string; target: string; ki
 export type InstallOutcome =
   | { status: "installed"; installId: number; modType: ModType; files: number; needsRedmodDeploy: boolean; deploy: DeployOutcome; replaced: number[]; warnings: string[] }
   | { status: "needsReview"; plan: InstallPlan }
-  | { status: "staged"; installId: number; deploy: DeployOutcome };
-export interface InstallRequest { modId: number; fileId: number; name: string; version: string; archive: string; acceptUnknown?: boolean; replaceOlder?: boolean; options?: DeployOptions }
+  | { status: "staged"; installId: number; deploy: DeployOutcome }
+  | { status: "needsChoices"; fomod: Fomod; defaults: Choice[] };
+export interface InstallRequest { modId: number; fileId: number; name: string; version: string; archive: string; acceptUnknown?: boolean; replaceOlder?: boolean; options?: DeployOptions; fomodChoices?: Choice[] }
+export type Choice = [number, number, number];
+export interface FomodPlugin { name: string; description: string; image: string | null; kind: string }
+export interface Fomod { name: string; root: string; steps: Array<{ name: string; groups: Array<{ name: string; kind: string; plugins: FomodPlugin[] }> }> }
+export interface ChoicesNeeded { request: InstallRequest; fomod: Fomod; defaults: Choice[] }
+export const onChoicesNeeded = (cb: (c: ChoicesNeeded) => void) => listen<ChoicesNeeded>("install-choices", cb);
 
 export const library = {
   list: () => call<InstallRow[]>("library_list"),
@@ -317,3 +324,38 @@ export function descriptionMedia(src: string, picture?: string | null): Array<{ 
   for (const m of src.matchAll(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/gi)) yt(m[1]);
   return out.slice(0, 40);
 }
+
+// ── existing mods, groups, bulk ──
+
+export interface FoundMod { name: string; kind: ModType; files: string[]; modId: number | null }
+export interface ExistingScan { vortex: { staging: string | null; mods: number; deployed: number; alreadyTracked: number; sample: string[] } | null; found: FoundMod[] }
+export interface TrackResult { vortex: { tracked: number; matchedOnNexus: number; already: number }; found: number }
+export const existing = {
+  scan: () => call<ExistingScan>("existing_scan"),
+  track: (vortexMods: boolean, foundMods: boolean) => call<TrackResult>("existing_track", { vortexMods, foundMods }),
+};
+export const groups = {
+  list: () => call<{ presets: string[]; custom: string[] }>("groups_list"),
+  set: (installIds: number[], group: string | null) => call<void>("groups_set", { installIds, group }),
+  create: (name: string) => call<void>("group_create", { name }),
+  rename: (from: string, to: string) => call<void>("group_rename", { from, to }),
+  remove: (name: string) => call<void>("group_delete", { name }),
+};
+export const bulk = (installIds: number[], action: "enable" | "disable" | "uninstall") => call<{ done: number; failed: Array<[number, string]> }>("library_bulk", { installIds, action });
+
+export const launchGame = () => call<{ started: boolean; modded?: boolean; redmod?: RedmodResult | null }>("game_launch");
+
+export const downloadsUsage = () => call<{ files: number; bytes: number; installedFiles: number; installedBytes: number }>("downloads_usage");
+export const downloadsCleanup = () => call<number>("downloads_cleanup");
+export const testHandler = () => call<void>("nxm_handler_test");
+
+// ── for mod authors ──
+
+export interface CreatorCheck { plan: InstallPlan; problems: string[]; tips: string[]; files: number }
+export interface PublishRequest { file: string; fileId: number; modId?: number | null; version: string; displayName?: string | null; description?: string | null; category: "main" | "optional" | "miscellaneous"; changelog?: string | null; archiveExisting: boolean; updateModVersion: boolean }
+export const creator = {
+  check: (path: string, name: string) => call<CreatorCheck>("creator_check", { path, name }),
+  pack: (path: string, name: string, version: string) => call<string>("creator_package", { path, name, version }),
+  publish: (request: PublishRequest) => call<number>("creator_publish", { request }),
+  onProgress: (cb: (p: [number, number]) => void) => listen<[number, number]>("publish-progress", cb),
+};

@@ -27,12 +27,12 @@ impl ModType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, serde::Deserialize, PartialOrd, Ord)]
 #[serde(rename_all = "lowercase")]
 pub enum FileKind { Archive, ArchiveXl, Redmod, Redscript, Tweak, CetMod, Red4extPlugin, FrameworkCore, GameFile, Doc, Unknown }
 
 /// One file to put in the game folder.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Placement {
     /// Path inside the archive, as listed.
@@ -195,6 +195,34 @@ pub fn plan_install(entries: &[String], mod_name: &str) -> InstallPlan {
             FileKind::ArchiveXl => { plan.uses.insert(Framework::ArchiveXl); }
             FileKind::Red4extPlugin => { plan.uses.insert(Framework::Red4ext); }
             _ => {}
+        }
+    }
+    plan.needs_redmod_deploy = !plan.redmods.is_empty();
+    plan.mod_type = Some(type_of(&plan.files));
+    plan
+}
+
+/// A placement for an explicit target (FOMOD choices), or None for docs and images.
+pub fn placement(source: &str, target: &str) -> Option<Placement> {
+    let target = norm(target);
+    let kind = kind_of_target(&target);
+    (kind != FileKind::Doc && !target.is_empty()).then(|| Placement { source: norm(source), target, kind })
+}
+
+/// The mod type and frameworks for a finished list of placements.
+pub fn summarize(files: Vec<Placement>) -> InstallPlan {
+    let mut plan = InstallPlan { files, ..Default::default() };
+    for p in &plan.files {
+        match p.kind {
+            FileKind::Redscript => { plan.uses.insert(Framework::Redscript); }
+            FileKind::Tweak => { plan.uses.insert(Framework::TweakXl); }
+            FileKind::CetMod => { plan.uses.insert(Framework::Cet); }
+            FileKind::ArchiveXl => { plan.uses.insert(Framework::ArchiveXl); }
+            FileKind::Red4extPlugin => { plan.uses.insert(Framework::Red4ext); }
+            _ => {}
+        }
+        if p.kind == FileKind::Redmod {
+            if let Some(name) = p.target.split('/').nth(1) { if !plan.redmods.iter().any(|r| r == name) { plan.redmods.push(name.to_string()); } }
         }
     }
     plan.needs_redmod_deploy = !plan.redmods.is_empty();

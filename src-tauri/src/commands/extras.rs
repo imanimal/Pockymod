@@ -43,3 +43,31 @@ pub async fn modio_browse(state: State<'_, AppState>, text: Option<String>, offs
     let page = match &game { Some(g) => Some(c.mods(g.id, text.as_deref(), offset).await?), None => None };
     Ok(ModioBrowse { game, page })
 }
+
+// ── for mod authors ──
+
+#[tauri::command]
+pub async fn creator_check(path: String, name: String) -> Result<pocket_core::creator::Check> {
+    tauri::async_runtime::spawn_blocking(move || pocket_core::creator::check(std::path::Path::new(&path), &name)).await.map_err(|e| Error::Invalid(e.to_string()))?
+}
+
+/// Pack a mod folder into a clean zip next to it.
+#[tauri::command]
+pub async fn creator_package(path: String, name: String, version: String) -> Result<String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let p = std::path::PathBuf::from(&path);
+        let out = p.parent().map(|d| d.to_path_buf()).unwrap_or_else(|| p.clone());
+        pocket_core::creator::package(&p, &out, &name, &version).map(|f| f.to_string_lossy().into_owned())
+    }).await.map_err(|e| Error::Invalid(e.to_string()))?
+}
+
+/// Publish a new version of one of your files through the Upload API, with the key in Credential Manager.
+#[tauri::command]
+pub async fn creator_publish(app: tauri::AppHandle, state: State<'_, AppState>, request: pocket_core::creator::Publish) -> Result<u64> {
+    use tauri::Emitter;
+    let key = state.keys.get()?.ok_or(Error::NoKey)?;
+    let app2 = app.clone();
+    pocket_core::creator::publish(state.nexus.http(), key.expose(), &request, move |sent, total| {
+        let _ = app2.emit("publish-progress", (sent, total));
+    }).await
+}

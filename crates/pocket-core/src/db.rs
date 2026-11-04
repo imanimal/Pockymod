@@ -31,6 +31,13 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE deployed_files ADD COLUMN target_path TEXT NOT NULL DEFAULT '';
      ALTER TABLE deployed_files ADD COLUMN backup TEXT;
      ALTER TABLE deployed_files ADD COLUMN prev_install INTEGER;",
+    // 4: where a mod came from (pocket, vortex, found), its Nexus category, the user's own group; groups; saved queue
+    "ALTER TABLE installs ADD COLUMN source TEXT NOT NULL DEFAULT 'pocket';
+     ALTER TABLE installs ADD COLUMN external TEXT;
+     ALTER TABLE installs ADD COLUMN category TEXT;
+     ALTER TABLE installs ADD COLUMN group_name TEXT;
+     CREATE TABLE groups (name TEXT PRIMARY KEY, sort INTEGER NOT NULL DEFAULT 0);
+     CREATE TABLE queue_items (id INTEGER PRIMARY KEY, data TEXT NOT NULL);",
 ];
 
 pub struct Db { pub conn: Connection }

@@ -59,7 +59,7 @@ pub async fn library_uninstall(app: AppHandle, state: State<'_, AppState>, insta
 pub async fn library_deploy(app: AppHandle, state: State<'_, AppState>, install_id: i64, options: DeployOptions) -> Result<DeployOutcome> {
     let (game, library) = Paths::load(&state.db.lock().unwrap()).require()?;
     let db = state.db.clone();
-    let r = tauri::async_runtime::spawn_blocking(move || install::redeploy(&db.lock().unwrap(), &game, &library, install_id, &options)).await.map_err(|e| Error::Invalid(e.to_string()))??;
+    let r = tauri::async_runtime::spawn_blocking(move || install::redeploy_any(&db.lock().unwrap(), &game, &library, install_id, &options)).await.map_err(|e| Error::Invalid(e.to_string()))??;
     let _ = app.emit("library-changed", ());
     Ok(r)
 }
@@ -171,3 +171,41 @@ pub fn nxm_handler_status() -> Result<HandlerStatus> { platform::nxm_handler_sta
 
 #[tauri::command]
 pub fn nxm_handler_register() -> Result<HandlerStatus> { platform::register_nxm_handler(&std::env::current_exe()?) }
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadsUsage { pub files: usize, pub bytes: u64, pub installed_files: usize, pub installed_bytes: u64 }
+
+/// How much space downloaded archives take, and how much of it is archives already installed.
+#[tauri::command]
+pub fn downloads_usage(state: State<'_, AppState>) -> Result<DownloadsUsage> {
+    let rows = library_downloads(state)?;
+    let on_disk: Vec<&DownloadRow> = rows.iter().filter(|r| std::path::Path::new(&r.path).exists()).collect();
+    let inst: Vec<&&DownloadRow> = on_disk.iter().filter(|r| r.installed).collect();
+    Ok(DownloadsUsage { files: on_disk.len(), bytes: on_disk.iter().map(|r| r.size as u64).sum(), installed_files: inst.len(), installed_bytes: inst.iter().map(|r| r.size as u64).sum() })
+}
+
+/// Delete archives of mods that are installed (the staged copy is what the game uses). Reinstalling downloads again.
+#[tauri::command]
+pub fn downloads_cleanup(state: State<'_, AppState>) -> Result<u64> {
+    let rows = library_downloads(state)?;
+    let mut freed = 0;
+    for r in rows.iter().filter(|r| r.installed) {
+        if std::fs::remove_file(&r.path).is_ok() { freed += r.size as u64; }
+    }
+    Ok(freed)
+}
+
+/// Send a test nxm:// link through Windows, to show which app gets it.
+#[tauri::command]
+pub fn nxm_handler_test() -> Result<()> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        std::process::Command::new("cmd").args(["/C", "start", "", "nxm://cyberpunk2077/mods/0/files/0"]).creation_flags(0x0800_0000).spawn()
+            .map_err(|e| Error::Invalid(format!("Could not send the test link: {e}")))?;
+        Ok(())
+    }
+    #[cfg(not(windows))]
+    { Err(Error::Invalid("The link test runs on Windows.".into())) }
+}

@@ -46,7 +46,8 @@ function pump() {
         clearInterval(tick);
         next.state = { state: "done", installId: installs.length + 1, note: null };
         installs.push({ id: installs.length + 1, modId: next.modId, fileId: next.fileId, name: next.modName, version: next.version, modType: "archive", frameworks: [],
-          staging: "", installedAt: Date.now() / 1000, updatedAt: null, deployedFiles: 3, enabled: true, loadOrder: installs.length });
+          staging: "", installedAt: Date.now() / 1000, updatedAt: null, deployedFiles: 3, enabled: true, loadOrder: installs.length,
+          source: "pocket", category: details.find((d) => d.detail.modId === next.modId)?.detail.category ?? null, group: groupOf(details.find((d) => d.detail.modId === next.modId)?.detail.category ?? null), customGroup: false });
         demoEmit("library-changed", null);
       }
       pump();
@@ -64,6 +65,17 @@ function planFor(modId: number, fileId: number): QueueItem[] {
   return [...reqs.map((r) => item(r, r.files.find((x) => x.category === "MAIN") ?? r.files[0], d.detail.name)), item(d, f, null)];
 }
 
+const customGroups: string[] = [];
+function groupOf(c: string | null): string {
+  const x = (c ?? "").toLowerCase();
+  if (x.includes("preset")) return "Character presets";
+  if (x === "modders resources" || x === "utilities") return "Core";
+  if (x === "armour and clothing") return "Clothing";
+  if (x === "appearance" || x === "characters") return "Appearance";
+  if (x === "gameplay" || x === "scripts") return "Gameplay";
+  if (x === "user interface") return "Interface";
+  return "Other";
+}
 let profilesList: Profile[] = [{ id: 1, name: "Default", active: true, enabled: 0 }];
 function health(): HealthReport {
   const fw = (key: string, name: string, installed: boolean, version: string | null, latest: string, older = false, neededBy: string[] = []) =>
@@ -181,8 +193,12 @@ export function installDemo() {
     mod_set_enabled: ({ installId, on }) => { const i = installs.find((x) => x.id === installId); if (i) i.enabled = Boolean(on); return null; },
     load_order_set: ({ installIds }) => { (installIds as number[]).forEach((id, n) => { const i = installs.find((x) => x.id === id); if (i) i.loadOrder = n; }); installs.sort((a, b) => a.loadOrder - b.loadOrder); },
     updates_check: () => [],
-    updates_last: () => [],
+    updates_last: () => installs.filter((i) => i.source === "vortex").slice(0, 2).map((i) => ({ modId: i.modId, name: i.name, installed: i.version, latest: `${i.version}.1`, updatedAt: "2026-11-01T00:00:00Z" })),
     queue_add_mod: () => snapshot(),
+    downloads_usage: () => ({ files: 0, bytes: 0, installedFiles: 0, installedBytes: 0 }),
+    downloads_cleanup: () => 0,
+    nxm_handler_test: () => { throw { kind: "demo", message: "The link test needs the desktop app on Windows." }; },
+    game_launch: () => { throw { kind: "demo", message: "Starting the game needs the desktop app." }; },
     app_update_check: () => ({ current: "0.1.0", latest: null, newer: false, notes: null, url: null, message: "No published release found yet." }),
     modio_has_key: () => false,
     modio_set_key: () => { throw { kind: "demo", message: "mod.io needs the desktop app." }; },
@@ -205,6 +221,35 @@ export function installDemo() {
     },
     local_collection_export: () => {},
     local_collection_import: () => { throw { kind: "demo", message: "Importing a file needs the desktop app." }; },
+    existing_scan: () => ({ vortex: { staging: "C:\\Users\\you\\AppData\\Roaming\\Vortex\\cyberpunk2077\\mods", mods: 6, deployed: 5, alreadyTracked: installs.filter((i) => i.source === "vortex").length ? 6 : 0,
+      sample: fixture.nodes.slice(8, 14).map((n) => n.name) }, found: installs.some((i) => i.source === "found") ? [] : [{ name: "Hand-placed hair", kind: "archive", files: ["archive/pc/mod/hair.archive"], modId: null }] }),
+    existing_track: ({ vortexMods, foundMods }) => {
+      let n = 0;
+      if (vortexMods) for (const c of fixture.nodes.slice(8, 14)) {
+        installs.push({ id: installs.length + 1, modId: c.modId, fileId: 1, name: c.name, version: c.version, modType: c.classification.modType, frameworks: c.classification.frameworks.map((f) => f.key),
+          staging: "", installedAt: 0, updatedAt: null, deployedFiles: 4, enabled: n !== 5, loadOrder: installs.length, source: "vortex", category: c.category, group: groupOf(c.category), customGroup: false, picture: c.thumbnailUrl?.replace("/thumbnails/", "/") });
+        n++;
+      }
+      if (foundMods) installs.push({ id: installs.length + 1, modId: 900000001, fileId: 1, name: "Hand-placed hair", version: "", modType: "archive", frameworks: [], staging: "", installedAt: 0, updatedAt: null,
+        deployedFiles: 1, enabled: true, loadOrder: installs.length, source: "found", category: null, group: "Other", customGroup: false });
+      demoEmit("library-changed", null);
+      return { vortex: { tracked: vortexMods ? 6 : 0, matchedOnNexus: vortexMods ? 6 : 0, already: 0 }, found: foundMods ? 1 : 0 };
+    },
+    groups_list: () => ({ presets: ["Core", "Clothing", "Character presets", "Appearance", "Gameplay", "Visuals and places", "Weapons and vehicles", "Audio", "Interface", "Other"], custom: customGroups }),
+    groups_set: ({ installIds, group }) => {
+      if (group && !customGroups.includes(String(group))) customGroups.push(String(group));
+      for (const i of installs) if ((installIds as number[]).includes(i.id)) { i.group = group ? String(group) : groupOf(i.category); i.customGroup = !!group; }
+      demoEmit("library-changed", null);
+    },
+    group_create: ({ name }) => { if (!customGroups.includes(String(name))) customGroups.push(String(name)); },
+    group_rename: ({ from, to }) => { const k = customGroups.indexOf(String(from)); if (k >= 0) customGroups[k] = String(to); for (const i of installs) if (i.group === from) i.group = String(to); },
+    group_delete: ({ name }) => { const k = customGroups.indexOf(String(name)); if (k >= 0) customGroups.splice(k, 1); for (const i of installs) if (i.group === name) { i.group = groupOf(i.category); i.customGroup = false; } },
+    library_bulk: ({ installIds, action }) => {
+      const ids = installIds as number[];
+      for (const i of [...installs]) if (ids.includes(i.id)) { if (action === "uninstall") installs.splice(installs.indexOf(i), 1); else i.enabled = action === "enable"; }
+      demoEmit("library-changed", null);
+      return { done: ids.length, failed: [] };
+    },
     nxm_handler_status: () => ({ supported: true, ours: false, owner: "Vortex", command: null }),
     nxm_handler_register: () => ({ supported: true, ours: true, owner: "Pocket Mods", command: null }),
     patches: () => [["2.0", "2023-09-21"], ["2.1", "2023-12-05"], ["2.12", "2024-03-01"], ["2.2", "2024-12-10"], ["2.3", "2025-07-17"], ["2.5", "2026-10-22"]]

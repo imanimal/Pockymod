@@ -11,13 +11,20 @@ import { InstallDialog } from "./screens/InstallDialog";
 import { Health } from "./screens/Health";
 import { LoadOrder } from "./screens/LoadOrder";
 import { Collections } from "./screens/Collections";
+import { ExistingDialog } from "./screens/Existing";
+import { ProfileSwitch } from "./ui/ProfileSwitch";
+import { Onboarding } from "./screens/Onboarding";
+import { PlayKey } from "./ui/PlayKey";
+import { FomodDialog } from "./screens/FomodDialog";
+import { Create } from "./screens/Create";
 import { Toasts, toast } from "./ui/toast";
-import { errorText, game, nexus, nexusPages, onToast, queue, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
+import { installPrefs } from "./lib/prefs";
+import { errorText, game, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
 import { applyTheme, getThemeChoice, setThemeChoice, watchSystemTheme } from "./lib/theme";
 import { windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
 
-export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "gallery";
+export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "create" | "gallery";
 
 const VIEWS: Array<{ id: View; label: string; icon: IconName }> = [
   { id: "browse", label: "Browse", icon: "browse" },
@@ -26,6 +33,7 @@ const VIEWS: Array<{ id: View; label: string; icon: IconName }> = [
   { id: "downloads", label: "Downloads", icon: "downloads" },
   { id: "loadorder", label: "Load order", icon: "loadorder" },
   { id: "health", label: "Health", icon: "health" },
+  { id: "create", label: "Create", icon: "share" },
   { id: "settings", label: "Settings", icon: "settings" },
 ];
 
@@ -37,6 +45,11 @@ export function App() {
   const [installing, setInstalling] = useState<{ modId: number; fileId: number; name: string } | null>(null);
   const [updates, setUpdates] = useState<Update[]>([]);
   const [healthIssues, setHealthIssues] = useState(0);
+  const [existingOpen, setExistingOpen] = useState(false);
+  const [onboard, setOnboard] = useState(false);
+  const [choices, setChoices] = useState<ChoicesNeeded | null>(null);
+  useEffect(() => { let off: (() => void) | undefined; onChoicesNeeded(setChoices).then((u) => { off = u; }); return () => off?.(); }, []);
+  useEffect(() => { settings.get("onboarded").then((v) => setOnboard(v !== "1")).catch(() => {}); }, []);
 
   useEffect(() => watchSystemTheme(() => setScheme(applyTheme())), []);
   useEffect(() => {
@@ -59,6 +72,17 @@ export function App() {
   const current = snap?.items.find((i) => i.state.state === "downloading");
   const progress = current && current.state.state === "downloading" && current.state.total ? current.state.received / current.state.total : undefined;
 
+  // Install: straight to the queue when the user turned the question off, else the plan dialog
+  const startInstall = async (modId: number, fileId: number, name: string) => {
+    const p = await installPrefs().catch(() => ({ confirm: true, requirements: "always" as const }));
+    if (p.confirm || p.requirements === "ask") { setInstalling({ modId, fileId, name }); return; }
+    try {
+      const snap = await queue.add(modId, fileId, p.requirements === "always");
+      const n = snap.items.filter((i) => i.state.state === "waiting" || i.state.state === "needsClick").length;
+      toast(`${name} is queued${n > 1 ? ` with ${n - 1} required mods` : ""}.`);
+    } catch (e) { toast(errorText(e), true); }
+  };
+
   const toggleScheme = () => {
     const next = scheme === "night" ? "cream" : "night";
     setThemeChoice(next);
@@ -76,6 +100,8 @@ export function App() {
         <span className="brandmark" data-tauri-drag-region><span className="logo">P</span><span>Pocket Mods</span></span>
         <span className="crumb" data-tauri-drag-region><span className="v">{here.label}</span><span className="ctx">Cyberpunk 2077</span></span>
         <span className="sp" data-tauri-drag-region />
+        <ProfileSwitch onManage={() => setView("loadorder")} />
+        <PlayKey onHealth={() => setView("health")} />
         <Key variant="ghost" size="sm" icon={scheme === "night" ? "sun" : "moon"} onClick={toggleScheme}
           aria-label={scheme === "night" ? "Switch to Cream" : "Switch to Night"} title={`Theme: ${getThemeChoice()}`} />
         <span className="winkeys">
@@ -104,20 +130,24 @@ export function App() {
       <main className="view">
         {/* Browse stays mounted so its search and filters survive a trip to another view */}
         <div style={{ display: view === "browse" ? "contents" : "none" }}>
-          <Browse onInstall={(d, fileId) => setInstalling({ modId: d.detail.modId, fileId, name: d.detail.name })}
+          <Browse onInstall={(d, fileId) => void startInstall(d.detail.modId, fileId, d.detail.name)}
             onOpenPage={(modId) => nexusPages.mod(modId).catch((e) => toast(errorText(e), true))} />
         </div>
         {view === "gallery" ? <Gallery />
           : view === "settings" ? <Settings scheme={scheme} onScheme={setScheme} />
           : view === "downloads" ? <Downloads snap={snap} />
-          : view === "library" ? <Library updates={new Map(updates.map((u) => [u.modId, u.latest]))} />
+          : view === "library" ? <Library updates={updates} onExisting={() => setExistingOpen(true)} />
           : view === "health" ? <Health onNavigate={setView} onIssues={setHealthIssues} />
           : view === "loadorder" ? <LoadOrder />
+          : view === "create" ? <Create />
           : view === "collections" ? <Collections onQueued={() => setView("downloads")} />
           : view === "browse" ? null
           : <Placeholder view={here.label} icon={here.icon} />}
       </main>
       {installing && <InstallDialog {...installing} premium={premium} onClose={() => setInstalling(null)} onQueued={() => setInstalling(null)} />}
+      {choices && <FomodDialog need={choices} onClose={() => setChoices(null)} />}
+      {existingOpen && <ExistingDialog onClose={() => setExistingOpen(false)} />}
+      {onboard && <Onboarding onDone={() => { setOnboard(false); game.health().then((h) => setHealthIssues(h.problems)).catch(() => {}); }} />}
       <Toasts />
     </div>
   );

@@ -23,6 +23,7 @@ md-5 = "0.10"
 hex = "0.4"
 same-file = "1"
 walkdir = "2"
+roxmltree = "0.20"
 pelite = { version = "0.10", default-features = false, features = ["std", "mmap"] }
 
 [target.'cfg(windows)'.dependencies]

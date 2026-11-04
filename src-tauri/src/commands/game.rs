@@ -111,3 +111,22 @@ pub async fn updates_check(app: AppHandle, state: State<'_, AppState>) -> Result
 
 #[tauri::command]
 pub fn updates_last(state: State<'_, AppState>) -> Vec<Update> { updates::last(&state.db.lock().unwrap()) }
+
+/// Start the game, after running the REDmod deploy when REDmods changed. The UI runs the health check first.
+#[tauri::command]
+pub async fn game_launch(state: State<'_, AppState>) -> Result<serde_json::Value> {
+    let (game, _) = Paths::load(&state.db.lock().unwrap()).require()?;
+    let (redmods, needs_deploy) = { let d = state.db.lock().unwrap(); (pocket_core::launch::has_redmods(&d)?, profiles::redmod_needs_deploy(&d)?) };
+    let mut deployed = None;
+    if needs_deploy {
+        let order = profiles::redmod_order(&state.db.lock().unwrap())?;
+        let mods: Vec<String> = order.into_iter().filter(|e| e.enabled).flat_map(|e| e.folders).collect();
+        let g = game.clone();
+        let r = blocking(move || redmod::run_deploy(&g, &mods)).await?;
+        if !r.ok { return Ok(serde_json::json!({ "started": false, "redmod": r })); }
+        state.db.lock().unwrap().set_setting("redmod.lastDeploy", &now().to_string())?;
+        deployed = Some(r);
+    }
+    pocket_core::launch::launch(&game, redmods)?;
+    Ok(serde_json::json!({ "started": true, "modded": redmods, "redmod": deployed }))
+}

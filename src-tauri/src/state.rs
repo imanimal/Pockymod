@@ -57,5 +57,5 @@ impl Paths {
             _ => Err(pocket_core::Error::Invalid("Set the Cyberpunk 2077 folder in Settings first.".into())),
         }
     }
-    pub fn deploy_options(&self) -> DeployOptions { DeployOptions { allow_copy: self.allow_copy, take_conflicts: false } }
+    pub fn deploy_options(&self) -> DeployOptions { DeployOptions { allow_copy: self.allow_copy, ..Default::default() } }
 }

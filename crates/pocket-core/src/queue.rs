@@ -13,7 +13,7 @@ use serde::Serialize;
 use std::collections::{BTreeSet, VecDeque};
 use std::sync::Mutex;
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", tag = "state")]
 pub enum ItemState {
     Waiting,
@@ -26,7 +26,7 @@ pub enum ItemState {
     Failed { message: String },
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QueueItem {
     pub id: u64,
@@ -153,6 +153,32 @@ impl Queue {
 /// Whether a Nexus file can be installed automatically. Its `uri` is usually the archive's name
 /// (`Mod-123-1-0.zip`), but files listed in collections can carry a storage path with no extension
 /// (`4c/ec/e3/4cece3d6-…`, seen live); those are taken as archives and checked by content when installed.
+/// Keep the open items, so a restart (or a crash) does not lose the queue. Links from Nexus are not kept: they
+/// expire, and the queue asks again.
+pub fn save(db: &Db, q: &Queue) -> Result<()> {
+    let tx = db.conn.unchecked_transaction()?;
+    tx.execute("DELETE FROM queue_items", [])?;
+    for i in q.items.iter().filter(|i| i.is_open() || matches!(i.state, ItemState::Failed { .. })) {
+        tx.execute("INSERT INTO queue_items (id, data) VALUES (?1, ?2)", rusqlite::params![i.id as i64, serde_json::to_string(i).unwrap_or_default()])?;
+    }
+    tx.commit()?;
+    Ok(())
+}
+
+/// The saved queue, with anything that was running set back to waiting.
+pub fn load(db: &Db) -> Result<Queue> {
+    let mut st = db.conn.prepare("SELECT data FROM queue_items ORDER BY id")?;
+    let rows: Vec<String> = st.query_map([], |r| r.get(0))?.collect::<std::result::Result<_, _>>()?;
+    let mut q = Queue::default();
+    for r in rows {
+        let Ok(mut i) = serde_json::from_str::<QueueItem>(&r) else { continue };
+        if !matches!(i.state, ItemState::Failed { .. }) { i.state = ItemState::Waiting; }
+        q.next_id = q.next_id.max(i.id);
+        q.items.push(i);
+    }
+    Ok(q)
+}
+
 pub fn is_archive_name(uri: &str) -> bool {
     let name = uri.rsplit('/').next().unwrap_or(uri).to_lowercase();
     match name.rsplit_once('.') {
@@ -246,6 +272,22 @@ mod tests {
         let n = q.accept_nxm(link(7, 70), |l| item(l.mod_id, l.file_id, "x.zip"));
         assert_ne!(n, a);
         assert!(q.get(n).unwrap().nxm.is_some());
+    }
+
+    #[test]
+    fn the_queue_survives_a_restart() {
+        let db = Db::memory().unwrap();
+        let mut q = Queue::default();
+        let a = q.add(item(1, 10, "a.zip"));
+        q.add(item(2, 20, "b.zip"));
+        q.set(a, ItemState::Downloading { received: 5, total: Some(10) });
+        q.accept_nxm(link(2, 20), |_| unreachable!());
+        save(&db, &q).unwrap();
+        let back = load(&db).unwrap();
+        assert_eq!(back.items.len(), 2);
+        assert!(back.items.iter().all(|i| i.state == ItemState::Waiting && i.nxm.is_none()));
+        let mut back = back;
+        assert!(back.add(item(3, 30, "c.zip")) > 2, "ids keep counting");
     }
 
     #[test]
