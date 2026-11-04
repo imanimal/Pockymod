@@ -383,7 +383,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         <Dialog icon="warn" title="Files already in use" count={`${pending.conflicts.length} files`} band="bad" onClose={() => setPending(null)}>
           <p>{pending.name} wants files that other mods have put in the game. Nothing has been changed yet.</p>
           <div className="log" style={{ maxHeight: "10em" }}>{pending.conflicts.slice(0, 50).map((c) => `${c.target}  ·  ${c.ownerName}`).join("\n")}</div>
-          <p className="dim" style={{ fontSize: ".86em" }}>Taking them over keeps the other mods' copies. They get their files back if you remove {pending.name} later.</p>
+          <p className="dim" style={{ fontSize: ".86em" }}>Taking them over keeps the other mods' copies. They get their files back if you remove {pending.name} later. The choice is remembered for profile switches and updates; Load order lists it under Your choices.</p>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setPending(null)}>Leave it staged</Key>
             <Key onClick={() => deploy({ id: pending.installId, name: pending.name }, true)} disabled={busy}>Take them over</Key>
