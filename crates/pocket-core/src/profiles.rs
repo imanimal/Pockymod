@@ -163,4 +163,35 @@ mod tests {
         set_order(&db, &[2, 1]).unwrap();
         assert_eq!(install::list_installs(&db).unwrap()[0].id, 2);
     }
+
+    #[test]
+    fn a_take_over_choice_survives_a_profile_switch() {
+        let dir = tempfile::tempdir().unwrap();
+        let game = dir.path().join("game");
+        fs::create_dir_all(game.join("bin/x64")).unwrap();
+        let lib = dir.path().join("lib");
+        let db = Db::memory().unwrap();
+        for (i, body) in ["from A", "from B"].iter().enumerate() {
+            let a = dir.path().join(format!("{i}.zip"));
+            let mut z = zip::ZipWriter::new(fs::File::create(&a).unwrap());
+            z.start_file("shared.archive", zip::write::SimpleFileOptions::default()).unwrap();
+            z.write_all(body.as_bytes()).unwrap();
+            z.finish().unwrap();
+            let req = install::InstallRequest { mod_id: i as u32 + 1, file_id: 1, name: format!("Mod {i}"), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
+            install::install(&db, &game, &lib, &req).unwrap();
+        }
+        let target = game.join("archive/pc/mod/shared.archive");
+        // the second clashes; the user takes the files over
+        assert!(matches!(install::redeploy(&db, &game, &lib, 2, &DeployOptions::default()).unwrap(), DeployOutcome::Conflicts { .. }));
+        install::redeploy(&db, &game, &lib, 2, &DeployOptions { take_conflicts: true, ..Default::default() }).unwrap();
+        assert_eq!(fs::read_to_string(&target).unwrap(), "from B");
+        let default = install::active_profile(&db).unwrap();
+        let empty = create(&db, "Empty", None).unwrap();
+        activate(&db, &game, &lib, empty, &DeployOptions::default()).unwrap();
+        assert!(!target.exists());
+        let back = activate(&db, &game, &lib, default, &DeployOptions::default()).unwrap();
+        assert!(back.not_deployed.is_empty(), "no mod comes back as a clash: {:?}", back.not_deployed);
+        assert_eq!(back.deployed.len(), 2);
+        assert_eq!(fs::read_to_string(&target).unwrap(), "from B");
+    }
 }

@@ -19,6 +19,7 @@ pub mod modio;
 pub mod platform;
 pub mod profiles;
 pub mod queue;
+pub mod rules;
 pub mod updates;
 pub mod vortex;
 pub mod error;

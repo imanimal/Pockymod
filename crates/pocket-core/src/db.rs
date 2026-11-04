@@ -46,6 +46,12 @@ const MIGRATIONS: &[&str] = &[
     // 7: the Nexus file's own name (its line: 2K or 4K, main or optional), and faster per-install lookups
     "ALTER TABLE installs ADD COLUMN file_name TEXT;
      CREATE INDEX IF NOT EXISTS deployed_by_install ON deployed_files (install_id);",
+    // 8: the user's standing choices: which mod's files win when two mods want the same paths ("Take them over"),
+    // and archives renamed so they load earlier (a name prefix). Both are kept by Nexus mod, so updates keep them.
+    "CREATE TABLE conflict_rules (id INTEGER PRIMARY KEY, winner_mod INTEGER NOT NULL, winner_install INTEGER NOT NULL, winner_name TEXT NOT NULL,
+        loser_mod INTEGER NOT NULL, loser_install INTEGER NOT NULL, loser_name TEXT NOT NULL, files INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL);
+     CREATE TABLE archive_renames (mod_id INTEGER NOT NULL, target TEXT NOT NULL, renamed TEXT NOT NULL, install_name TEXT NOT NULL, created_at INTEGER NOT NULL,
+        PRIMARY KEY (mod_id, target));",
 ];
 
 pub struct Db { pub conn: Connection }

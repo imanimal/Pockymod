@@ -116,12 +116,23 @@ fn owner_of(db: &Db, target_key: &str) -> Result<Option<(i64, String)>> {
 }
 
 /// Deploy one install's staged files. `plan` is from `layout::plan_install`; sources are relative to `staging`.
+/// The user's standing choices (`rules`) apply: archive renames change targets, and a remembered "Take them over"
+/// settles a clash without asking (this mod takes the paths, or stays out of them while the winner is there).
 pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &Path, plan: &[Placement], opts: &DeployOptions) -> Result<DeployOutcome> {
+    let plan = &crate::rules::apply_renames(db, install_id, plan)?[..];
     // 1. conflicts with other installs
     let mut conflicts = Vec::new();
+    let mut settled = Vec::new();
+    let mut shadowed: std::collections::BTreeSet<String> = Default::default();
     for p in plan {
         if let Some((owner, name)) = owner_of(db, &key(&p.target))? {
-            if owner != install_id { conflicts.push(Conflict { target: p.target.clone(), owner_install: owner, owner_name: name }); }
+            if owner == install_id { continue; }
+            let c = Conflict { target: p.target.clone(), owner_install: owner, owner_name: name };
+            match crate::rules::verdict(db, install_id, owner)? {
+                Some(crate::rules::Verdict::Wins) => settled.push(c),
+                Some(crate::rules::Verdict::Loses) => { shadowed.insert(key(&p.target)); }
+                None => conflicts.push(c),
+            }
         }
     }
     if !conflicts.is_empty() && !opts.take_conflicts { return Ok(DeployOutcome::Conflicts { conflicts }); }
@@ -140,6 +151,11 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
             let src = staging.join(&p.source);
             let dst = game.join(&p.target);
             let tkey = key(&p.target);
+            if shadowed.contains(&tkey) {
+                // the user chose the other mod's copy: stay out, and get the path back when that mod goes
+                db.conn.execute("UPDATE deployed_files SET prev_install = ?2 WHERE target = ?1 AND prev_install IS NULL", params![tkey, install_id])?;
+                continue;
+            }
             let size = fs::metadata(&src)?.len();
             if let Some(parent) = dst.parent() {
                 fs::create_dir_all(parent).map_err(|e| if e.kind() == ErrorKind::PermissionDenied { permission_error(parent, game) } else { e.into() })?;
@@ -199,10 +215,19 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
     if let Err(e) = result {
         // undo this run: remove what was linked, put back what was moved or taken
         for r in done.iter().rev() { let _ = undo_row(db, game, r); }
+        for t in &shadowed { let _ = db.conn.execute("UPDATE deployed_files SET prev_install = NULL WHERE target = ?1 AND prev_install = ?2", params![t, install_id]); }
         return Err(e);
     }
     if !opts.no_manifest { write_manifest(staging, db, install_id)?; }
-    Ok(DeployOutcome::Deployed { linked, copied, backed_up, took_from: conflicts })
+    // "Take them over" is remembered, so the next deploy, profile switch or update does not ask again
+    if opts.take_conflicts {
+        let mut by: std::collections::BTreeMap<i64, usize> = Default::default();
+        for c in &conflicts { *by.entry(c.owner_install).or_default() += 1; }
+        for (owner, n) in by { crate::rules::remember_win(db, install_id, owner, n)?; }
+    }
+    let mut took_from = conflicts;
+    took_from.extend(settled);
+    Ok(DeployOutcome::Deployed { linked, copied, backed_up, took_from })
 }
 
 fn undo_row(db: &Db, game: &Path, r: &Row) -> Result<()> {
@@ -216,18 +241,24 @@ fn undo_row(db: &Db, game: &Path, r: &Row) -> Result<()> {
 
 /// Give a path back to the install that owned it before, from that install's staging folder.
 fn relink_previous(db: &Db, game: &Path, target_key: &str, target_path: &str, prev: i64) -> Result<bool> {
-    let staging: Option<String> = db.conn.query_row("SELECT staging FROM installs WHERE id = ?1", params![prev], |r| r.get(0)).optional()?;
-    let Some(staging) = staging else { return Ok(false) };
-    // the previous install's own source path for this target is in its manifest
-    let source = manifest_source(Path::new(&staging), target_key);
+    let row: Option<(String, String)> = db.conn.query_row("SELECT staging, name FROM installs WHERE id = ?1", params![prev], |r| Ok((r.get(0)?, r.get(1)?))).optional()?;
+    let Some((staging, name)) = row else { return Ok(false) };
+    // the previous install's own source path for this target is in its manifest; a mod that stayed out of the path
+    // (another mod's copy was chosen) never had it there, so its plan says which staged file it is
+    let source = manifest_source(Path::new(&staging), target_key).or_else(|| {
+        let plan = crate::install::staged_plan(Path::new(&staging), &name);
+        let plan = crate::rules::apply_renames(db, prev, &plan.files).ok()?;
+        plan.into_iter().find(|p| key(&p.target) == target_key).map(|p| Path::new(&staging).join(p.source))
+    });
     let Some(src) = source.filter(|s| s.exists()) else { return Ok(false) };
     let dst = game.join(target_path);
-    if fs::hard_link(&src, &dst).is_err() { fs::copy(&src, &dst)?; }
+    if let Some(parent) = dst.parent() { fs::create_dir_all(parent)?; }
+    let method = if fs::hard_link(&src, &dst).is_ok() { "hardlink" } else { fs::copy(&src, &dst)?; "copy" };
     let size = fs::metadata(&src).map(|m| m.len()).unwrap_or(0);
     db.conn.execute(
-        "INSERT INTO deployed_files (target, install_id, source, method, size, deployed_at, target_path, backup, prev_install) VALUES (?1, ?2, ?3, 'hardlink', ?4, ?5, ?6, NULL, NULL)
-         ON CONFLICT(target) DO UPDATE SET install_id = ?2, source = ?3, size = ?4, deployed_at = ?5, prev_install = NULL",
-        params![target_key, prev, src.to_string_lossy(), size as i64, now(), target_path])?;
+        "INSERT INTO deployed_files (target, install_id, source, method, size, deployed_at, target_path, backup, prev_install) VALUES (?1, ?2, ?3, ?7, ?4, ?5, ?6, NULL, NULL)
+         ON CONFLICT(target) DO UPDATE SET install_id = ?2, source = ?3, method = ?7, size = ?4, deployed_at = ?5, prev_install = NULL",
+        params![target_key, prev, src.to_string_lossy(), size as i64, now(), target_path, method])?;
     Ok(true)
 }
 
@@ -254,7 +285,12 @@ pub fn undeploy(db: &Db, game: &Path, install_id: i64) -> Result<UndeployReport>
         if dst.exists() { remove_file(&dst, game)?; rep.removed += 1; }
         db.conn.execute("DELETE FROM deployed_files WHERE target = ?1", params![r.target_key])?;
         if let Some(prev) = r.prev_install {
-            if relink_previous(db, game, &r.target_key, &r.target_path, prev)? { rep.restored.push(r.target_path.clone()); continue; }
+            if relink_previous(db, game, &r.target_key, &r.target_path, prev)? {
+                // the game's own file this path replaced is now the other mod's to put back
+                if let Some(b) = &r.backup { db.conn.execute("UPDATE deployed_files SET backup = ?2 WHERE target = ?1", params![r.target_key, b])?; }
+                rep.restored.push(r.target_path.clone());
+                continue;
+            }
         }
         if let Some(b) = &r.backup {
             if Path::new(b).exists() { move_file(Path::new(b), &dst)?; rep.restored.push(r.target_path.clone()); continue; }
@@ -262,6 +298,8 @@ pub fn undeploy(db: &Db, game: &Path, install_id: i64) -> Result<UndeployReport>
         if let Some(parent) = dst.parent() { dirs.push(parent.to_path_buf()); }
     }
     for d in dirs { prune_dirs(game, &d); }
+    // this mod is out of the game now: paths other mods hold are no longer to be given back to it
+    db.conn.execute("UPDATE deployed_files SET prev_install = NULL WHERE prev_install = ?1", params![install_id])?;
     Ok(rep)
 }
 
@@ -293,7 +331,10 @@ fn move_file(from: &Path, to: &Path) -> Result<()> {
     }
 }
 
-const MANIFEST: &str = ".pocket-manifest.json";
+pub const MANIFEST: &str = ".pocket-manifest.json";
+
+/// Write an install's manifest again from the database (after its paths changed).
+pub fn refresh_manifest(staging: &Path, db: &Db, install_id: i64) -> Result<()> { write_manifest(staging, db, install_id) }
 
 /// A copy of the install's manifest rows next to its staged files, so a lost database can be rebuilt.
 fn write_manifest(staging: &Path, db: &Db, install_id: i64) -> Result<()> {
@@ -408,6 +449,58 @@ mod tests {
         assert_eq!(rep.restored.len(), 1);
         assert_eq!(fs::read_to_string(&target).unwrap(), "A", "A owns it again");
         assert_eq!(owner_of(&e.db, "archive/pc/mod/shared.archive").unwrap().unwrap().0, 1);
+    }
+
+    #[test]
+    fn take_them_over_is_remembered_whichever_mod_goes_in_first() {
+        let e = env();
+        let (st1, p1) = stage(&e, 1, "A", &[("shared.archive", "A"), ("a_only.archive", "a")]);
+        let (st2, p2) = stage(&e, 2, "B", &[("shared.archive", "B")]);
+        let target = e.game.join("archive/pc/mod/shared.archive");
+        let opts = DeployOptions::default();
+        deploy(&e.db, &e.game, &e.lib, 1, &st1, &p1, &opts).unwrap();
+        deploy(&e.db, &e.game, &e.lib, 2, &st2, &p2, &DeployOptions { take_conflicts: true, ..Default::default() }).unwrap();
+        assert_eq!(crate::rules::list(&e.db).unwrap().wins.len(), 1);
+
+        // both out (a profile without them), then in again in the same order: no question this time
+        undeploy(&e.db, &e.game, 2).unwrap();
+        undeploy(&e.db, &e.game, 1).unwrap();
+        deploy(&e.db, &e.game, &e.lib, 1, &st1, &p1, &opts).unwrap();
+        let out = deploy(&e.db, &e.game, &e.lib, 2, &st2, &p2, &opts).unwrap();
+        assert!(matches!(&out, DeployOutcome::Deployed { took_from, .. } if took_from.len() == 1), "{out:?}");
+        assert_eq!(fs::read_to_string(&target).unwrap(), "B");
+
+        // the other order: B first, then A goes in and stays out of B's path
+        undeploy(&e.db, &e.game, 2).unwrap();
+        undeploy(&e.db, &e.game, 1).unwrap();
+        deploy(&e.db, &e.game, &e.lib, 2, &st2, &p2, &opts).unwrap();
+        let out = deploy(&e.db, &e.game, &e.lib, 1, &st1, &p1, &opts).unwrap();
+        assert!(matches!(out, DeployOutcome::Deployed { linked: 1, .. }), "{out:?}");
+        assert_eq!(fs::read_to_string(&target).unwrap(), "B");
+        assert!(e.game.join("archive/pc/mod/a_only.archive").exists());
+        // B goes: A gets the path it stayed out of
+        undeploy(&e.db, &e.game, 2).unwrap();
+        assert_eq!(fs::read_to_string(&target).unwrap(), "A");
+        assert_eq!(owner_of(&e.db, "archive/pc/mod/shared.archive").unwrap().unwrap().0, 1);
+
+        // a mod that left the game is not handed paths later
+        deploy(&e.db, &e.game, &e.lib, 2, &st2, &p2, &opts).unwrap();
+        undeploy(&e.db, &e.game, 1).unwrap();
+        undeploy(&e.db, &e.game, 2).unwrap();
+        assert!(!target.exists(), "A was off, so nothing comes back for it");
+    }
+
+    #[test]
+    fn a_renamed_archive_is_linked_under_its_new_name_and_back() {
+        let e = env();
+        let (st, plan) = stage(&e, 1, "Coat", &[("coat.archive", "C")]);
+        crate::rules::set_rename(&e.db, 1, "archive/pc/mod/coat.archive", "!coat.archive").unwrap();
+        deploy(&e.db, &e.game, &e.lib, 1, &st, &plan, &DeployOptions::default()).unwrap();
+        assert!(e.game.join("archive/pc/mod/!coat.archive").exists() && !e.game.join("archive/pc/mod/coat.archive").exists());
+        undeploy(&e.db, &e.game, 1).unwrap();
+        crate::rules::clear_rename(&e.db, 1, "archive/pc/mod/coat.archive").unwrap();
+        deploy(&e.db, &e.game, &e.lib, 1, &st, &plan, &DeployOptions::default()).unwrap();
+        assert!(e.game.join("archive/pc/mod/coat.archive").exists() && !e.game.join("archive/pc/mod/!coat.archive").exists());
     }
 
     #[test]
