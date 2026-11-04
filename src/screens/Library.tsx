@@ -11,6 +11,7 @@ import {
 import { toast } from "../ui/toast";
 import { FomodDialog } from "./FomodDialog";
 import type { ChoicesNeeded } from "../lib/api";
+import { planGroups, useExtensions } from "../lib/extensions";
 
 type Pending =
   | { kind: "conflicts"; installId: number; name: string; conflicts: Conflict[] }
@@ -36,6 +37,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const [manage, setManage] = useState(false);
   const [choices, setChoices] = useState<ChoicesNeeded | null>(null);
   const [profileName, setProfileName] = useState("");
+  const groupRules = useExtensions().active.groupRules;
+  const [sortPlan, setSortPlan] = useState<ReturnType<typeof planGroups> | null>(null);
   const [layout, setLayoutState] = useState<"grid" | "list">(() => { try { return localStorage.getItem("pm.libraryLayout") === "list" ? "list" : "grid"; } catch { return "grid"; } });
   const setLayout = (l: "grid" | "list") => { setLayoutState(l); try { localStorage.setItem("pm.libraryLayout", l); } catch { /* storage unavailable */ } };
   const upd = useMemo(() => new Map((updates ?? []).map((u) => [u.modId, u])), [updates]);
@@ -130,6 +133,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         <Key size="sm" icon="file" onClick={installFromFile} disabled={busy}>Install from file</Key>
         <Key size="sm" icon="folder" onClick={() => onExisting?.()} title="Find mods Vortex installed or that are in the game folder already">Find existing mods</Key>
         <Key size="sm" variant="ghost" icon="settings" latched={manage} onClick={() => setManage(!manage)}>Groups</Key>
+        {groupRules.length > 0 && <Key size="sm" icon="folder" disabled={busy || !rows?.length} onClick={() => setSortPlan(planGroups(rows ?? [], groupRules))} title="Use the group rules from your extensions">Sort into groups</Key>}
       </div>
 
       {sel.size > 0 && (
@@ -240,6 +244,13 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       )}
 
       {choices && <FomodDialog need={choices} onClose={() => setChoices(null)} onInstalled={load} />}
+      {sortPlan && <SortPlan plan={sortPlan} busy={busy} onClose={() => setSortPlan(null)} onApply={() => run(async () => {
+        const by = new Map<string, number[]>();
+        for (const p of sortPlan) by.set(p.group, [...(by.get(p.group) ?? []), p.row.id]);
+        for (const [g, ids] of by) await groupsApi.set(ids, g);
+        setSortPlan(null);
+        toast(`${sortPlan.length} ${sortPlan.length === 1 ? "mod" : "mods"} sorted into ${by.size} ${by.size === 1 ? "group" : "groups"}.`);
+      })} />}
       {moveOpen && (
         <Dialog icon="folder" title="Move to group" count={`${sel.size} mods`} onClose={() => setMoveOpen(false)}>
           <div className="chips">
@@ -315,5 +326,28 @@ function GroupManager({ custom, onChange }: { custom: string[]; onChange: () => 
         <Key size="sm" icon="plus" disabled={!name.trim()} onClick={() => { act(groupsApi.create(name)); setName(""); }}>Add</Key>
       </div>
     </Module>
+  );
+}
+
+/** Where the extensions' group rules would put your mods, before anything moves. */
+function SortPlan({ plan, busy, onClose, onApply }: { plan: ReturnType<typeof planGroups>; busy: boolean; onClose: () => void; onApply: () => void }) {
+  return (
+    <Dialog icon="folder" title="Sort into groups" count={`${plan.length} ${plan.length === 1 ? "mod" : "mods"}`} onClose={onClose}>
+      {plan.length === 0 ? <p>Every mod is where the rules would put it already. Mods in groups you made yourself are left alone.</p> : <>
+        <p>The group rules from your extensions move these mods. Mods in groups you made yourself are left alone.</p>
+        <div className="rows sortplan">
+          {plan.map((p) => (
+            <div key={p.row.id} className="row">
+              <span className="m-main"><span className="m-t">{p.row.name}</span><span className="m-meta"><span>{p.row.group} → {p.group}</span>{p.from && <span>{p.from}</span>}</span></span>
+            </div>
+          ))}
+        </div>
+        <p className="dim" style={{ fontSize: ".84em" }}>To undo, select them and use Move to group, then Back to their own group.</p>
+      </>}
+      <div className="actions" style={{ justifyContent: "flex-end" }}>
+        <Key variant="ghost" onClick={onClose}>{plan.length ? "Cancel" : "Close"}</Key>
+        {plan.length > 0 && <Key icon="folder" disabled={busy} onClick={onApply}>Move {plan.length} {plan.length === 1 ? "mod" : "mods"}</Key>}
+      </div>
+    </Dialog>
   );
 }
