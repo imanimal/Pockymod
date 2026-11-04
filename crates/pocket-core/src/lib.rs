@@ -1,7 +1,9 @@
 //! Pocket Mods core: everything that is not UI. The Tauri app in `src-tauri` is a thin layer of commands over it.
 
+pub mod browse;
 pub mod credentials;
 pub mod cyberpunk;
+pub mod db;
 pub mod error;
 pub mod nexus;
 

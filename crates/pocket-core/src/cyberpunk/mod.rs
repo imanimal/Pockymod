@@ -1,2 +1,5 @@
-//! Cyberpunk 2077 knowledge: frameworks, mod types, install layout, game detection.
+//! Cyberpunk 2077 knowledge: frameworks, mod types, install layout, patches, game detection.
+pub mod classify;
 pub mod frameworks;
+pub mod layout;
+pub mod patches;

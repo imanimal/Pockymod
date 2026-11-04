@@ -1,3 +1,28 @@
 /* App-level layout that is not part of the Pocket kit. */
 #root { height: 100%; }
 .gallery .grid3 > .panel, .gallery .grid2 > .panel { min-height: 0; }
+
+/* Browse: search across the top, then filters · results · detail, each module scrolling on its own */
+.browse { display: flex; flex-direction: column; gap: var(--gap); height: 100%; min-height: 0; }
+.browse-top { display: flex; align-items: center; gap: .6em; flex-wrap: wrap; }
+.browse-top .fbox { flex: 1 1 22em; }
+.browse-top .btn { margin-bottom: 3px; }
+.browse > .split { flex: 1; min-height: 0; grid-template-columns: 16.5em minmax(0, 1fr) minmax(21em, 27em); }
+.browse > .split > .panel, .browse > .split > .detail > .panel { height: 100%; }
+.browse .detail { min-height: 0; }
+.filters .pb { padding-top: .7em; }
+.filters .chips .chip { font-size: .8em; }
+.filters .seg .chip { font-size: .78em; padding: .26em .5em; }
+.hint { font-size: .78em; margin-top: .5em; line-height: 1.35; }
+.pager { display: flex; align-items: center; gap: .6em; padding: .7em .5em .2em; }
+.pager .display { margin: 5px 3px; }
+.hero-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: var(--surface-2); display: block; }
+.desc { white-space: pre-wrap; font-size: .9em; color: var(--text-2); overflow-wrap: anywhere; }
+.linkish { all: unset; color: var(--acc2); cursor: pointer; text-decoration: underline; text-underline-offset: .15em; }
+.linkish:focus-visible { outline: 2px solid var(--accent); }
+.detail-mod .row.sel { box-shadow: inset 3px 0 0 var(--text-3); background: var(--surface-2); }
+@media (max-width: 1100px) {
+  .browse { height: auto; }
+  .browse > .split { grid-template-columns: 15em minmax(0, 1fr); }
+  .browse > .split > .panel { height: auto; max-height: none; }
+}

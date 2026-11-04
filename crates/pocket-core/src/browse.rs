@@ -1,0 +1,185 @@
+//! The in-app browser: one `mods()` call per page, cached by filter, sort and offset; derived filter counts in one
+//! aliased call, cached too; detail fetched only when a mod is opened and refreshed when its `updatedAt` moves.
+
+use crate::cyberpunk::classify::{classify, Classification};
+use crate::db::{now, Db};
+use crate::error::Result;
+use crate::nexus::graphql::{facets_from, BrowseQuery, Facets, GAME_ID};
+use crate::nexus::types::{ModCard, ModDetail, ModFile, ModPage};
+use crate::nexus::NexusClient;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use std::sync::Mutex;
+
+pub const PAGE_TTL: i64 = 10 * 60;
+pub const COUNTS_TTL: i64 = 30 * 60;
+pub const FILE_LIST_LIMIT: u32 = 400;
+
+/// Filters Nexus cannot do, applied to this machine's data.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct LocalFilter {
+    pub show_hidden: bool,
+    /// Some(true): only mods downloaded here; Some(false): only ones not downloaded.
+    pub downloaded: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CardView {
+    #[serde(flatten)]
+    pub card: ModCard,
+    pub classification: Classification,
+    pub hidden: bool,
+    pub ignored: bool,
+    pub downloaded: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BrowseResult {
+    pub total: u64,
+    pub offset: u32,
+    pub count: u32,
+    pub nodes: Vec<CardView>,
+    /// Mods on this page left out by the local filters.
+    pub filtered_on_page: u32,
+    pub facets: Facets,
+    /// "fw_<key>" and "type_<key>" → count.
+    pub derived: Vec<(String, u64)>,
+    pub from_cache: bool,
+}
+
+const CARDS_BY_ID: &str = "query ByIds($ids: [CompositeDomainWithIdInput!]!, $count: Int) { legacyModsByDomain(ids: $ids, count: $count) { totalCount nodesCount nodes { modId uid name summary author uploader { name memberId } thumbnailUrl downloads endorsements fileSize createdAt updatedAt version category modCategory { categoryId name } adultContent status tags { id name } modRequirements { nexusRequirements { totalCount nodes { modId modName externalRequirement } } } } } }";
+
+pub async fn search(client: &NexusClient, db: &Mutex<Db>, q: &BrowseQuery, local: &LocalFilter) -> Result<BrowseResult> {
+    let size = q.page_size();
+    let (page, from_cache, derived) = if local.downloaded == Some(true) {
+        // the "downloaded" view is a local list, looked up by ID in one request
+        let ids: Vec<u32> = db.lock().unwrap().downloaded_mod_ids()?.into_iter().collect();
+        let slice: Vec<u32> = ids.iter().copied().skip(q.offset as usize).take(size as usize).collect();
+        let nodes = if slice.is_empty() { Vec::new() } else { cards_by_id(client, &slice).await? };
+        (ModPage { total_count: ids.len() as u64, nodes_count: nodes.len() as u64, facets_data: None, nodes }, false, Vec::new())
+    } else {
+        let key = format!("page:{}", q.cache_key());
+        let counts_key = format!("counts:{}", BrowseQuery { offset: 0, count: 0, sort: Default::default(), ascending: false, ..q.clone() }.cache_key());
+        let (cached_page, cached_counts) = {
+            let d = db.lock().unwrap();
+            (d.cache_get(&key, PAGE_TTL, now())?, d.cache_get(&counts_key, COUNTS_TTL, now())?)
+        };
+        let page_fut = async {
+            match cached_page.as_deref().and_then(|s| serde_json::from_str::<ModPage>(s).ok()) {
+                Some(p) => Ok((p, true)),
+                None => {
+                    let p = client.mods_page(q).await?;
+                    db.lock().unwrap().cache_put(&key, &serde_json::to_string(&p).unwrap_or_default(), now())?;
+                    Ok::<_, crate::Error>((p, false))
+                }
+            }
+        };
+        let counts_fut = async {
+            if let Some(c) = cached_counts.as_deref().and_then(|s| serde_json::from_str::<Vec<(String, u64)>>(s).ok()) { return c; }
+            // counts are a nicety: a failure leaves the chips without numbers, the page still shows
+            match client.derived_counts(q).await {
+                Ok(c) => { let _ = db.lock().unwrap().cache_put(&counts_key, &serde_json::to_string(&c).unwrap_or_default(), now()); c }
+                Err(_) => Vec::new(),
+            }
+        };
+        let (page, derived) = tokio::join!(page_fut, counts_fut);
+        let (page, from_cache) = page?;
+        (page, from_cache, derived)
+    };
+
+    let (flags, downloaded) = { let d = db.lock().unwrap(); (d.flags()?, d.downloaded_mod_ids()?) };
+    let mut nodes = Vec::with_capacity(page.nodes.len());
+    let mut filtered = 0;
+    for card in page.nodes {
+        let hidden = flags.hidden.contains(&card.mod_id);
+        let is_dl = downloaded.contains(&card.mod_id);
+        if (hidden && !local.show_hidden) || (local.downloaded == Some(false) && is_dl) { filtered += 1; continue; }
+        let files = db.lock().unwrap().file_lists_for(card.mod_id)?;
+        let classification = classify(&card, &files);
+        nodes.push(CardView { ignored: flags.ignored.contains(&card.mod_id), hidden, downloaded: is_dl, classification, card });
+    }
+    Ok(BrowseResult { total: page.total_count, offset: q.offset, count: size, nodes, filtered_on_page: filtered, facets: facets_from(&page.facets_data), derived, from_cache })
+}
+
+pub async fn cards_by_id(client: &NexusClient, ids: &[u32]) -> Result<Vec<ModCard>> {
+    let list: Vec<_> = ids.iter().map(|id| json!({ "gameDomain": crate::GAME_DOMAIN, "modId": id })).collect();
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct D { legacy_mods_by_domain: ModPage }
+    let d: D = client.graphql(CARDS_BY_ID, json!({ "ids": list, "count": ids.len() })).await?;
+    Ok(d.legacy_mods_by_domain.nodes)
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DetailView {
+    pub detail: ModDetail,
+    pub files: Vec<ModFile>,
+    pub classification: Classification,
+    /// The archive file list Nexus has for the main file, if indexed.
+    pub file_list: Option<Vec<String>>,
+    pub hidden: bool,
+    pub ignored: bool,
+    pub downloaded: bool,
+    pub game_id: u32,
+}
+
+/// The newest MAIN file, else the newest current file.
+pub fn main_file(files: &[ModFile]) -> Option<&ModFile> {
+    files.iter().filter(|f| f.category == "MAIN").max_by_key(|f| f.date)
+        .or_else(|| files.iter().filter(|f| f.is_current()).max_by_key(|f| f.date))
+}
+
+pub async fn detail(client: &NexusClient, db: &Mutex<Db>, mod_id: u32, updated_at: Option<&str>) -> Result<DetailView> {
+    let cached = db.lock().unwrap().mod_get(mod_id, updated_at)?;
+    let (detail, files) = match cached.and_then(|(d, f)| Some((serde_json::from_str::<ModDetail>(&d).ok()?, serde_json::from_str::<Vec<ModFile>>(&f).ok()?))) {
+        Some(x) => x,
+        None => {
+            let (d, f) = client.mod_detail(mod_id).await?;
+            db.lock().unwrap().mod_put(mod_id, &d.updated_at, &serde_json::to_string(&d).unwrap_or_default(), &serde_json::to_string(&f).unwrap_or_default(), now())?;
+            (d, f)
+        }
+    };
+    // the file list: the main file's, else whatever Nexus indexed for the mod (kept under file 0)
+    let file_list = match main_file(&files).map(|f| f.file_id) {
+        Some(fid) => {
+            let have = db.lock().unwrap().file_list_get(mod_id, fid)?;
+            let list = match have {
+                Some(l) => l, // fetched before; may be empty when Nexus has not indexed it
+                None => {
+                    let (_, rows) = client.file_contents(mod_id, Some(fid), FILE_LIST_LIMIT).await.unwrap_or((0, Vec::new()));
+                    let paths: Vec<String> = rows.into_iter().map(|r| r.file_path).collect();
+                    db.lock().unwrap().file_list_put(mod_id, fid, &paths, now())?;
+                    if paths.is_empty() {
+                        // fall back to the newest file of the mod that is indexed, kept under file 0
+                        let (_, any) = client.file_contents(mod_id, None, FILE_LIST_LIMIT).await.unwrap_or((0, Vec::new()));
+                        if let Some(newest) = any.iter().map(|r| r.file_id).max() {
+                            let older: Vec<String> = any.into_iter().filter(|r| r.file_id == newest).map(|r| r.file_path).collect();
+                            db.lock().unwrap().file_list_put(mod_id, 0, &older, now())?;
+                        }
+                    }
+                    paths
+                }
+            };
+            if !list.is_empty() { Some(list) } else { db.lock().unwrap().file_list_get(mod_id, 0)?.filter(|l| !l.is_empty()) }
+        }
+        None => None,
+    };
+    let card = card_of(&detail);
+    let classification = classify(&card, file_list.as_deref().unwrap_or(&[]));
+    let (flags, dl) = { let d = db.lock().unwrap(); (d.flags()?, d.downloaded_mod_ids()?) };
+    Ok(DetailView { hidden: flags.hidden.contains(&mod_id), ignored: flags.ignored.contains(&mod_id), downloaded: dl.contains(&mod_id), detail, files, classification, file_list, game_id: GAME_ID })
+}
+
+/// The card view of a detail record, for classification.
+pub fn card_of(d: &ModDetail) -> ModCard {
+    ModCard {
+        mod_id: d.mod_id, uid: d.uid.clone(), name: d.name.clone(), summary: d.summary.clone(), author: d.author.clone(), uploader: d.uploader.clone(),
+        thumbnail_url: d.picture_url.clone(), downloads: d.downloads, endorsements: d.endorsements, file_size: d.file_size, created_at: d.created_at.clone(),
+        updated_at: d.updated_at.clone(), version: d.version.clone(), category: d.category.clone(), mod_category: None, adult_content: d.adult_content,
+        status: d.status.clone(), tags: d.tags.clone(), mod_requirements: Some(d.mod_requirements.clone()),
+    }
+}

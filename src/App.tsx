@@ -4,6 +4,7 @@ import type { IconName } from "./ui/icons";
 import { Empty, Key, ProgramKey, type Led } from "./ui/pocket";
 import { Gallery } from "./screens/Gallery";
 import { Settings } from "./screens/Settings";
+import { Browse } from "./screens/Browse";
 import { applyTheme, getThemeChoice, setThemeChoice, watchSystemTheme } from "./lib/theme";
 import { windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
@@ -80,6 +81,7 @@ export function App() {
       <main className="view">
         {view === "gallery" ? <Gallery />
           : view === "settings" ? <Settings scheme={scheme} onScheme={setScheme} />
+          : view === "browse" ? <Browse />
           : <Placeholder view={current.label} icon={current.icon} />}
       </main>
     </div>

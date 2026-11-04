@@ -14,7 +14,8 @@ fn app_info() -> serde_json::Value {
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            let state = state::AppState::new()?;
+            let data_dir = app.path().app_data_dir()?;
+            let state = state::AppState::new(data_dir)?;
             // every Nexus response updates the rate-limit LCD
             let handle = app.handle().clone();
             state.nexus.set_observer(std::sync::Arc::new(move |rl| { let _ = handle.emit("rate-limit", rl); }));
@@ -27,6 +28,12 @@ pub fn run() {
             commands::nexus::nexus_set_key,
             commands::nexus::nexus_clear_key,
             commands::nexus::rate_limit,
+            commands::browse::browse_search,
+            commands::browse::browse_detail,
+            commands::browse::set_mod_flag,
+            commands::browse::settings_get,
+            commands::browse::settings_set,
+            commands::browse::patches,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Pocket Mods");

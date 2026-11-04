@@ -1,0 +1,1419 @@
+[
+  {
+    "detail": {
+      "modId": 107,
+      "uid": "14315125997675",
+      "name": "Cyber Engine Tweaks",
+      "summary": "Scripting framework for modders and quality of life fixes.",
+      "description": "[size=3][url=https://wiki.redmodding.org/cyber-engine-tweaks/getting-started/installing][u][size=3]Please read the Wiki![/size][/u][/url]\n<br />\n<br />[/size][b]Cyber Engine Tweaks[/b] is a framework giving modders a way to script mods using [url=https://www.lua.org/]Lua [/url]with access to all the internal scripting features, it also comes with a UI to configure the different mods you are using or using the console directly. It also adds some in game patches for quality of life (for example it fixed the security flaw that was then fixed with the 1.12 patch of the game), all of which can be enabled/disabled through the settings menu or config files.\n<br />\n<br />As it stands the recommended method of installation is manual installation, however you can use vortex. Just drop the content of the zip file in the root folder of your game install.\n<br />When installing through vortex, make sure to use hardlink deployment.\n<br />If you wish to install manually please read the instructions on the [url=https://wiki.redmodding.org/cyber-engine-tweaks/getting-started/installing]wiki [/url].\n<br />\n<br />[b][size=4]IMPORTANT!!!\n<br />[/size]You may need to install the latest Visual C++ Redistributable for the mod to run, you can get it at[/b] [url=https://aka.ms/vs/17/release/vc_redist.x64.exe]https://aka.ms/vs/17/release/vc_redist.x64.exe[/url]\n<br />\n<br />No support will be provided here by developers, if you need help join us on [url=https://discord.gg/Epkq79kd96]discord [/url]﻿after having read the troubleshooting guide on the [url=https://wiki.redmodding.org/cyber-engine-tweaks/getting-started/installing/troubleshooting]wiki[/url]. Issues posted here are also not considered, if you want to report a bug do so [url=https://github.com/yamashi/CyberEngineTweaks/issues]here[/url]﻿. This is for posting actual bugs, not user error.\n<br />\n<br />If you are a C++ developer and/or reverse engineer, you can contribute on [url=https://github.com/maximegmd/CyberEngineTweaks]github[/url].\n<br />\n<br />[size=4][b]Supported version:[/b] [color=#00ffff][b]2.31[/b][/color][/size]\n<br />[b]\n<br />Bitcoin[/b]: bc1q0neujk5e8v8sc3934ajn8z8zav7hl6557fjj54\n<br />[b]Bitcoin Cash[/b]: qps5ze9p8fxmu4rszyxwy3g0ctlmrhvc3uqq0fzsnl\n<br />[b]Dogecoin[/b]: DMoReR33D87D6rYeUkyQb2BsEHJTqfBFva\n<br />[b]Ethereum[/b]: 0x7Cd23BE1C507Da85ABF0B05c7A3C03e6d3d0233B[url=https://www.patreon.com/tiltedphoque",
+      "version": "1.38.1",
+      "author": "yamashi",
+      "uploader": {
+        "name": "yamashi",
+        "memberId": 3386513
+      },
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/107/107-1613641770-185635979.png",
+      "downloads": 19824393,
+      "endorsements": 245154,
+      "fileSize": 34051,
+      "createdAt": "2020-12-12T22:39:34Z",
+      "updatedAt": "2026-10-26T01:28:58Z",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1044",
+          "name": "English"
+        },
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1077",
+          "name": "Tutorials for Modders"
+        },
+        {
+          "id": "1079",
+          "name": "User Interface"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      }
+    },
+    "files": [
+      {
+        "fileId": 168615,
+        "name": "CET 1.38.1 - Game version 2.5",
+        "version": "1.38.1",
+        "category": "MAIN",
+        "size": 34051,
+        "sizeInBytes": 34868963,
+        "date": 1792978138,
+        "primary": 1,
+        "uri": "d9/b2/b8/d9b2b8f8-1e2b-49a1-88c3-5f27814f0379",
+        "description": ""
+      },
+      {
+        "fileId": 167620,
+        "name": "CET 1.38.0 - Game version 2.5",
+        "version": "1.38.0",
+        "category": "OLD_VERSION",
+        "size": 34475,
+        "sizeInBytes": 35303156,
+        "date": 1792673845,
+        "primary": 0,
+        "uri": "8e/4b/39/8e4b39ee-201c-42f5-9bd7-fcf0e4ac45be",
+        "description": ""
+      },
+      {
+        "fileId": 123169,
+        "name": "CET 1.37.1 - Scripting fixes",
+        "version": "1.37.1",
+        "category": "OLD_VERSION",
+        "size": 34401,
+        "sizeInBytes": 35227011,
+        "date": 1759193708,
+        "primary": 0,
+        "uri": "CET 1.37.1 - Scripting fixes-107-1-37-1-1759193708.zip",
+        "description": ""
+      },
+      {
+        "fileId": 122871,
+        "name": "CET 1.37.1 - Scripting fix",
+        "version": "1.37.1",
+        "category": "ARCHIVED",
+        "size": 34401,
+        "sizeInBytes": 35226817,
+        "date": 1758996889,
+        "primary": 0,
+        "uri": "CET 1.37.1 - Scripting fix-107-1-37-1-1758996889.zip",
+        "description": "Scripting fixes"
+      },
+      {
+        "fileId": 121028,
+        "name": "CET 1.37.0 - Patch 2.31",
+        "version": "1.37.0",
+        "category": "ARCHIVED",
+        "size": 34407,
+        "sizeInBytes": 35233161,
+        "date": 1757629209,
+        "primary": 0,
+        "uri": "CET 1.37.0 - Patch 2.31-107-1-37-0-1757629209.zip",
+        "description": "Patch 2.31"
+      },
+      {
+        "fileId": 113973,
+        "name": "CET 1.36.0",
+        "version": "1.36.0",
+        "category": "ARCHIVED",
+        "size": 34363,
+        "sizeInBytes": 35187560,
+        "date": 1752791569,
+        "primary": 0,
+        "uri": "CET 1.36.0-107-1-36-0-1752791569.zip",
+        "description": "Patch 2.3"
+      },
+      {
+        "fileId": 110753,
+        "name": "CET 1.35.1",
+        "version": "1.35.1",
+        "category": "ARCHIVED",
+        "size": 34467,
+        "sizeInBytes": 35294428,
+        "date": 1749158592,
+        "primary": 0,
+        "uri": "CET 1.35.1-107-1-35-1-1749158592.zip",
+        "description": "Patch from March I forgot to push to Nexus ^^'"
+      },
+      {
+        "fileId": 99133,
+        "name": "CET 1.35.0 - Patch 2.21",
+        "version": "1.35.0",
+        "category": "ARCHIVED",
+        "size": 34449,
+        "sizeInBytes": 35276081,
+        "date": 1737654030,
+        "primary": 0,
+        "uri": "CET 1.35.0 - Patch 2.21-107-1-35-0-1737654030.zip",
+        "description": "2.21 patch."
+      }
+    ],
+    "classification": {
+      "frameworks": [],
+      "modType": "framework",
+      "typeSource": "identity",
+      "isFramework": "cet"
+    },
+    "fileList": [
+      "LICENSE",
+      "version.dll"
+    ],
+    "hidden": false,
+    "ignored": false,
+    "downloaded": false,
+    "gameId": 3333
+  },
+  {
+    "detail": {
+      "modId": 4198,
+      "uid": "14315126001766",
+      "name": "ArchiveXL",
+      "summary": "Archive extension loader",
+      "description": "[b][color=#f3e500][size=5]ARCHIVE-XL[/size][/color][/b]\n<br />\n<br />ArchiveXL is a modding tool that allows you to load custom resources without touching original game files, thus allowing multiple mods to expand same resources without conflicts.\n<br />\n<br />— Load custom entity factories (necessary for item additions)\n<br />— Add localization texts that can be used in scripts, resources and TweakDB\n<br />— Edit existing localization texts without overwriting original resources\n<br />— Override submeshes of entity parts\n<br />— Add visual tags to clothing items\n<br />— Create character customization options\n<br />— Create custom attachment slots\n<br />— Register world streaming blocks\n<br />— Manage journal entries\n<br />— Spawn widgets from any library\n<br />\n<br />[color=#01fdfe][size=4]COMPATIBILITY[/size][/color]\n<br />\n<br />✓ Cyberpunk 2077 2.5\n<br />✓ redscript 0.5.32+\n<br />\n<br />[color=#01fdfe][size=4]INSTALLATION[/size][/color]\n<br />\n<br />1. Install requirements\n<br />— [url=https://www.nexusmods.com/cyberpunk2077/mods/2380][color=#e3dee0]RED4ext[/color][/url] 1.31.0+\n<br />2. Download the latest release\n<br />3. Extract the archive into the Cyberpunk 2077 directory\n<br />\n<br />[size=2][color=#aaaaaa][i]You should have a \"&lt;Cyberpunk 2077&gt;/red4ext/plugins/ArchiveXL\" directory if done correctly.[/i][/color][/size]\n<br />\n<br />[color=#01fdfe][size=4]DOCUMENTATION[/size][/color]\n<br />\n<br />▸ [url=https://github.com/psiberx/cp2077-archive-xl/wiki#dynamic-appearances][color=#e3dee0]Dynamic appearances[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-archive-xl/wiki#body-types][color=#e3dee0]Body types[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-archive-xl/wiki#appearance-suffixes][color=#e3dee0]Appearance suffixes[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-archive-xl/wiki#components-overrides][color=#e3dee0]Components overrides[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-archive-xl/wiki#visual-tags][color=#e3dee0]Visual tags[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-archive-xl/wiki#extending-resources][color=#e3dee0]Extending resources[/color][/url]\n<br />\n<br />[color=#01fdfe][size=4]COMMUNITY[/size][/color]\n<br />\n<br />If you need help with mod development or have any other question, please feel free to contact me on Discord.\n<br />I prefer public discuss",
+      "version": "1.28.6",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/4198/4198-1648116857-72076015.jpeg",
+      "downloads": 13966083,
+      "endorsements": 146756,
+      "fileSize": 1046,
+      "createdAt": "2022-03-24T12:22:09Z",
+      "updatedAt": "2026-10-29T12:59:42Z",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": "",
+              "notes": ""
+            }
+          ]
+        },
+        "dlcRequirements": []
+      }
+    },
+    "files": [
+      {
+        "fileId": 170440,
+        "name": "ArchiveXL",
+        "version": "1.28.6",
+        "category": "MAIN",
+        "size": 1046,
+        "sizeInBytes": 1072116,
+        "date": 1793278782,
+        "primary": 1,
+        "uri": "a1/f3/28/a1f328af-5991-4e62-8da3-08c32814ad18",
+        "description": ""
+      },
+      {
+        "fileId": 170431,
+        "name": "ArchiveXL",
+        "version": "1.28.5",
+        "category": "OLD_VERSION",
+        "size": 1048,
+        "sizeInBytes": 1073445,
+        "date": 1793276426,
+        "primary": 0,
+        "uri": "3a/f9/b9/3af9b943-1b95-41c1-9df3-691025e4090d",
+        "description": ""
+      },
+      {
+        "fileId": 170409,
+        "name": "ArchiveXL",
+        "version": "1.28.4",
+        "category": "OLD_VERSION",
+        "size": 1048,
+        "sizeInBytes": 1073435,
+        "date": 1793271740,
+        "primary": 0,
+        "uri": "00/57/70/005770d3-f622-4bf4-ad7c-9dc8aff0ac80",
+        "description": ""
+      },
+      {
+        "fileId": 170117,
+        "name": "ArchiveXL",
+        "version": "1.28.3",
+        "category": "OLD_VERSION",
+        "size": 1046,
+        "sizeInBytes": 1071586,
+        "date": 1793215019,
+        "primary": 0,
+        "uri": "fa/89/4f/fa894ffe-7cf4-4af1-963e-fdb43bb6c208",
+        "description": ""
+      },
+      {
+        "fileId": 169881,
+        "name": "ArchiveXL",
+        "version": "1.28.2",
+        "category": "OLD_VERSION",
+        "size": 1046,
+        "sizeInBytes": 1071426,
+        "date": 1793177224,
+        "primary": 0,
+        "uri": "e5/a5/63/e5a563d6-00ac-4a13-8764-81317d9903ab",
+        "description": ""
+      },
+      {
+        "fileId": 169484,
+        "name": "ArchiveXL",
+        "version": "1.28.1",
+        "category": "OLD_VERSION",
+        "size": 1045,
+        "sizeInBytes": 1070699,
+        "date": 1793123964,
+        "primary": 0,
+        "uri": "c9/56/b8/c956b8f5-6526-4dd6-9ba1-59209a90fdb8",
+        "description": ""
+      },
+      {
+        "fileId": 168222,
+        "name": "ArchiveXL",
+        "version": "1.28.0",
+        "category": "OLD_VERSION",
+        "size": 1049,
+        "sizeInBytes": 1074623,
+        "date": 1792915841,
+        "primary": 0,
+        "uri": "bf/4e/6a/bf4e6a9d-c0e8-4dce-a235-4ddc5dbc4251",
+        "description": ""
+      },
+      {
+        "fileId": 167253,
+        "name": "ArchiveXL",
+        "version": "1.27.5",
+        "category": "OLD_VERSION",
+        "size": 1040,
+        "sizeInBytes": 1065299,
+        "date": 1792493526,
+        "primary": 0,
+        "uri": "01/e8/5a/01e85ac0-8149-4327-a4e6-b3c926287c2d",
+        "description": ""
+      }
+    ],
+    "classification": {
+      "frameworks": [
+        {
+          "framework": "red4ext",
+          "key": "red4ext",
+          "name": "RED4ext",
+          "source": "files"
+        }
+      ],
+      "modType": "framework",
+      "typeSource": "identity",
+      "isFramework": "archivexl"
+    },
+    "fileList": [
+      "red4ext/plugins/ArchiveXL/ArchiveXL.dll",
+      "red4ext/plugins/ArchiveXL/Scripts/ArchiveXL.reds",
+      "red4ext/plugins/ArchiveXL/THIRD_PARTY_LICENSES"
+    ],
+    "hidden": false,
+    "ignored": false,
+    "downloaded": false,
+    "gameId": 3333
+  },
+  {
+    "detail": {
+      "modId": 2380,
+      "uid": "14315125999948",
+      "name": "RED4ext",
+      "summary": "A script extender for REDengine 4.",
+      "description": "RED4ext is a library that extends REDengine 4. It will allow modders to add new features, modify the game behavior, add new scripting functions or call existing ones in your own plugins.\n<br />\n<br />This library is similar to:\n<br />[list]\n<br />[*][url=http://dev-c.com/GTAV/scripthookv]Script Hook V[/url]\n<br />[*][url=https://skse.silverlock.org/]Skyrim Script Extender[/url]\n<br />[/list]\n<br />This library is split into two parts:\n<br />[list]\n<br />[*][url=https://github.com/WopsS/RED4ext]RED4ext[/url] - This project which consist of the loader, it only takes care of managing plugins.\n<br />[*][url=https://github.com/WopsS/RED4ext.SDK]RED4ext.SDK[/url] - This project contains the reversed types and helpers to extend the engine, it can be used independently of RED4ext.\n<br />[/list]\n<br />If you are developing a new plugin, add only [url=https://github.com/WopsS/RED4ext.SDK]RED4ext.SDK[/url] in your project structure.\n<br />\n<br />[size=4]Installing[/size]\n<br />\n<br />[list=1]\n<br />[*][b]Install [/b]the latest [url=https://aka.ms/vs/17/release/vc_redist.x64.exe]Visual C++ Redistributable 2022[/url].\n<br />[*][b]Download [/b]the latest zip (e.g. [b]red4ext_x.y.z.zip[/b]) from [url=https://github.com/WopsS/RED4ext/releases/latest]GitHub [/url]﻿or [url=https://www.nexusmods.com/cyberpunk2077/mods/2380]NexusMods[/url]﻿.\n<br />[*][b]Extract [/b]the content of the archive in the game's directory.\n<br />[*][b]Launch [/b]the game.\n<br />[*]([b]Optional[/b]) Check the log file in [b]&lt;game_directory&gt;/red4ext/logs/red4ext.log[/b] to make sure everything works.\n<br />[/list]\n<br />[size=4]Uninstall[/size]\n<br />\n<br />[list=1]\n<br />[*]Remove [b]winmm[/b][b].dll[/b] from [b]&lt;game_directory&gt;/bin/x64[/b].\n<br />[*]([b]Optionally[/b]) Remove [b]red4ext [/b]directory from [b]&lt;game_directory&gt;[/b].\n<br />[/list]\n<br />The complete / most up to date documentation is now available at [url=https://docs.red4ext.com]docs.red4ext.com[/url].",
+      "version": "1.31.0",
+      "author": "WopsS",
+      "uploader": {
+        "name": "WopsS",
+        "memberId": 16475274
+      },
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/2380/2380-1618829826-1376548256.png",
+      "downloads": 13585697,
+      "endorsements": 163478,
+      "fileSize": 564,
+      "createdAt": "2021-04-19T11:48:03Z",
+      "updatedAt": "2026-10-24T17:28:10Z",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      }
+    },
+    "files": [
+      {
+        "fileId": 168077,
+        "name": "RED4ext",
+        "version": "1.31.0",
+        "category": "MAIN",
+        "size": 564,
+        "sizeInBytes": 577549,
+        "date": 1792862890,
+        "primary": 1,
+        "uri": "a8/d2/fc/a8d2fcf2-fb85-4d12-bdad-c4a12d3dadbd",
+        "description": "https://github.com/wopss/RED4ext/releases/tag/v1.31.0<br /><br />SHA256: B9AE4351F547F90AF58DFBF7445D45C55CD5BA24FBEE27FB16FB5D91E9DF621E"
+      },
+      {
+        "fileId": 139049,
+        "name": "RED4ext",
+        "version": "1.30.0",
+        "category": "OLD_VERSION",
+        "size": 562,
+        "sizeInBytes": 575834,
+        "date": 1773082858,
+        "primary": 0,
+        "uri": "RED4ext-2380-1-30-0-1773082858.zip",
+        "description": "https://github.com/WopsS/RED4ext/releases/tag/v1.30.0\n<br />\n<br />SHA256: 3A72225C9D2C46C99F4A4159D952B9D24366357C2423EB7EA255C84E9E11C0B0"
+      },
+      {
+        "fileId": 121050,
+        "name": "RED4ext",
+        "version": "1.29.1",
+        "category": "OLD_VERSION",
+        "size": 731,
+        "sizeInBytes": 748036,
+        "date": 1757660268,
+        "primary": 0,
+        "uri": "RED4ext-2380-1-29-1-1757660268.zip",
+        "description": "https://github.com/WopsS/RED4ext/releases/tag/v1.29.1\n<br />\n<br />SHA256: D18FAD7EFA9BDFE054BD71952A5AFCDCAE4A11CE8D811C43267A8DA6AA5BFE0B"
+      },
+      {
+        "fileId": 120994,
+        "name": "RED4ext",
+        "version": "1.29.0",
+        "category": "OLD_VERSION",
+        "size": 731,
+        "sizeInBytes": 748122,
+        "date": 1757608563,
+        "primary": 0,
+        "uri": "RED4ext-2380-1-29-0-1757608563.zip",
+        "description": "https://github.com/WopsS/RED4ext/releases/tag/v1.29.0\n<br />\n<br />SHA256: 6664436CE7CB809CE8695B705F5A4AD8D0F072DC7FF421C87739DFE3DFE62789"
+      },
+      {
+        "fileId": 113965,
+        "name": "RED4ext",
+        "version": "1.28.0",
+        "category": "OLD_VERSION",
+        "size": 729,
+        "sizeInBytes": 746161,
+        "date": 1752783823,
+        "primary": 0,
+        "uri": "RED4ext-2380-1-28-0-1752783823.zip",
+        "description": "https://github.com/WopsS/RED4ext/releases/tag/v1.28.0\n<br />\n<br />SHA256: 0170AD443E839AD7AF1402D3FC4E4F848B534C9D093DE6E2A77B6A5BEA86795C"
+      },
+      {
+        "fileId": 99122,
+        "name": "RED4ext",
+        "version": "1.27.0",
+        "category": "OLD_VERSION",
+        "size": 714,
+        "sizeInBytes": 730755,
+        "date": 1737651915,
+        "primary": 0,
+        "uri": "RED4ext-2380-1-27-0-1737651915.zip",
+        "description": "https://github.com/WopsS/RED4ext/releases/tag/v1.27.0\n<br />\n<br />SHA256: 9B0C005BB5D8CF3EA782F236F64EAED58B85E10258945F6A8576B0CE74EB0212"
+      },
+      {
+        "fileId": 94482,
+        "name": "RED4ext",
+        "version": "1.26.1",
+        "category": "OLD_VERSION",
+        "size": 711,
+        "sizeInBytes": 727583,
+        "date": 1733932053,
+        "primary": 0,
+        "uri": "RED4ext-2380-1-26-1-1733932053.zip",
+        "description": "https://github.com/WopsS/RED4ext/releases/tag/v1.26.1\n<br />\n<br />SHA256: 8529CF405B7A7197484577C0C6C2D579A18B08D4CFDEBCB54240BD9597DDB782"
+      },
+      {
+        "fileId": 94461,
+        "name": "RED4ext",
+        "version": "1.26.0",
+        "category": "OLD_VERSION",
+        "size": 711,
+        "sizeInBytes": 727700,
+        "date": 1733923365,
+        "primary": 0,
+        "uri": "RED4ext-2380-1-26-0-1733923365.zip",
+        "description": "https://github.com/WopsS/RED4ext/releases/tag/v1.26.0\n<br />\n<br />SHA256: 5F6E69BEAC12E5E7F719822C9779E8DF5AB827827EC4CFE03E9BCA6B022AE20F"
+      }
+    ],
+    "classification": {
+      "frameworks": [],
+      "modType": "framework",
+      "typeSource": "identity",
+      "isFramework": "red4ext"
+    },
+    "fileList": [
+      "bin/x64/winmm.dll",
+      "red4ext/LICENSE.txt"
+    ],
+    "hidden": false,
+    "ignored": false,
+    "downloaded": false,
+    "gameId": 3333
+  },
+  {
+    "detail": {
+      "modId": 1511,
+      "uid": "14315125999079",
+      "name": "redscript",
+      "summary": "Compiler for Cyberpunk2077 scripts",
+      "description": "[img]https://user-images.githubusercontent.com/11986158/145491396-b987a964-4b45-460c-8864-9a78ebdff529.png[/img]\n<br />\n<br />[size=4][b]REDSCRIPT[/b][/size]\n<br />\n<br />This is a script compiler that can be integrated with the game and used to add/replace game scripts.\n<br />Source code available [url=https://github.com/jac3km4/redscript]here[/url].\n<br />\n<br />[b]INSTALLATION[/b]\n<br />You'll need to download the archive available in the 'Files' tab and extract it in the main 'Cyberpunk 2077' directory.\n<br />You should end up with the following files in the game directory:\n<br />- Cyberpunk 2077&#92;engine&#92;tools&#92;scc.exe\n<br />- Cyberpunk 2077&#92;engine&#92;config&#92;base&#92;scripts.ini\n<br />\n<br />[b]NOTE FOR REDMOD USERS\n<br />[/b]There is a known compatibility issue with REDmod. To use redscript with REDmod you should to install either [url=https://www.nexusmods.com/cyberpunk2077/mods/2380]RED4ext[/url] (recommended) or [url=https://www.nexusmods.com/cyberpunk2077/mods/5176?tab=description]cybercmd[/url]. Do not install both. Once installed, the REDmod compatibility should be resolved.\n<br />\n<br />[b]NOT WORKING?\n<br />[/b]If you are not sure if it's working or have any other issues, you should look for a log file at 'Cyberpunk 2077&#92;r6&#92;logs&#92;redscript.log'.\n<br />This log file should end with 'Output successfully saved to ...' if the mods were applied successfully.\n<br />If the log file contains any errors or warnings, you can post them here to help with debugging.\n<br />If the log file isn't there, redscript has not been installed correctly.\n<br />\n<br />[b]UNINSTALLING[/b]\n<br />The compiler saves a copy of the game scripts in a file 'Cyberpunk 2077&#92;r6&#92;cache&#92;final.redscripts.bk'.\n<br />If you wish to uninstall redscript you can just remove the files you downloaded (scc.exe and scripts.ini) and replace the existing 'final.redscripts' with the backed up 'final.redscripts.bk' file.",
+      "version": "0.5.32",
+      "author": "jac3km4",
+      "uploader": {
+        "name": "jac3km4",
+        "memberId": 49982271
+      },
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/1511/1511-1612727913-1059595445.png",
+      "downloads": 12948239,
+      "endorsements": 174550,
+      "fileSize": 908,
+      "createdAt": "2021-02-07T19:59:32Z",
+      "updatedAt": "2026-10-22T18:29:37Z",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1076",
+          "name": "Non-Playable Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "4048",
+          "name": "Cyber Engine Tweaks"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      }
+    },
+    "files": [
+      {
+        "fileId": 167681,
+        "name": "redscript",
+        "version": "0.5.32",
+        "category": "MAIN",
+        "size": 908,
+        "sizeInBytes": 930413,
+        "date": 1792693776,
+        "primary": 1,
+        "uri": "01/29/c7/0129c7d1-de7c-44b0-b1dc-c3cbb65abdbb",
+        "description": "https://github.com/jac3km4/redscript/releases/tag/v0.5.32<br /><br />Support for game patch 2.5"
+      },
+      {
+        "fileId": 120421,
+        "name": "redscript",
+        "version": "0.5.31",
+        "category": "OLD_VERSION",
+        "size": 927,
+        "sizeInBytes": 948910,
+        "date": 1757113888,
+        "primary": 0,
+        "uri": "redscript-1511-0-5-31-1757113888.zip",
+        "description": "https://github.com/jac3km4/redscript/releases/tag/v0.5.31\n<br />\n<br />Minor forward compatibility update"
+      },
+      {
+        "fileId": 117297,
+        "name": "redscript",
+        "version": "0.5.30",
+        "category": "OLD_VERSION",
+        "size": 926,
+        "sizeInBytes": 947993,
+        "date": 1754945621,
+        "primary": 0,
+        "uri": "redscript-1511-0-5-30-1754945621.zip",
+        "description": "0.5.30 release\n<br />https://github.com/jac3km4/redscript/releases/tag/v0.5.30\n<br />\n<br />Patch with minor forward compatibility additions.\n<br />See the Github release for the native MacOS version.\n<br />"
+      },
+      {
+        "fileId": 101739,
+        "name": "redscript",
+        "version": "0.5.28",
+        "category": "OLD_VERSION",
+        "size": 927,
+        "sizeInBytes": 949414,
+        "date": 1739731226,
+        "primary": 0,
+        "uri": "redscript-1511-0-5-28-1739731226.zip",
+        "description": "0.5.28 release\n<br />https://github.com/jac3km4/redscript/releases/tag/v0.5.28\n<br />\n<br />patch release with a minor forward compatibility addition"
+      },
+      {
+        "fileId": 86405,
+        "name": "redscript",
+        "version": "0.5.27",
+        "category": "OLD_VERSION",
+        "size": 909,
+        "sizeInBytes": 930576,
+        "date": 1725563529,
+        "primary": 0,
+        "uri": "redscript-1511-0-5-27-1725563529.zip",
+        "description": "https://github.com/jac3km4/redscript/releases/tag/v0.5.27"
+      },
+      {
+        "fileId": 79206,
+        "name": "redscript",
+        "version": "0.5.24",
+        "category": "OLD_VERSION",
+        "size": 912,
+        "sizeInBytes": 933457,
+        "date": 1717296627,
+        "primary": 0,
+        "uri": "redscript-1511-0-5-24-1717296627.zip",
+        "description": "https://github.com/jac3km4/redscript/releases/tag/v0.5.24"
+      },
+      {
+        "fileId": 73296,
+        "name": "redscript",
+        "version": "0.5.19",
+        "category": "OLD_VERSION",
+        "size": 921,
+        "sizeInBytes": 943061,
+        "date": 1711759453,
+        "primary": 0,
+        "uri": "redscript-1511-0-5-19-1711759453.zip",
+        "description": "https://github.com/jac3km4/redscript/releases/tag/v0.5.19\n<br /><br />minor release with some bugfixes\n<br /><br />compatible with 2.12(a) and Phantom Liberty"
+      },
+      {
+        "fileId": 71291,
+        "name": "redscript",
+        "version": "0.5.18",
+        "category": "OLD_VERSION",
+        "size": 919,
+        "sizeInBytes": 940633,
+        "date": 1710192256,
+        "primary": 0,
+        "uri": "redscript-1511-0-5-18-1710192256.zip",
+        "description": "https://github.com/jac3km4/redscript/releases/tag/v0.5.18\n<br /><br />minor release with some bugfixes\n<br /><br />for mod authors: there's a compatibility note that might be relevant to you in the GitHub release changelog linked above\n<br /><br />compatible with 2.12 and Phantom Liberty"
+      }
+    ],
+    "classification": {
+      "frameworks": [
+        {
+          "framework": "cet",
+          "key": "cet",
+          "name": "Cyber Engine Tweaks",
+          "source": "tags"
+        }
+      ],
+      "modType": "framework",
+      "typeSource": "identity",
+      "isFramework": "redscript"
+    },
+    "fileList": [
+      "engine/config/base/scripts.ini",
+      "engine/tools/scc_lib.dll"
+    ],
+    "hidden": false,
+    "ignored": false,
+    "downloaded": false,
+    "gameId": 3333
+  },
+  {
+    "detail": {
+      "modId": 4197,
+      "uid": "14315126001765",
+      "name": "TweakXL",
+      "summary": "TweakDB modifications loader and script extensions",
+      "description": "[b][color=#f3e500][size=5]TWEAK-XL[/size][/color][/b]\n<br />\n<br />TweakXL is a modding tool and a framework to create mods that modify TweakDB, a proprietary database of REDengine 4, containing essential information about game entities and behavior.\n<br />\n<br />— YAML and RED formats for manipulating data in a declarative style\n<br />— Script extensions to add complex logic and dynamic changes\n<br />— Hot reloading to speed up development\n<br />— Focused on mods compatibility and maintainability\n<br />\n<br />[color=#01fdfe][size=4]COMPATIBILITY[/size][/color]\n<br />\n<br />✓ Cyberpunk 2077 2.5\n<br />\n<br />[color=#01fdfe][size=4]INSTALLATION[/size][/color]\n<br />\n<br />1. Install requirements\n<br />— [url=https://www.nexusmods.com/cyberpunk2077/mods/2380][color=#e3dee0]RED4ext[/color][/url] 1.31.0+\n<br />2. Download the latest release\n<br />3. Extract the archive into the Cyberpunk 2077 directory\n<br />\n<br />[size=2][color=#aaaaaa][i]You should have a \"&lt;Cyberpunk 2077&gt;/red4ext/plugins/TweakXL\" directory if done correctly.[/i][/color][/size]\n<br />\n<br />[color=#01fdfe][size=4]DOCUMENTATION[/size][/color]\n<br />\n<br />▸ [url=https://github.com/psiberx/cp2077-tweak-xl/wiki/About-TweakDB][color=#e3dee0]About TweakDB[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-tweak-xl/wiki/YAML-Tweaks][color=#e3dee0]YAML Tweaks[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-tweak-xl/wiki/RED-Tweaks][color=#e3dee0]RED Tweaks[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-tweak-xl/wiki/Script-Extensions][color=#e3dee0]Script Extensions[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-tweak-xl/wiki/Modder-Tools][color=#e3dee0]Modder Tools[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-tweak-xl/wiki/Examples][color=#e3dee0]Examples[/color][/url]\n<br />\n<br />[color=#01fdfe][size=4]COMMUNITY[/size][/color]\n<br />\n<br />If you need help with mod development or have any other question, please feel free to contact me on Discord.\n<br />I prefer public discussions so that everyone can use shared knowledge.\n<br />\n<br />▸ [url=https://discord.gg/redmodding][color=#e3dee0]Cyberpunk 2077 Modding Community[/color][/url]\n<br />▸ [url=https://discord.gg/z3dBY7PQNK][color=#e3dee0]Cyberpunk 2077 Modding[/color][/url]",
+      "version": "1.12.0",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/4197/4197-1648116989-1847614261.jpeg",
+      "downloads": 11980704,
+      "endorsements": 134531,
+      "fileSize": 1045,
+      "createdAt": "2022-03-24T12:21:53Z",
+      "updatedAt": "2026-10-25T08:10:38Z",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": "",
+              "notes": ""
+            }
+          ]
+        },
+        "dlcRequirements": []
+      }
+    },
+    "files": [
+      {
+        "fileId": 168221,
+        "name": "TweakXL",
+        "version": "1.12.0",
+        "category": "MAIN",
+        "size": 1045,
+        "sizeInBytes": 1070421,
+        "date": 1792915838,
+        "primary": 1,
+        "uri": "6a/a4/d6/6aa4d6f0-fabc-476d-9e5c-e312e806ce50",
+        "description": ""
+      },
+      {
+        "fileId": 167254,
+        "name": "TweakXL",
+        "version": "1.11.5",
+        "category": "OLD_VERSION",
+        "size": 1040,
+        "sizeInBytes": 1065616,
+        "date": 1792493527,
+        "primary": 0,
+        "uri": "99/79/87/997987ad-20d6-4966-9c14-c20dba4d1e3d",
+        "description": ""
+      },
+      {
+        "fileId": 154092,
+        "name": "TweakXL",
+        "version": "1.11.4",
+        "category": "OLD_VERSION",
+        "size": 1021,
+        "sizeInBytes": null,
+        "date": 1785439921,
+        "primary": 0,
+        "uri": "77/9f/d7/779fd729-8ab5-4e22-b27b-49501d20d50e",
+        "description": ""
+      },
+      {
+        "fileId": 130803,
+        "name": "TweakXL",
+        "version": "1.11.3",
+        "category": "OLD_VERSION",
+        "size": 1005,
+        "sizeInBytes": 1028720,
+        "date": 1766690034,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-11-3-1766690034.zip",
+        "description": ""
+      },
+      {
+        "fileId": 128147,
+        "name": "TweakXL",
+        "version": "1.11.2",
+        "category": "OLD_VERSION",
+        "size": 1005,
+        "sizeInBytes": 1028881,
+        "date": 1763807957,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-11-2-1763807957.zip",
+        "description": ""
+      },
+      {
+        "fileId": 127456,
+        "name": "TweakXL",
+        "version": "1.11.1",
+        "category": "OLD_VERSION",
+        "size": 1003,
+        "sizeInBytes": 1027453,
+        "date": 1763055933,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-11-1-1763055933.zip",
+        "description": ""
+      },
+      {
+        "fileId": 113975,
+        "name": "TweakXL",
+        "version": "1.11.0",
+        "category": "OLD_VERSION",
+        "size": 1005,
+        "sizeInBytes": 1028706,
+        "date": 1752792546,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-11-0-1752792546.zip",
+        "description": ""
+      },
+      {
+        "fileId": 108558,
+        "name": "TweakXL",
+        "version": "1.10.10",
+        "category": "OLD_VERSION",
+        "size": 1003,
+        "sizeInBytes": 1027097,
+        "date": 1746727772,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-10-10-1746727772.zip",
+        "description": ""
+      }
+    ],
+    "classification": {
+      "frameworks": [
+        {
+          "framework": "red4ext",
+          "key": "red4ext",
+          "name": "RED4ext",
+          "source": "files"
+        }
+      ],
+      "modType": "framework",
+      "typeSource": "identity",
+      "isFramework": "tweakxl"
+    },
+    "fileList": [
+      "red4ext/plugins/TweakXL/LICENSE"
+    ],
+    "hidden": false,
+    "ignored": false,
+    "downloaded": false,
+    "gameId": 3333
+  },
+  {
+    "detail": {
+      "modId": 7780,
+      "uid": "14315126005348",
+      "name": "Codeware",
+      "summary": "Script extensions",
+      "description": "[b][color=#f3e500][size=5]CODEWARE[/size][/color][/b]\n<br />\n<br />Codeware is a library and framework for creating redscript and Cyber Engine Tweaks mods.\n<br />If another mod doesn't require it to work, you probably don't need it.\n<br />\n<br />[color=#01fdfe][size=4]COMPATIBILITY[/size][/color]\n<br />\n<br />✓ Cyberpunk 2077 2.5\n<br />✓ redscript 0.5.32+\n<br />✓ Cyber Engine Tweaks 1.38.0+\n<br />\n<br />[color=#01fdfe][size=4]INSTALLATION[/size][/color]\n<br />\n<br />1. Install requirements\n<br />— [url=https://www.nexusmods.com/cyberpunk2077/mods/2380][color=#e3dee0]RED4ext[/color][/url] 1.31.0+\n<br />2. Download the latest release\n<br />3. Extract the archive into the Cyberpunk 2077 directory\n<br />\n<br />[size=2][color=#aaaaaa][i]You should have a \"&lt;Cyberpunk 2077&gt;/red4ext/plugins/Codeware\" directory if done correctly.[/i][/color][/size]\n<br />\n<br />[color=#01fdfe][size=4]DOCUMENTATION[/size][/color]\n<br />\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#lifecycle][color=#e3dee0]Lifecycle[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#world][color=#e3dee0]World[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#entities][color=#e3dee0]Entities[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#player][color=#e3dee0]Player[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#user-interface][color=#e3dee0]User Interface[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#resources][color=#e3dee0]Resources[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#localization][color=#e3dee0]Localization[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#reflection][color=#e3dee0]Reflection[/color][/url]\n<br />▸ [url=https://github.com/psiberx/cp2077-codeware/wiki#utilities][color=#e3dee0]Utilities[/color][/url]\n<br />\n<br />[color=#01fdfe][size=4]COMMUNITY[/size][/color]\n<br />\n<br />If you need help with mod development or have any other question, please feel free to contact me on Discord.\n<br />I prefer public discussions so that everyone can use shared knowledge.\n<br />\n<br />▸ [url=https://discord.gg/redmodding][color=#e3dee0]Cyberpunk 2077 Modding Community[/color][/url]\n<br />▸ [url=https://discord.gg/z3dBY7PQNK][color=#e3dee0]Cyberpunk 2077 Modding[/color][/url]",
+      "version": "1.21.2",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/7780/7780-1678888364-446201648.jpeg",
+      "downloads": 11377612,
+      "endorsements": 106755,
+      "fileSize": 1915,
+      "createdAt": "2023-03-15T14:02:39Z",
+      "updatedAt": "2026-10-29T12:22:38Z",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1076",
+          "name": "Non-Playable Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "1178",
+          "name": "Skills/Perks"
+        },
+        {
+          "id": "2668",
+          "name": "Visual Effects/Particles"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": "",
+              "notes": ""
+            }
+          ]
+        },
+        "dlcRequirements": []
+      }
+    },
+    "files": [
+      {
+        "fileId": 170432,
+        "name": "Codeware",
+        "version": "1.21.2",
+        "category": "MAIN",
+        "size": 1915,
+        "sizeInBytes": 1961325,
+        "date": 1793276558,
+        "primary": 1,
+        "uri": "f3/7a/64/f37a64cb-1592-4e56-b516-443779b8140f",
+        "description": ""
+      },
+      {
+        "fileId": 168538,
+        "name": "Codeware",
+        "version": "1.21.1",
+        "category": "OLD_VERSION",
+        "size": 1907,
+        "sizeInBytes": 1953350,
+        "date": 1792962366,
+        "primary": 0,
+        "uri": "5a/ad/e8/5aade8c2-9674-4498-96ef-b9ada88a841e",
+        "description": ""
+      },
+      {
+        "fileId": 168220,
+        "name": "Codeware",
+        "version": "1.21.0",
+        "category": "OLD_VERSION",
+        "size": 1901,
+        "sizeInBytes": 1947045,
+        "date": 1792915835,
+        "primary": 0,
+        "uri": "b7/f4/95/b7f49597-632e-4c8c-bea2-0d5a5b752acf",
+        "description": ""
+      },
+      {
+        "fileId": 167255,
+        "name": "Codeware",
+        "version": "1.20.6",
+        "category": "OLD_VERSION",
+        "size": 1897,
+        "sizeInBytes": 1943237,
+        "date": 1792493541,
+        "primary": 0,
+        "uri": "ab/82/06/ab820667-cf10-4a78-a1d7-de4b416e9433",
+        "description": ""
+      },
+      {
+        "fileId": 161780,
+        "name": "Codeware",
+        "version": "1.20.5",
+        "category": "OLD_VERSION",
+        "size": 1916,
+        "sizeInBytes": 1962550,
+        "date": 1789892426,
+        "primary": 0,
+        "uri": "09/02/32/0902320b-ef94-4de7-ad42-755049838dae",
+        "description": ""
+      },
+      {
+        "fileId": 161439,
+        "name": "Codeware",
+        "version": "1.20.4",
+        "category": "OLD_VERSION",
+        "size": 1916,
+        "sizeInBytes": 1962661,
+        "date": 1789738215,
+        "primary": 0,
+        "uri": "55/f3/71/55f37110-2f51-4751-90b2-1f3c30d0e7d6",
+        "description": ""
+      },
+      {
+        "fileId": 144164,
+        "name": "Codeware",
+        "version": "1.20.3",
+        "category": "OLD_VERSION",
+        "size": 1915,
+        "sizeInBytes": 1960546,
+        "date": 1777845006,
+        "primary": 0,
+        "uri": "Codeware-7780-1-20-3-1777845006.zip",
+        "description": ""
+      },
+      {
+        "fileId": 144143,
+        "name": "Codeware",
+        "version": "1.20.2",
+        "category": "ARCHIVED",
+        "size": 1915,
+        "sizeInBytes": 1960610,
+        "date": 1777828123,
+        "primary": 0,
+        "uri": "Codeware-7780-1-20-2-1777828123.zip",
+        "description": ""
+      }
+    ],
+    "classification": {
+      "frameworks": [
+        {
+          "framework": "red4ext",
+          "key": "red4ext",
+          "name": "RED4ext",
+          "source": "requirements"
+        },
+        {
+          "framework": "redscript",
+          "key": "redscript",
+          "name": "redscript",
+          "source": "files"
+        }
+      ],
+      "modType": "framework",
+      "typeSource": "identity",
+      "isFramework": "codeware"
+    },
+    "fileList": [
+      "r6/scripts/Codeware/Codeware.Global.reds",
+      "r6/scripts/Codeware/Codeware.UI.reds"
+    ],
+    "hidden": false,
+    "ignored": false,
+    "downloaded": false,
+    "gameId": 3333
+  },
+  {
+    "detail": {
+      "modId": 6072,
+      "uid": "14315126003640",
+      "name": "WINGDEER HAIR COLLECTION",
+      "summary": "contains 210 hairs for fem v.",
+      "description": "[center][size=6]i wont be doing ccxl for my hair mods, stop asking me\n<br />i have 200+ hairs i dont have time for that\n<br />[b]i do not give permission[/b] to anyone turning my mods into ccxl[url=https://www.tumblr.com/wingdeer/733179358528798720/is-wingdeer-gonna-keep-doing-mods?source=share]\n<br />\n<br />\n<br />\n<br />WHY NO MORE WINGDEER MODS\n<br />[/url][/size][/center]\n<br />﻿\n<br />[center]﻿[/center]\n<br />\n<br />\n<br />[center][size=6]u may use my mods on ur own npv/npc appearance mod[/size]\n<br />[size=6]do not include my mesh or textures in ur public mod[/size]\n<br />[size=6]do not edit or change my mesh or textures without my permission\n<br />\n<br />[b]i NEVER gave permissions to ANYONE to edit my hair files and uploading them to any platform, if u see any mod using/editing my files, it is thievery w zero respect to me and my mods. it is one of the main reasons i stopped sharing my mods[/b][/size][/center]\n<br />\n<br />\n<br />\n<br />\n<br />\n<br />[size=5]Install:[/size]\n<br />\n<br />[size=3]1. Put .archive to your mod folder :[/size]\n<br />\n<br />[list]\n<br />[*][size=2]Steam &#92;SteamLibrary&#92;steamapps&#92;common&#92;Cyberpunk 2077&#92;archive&#92;pc&#92;mod[/size][/*]\n<br />[*][size=2]GOG &#92;GOGLibrary&#92;Games&#92;Cyberpunk 2077&#92;archive&#92;pc&#92;mod[/size][/*]\n<br />[*][size=2]Epic &#92;EpicLibrary&#92;Cyberpunk 2077&#92;archive&#92;pc&#92;mod[/size][/*]\n<br />[/list]\n<br />[size=3]2. Choose the hair[/size][size=3] in game [/size]\n<br />\n<br />\n<br />[size=4]Uninstall:[/size]\n<br />\n<br />[size=3]remove .archive from mod folder[/size]\n<br />\n<br />\n<br />[size=4]Notes:[/size]\n<br />\n<br />[list]\n<br />[*][size=3]if you use cyberware #1, install vessnelles cyberware replacer with my hairs together, it swaps cyberware#1 to #2 and the hair will work[/size][/*]\n<br />[*][size=3]some people had reported from my last rebecca hair mod that the hair r not showing when creating new character but it does show in game and in mirror, im not sure if these pack have the same bug but if u have that dw just get past the initial cc and chose the hair from mirror[/size][/*]\n<br />[*][size=3]some of the hairs might conflict w each other cos nobody got time to edit every entry everytime, just install one hair at a time[/size][/*]\n<br />[/list]\n<br />\n<br />\n<br />[size=6]credit:\n<br />my bitch [url=https://twitter.com/vessnelle]VESSNELLE[/url] for ∞[",
+      "version": "1.0",
+      "author": "wingdeer",
+      "uploader": {
+        "name": "peachydeer5",
+        "memberId": 107390893
+      },
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/6072/6072-1667205733-1606711861.png",
+      "downloads": 9853256,
+      "endorsements": 25331,
+      "fileSize": 3854,
+      "createdAt": "2022-10-31T17:15:20Z",
+      "updatedAt": "2023-10-15T17:27:52Z",
+      "category": "Appearance",
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1107",
+          "name": "Related to Movies/TV/Books/Other Games"
+        },
+        {
+          "id": "1166",
+          "name": "Hair"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      }
+    },
+    "files": [
+      {
+        "fileId": 53169,
+        "name": "Astraia Hair - PHYSCIS ENABLED",
+        "version": "1.1",
+        "category": "MAIN",
+        "size": 3854,
+        "sizeInBytes": 3946334,
+        "date": 1697390872,
+        "primary": 0,
+        "uri": "Astraia Hair - PHYSCIS ENABLED-6072-1-1-1697390872.zip",
+        "description": "1.1: fixed texture bug some people might have. thanks TEACUPFAIRY for helping me spot the issue!!&lt;3"
+      },
+      {
+        "fileId": 53168,
+        "name": "Astrid Hair - PHYSCIS ENABLED",
+        "version": "1.1",
+        "category": "MAIN",
+        "size": 4615,
+        "sizeInBytes": 4725584,
+        "date": 1697390811,
+        "primary": 0,
+        "uri": "Astrid Hair - PHYSCIS ENABLED-6072-1-1-1697390811.zip",
+        "description": "1.1: fixed texture bug some people might have. thanks TEACUPFAIRY for helping me spot the issue!!&lt;3"
+      },
+      {
+        "fileId": 53167,
+        "name": "Aster Hair - PHYSCIS ENABLED",
+        "version": "1.1",
+        "category": "MAIN",
+        "size": 4292,
+        "sizeInBytes": 4395139,
+        "date": 1697390748,
+        "primary": 0,
+        "uri": "Aster Hair - PHYSCIS ENABLED-6072-1-1-1697390748.zip",
+        "description": "1.1: fixed texture bug some people might have. thanks TEACUPFAIRY for helping me spot the issue!!&lt;3"
+      },
+      {
+        "fileId": 52645,
+        "name": "Astraia Hair - PHYSCIS ENABLED",
+        "version": "1.0",
+        "category": "OLD_VERSION",
+        "size": 3839,
+        "sizeInBytes": 3930630,
+        "date": 1697135491,
+        "primary": 0,
+        "uri": "Astraia Hair - PHYSCIS ENABLED-6072-1-0-1697135491.zip",
+        "description": ""
+      },
+      {
+        "fileId": 52643,
+        "name": "Asterina Hair - PHYSCIS ENABLED",
+        "version": "1.0",
+        "category": "MAIN",
+        "size": 13774,
+        "sizeInBytes": 14104899,
+        "date": 1697135440,
+        "primary": 0,
+        "uri": "Asterina Hair - PHYSCIS ENABLED-6072-1-0-1697135440.zip",
+        "description": ""
+      },
+      {
+        "fileId": 52369,
+        "name": "Astrid Hair - PHYSCIS ENABLED",
+        "version": "1.0",
+        "category": "OLD_VERSION",
+        "size": 4600,
+        "sizeInBytes": 4710120,
+        "date": 1696978600,
+        "primary": 0,
+        "uri": "Astrid Hair - PHYSCIS ENABLED-6072-1-0-1696978600.zip",
+        "description": ""
+      },
+      {
+        "fileId": 52367,
+        "name": "Aster Hair - PHYSCIS ENABLED",
+        "version": "1.0",
+        "category": "OLD_VERSION",
+        "size": 4276,
+        "sizeInBytes": 4378828,
+        "date": 1696978553,
+        "primary": 0,
+        "uri": "Aster Hair - PHYSCIS ENABLED-6072-1-0-1696978553.zip",
+        "description": ""
+      },
+      {
+        "fileId": 49140,
+        "name": "HAIR 171-Y - PHYSCIS ENABLED",
+        "version": "1.0",
+        "category": "MAIN",
+        "size": 5327,
+        "sizeInBytes": 5454606,
+        "date": 1695356236,
+        "primary": 0,
+        "uri": "HAIR 171-Y - PHYSCIS ENABLED-6072-1-0-1695356236.zip",
+        "description": ""
+      }
+    ],
+    "classification": {
+      "frameworks": [],
+      "modType": "archive",
+      "typeSource": "files",
+      "isFramework": null
+    },
+    "fileList": [
+      "WINGDEER_FemV_HAIR_ASTRAIA_NO47.png",
+      "WINGDEER_FemV_HAIR_ASTRAIA_NO47.archive"
+    ],
+    "hidden": false,
+    "ignored": false,
+    "downloaded": false,
+    "gameId": 3333
+  },
+  {
+    "detail": {
+      "modId": 4885,
+      "uid": "14315126002453",
+      "name": "Mod Settings",
+      "summary": "Adds a redscript-configurable \"Mod Settings\" page to the main menu that any mod can add a page to.",
+      "description": "Installation:\n<br />Install the requirements, and place the contents of mod_settings.zip directly into to your game's installation folder.\n<br />\n<br />Allows mods to configure a tab under \"Mod Settings\" in the main menu, using only redscript. For an example, see here: https://github.com/jackhumbert/in_world_navigation/blob/main/src/redscript/in_world_navigation/InWorldNavigation.reds",
+      "version": "0.2.28",
+      "author": "Jack Humbert",
+      "uploader": {
+        "name": "jackhumbert",
+        "memberId": 86010988
+      },
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/4885/4885-1658548659-1491857712.jpeg",
+      "downloads": 8140923,
+      "endorsements": 88500,
+      "fileSize": 420,
+      "createdAt": "2022-07-23T04:02:41Z",
+      "updatedAt": "2026-10-28T23:15:37Z",
+      "category": "User Interface",
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 3,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": "",
+              "notes": ""
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": "",
+              "notes": ""
+            },
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": "",
+              "notes": "Required since 0.2.0"
+            }
+          ]
+        },
+        "dlcRequirements": []
+      }
+    },
+    "files": [
+      {
+        "fileId": 170225,
+        "name": "Mod Settings v0.2.28 for 2.50",
+        "version": "0.2.28",
+        "category": "MAIN",
+        "size": 420,
+        "sizeInBytes": 430394,
+        "date": 1793229337,
+        "primary": 1,
+        "uri": "3f/12/09/3f1209df-2dc9-4f2c-949d-8bd7de109339",
+        "description": null
+      },
+      {
+        "fileId": 169008,
+        "name": "Mod Settings v0.2.27 for 2.50",
+        "version": "0.2.27",
+        "category": "OLD_VERSION",
+        "size": 414,
+        "sizeInBytes": 424160,
+        "date": 1793052882,
+        "primary": 0,
+        "uri": "e9/4d/4b/e94d4b14-8e68-4147-b51b-ecef0287738e",
+        "description": null
+      },
+      {
+        "fileId": 168746,
+        "name": "Mod Settings v0.2.25 for 2.50",
+        "version": "0.2.25",
+        "category": "OLD_VERSION",
+        "size": 413,
+        "sizeInBytes": 423900,
+        "date": 1793006565,
+        "primary": 0,
+        "uri": "05/38/cf/0538cf8d-5383-42fa-b584-ed0327dc6c97",
+        "description": null
+      },
+      {
+        "fileId": 168598,
+        "name": "Mod Settings v0.2.24 for 2.50",
+        "version": "0.2.24",
+        "category": "OLD_VERSION",
+        "size": 415,
+        "sizeInBytes": 425470,
+        "date": 1792973293,
+        "primary": 0,
+        "uri": "32/d4/d7/32d4d701-239a-4a9a-905d-b4e697a7a2a2",
+        "description": null
+      },
+      {
+        "fileId": 168549,
+        "name": "Mod Settings v0.2.23 for 2.50",
+        "version": "0.2.23",
+        "category": "OLD_VERSION",
+        "size": 414,
+        "sizeInBytes": 424722,
+        "date": 1792964753,
+        "primary": 0,
+        "uri": "b0/e7/ec/b0e7ec23-fc67-47a4-a06d-1b0fa208ccc4",
+        "description": null
+      },
+      {
+        "fileId": 168469,
+        "name": "Mod Settings v0.2.22 for 2.50",
+        "version": "0.2.22",
+        "category": "OLD_VERSION",
+        "size": 414,
+        "sizeInBytes": 424714,
+        "date": 1792950559,
+        "primary": 0,
+        "uri": "d5/fd/8e/d5fd8e21-89b4-4541-8cc8-bbfa5badce17",
+        "description": null
+      },
+      {
+        "fileId": 114228,
+        "name": "mod_settings_v0.2.21.zip",
+        "version": "0.2.21",
+        "category": "OLD_VERSION",
+        "size": 381,
+        "sizeInBytes": 389792,
+        "date": 1752938049,
+        "primary": 0,
+        "uri": "mod_settings_v0.2.21.zip-4885-0-2-21-1752938049.zip",
+        "description": "* Update for 2.3\n<br />* Fix float slider handle size\n<br />* Potential hang fix"
+      },
+      {
+        "fileId": 113841,
+        "name": "mod_settings_v0.2.19.zip",
+        "version": "0.2.19",
+        "category": "OLD_VERSION",
+        "size": 388,
+        "sizeInBytes": 397764,
+        "date": 1752691860,
+        "primary": 0,
+        "uri": "mod_settings_v0.2.19.zip-4885-0-2-19-1752691860.zip",
+        "description": "* Subscribe classes to base class changes as well"
+      }
+    ],
+    "classification": {
+      "frameworks": [
+        {
+          "framework": "red4ext",
+          "key": "red4ext",
+          "name": "RED4ext",
+          "source": "requirements"
+        },
+        {
+          "framework": "redscript",
+          "key": "redscript",
+          "name": "redscript",
+          "source": "files"
+        },
+        {
+          "framework": "archivexl",
+          "key": "archivexl",
+          "name": "ArchiveXL",
+          "source": "files"
+        }
+      ],
+      "modType": "mixed",
+      "typeSource": "files",
+      "isFramework": null
+    },
+    "fileList": [
+      "archive/pc/mod/ModSettings.archive",
+      "archive/pc/mod/ModSettings.xl",
+      "r6/scripts/mod_settings/ModSettings.reds",
+      "r6/scripts/mod_settings/ModSettingsMainGameController.reds"
+    ],
+    "hidden": false,
+    "ignored": false,
+    "downloaded": false,
+    "gameId": 3333
+  }
+]

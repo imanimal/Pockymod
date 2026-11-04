@@ -1,0 +1,4492 @@
+{
+  "total": 22615,
+  "offset": 0,
+  "count": 40,
+  "nodes": [
+    {
+      "modId": 107,
+      "uid": "14315125997675",
+      "name": "Cyber Engine Tweaks",
+      "summary": "Scripting framework for modders and quality of life fixes.",
+      "author": "yamashi",
+      "uploader": {
+        "name": "yamashi",
+        "memberId": 3386513
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/107/107-1613641770-185635979.png",
+      "downloads": 19824393,
+      "endorsements": 245163,
+      "fileSize": 34051,
+      "createdAt": "2020-12-12T22:39:34Z",
+      "updatedAt": "2026-10-26T01:28:58Z",
+      "version": "1.38.1",
+      "category": "Modders Resources",
+      "modCategory": {
+        "categoryId": 12,
+        "name": "Modders Resources"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1044",
+          "name": "English"
+        },
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1077",
+          "name": "Tutorials for Modders"
+        },
+        {
+          "id": "1079",
+          "name": "User Interface"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [],
+        "modType": "framework",
+        "typeSource": "identity",
+        "isFramework": "cet"
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4198,
+      "uid": "14315126001766",
+      "name": "ArchiveXL",
+      "summary": "Archive extension loader",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4198/4198-1648116857-72076015.jpeg",
+      "downloads": 13966083,
+      "endorsements": 146759,
+      "fileSize": 1046,
+      "createdAt": "2022-03-24T12:22:09Z",
+      "updatedAt": "2026-10-29T12:59:42Z",
+      "version": "1.28.6",
+      "category": "Modders Resources",
+      "modCategory": {
+        "categoryId": 12,
+        "name": "Modders Resources"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "identity",
+        "isFramework": "archivexl"
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 2380,
+      "uid": "14315125999948",
+      "name": "RED4ext",
+      "summary": "A script extender for REDengine 4.",
+      "author": "WopsS",
+      "uploader": {
+        "name": "WopsS",
+        "memberId": 16475274
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/2380/2380-1618829826-1376548256.png",
+      "downloads": 13585697,
+      "endorsements": 163491,
+      "fileSize": 564,
+      "createdAt": "2021-04-19T11:48:03Z",
+      "updatedAt": "2026-10-24T17:28:10Z",
+      "version": "1.31.0",
+      "category": "Modders Resources",
+      "modCategory": {
+        "categoryId": 12,
+        "name": "Modders Resources"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [],
+        "modType": "framework",
+        "typeSource": "identity",
+        "isFramework": "red4ext"
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 1511,
+      "uid": "14315125999079",
+      "name": "redscript",
+      "summary": "Compiler for Cyberpunk2077 scripts",
+      "author": "jac3km4",
+      "uploader": {
+        "name": "jac3km4",
+        "memberId": 49982271
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/1511/1511-1612727913-1059595445.png",
+      "downloads": 12948239,
+      "endorsements": 174561,
+      "fileSize": 908,
+      "createdAt": "2021-02-07T19:59:32Z",
+      "updatedAt": "2026-10-22T18:29:37Z",
+      "version": "0.5.32",
+      "category": "Modders Resources",
+      "modCategory": {
+        "categoryId": 12,
+        "name": "Modders Resources"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1076",
+          "name": "Non-Playable Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "4048",
+          "name": "Cyber Engine Tweaks"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "tags"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "identity",
+        "isFramework": "redscript"
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4197,
+      "uid": "14315126001765",
+      "name": "TweakXL",
+      "summary": "TweakDB modifications loader and script extensions",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4197/4197-1648116989-1847614261.jpeg",
+      "downloads": 11980704,
+      "endorsements": 134537,
+      "fileSize": 1045,
+      "createdAt": "2022-03-24T12:21:53Z",
+      "updatedAt": "2026-10-25T08:10:38Z",
+      "version": "1.12.0",
+      "category": "Modders Resources",
+      "modCategory": {
+        "categoryId": 12,
+        "name": "Modders Resources"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "identity",
+        "isFramework": "tweakxl"
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 7780,
+      "uid": "14315126005348",
+      "name": "Codeware",
+      "summary": "Script extensions",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/7780/7780-1678888364-446201648.jpeg",
+      "downloads": 11377612,
+      "endorsements": 106757,
+      "fileSize": 1915,
+      "createdAt": "2023-03-15T14:02:39Z",
+      "updatedAt": "2026-10-29T12:22:38Z",
+      "version": "1.21.2",
+      "category": "Modders Resources",
+      "modCategory": {
+        "categoryId": 12,
+        "name": "Modders Resources"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1076",
+          "name": "Non-Playable Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "1178",
+          "name": "Skills/Perks"
+        },
+        {
+          "id": "2668",
+          "name": "Visual Effects/Particles"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "identity",
+        "isFramework": "codeware"
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 6072,
+      "uid": "14315126003640",
+      "name": "WINGDEER HAIR COLLECTION",
+      "summary": "contains 210 hairs for fem v.",
+      "author": "wingdeer",
+      "uploader": {
+        "name": "peachydeer5",
+        "memberId": 107390893
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/6072/6072-1667205733-1606711861.png",
+      "downloads": 9853256,
+      "endorsements": 25331,
+      "fileSize": 3854,
+      "createdAt": "2022-10-31T17:15:20Z",
+      "updatedAt": "2023-10-15T17:27:52Z",
+      "version": "1.0",
+      "category": "Appearance",
+      "modCategory": {
+        "categoryId": 13,
+        "name": "Appearance"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1107",
+          "name": "Related to Movies/TV/Books/Other Games"
+        },
+        {
+          "id": "1166",
+          "name": "Hair"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4885,
+      "uid": "14315126002453",
+      "name": "Mod Settings",
+      "summary": "Adds a redscript-configurable \"Mod Settings\" page to the main menu that any mod can add a page to.",
+      "author": "Jack Humbert",
+      "uploader": {
+        "name": "jackhumbert",
+        "memberId": 86010988
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4885/4885-1658548659-1491857712.jpeg",
+      "downloads": 8140923,
+      "endorsements": 88499,
+      "fileSize": 420,
+      "createdAt": "2022-07-23T04:02:41Z",
+      "updatedAt": "2026-10-28T23:15:37Z",
+      "version": "0.2.28",
+      "category": "User Interface",
+      "modCategory": {
+        "categoryId": 8,
+        "name": "User Interface"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 3,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "tags",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 2987,
+      "uid": "14315126000555",
+      "name": "Virtual Atelier",
+      "summary": "A framework for other modders, that allows them to add virtual stores in-game for their modded clothes items.Also allows the players to preview clothing items on their characters before purchasing in stores, & preview in-game items models",
+      "author": "Pacings and djkovrik",
+      "uploader": {
+        "name": "Pacings",
+        "memberId": 96220198
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/2987/2987-1747066376-143046661.png",
+      "downloads": 7989138,
+      "endorsements": 75146,
+      "fileSize": 379,
+      "createdAt": "2021-08-07T16:28:58Z",
+      "updatedAt": "2026-10-25T17:42:59Z",
+      "version": "1.6.4",
+      "category": "Characters",
+      "modCategory": {
+        "categoryId": 5,
+        "name": "Characters"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "1196",
+          "name": "Clothing"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 7,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 10038,
+              "modName": "Browser Extension",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4885,
+              "modName": "Mod Settings",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 21482,
+              "modName": "Virtual Atelier Delivery",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 3518,
+      "uid": "14315126001086",
+      "name": "Native Settings UI",
+      "summary": "This mod allows other mods to easily add settings menus using only native UI, thus looking like the games settings menu",
+      "author": "keanuWheeze",
+      "uploader": {
+        "name": "NexusGuy999",
+        "memberId": 77476393
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/3518/3518-1638213207-1484439585.png",
+      "downloads": 7207901,
+      "endorsements": 95336,
+      "fileSize": 15,
+      "createdAt": "2021-12-04T16:16:35Z",
+      "updatedAt": "2026-10-22T15:26:53Z",
+      "version": "1.97",
+      "category": "Modders Resources",
+      "modCategory": {
+        "categoryId": 12,
+        "name": "Modders Resources"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1079",
+          "name": "User Interface"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4048",
+          "name": "Cyber Engine Tweaks"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 107,
+              "modName": "Cyber Engine Tweaks",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "requirements"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "tags",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 6945,
+      "uid": "14315126004513",
+      "name": "Equipment-EX",
+      "summary": "Powerful transmog system and outfit manager",
+      "author": "psiberx and DJ_Kovrik",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/6945/6945-1672583521-2028780239.jpeg",
+      "downloads": 6477620,
+      "endorsements": 56190,
+      "fileSize": 87,
+      "createdAt": "2023-01-03T21:35:43Z",
+      "updatedAt": "2026-10-25T21:07:19Z",
+      "version": "1.2.10",
+      "category": "Appearance",
+      "modCategory": {
+        "categoryId": 13,
+        "name": "Appearance"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1079",
+          "name": "User Interface"
+        },
+        {
+          "id": "1196",
+          "name": "Clothing"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 5,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4575,
+      "uid": "14315126002143",
+      "name": "Input Loader",
+      "summary": "This plugin looks for all r6/input/*.xml files and merges them with the appropriate input config file from r6/config/ and saves results to r6/cache/. A configuration file is written to engine/config/platform/pc/input_loader.ini, which tells",
+      "author": "Jack Humbert",
+      "uploader": {
+        "name": "jackhumbert",
+        "memberId": 86010988
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4575/4575-1653846065-507129799.png",
+      "downloads": 5635094,
+      "endorsements": 64265,
+      "fileSize": 485,
+      "createdAt": "2022-05-29T17:41:20Z",
+      "updatedAt": "2026-10-26T08:38:53Z",
+      "version": "0.2.6",
+      "category": "Utilities",
+      "modCategory": {
+        "categoryId": 9,
+        "name": "Utilities"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1076",
+          "name": "Non-Playable Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "tags",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 10064,
+      "uid": "14315126007632",
+      "name": "City of Dreams Overhaul",
+      "summary": "Huge Gameplay Overhaul from the The largest & most comprehensive Mod Collection for Cyberpunk 2077.",
+      "author": "2077v2",
+      "uploader": {
+        "name": "2077v2",
+        "memberId": 123334373
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/10064/10064-1723972072-86658979.png",
+      "downloads": 5627084,
+      "endorsements": 1299,
+      "fileSize": 2,
+      "createdAt": "2023-10-16T02:04:50Z",
+      "updatedAt": "2025-02-24T23:08:39Z",
+      "version": "1.0",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1041",
+          "name": "Cheating"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 10,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 107,
+              "modName": "Cyber Engine Tweaks",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 8595,
+              "modName": "Cyberclean",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4575,
+              "modName": "Input Loader",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2987,
+              "modName": "Virtual Atelier",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4591,
+              "modName": "RadioExt",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "requirements"
+          },
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4454,
+      "uid": "14315126002022",
+      "name": "Virtual Car Dealer",
+      "summary": "Very basic framework which allows modders to add any vehicle to a simple virtual shop using TweakXL.",
+      "author": "DJ_Kovrik",
+      "uploader": {
+        "name": "djkovrik",
+        "memberId": 100354
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4454/4454-1651660089-1706296678.png",
+      "downloads": 5098750,
+      "endorsements": 39723,
+      "fileSize": 3105,
+      "createdAt": "2022-05-04T10:50:42Z",
+      "updatedAt": "2026-10-25T11:18:57Z",
+      "version": "2.3.0",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1043",
+          "name": "Fair and balanced"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "2051",
+          "name": "Vehicles"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 6,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 10038,
+              "modName": "Browser Extension",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 2675,
+      "uid": "14315126000243",
+      "name": "Immersive First Person 2.0 - Camera Rework and Native Height Adjustment",
+      "summary": "Improved body presence with FreeLook and height adjustments.",
+      "author": "Bonaniki",
+      "uploader": {
+        "name": "Bonaniki",
+        "memberId": 109414063
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/2675/2675-1667748771-454639035.jpeg",
+      "downloads": 4890805,
+      "endorsements": 57815,
+      "fileSize": 136,
+      "createdAt": "2021-05-27T19:46:39Z",
+      "updatedAt": "2026-10-27T10:12:52Z",
+      "version": "2.2.0",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1044",
+          "name": "English"
+        },
+        {
+          "id": "1055",
+          "name": "Animation - Modified"
+        },
+        {
+          "id": "1059",
+          "name": "Body"
+        },
+        {
+          "id": "2653",
+          "name": "Camera"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4048",
+          "name": "Cyber Engine Tweaks"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 3,
+          "nodes": [
+            {
+              "modId": 107,
+              "modName": "Cyber Engine Tweaks",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "requirements"
+          },
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          }
+        ],
+        "modType": "script",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 9429,
+      "uid": "14315126006997",
+      "name": "Cyberware-EX",
+      "summary": "Cyberware slot expansions / Install Cyberdeck, Sandevistan, Berserk at the same time",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/9429/9429-1696160681-150367609.jpeg",
+      "downloads": 4675584,
+      "endorsements": 28631,
+      "fileSize": 16,
+      "createdAt": "2023-10-01T11:58:21Z",
+      "updatedAt": "2026-10-25T08:53:41Z",
+      "version": "1.6.0",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 3,
+          "nodes": [
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "script",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 10038,
+      "uid": "14315126007606",
+      "name": "Browser Extension",
+      "summary": "Browser Extension Framework creates an easy entry point to add your custom Web Sites to the main browser page: “NETdir://ncity.pub”. It also gathers and shows all the vanilla sites defined as journal entries in the game’s resources.",
+      "author": "r457 and gh057",
+      "uploader": {
+        "name": "r457",
+        "memberId": 164673548
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/10038/10038-1757050162-1859381149.png",
+      "downloads": 4523812,
+      "endorsements": 41468,
+      "fileSize": 6,
+      "createdAt": "2023-10-15T14:41:24Z",
+      "updatedAt": "2025-09-20T04:08:40Z",
+      "version": "0.9.7",
+      "category": "Modders Resources",
+      "modCategory": {
+        "categoryId": 12,
+        "name": "Modders Resources"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 4,
+          "nodes": [
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4885,
+              "modName": "Mod Settings",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "tags",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 7831,
+      "uid": "14315126005399",
+      "name": "Deceptious Quest Core",
+      "summary": "Core/framework mod file that allows for multiple quest type mods to use a single hook",
+      "author": "Deceptious",
+      "uploader": {
+        "name": "deceptious",
+        "memberId": 4035601
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/7831/7831-1679352004-933441091.png",
+      "downloads": 3854478,
+      "endorsements": 26673,
+      "fileSize": 2705,
+      "createdAt": "2023-03-21T12:56:49Z",
+      "updatedAt": "2026-10-27T04:49:16Z",
+      "version": "3.3.3",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1076",
+          "name": "Non-Playable Resource"
+        },
+        {
+          "id": "1169",
+          "name": "Quests"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [],
+        "modType": "framework",
+        "typeSource": "tags",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4626,
+      "uid": "14315126002194",
+      "name": "Panam Romanced Enhanced",
+      "summary": "Panam now Eats, Drinks, Sleeps and uses her phone around the Aldecaldos' camp, and showers, if you have romanced her. V can chat with and hug her at any of her activity spots, and her bed also now works more reliably. Updated for patch 1.6",
+      "author": "Deceptious",
+      "uploader": {
+        "name": "deceptious",
+        "memberId": 4035601
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4626/4626-1654984996-386712145.png",
+      "downloads": 3720225,
+      "endorsements": 28333,
+      "fileSize": 234,
+      "createdAt": "2022-06-11T22:17:09Z",
+      "updatedAt": "2026-10-28T21:30:51Z",
+      "version": "2.6.3",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1212",
+          "name": "NPCs"
+        },
+        {
+          "id": "1715",
+          "name": "Overhaul"
+        },
+        {
+          "id": "3028",
+          "name": "Bug Fixes"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 3,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4508,
+      "uid": "14315126002076",
+      "name": "Judy Romanced Enhanced",
+      "summary": "Adds a few different states for Judy to be in when you visit her apartment once romanced; no longer stuck to her window. Includes the hug mod! Now with the option to kiss her",
+      "author": "Deceptious",
+      "uploader": {
+        "name": "deceptious",
+        "memberId": 4035601
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4508/4508-1652646872-60848561.png",
+      "downloads": 3657479,
+      "endorsements": 31606,
+      "fileSize": 121,
+      "createdAt": "2022-05-14T20:51:09Z",
+      "updatedAt": "2026-08-01T03:15:35Z",
+      "version": "2.4.3",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1044",
+          "name": "English"
+        },
+        {
+          "id": "1212",
+          "name": "NPCs"
+        },
+        {
+          "id": "1715",
+          "name": "Overhaul"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [],
+        "modType": "unknown",
+        "typeSource": null,
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 16310,
+      "uid": "14315126013878",
+      "name": "LUT Switcher 3 (Realtime - Scanner - Weather - Menu)",
+      "summary": "Realtime, native LUT switching! Features custom packs, categories, favorites, and hotkeys to toggle active LUTs.",
+      "author": "CyanideX",
+      "uploader": {
+        "name": "theCyanideX",
+        "memberId": 24735399
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/16310/16310-1781465076-253780488.png",
+      "downloads": 3622003,
+      "endorsements": 5709,
+      "fileSize": 3487,
+      "createdAt": "2024-08-24T20:42:51Z",
+      "updatedAt": "2026-10-25T18:00:36Z",
+      "version": "3.5.0",
+      "category": "Visuals and Graphics",
+      "modCategory": {
+        "categoryId": 10,
+        "name": "Visuals and Graphics"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1075",
+          "name": "Modder's Resource"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1167",
+          "name": "Lighting"
+        },
+        {
+          "id": "2668",
+          "name": "Visual Effects/Particles"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4048",
+          "name": "Cyber Engine Tweaks"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 6,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 107,
+              "modName": "Cyber Engine Tweaks",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 26589,
+              "modName": "Window Utils (GUI Library - Animation - Grid Alignment)",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "requirements"
+          },
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "framework",
+        "typeSource": "tags",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 3850,
+      "uid": "14315126001418",
+      "name": "ACU - Character Preset Manager",
+      "summary": "This mod allows you to save and create character presets. Additionally, it unlocks all options in the mirror in your apartment so you can customize your character without going to a ripperdoc.",
+      "author": "PotatoOfDoom",
+      "uploader": {
+        "name": "PotatoOfDoom1337",
+        "memberId": 114609908
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/3850/3850-1645978776-1620937641.png",
+      "downloads": 3519436,
+      "endorsements": 35566,
+      "fileSize": 399,
+      "createdAt": "2022-02-16T11:41:45Z",
+      "updatedAt": "2026-11-01T14:38:19Z",
+      "version": "4.1.1",
+      "category": "Appearance",
+      "modCategory": {
+        "categoryId": 13,
+        "name": "Appearance"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1059",
+          "name": "Body"
+        },
+        {
+          "id": "1064",
+          "name": "Face"
+        },
+        {
+          "id": "1079",
+          "name": "User Interface"
+        },
+        {
+          "id": "1166",
+          "name": "Hair"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "3603",
+          "name": "Eyes"
+        },
+        {
+          "id": "4048",
+          "name": "Cyber Engine Tweaks"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 4,
+          "nodes": [
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "tags"
+          },
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 9765,
+      "uid": "14315126007333",
+      "name": "Proxima's Apartment Emporium",
+      "summary": "A collection of Night City apartment reskins",
+      "author": "Proxima Dust",
+      "uploader": {
+        "name": "ProximaDust",
+        "memberId": 19082254
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/9765/9765-1719090481-941808363.jpeg",
+      "downloads": 3474503,
+      "endorsements": 2034,
+      "fileSize": 3169,
+      "createdAt": "2023-10-10T21:21:52Z",
+      "updatedAt": "2026-11-02T21:05:11Z",
+      "version": "1",
+      "category": "Apartment",
+      "modCategory": {
+        "categoryId": 21,
+        "name": "Apartment"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1030",
+          "name": "Compilation"
+        },
+        {
+          "id": "1066",
+          "name": "Textures"
+        },
+        {
+          "id": "1715",
+          "name": "Overhaul"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 6,
+          "nodes": [
+            {
+              "modId": 790,
+              "modName": "AMM - Appearance Menu Mod",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 107,
+              "modName": "Cyber Engine Tweaks",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 19635,
+              "modName": "Proxima's Prop Archives",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 5437,
+              "modName": "V's Edgerunners Mansion - Apartment DLC",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "requirements"
+          },
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 20808,
+      "uid": "14315126018376",
+      "name": "ReLUX (Lighting Redux - Accurate Lighting - AIO)",
+      "summary": "Lighting redux! Bringing back the lighting that should have been with accurate emission from each source, removed fake GI bounces and random sources to bring a more grounded look to Night City. Yes, it removes artistic vision.",
+      "author": "CyanideX - robber804",
+      "uploader": {
+        "name": "theCyanideX",
+        "memberId": 24735399
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/20808/20808-1764133018-175540174.png",
+      "downloads": 3361014,
+      "endorsements": 3917,
+      "fileSize": 144,
+      "createdAt": "2025-04-06T22:25:35Z",
+      "updatedAt": "2026-02-15T21:17:05Z",
+      "version": "2.2.0",
+      "category": "Visuals and Graphics",
+      "modCategory": {
+        "categoryId": 10,
+        "name": "Visuals and Graphics"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1167",
+          "name": "Lighting"
+        },
+        {
+          "id": "1715",
+          "name": "Overhaul"
+        },
+        {
+          "id": "2668",
+          "name": "Visual Effects/Particles"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 2,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 25845,
+              "modName": "ReImagined",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 5266,
+      "uid": "14315126002834",
+      "name": "Material and Texture Override",
+      "summary": "Enables the game to load new materials. Please read the description.",
+      "author": "Nim",
+      "uploader": {
+        "name": "NimRain",
+        "memberId": 51984341
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/5266/5266-1663479835-149434627.png",
+      "downloads": 3341489,
+      "endorsements": 63670,
+      "fileSize": 2,
+      "createdAt": "2022-09-18T06:24:49Z",
+      "updatedAt": "2023-09-29T00:50:18Z",
+      "version": "1.2",
+      "category": "Utilities",
+      "modCategory": {
+        "categoryId": 9,
+        "name": "Utilities"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1055",
+          "name": "Animation - Modified"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [],
+        "modType": "unknown",
+        "typeSource": null,
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 5093,
+      "uid": "14315126002661",
+      "name": "Nola Dreamer's archive XL clothes for fem V (pack 1)",
+      "summary": "Clothing archive XL for fem V (pack 1). Fem V. VANILLA / EBB / EBBRB / EBBP / EBBPRB / RB / LUSH / SMALL. Automatic Refit Selection.",
+      "author": "NolaDreamer",
+      "uploader": {
+        "name": "NolaDreamer",
+        "memberId": 103558203
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/5093/5093-1661959454-735776536.png",
+      "downloads": 3093577,
+      "endorsements": 5290,
+      "fileSize": 22556,
+      "createdAt": "2022-08-28T20:28:08Z",
+      "updatedAt": "2026-01-18T07:57:51Z",
+      "version": "1.0",
+      "category": "Armour and Clothing",
+      "modCategory": {
+        "categoryId": 3,
+        "name": "Armour and Clothing"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1194",
+          "name": "Clothing - Female Only"
+        },
+        {
+          "id": "1196",
+          "name": "Clothing"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "text"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "text"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 2557,
+      "uid": "14315126000125",
+      "name": "Always First Equip",
+      "summary": "Repeats firstEquip animation each time you equip your weapon or press a hotkey. Allows to trigger additional weapon inspection animations: IdleBreak and SafeAction. Highly configurable.",
+      "author": "DJ_Kovrik",
+      "uploader": {
+        "name": "djkovrik",
+        "memberId": 100354
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/2557/2557-1620280394-1500347499.jpeg",
+      "downloads": 3011455,
+      "endorsements": 30020,
+      "fileSize": 35,
+      "createdAt": "2021-05-06T06:01:05Z",
+      "updatedAt": "2026-10-24T19:15:08Z",
+      "version": "2.2.0",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1051",
+          "name": "Russian"
+        },
+        {
+          "id": "1217",
+          "name": "Weapons"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 5,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4575,
+              "modName": "Input Loader",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4885,
+              "modName": "Mod Settings",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4658,
+      "uid": "14315126002226",
+      "name": "Vehicle Summon Tweaks",
+      "summary": "A few minor tweaks to vehicle summon system: increased repair cost, decreased summon distances, paid vehicle calls and dismissing.",
+      "author": "DJ_Kovrik",
+      "uploader": {
+        "name": "djkovrik",
+        "memberId": 100354
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4658/4658-1655396615-742367094.png",
+      "downloads": 2963064,
+      "endorsements": 4213,
+      "fileSize": 7,
+      "createdAt": "2022-06-16T16:32:56Z",
+      "updatedAt": "2026-05-21T08:04:10Z",
+      "version": "2.3.4",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "2051",
+          "name": "Vehicles"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 6,
+          "nodes": [
+            {
+              "modId": 107,
+              "modName": "Cyber Engine Tweaks",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4575,
+              "modName": "Input Loader",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "requirements"
+          },
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 11590,
+      "uid": "14315126009158",
+      "name": "Romance Hangouts Enhanced",
+      "summary": "A collection of quality-of-life updates and changes for the patch 2.1 Romance Hangouts Feature(s)This is an ongoing/wip project, starting with repeatable cuddle actions",
+      "author": "Deceptious",
+      "uploader": {
+        "name": "deceptious",
+        "memberId": 4035601
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/11590/11590-1702430267-1774976559.png",
+      "downloads": 2818262,
+      "endorsements": 16833,
+      "fileSize": 8772,
+      "createdAt": "2023-12-13T01:14:26Z",
+      "updatedAt": "2026-07-30T15:15:19Z",
+      "version": "2.5.3",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 2,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 5519,
+      "uid": "14315126003087",
+      "name": "Night City Interactions - Core",
+      "summary": "The core mod for the Night City Interactions mods/addons. On its own it contains the Edgerunners Tour meta quest that features locales from each of the Edgerunners anime episodes. This mod is required for all NCI Addons, handles their",
+      "author": "Deceptious",
+      "uploader": {
+        "name": "deceptious",
+        "memberId": 4035601
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/5519/5519-1703880657-596724731.png",
+      "downloads": 2714805,
+      "endorsements": 16408,
+      "fileSize": 25624,
+      "createdAt": "2022-09-30T20:27:48Z",
+      "updatedAt": "2026-10-28T21:29:48Z",
+      "version": "4.1.1",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1044",
+          "name": "English"
+        },
+        {
+          "id": "1425",
+          "name": "Other languages"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 5,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 3518,
+              "modName": "Native Settings UI",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 14264,
+      "uid": "14315126011832",
+      "name": "Stash and Backpack Search",
+      "summary": "Adds a search option for stash and backpack screen menus.",
+      "author": "DJ_Kovrik",
+      "uploader": {
+        "name": "djkovrik",
+        "memberId": 100354
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/14264/14264-1713364342-663194382.png",
+      "downloads": 2536412,
+      "endorsements": 3375,
+      "fileSize": 2,
+      "createdAt": "2024-04-17T14:37:54Z",
+      "updatedAt": "2025-07-13T06:19:47Z",
+      "version": "1.2.1",
+      "category": "User Interface",
+      "modCategory": {
+        "categoryId": 8,
+        "name": "User Interface"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 3,
+          "nodes": [
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "script",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4378,
+      "uid": "14315126001946",
+      "name": "Enhanced Craft",
+      "summary": "Extends default crafting capabilities allowing you to choose weapons skins and name while crafting.",
+      "author": "DJ_Kovrik",
+      "uploader": {
+        "name": "djkovrik",
+        "memberId": 100354
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4378/4378-1650380270-1577618708.png",
+      "downloads": 2507570,
+      "endorsements": 13404,
+      "fileSize": 89,
+      "createdAt": "2022-04-19T15:20:12Z",
+      "updatedAt": "2026-10-29T19:01:25Z",
+      "version": "4.1.1",
+      "category": "Crafting",
+      "modCategory": {
+        "categoryId": 6,
+        "name": "Crafting"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "2683",
+          "name": "Crafting"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 7,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4575,
+              "modName": "Input Loader",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4885,
+              "modName": "Mod Settings",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4805,
+      "uid": "14315126002373",
+      "name": "NC Fashion Virtual Atelier",
+      "summary": "Virtual Atelier for my Archive XL Mods",
+      "author": "EzioMaverick",
+      "uploader": {
+        "name": "Apzurv",
+        "memberId": 18222069
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4805/4805-1760783640-171108412.png",
+      "downloads": 2484143,
+      "endorsements": 13997,
+      "fileSize": 63,
+      "createdAt": "2022-07-10T13:55:59Z",
+      "updatedAt": "2026-10-20T17:44:17Z",
+      "version": "10.1.k",
+      "category": "Atelier Shop",
+      "modCategory": {
+        "categoryId": 23,
+        "name": "Atelier Shop"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1196",
+          "name": "Clothing"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 7,
+          "nodes": [
+            {
+              "modId": 2987,
+              "modName": "Virtual Atelier",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 6945,
+              "modName": "Equipment-EX",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 2592,
+      "uid": "14315126000160",
+      "name": "Limited HUD",
+      "summary": "Hides main HUD widgets by default and shows them only on certain events (configurable). Adds in-game widget toggle hotkeys and a bunch of optional files to tweak different HUD elements.",
+      "author": "DJ_Kovrik",
+      "uploader": {
+        "name": "djkovrik",
+        "memberId": 100354
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/2592/2592-1620640405-942531536.jpeg",
+      "downloads": 2477542,
+      "endorsements": 11885,
+      "fileSize": 104,
+      "createdAt": "2021-05-10T10:18:24Z",
+      "updatedAt": "2026-10-27T05:52:42Z",
+      "version": "2.23.1",
+      "category": "User Interface",
+      "modCategory": {
+        "categoryId": 8,
+        "name": "User Interface"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1079",
+          "name": "User Interface"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 5,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4575,
+              "modName": "Input Loader",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4885,
+              "modName": "Mod Settings",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 533,
+      "uid": "14315125998101",
+      "name": "No Intro Videos",
+      "summary": "Disables the game intro videos.",
+      "author": "DJ_Kovrik",
+      "uploader": {
+        "name": "djkovrik",
+        "memberId": 100354
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/533/533-1608996459-230954815.jpeg",
+      "downloads": 2441372,
+      "endorsements": 39785,
+      "fileSize": 1,
+      "createdAt": "2020-12-26T16:08:33Z",
+      "updatedAt": "2025-10-14T04:42:24Z",
+      "version": "0.8",
+      "category": "User Interface",
+      "modCategory": {
+        "categoryId": 8,
+        "name": "User Interface"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1067",
+          "name": "Video"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          }
+        ],
+        "modType": "script",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 718,
+      "uid": "14315125998286",
+      "name": "Save Editor (Project CyberCAT-SimpleGUI)",
+      "summary": "An offshoot of SirBitesalot's CyberCAT, an in-development save editor.",
+      "author": "DeweySalt and Papayu",
+      "uploader": {
+        "name": "Snapdragon2",
+        "memberId": 42829650
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/718/718-1700729906-799173000.png",
+      "downloads": 2355745,
+      "endorsements": 44144,
+      "fileSize": 88106,
+      "createdAt": "2021-01-04T07:10:59Z",
+      "updatedAt": "2025-07-22T18:35:29Z",
+      "version": "0.28b",
+      "category": "Utilities",
+      "modCategory": {
+        "categoryId": 9,
+        "name": "Utilities"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1041",
+          "name": "Cheating"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [],
+        "modType": "unknown",
+        "typeSource": null,
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 7064,
+      "uid": "14315126004632",
+      "name": "Immersive Rippers",
+      "summary": "Adds a little immersion to the NC rippers such that you now sit in their chairs to get work done. Fingers can be paid as an apology and regain access to his services.",
+      "author": "Deceptious",
+      "uploader": {
+        "name": "deceptious",
+        "memberId": 4035601
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/7064/7064-1673471906-844026640.png",
+      "downloads": 2344863,
+      "endorsements": 11639,
+      "fileSize": 431,
+      "createdAt": "2023-01-11T21:26:14Z",
+      "updatedAt": "2026-10-28T21:29:29Z",
+      "version": "2.6.2",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1044",
+          "name": "English"
+        },
+        {
+          "id": "1425",
+          "name": "Other languages"
+        },
+        {
+          "id": "1715",
+          "name": "Overhaul"
+        },
+        {
+          "id": "3028",
+          "name": "Bug Fixes"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 3,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 7780,
+              "modName": "Codeware",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "codeware",
+            "key": "codeware",
+            "name": "Codeware",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 5115,
+      "uid": "14315126002683",
+      "name": "Immersive Timeskip",
+      "summary": "Allows to use vanilla timeskip widget in a more immersive way.",
+      "author": "DJ_Kovrik",
+      "uploader": {
+        "name": "djkovrik",
+        "memberId": 100354
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/5115/5115-1661974045-1633804703.png",
+      "downloads": 2330877,
+      "endorsements": 12126,
+      "fileSize": 961,
+      "createdAt": "2022-08-31T19:35:35Z",
+      "updatedAt": "2026-10-25T12:27:26Z",
+      "version": "2.2.3",
+      "category": "User Interface",
+      "modCategory": {
+        "categoryId": 8,
+        "name": "User Interface"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        },
+        {
+          "id": "4902",
+          "name": "AI Assisted"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 3,
+          "nodes": [
+            {
+              "modId": 4575,
+              "modName": "Input Loader",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          }
+        ],
+        "modType": "script",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 4070,
+      "uid": "14315126001638",
+      "name": "Silent Silencers and Throwing Knives",
+      "summary": "Stops combat from auto-triggering when you use a silenced gun or throwing knife. Lets you use those weapons from stealth even when you don't one-shot kill enemies.",
+      "author": "RMK",
+      "uploader": {
+        "name": "rmk1234",
+        "memberId": 84555803
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4070/4070-1646782673-771956312.jpeg",
+      "downloads": 2285045,
+      "endorsements": 16775,
+      "fileSize": 22,
+      "createdAt": "2022-03-09T11:44:19Z",
+      "updatedAt": "2026-10-25T13:01:45Z",
+      "version": "1.6.3",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1043",
+          "name": "Fair and balanced"
+        },
+        {
+          "id": "1217",
+          "name": "Weapons"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 6,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 3518,
+              "modName": "Native Settings UI",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 107,
+              "modName": "Cyber Engine Tweaks",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "cet",
+            "key": "cet",
+            "name": "Cyber Engine Tweaks",
+            "source": "requirements"
+          },
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    },
+    {
+      "modId": 14203,
+      "uid": "14315126011771",
+      "name": "Berserk Unchained",
+      "summary": "Functionality unlocks for all Berserk: no longer restricts the player to only melee weapons, prevents UI hiding, prevents VFX stacking. Optionally Berserk can retain unspent charge level on deactivation, reducing cooldown before",
+      "author": "Seijax",
+      "uploader": {
+        "name": "Seijax",
+        "memberId": 53009476
+      },
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/14203/14203-1713091340-1437581101.jpeg",
+      "downloads": 2258860,
+      "endorsements": 1464,
+      "fileSize": 5,
+      "createdAt": "2024-04-15T14:06:34Z",
+      "updatedAt": "2025-03-17T11:06:43Z",
+      "version": "2.3.1",
+      "category": "Gameplay",
+      "modCategory": {
+        "categoryId": 7,
+        "name": "Gameplay"
+      },
+      "adultContent": false,
+      "status": "published",
+      "tags": [
+        {
+          "id": "1032",
+          "name": "Gameplay"
+        },
+        {
+          "id": "1080",
+          "name": "Utilities for Modders"
+        },
+        {
+          "id": "1081",
+          "name": "Utilities for Players"
+        },
+        {
+          "id": "3163",
+          "name": "Quality of Life"
+        }
+      ],
+      "modRequirements": {
+        "nexusRequirements": {
+          "totalCount": 4,
+          "nodes": [
+            {
+              "modId": 4198,
+              "modName": "ArchiveXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 2380,
+              "modName": "RED4ext",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 1511,
+              "modName": "redscript",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            },
+            {
+              "modId": 4197,
+              "modName": "TweakXL",
+              "externalRequirement": false,
+              "url": null,
+              "notes": null
+            }
+          ]
+        },
+        "dlcRequirements": []
+      },
+      "classification": {
+        "frameworks": [
+          {
+            "framework": "red4ext",
+            "key": "red4ext",
+            "name": "RED4ext",
+            "source": "requirements"
+          },
+          {
+            "framework": "redscript",
+            "key": "redscript",
+            "name": "redscript",
+            "source": "requirements"
+          },
+          {
+            "framework": "archivexl",
+            "key": "archivexl",
+            "name": "ArchiveXL",
+            "source": "requirements"
+          },
+          {
+            "framework": "tweakxl",
+            "key": "tweakxl",
+            "name": "TweakXL",
+            "source": "requirements"
+          }
+        ],
+        "modType": "archive",
+        "typeSource": "text",
+        "isFramework": null
+      },
+      "hidden": false,
+      "ignored": false,
+      "downloaded": false
+    }
+  ],
+  "filteredOnPage": 0,
+  "facets": {
+    "categories": [
+      [
+        "Gameplay",
+        4447
+      ],
+      [
+        "Armour and Clothing",
+        4035
+      ],
+      [
+        "Appearance",
+        2973
+      ],
+      [
+        "Visuals and Graphics",
+        1398
+      ],
+      [
+        "Weapons",
+        1324
+      ],
+      [
+        "Audio",
+        1298
+      ],
+      [
+        "User Interface",
+        1256
+      ],
+      [
+        "Miscellaneous",
+        1132
+      ],
+      [
+        "Characters",
+        1036
+      ],
+      [
+        "Vehicles",
+        998
+      ],
+      [
+        "Locations",
+        751
+      ],
+      [
+        "Animations",
+        628
+      ],
+      [
+        "Utilities",
+        444
+      ],
+      [
+        "Modders Resources",
+        293
+      ],
+      [
+        "Apartment",
+        142
+      ],
+      [
+        "Scripts",
+        134
+      ],
+      [
+        "Atelier Shop",
+        131
+      ],
+      [
+        "AI Voices",
+        122
+      ],
+      [
+        "Props and Decorations",
+        110
+      ],
+      [
+        "Appearance Change Unlocker Preset",
+        89
+      ],
+      [
+        "Crafting",
+        84
+      ],
+      [
+        "Add-On Apartment",
+        78
+      ],
+      [
+        "Adverts",
+        54
+      ],
+      [
+        "Appearance Menu Mod Preset",
+        50
+      ],
+      [
+        "Audio Replacer",
+        50
+      ]
+    ],
+    "tags": [
+      [
+        "Translation",
+        2817
+      ],
+      [
+        "Gameplay",
+        2569
+      ],
+      [
+        "Quality of Life",
+        2117
+      ],
+      [
+        "Clothing",
+        1776
+      ],
+      [
+        "Clothing - Female Only",
+        1056
+      ],
+      [
+        "AI-Generated Content",
+        964
+      ],
+      [
+        "User Interface",
+        948
+      ],
+      [
+        "Character Preset",
+        874
+      ],
+      [
+        "English",
+        855
+      ],
+      [
+        "Textures",
+        822
+      ],
+      [
+        "Weapons",
+        799
+      ],
+      [
+        "Vehicles",
+        731
+      ],
+      [
+        "Cyber Engine Tweaks",
+        719
+      ],
+      [
+        "Replacer",
+        716
+      ],
+      [
+        "Hair",
+        659
+      ],
+      [
+        "Utilities for Players",
+        651
+      ],
+      [
+        "Chinese",
+        614
+      ],
+      [
+        "Models/Meshes",
+        590
+      ],
+      [
+        "Fair and balanced",
+        588
+      ],
+      [
+        "AI Media",
+        541
+      ],
+      [
+        "Overhaul",
+        518
+      ],
+      [
+        "ReShade",
+        478
+      ],
+      [
+        "Saved games",
+        472
+      ],
+      [
+        "Bug Fixes",
+        469
+      ],
+      [
+        "REDMod",
+        412
+      ],
+      [
+        "Clothing - Male Only",
+        404
+      ],
+      [
+        "Music",
+        372
+      ],
+      [
+        "Face",
+        324
+      ],
+      [
+        "French",
+        316
+      ],
+      [
+        "NPCs",
+        302
+      ],
+      [
+        "Poses",
+        290
+      ],
+      [
+        "AI Assisted",
+        283
+      ],
+      [
+        "Armour",
+        280
+      ],
+      [
+        "Cheating",
+        280
+      ],
+      [
+        "Visual Effects/Particles",
+        278
+      ],
+      [
+        "Body",
+        277
+      ],
+      [
+        "Portuguese",
+        252
+      ],
+      [
+        "Russian",
+        250
+      ],
+      [
+        "Modder's Resource",
+        247
+      ],
+      [
+        "Related to Movies/TV/Books/Other Games",
+        225
+      ],
+      [
+        "German",
+        213
+      ],
+      [
+        "Sound FX",
+        209
+      ],
+      [
+        "Eyes",
+        203
+      ],
+      [
+        "Japanese",
+        187
+      ],
+      [
+        "Lighting",
+        176
+      ],
+      [
+        "Props",
+        173
+      ],
+      [
+        "Utilities for Modders",
+        172
+      ],
+      [
+        "Performance Optimization",
+        170
+      ],
+      [
+        "Voice Acting",
+        162
+      ],
+      [
+        "Animation - New",
+        158
+      ],
+      [
+        "Quests",
+        142
+      ],
+      [
+        "Mandarin",
+        130
+      ],
+      [
+        "Skills/Perks",
+        129
+      ],
+      [
+        "Spanish",
+        125
+      ],
+      [
+        "Humour, Joke or Just for Fun",
+        118
+      ],
+      [
+        "Cyberpunk Modathon 2026",
+        113
+      ],
+      [
+        "NPC Behaviours (AI)",
+        113
+      ],
+      [
+        "Animation - Modified",
+        100
+      ],
+      [
+        "Korean",
+        98
+      ],
+      [
+        "Dialogue",
+        95
+      ],
+      [
+        "Czech",
+        90
+      ],
+      [
+        "Camera",
+        88
+      ],
+      [
+        "ini tweak",
+        84
+      ],
+      [
+        "Unbalanced",
+        82
+      ],
+      [
+        "Turkish",
+        78
+      ],
+      [
+        "Polish",
+        77
+      ],
+      [
+        "Crafting",
+        73
+      ],
+      [
+        "Other languages",
+        73
+      ],
+      [
+        "LGBTQ+",
+        69
+      ],
+      [
+        "20 Years of Modding 2021",
+        67
+      ],
+      [
+        "Non-Playable Resource",
+        64
+      ],
+      [
+        "Weather",
+        57
+      ],
+      [
+        "Ukrainian",
+        54
+      ],
+      [
+        "NCZoning",
+        53
+      ],
+      [
+        "Italian",
+        51
+      ],
+      [
+        "Real World Issues",
+        51
+      ],
+      [
+        "Video",
+        49
+      ],
+      [
+        "Edgerunners",
+        47
+      ],
+      [
+        "Sky",
+        44
+      ],
+      [
+        "Terrain",
+        44
+      ],
+      [
+        "Nexus Mods Turns 25",
+        41
+      ],
+      [
+        "Tutorials for Modders",
+        37
+      ],
+      [
+        "Compilation",
+        35
+      ],
+      [
+        "Menu Replacer",
+        33
+      ],
+      [
+        "Stay Home. Make Mods.",
+        30
+      ],
+      [
+        "Unrealistic",
+        30
+      ],
+      [
+        "Total Conversion",
+        29
+      ],
+      [
+        "Style Over Substance (2026 Modathon)",
+        28
+      ],
+      [
+        "Compatibility Patch",
+        26
+      ],
+      [
+        "Hungarian",
+        24
+      ],
+      [
+        "Tutorials for Players",
+        24
+      ],
+      [
+        "Water",
+        24
+      ],
+      [
+        "Dutch",
+        21
+      ],
+      [
+        "Collection Asset",
+        19
+      ],
+      [
+        "Races - New",
+        19
+      ],
+      [
+        "Foliage (Plants)",
+        18
+      ],
+      [
+        "Never Fade Away (2026 Modathon)",
+        17
+      ],
+      [
+        "Good Morning, Night City! (2026 Modathon)",
+        14
+      ],
+      [
+        "Horror",
+        12
+      ],
+      [
+        "Cyberpsychosis (2026 Modathon)",
+        11
+      ],
+      [
+        "Tested in Version 1.5",
+        9
+      ],
+      [
+        "We Have a City to Burn (2026 Modathon)",
+        8
+      ],
+      [
+        "Official",
+        6
+      ],
+      [
+        "One More Gig (2026 Modathon)",
+        5
+      ],
+      [
+        "Wabbajack Mod List",
+        5
+      ],
+      [
+        "ROG Theme Event 2021",
+        4
+      ],
+      [
+        "To the Moon (2026 Modathon)",
+        4
+      ],
+      [
+        "Android Compatible",
+        1
+      ],
+      [
+        "Not Safe For Work",
+        1
+      ]
+    ]
+  },
+  "derived": [
+    [
+      "fw_archivexl",
+      5059
+    ],
+    [
+      "fw_cet",
+      3193
+    ],
+    [
+      "fw_codeware",
+      1210
+    ],
+    [
+      "fw_cybercmd",
+      71
+    ],
+    [
+      "fw_red4ext",
+      2345
+    ],
+    [
+      "fw_redscript",
+      2642
+    ],
+    [
+      "fw_tweakxl",
+      2761
+    ],
+    [
+      "type_archive",
+      17119
+    ],
+    [
+      "type_framework",
+      522
+    ],
+    [
+      "type_redmod",
+      818
+    ],
+    [
+      "type_script",
+      4251
+    ]
+  ],
+  "fromCache": false
+}
