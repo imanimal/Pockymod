@@ -1,0 +1,643 @@
+{
+  "author": {
+    "memberId": 108159138,
+    "name": "psiberx",
+    "avatar": "https://avatars.nexusmods.com/108159138/100",
+    "modCount": 9,
+    "uniqueModDownloads": 17205218,
+    "kudos": 1818,
+    "recognizedAuthor": true,
+    "joined": "2021-01-26T12:56:02Z"
+  },
+  "mods": [
+    {
+      "modId": 18839,
+      "uid": "14315126016407",
+      "name": "PhotoMode-EX",
+      "summary": "Custom characters framework and QOL tweaks for Photo Mode",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.5.0",
+      "status": "published",
+      "category": "Utilities",
+      "adultContent": false,
+      "createdAt": "2025-01-05T00:27:08Z",
+      "updatedAt": "2026-10-30T07:27:19Z",
+      "downloads": 881135,
+      "endorsements": 4625,
+      "uniqueDownloads": 438593,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/18839/18839-1736036811-20136042.png",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/18839/18839-1736036811-20136042.png",
+      "requirements": 3,
+      "requiredBy": 190,
+      "files": [
+        {
+          "fileId": 170889,
+          "name": "PhotoMode-EX",
+          "version": "1.5.0",
+          "category": "MAIN",
+          "size": 332,
+          "sizeInBytes": 340778,
+          "date": 1793345239,
+          "primary": 1,
+          "uri": "c8/cc/d8/c8ccd808-fb86-414c-9b6c-b6fe0fa3c289",
+          "description": "Thanks to arm4ni (https://www.nexusmods.com/profile/arm4ni) for helping with this update",
+          "totalDownloads": 39048,
+          "uniqueDownloads": 33368,
+          "groupId": 2828359,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "Updated compatibility to game patch 2.5 (thanks to arm4ni)"
+          ]
+        }
+      ],
+      "oldFiles": 13,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/18839",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/18839?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/18839?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/18839?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/18839?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=18839",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=18839&step=files"
+      }
+    },
+    {
+      "modId": 4198,
+      "uid": "14315126001766",
+      "name": "ArchiveXL",
+      "summary": "Archive extension loader",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.28.6",
+      "status": "published",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "createdAt": "2022-03-24T12:22:09Z",
+      "updatedAt": "2026-10-29T12:59:42Z",
+      "downloads": 13970996,
+      "endorsements": 146797,
+      "uniqueDownloads": 3854297,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/4198/4198-1648116857-72076015.jpeg",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4198/4198-1648116857-72076015.jpeg",
+      "requirements": 1,
+      "requiredBy": 7763,
+      "files": [
+        {
+          "fileId": 170440,
+          "name": "ArchiveXL",
+          "version": "1.28.6",
+          "category": "MAIN",
+          "size": 1046,
+          "sizeInBytes": 1072116,
+          "date": 1793278782,
+          "primary": 1,
+          "uri": "a1/f3/28/a1f328af-5991-4e62-8da3-08c32814ad18",
+          "description": "",
+          "totalDownloads": 351651,
+          "uniqueDownloads": 278252,
+          "groupId": 2583817,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "Added temporary fix for Panam hair"
+          ]
+        }
+      ],
+      "oldFiles": 121,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/4198",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/4198?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/4198?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/4198?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/4198?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=4198",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=4198&step=files"
+      }
+    },
+    {
+      "modId": 7780,
+      "uid": "14315126005348",
+      "name": "Codeware",
+      "summary": "Script extensions",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.21.2",
+      "status": "published",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "createdAt": "2023-03-15T14:02:39Z",
+      "updatedAt": "2026-10-29T12:22:38Z",
+      "downloads": 11382531,
+      "endorsements": 106798,
+      "uniqueDownloads": 3349139,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/7780/7780-1678888364-446201648.jpeg",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/7780/7780-1678888364-446201648.jpeg",
+      "requirements": 1,
+      "requiredBy": 2058,
+      "files": [
+        {
+          "fileId": 170432,
+          "name": "Codeware",
+          "version": "1.21.2",
+          "category": "MAIN",
+          "size": 1915,
+          "sizeInBytes": 1961325,
+          "date": 1793276558,
+          "primary": 1,
+          "uri": "f3/7a/64/f37a64cb-1592-4e56-b516-443779b8140f",
+          "description": "",
+          "totalDownloads": 346922,
+          "uniqueDownloads": 274449,
+          "groupId": 2682862,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "Improved support of cooked world nodes",
+            "Fixed native implementation of inkWidgetLibraryResource"
+          ]
+        }
+      ],
+      "oldFiles": 71,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/7780",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/7780?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/7780?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/7780?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/7780?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=7780",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=7780&step=files"
+      }
+    },
+    {
+      "modId": 6945,
+      "uid": "14315126004513",
+      "name": "Equipment-EX",
+      "summary": "Powerful transmog system and outfit manager",
+      "author": "psiberx and DJ_Kovrik",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.2.10",
+      "status": "published",
+      "category": "Appearance",
+      "adultContent": false,
+      "createdAt": "2023-01-03T21:35:43Z",
+      "updatedAt": "2026-10-25T21:07:19Z",
+      "downloads": 6479865,
+      "endorsements": 56207,
+      "uniqueDownloads": 2192968,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/6945/6945-1672583521-2028780239.jpeg",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/6945/6945-1672583521-2028780239.jpeg",
+      "requirements": 5,
+      "requiredBy": 2218,
+      "files": [
+        {
+          "fileId": 168539,
+          "name": "Equipment-EX",
+          "version": "1.2.10",
+          "category": "MAIN",
+          "size": 87,
+          "sizeInBytes": 89560,
+          "date": 1792962438,
+          "primary": 1,
+          "uri": "8b/73/d6/8b73d6bd-e9b8-40e2-8e75-ee48bb605e3e",
+          "description": "",
+          "totalDownloads": 369994,
+          "uniqueDownloads": 272367,
+          "groupId": 2663014,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "Updated requirements to match game patch 2.5"
+          ]
+        },
+        {
+          "fileId": 145554,
+          "name": "Equipment-EX Hide Hub Buttons Patch",
+          "version": "1.0",
+          "category": "OPTIONAL",
+          "size": 1,
+          "sizeInBytes": 798,
+          "date": 1778915785,
+          "primary": 0,
+          "uri": "EquipmentEx-HideHubButtons-6945-1-0-1778915785.zip",
+          "description": "This optional patch hides the HUB menu buttons, leaving the wardrobe accessible only from apartments.",
+          "totalDownloads": 13378,
+          "uniqueDownloads": 11410,
+          "groupId": 7424867,
+          "scannedV2": "VERIFIED",
+          "changelogText": []
+        }
+      ],
+      "oldFiles": 59,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/6945",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/6945?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/6945?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/6945?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/6945?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=6945",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=6945&step=files"
+      }
+    },
+    {
+      "modId": 9429,
+      "uid": "14315126006997",
+      "name": "Cyberware-EX",
+      "summary": "Cyberware slot expansions / Install Cyberdeck, Sandevistan, Berserk at the same time",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.6.0",
+      "status": "published",
+      "category": "Gameplay",
+      "adultContent": false,
+      "createdAt": "2023-10-01T11:58:21Z",
+      "updatedAt": "2026-10-25T08:53:41Z",
+      "downloads": 4677882,
+      "endorsements": 28648,
+      "uniqueDownloads": 1221420,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/9429/9429-1696160681-150367609.jpeg",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/9429/9429-1696160681-150367609.jpeg",
+      "requirements": 3,
+      "requiredBy": 58,
+      "files": [
+        {
+          "fileId": 168239,
+          "name": "Cyberware-EX",
+          "version": "1.6.0",
+          "category": "MAIN",
+          "size": 16,
+          "sizeInBytes": 17264,
+          "date": 1792918421,
+          "primary": 1,
+          "uri": "51/ce/b2/51ceb261-492b-45c6-a99c-cc8c3a463029",
+          "description": "Special thanks to MysteriousLetters for help with bug fixes",
+          "totalDownloads": 232129,
+          "uniqueDownloads": 177105,
+          "groupId": 2718592,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "- Updated compatibility to game patch 2.5"
+          ]
+        },
+        {
+          "fileId": 52998,
+          "name": "CyberwareEx-Config-OverrideMode",
+          "version": "1.0.4",
+          "category": "MISCELLANEOUS",
+          "size": 1,
+          "sizeInBytes": 980,
+          "date": 1697310603,
+          "primary": 0,
+          "uri": "CyberwareEx-Config-OverrideMode-9429-1-0-4-1697310603.zip",
+          "description": "User configuration template for Override Mode (slots unlockable with money)",
+          "totalDownloads": 25665,
+          "uniqueDownloads": 18825,
+          "groupId": 2718601,
+          "scannedV2": "VERIFIED",
+          "changelogText": []
+        },
+        {
+          "fileId": 51398,
+          "name": "CyberwareEx-Config-ExpansionMode",
+          "version": "1.0.2",
+          "category": "MISCELLANEOUS",
+          "size": 1,
+          "sizeInBytes": 1049,
+          "date": 1696584762,
+          "primary": 0,
+          "uri": "CyberwareEx-Config-ExpansionMode-9429-1-0-2-1696584762.zip",
+          "description": "User configuration template for Expansion Mode (slots unlockable by perks)",
+          "totalDownloads": 33266,
+          "uniqueDownloads": 24333,
+          "groupId": 2718598,
+          "scannedV2": "VERIFIED",
+          "changelogText": []
+        },
+        {
+          "fileId": 51006,
+          "name": "CyberwareEx-Reset",
+          "version": "1.0.0",
+          "category": "MISCELLANEOUS",
+          "size": 1,
+          "sizeInBytes": 801,
+          "date": 1696420767,
+          "primary": 0,
+          "uri": "CyberwareEx-Reset-9429-1-0-0-1696420767.zip",
+          "description": "Removes all cyberware slots added using Cyberware-EX (use to properly uninstall the mod)",
+          "totalDownloads": 16920,
+          "uniqueDownloads": 13210,
+          "groupId": 4434469,
+          "scannedV2": "VERIFIED",
+          "changelogText": []
+        },
+        {
+          "fileId": 50472,
+          "name": "CyberwareEx-Addon-ExtendedSlots",
+          "version": "1.0.0",
+          "category": "OPTIONAL",
+          "size": 1,
+          "sizeInBytes": 682,
+          "date": 1696174758,
+          "primary": 0,
+          "uri": "CyberwareEx-ExtendedMode-9429-1-0-0-1696174758.zip",
+          "description": "Adds 10 new cyberware slots in expansion mode\n<br />\n<br />INCOMPATIBLE WITH OVERRIDE MODE\n<br />DO NOT INSTALL TOGETHER",
+          "totalDownloads": 1078560,
+          "uniqueDownloads": 558202,
+          "groupId": 4434466,
+          "scannedV2": "VERIFIED",
+          "changelogText": []
+        },
+        {
+          "fileId": 50436,
+          "name": "CyberwareEx-Addon-OverrideMode",
+          "version": "1.0.0",
+          "category": "OPTIONAL",
+          "size": 1,
+          "sizeInBytes": 682,
+          "date": 1696161416,
+          "primary": 0,
+          "uri": "CyberwareEx-OverrideMode-9429-1-0-0-1696161416.zip",
+          "description": "Activates override mode (allows to buy slots with money, slots aren't locked behind perks)\n<br />\n<br />INCOMPATIBLE WITH EXTENDED SLOTS ADDON\n<br />DO NOT INSTALL TOGETHER",
+          "totalDownloads": 382470,
+          "uniqueDownloads": 231301,
+          "groupId": 4434460,
+          "scannedV2": "VERIFIED",
+          "changelogText": []
+        }
+      ],
+      "oldFiles": 34,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/9429",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/9429?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/9429?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/9429?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/9429?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=9429",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=9429&step=files"
+      }
+    },
+    {
+      "modId": 4197,
+      "uid": "14315126001765",
+      "name": "TweakXL",
+      "summary": "TweakDB modifications loader and script extensions",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.12.0",
+      "status": "published",
+      "category": "Modders Resources",
+      "adultContent": false,
+      "createdAt": "2022-03-24T12:21:53Z",
+      "updatedAt": "2026-10-25T08:10:38Z",
+      "downloads": 11984299,
+      "endorsements": 134575,
+      "uniqueDownloads": 3655507,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/4197/4197-1648116989-1847614261.jpeg",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/4197/4197-1648116989-1847614261.jpeg",
+      "requirements": 1,
+      "requiredBy": 6654,
+      "files": [
+        {
+          "fileId": 168221,
+          "name": "TweakXL",
+          "version": "1.12.0",
+          "category": "MAIN",
+          "size": 1045,
+          "sizeInBytes": 1070421,
+          "date": 1792915838,
+          "primary": 1,
+          "uri": "6a/a4/d6/6aa4d6f0-fabc-476d-9e5c-e312e806ce50",
+          "description": "",
+          "totalDownloads": 629247,
+          "uniqueDownloads": 456072,
+          "groupId": 2583823,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "Updated compatibility to game patch 2.5"
+          ]
+        }
+      ],
+      "oldFiles": 62,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/4197",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/4197?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/4197?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/4197?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/4197?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=4197",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=4197&step=files"
+      }
+    },
+    {
+      "modId": 8340,
+      "uid": "14315126005908",
+      "name": "Find-EX",
+      "summary": "Search codex / shards / quests / messages",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.2.0",
+      "status": "published",
+      "category": "User Interface",
+      "adultContent": false,
+      "createdAt": "2023-05-16T20:55:07Z",
+      "updatedAt": "2023-10-13T13:17:05Z",
+      "downloads": 1466245,
+      "endorsements": 3090,
+      "uniqueDownloads": 659058,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/8340/8340-1684269882-418357170.jpeg",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/8340/8340-1684269882-418357170.jpeg",
+      "requirements": 3,
+      "requiredBy": 1,
+      "files": [
+        {
+          "fileId": 52766,
+          "name": "Find-EX",
+          "version": "1.2.0",
+          "category": "MAIN",
+          "size": 6,
+          "sizeInBytes": 5720,
+          "date": 1697203025,
+          "primary": 1,
+          "uri": "Find-EX-8340-1-2-0-1697203025.zip",
+          "description": "",
+          "totalDownloads": 1408527,
+          "uniqueDownloads": 641922,
+          "groupId": 2697877,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "Support patch 2.01"
+          ]
+        }
+      ],
+      "oldFiles": 3,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/8340",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/8340?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/8340?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/8340?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/8340?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=8340",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=8340&step=files"
+      }
+    },
+    {
+      "modId": 9302,
+      "uid": "14315126006870",
+      "name": "RipperDeck",
+      "summary": "Manage cyberware without visiting ripperdoc",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.1.0",
+      "status": "published",
+      "category": "Gameplay",
+      "adultContent": false,
+      "createdAt": "2023-10-01T16:16:15Z",
+      "updatedAt": "2023-10-12T21:09:20Z",
+      "downloads": 943508,
+      "endorsements": 6018,
+      "uniqueDownloads": 476263,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/9302/9302-1696176516-2102545836.jpeg",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/9302/9302-1696176516-2102545836.jpeg",
+      "requirements": 1,
+      "requiredBy": 3,
+      "files": [
+        {
+          "fileId": 52667,
+          "name": "RipperDeck",
+          "version": "1.1.0",
+          "category": "MAIN",
+          "size": 2,
+          "sizeInBytes": 2278,
+          "date": 1697144960,
+          "primary": 1,
+          "uri": "RipperDeck-9302-1-1-0-1697144960.zip",
+          "description": "",
+          "totalDownloads": 901875,
+          "uniqueDownloads": 467694,
+          "groupId": 2718679,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "Added ability to drop cyberware"
+          ]
+        }
+      ],
+      "oldFiles": 5,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/9302",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/9302?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/9302?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/9302?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/9302?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=9302",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=9302&step=files"
+      }
+    },
+    {
+      "modId": 2881,
+      "uid": "14315126000449",
+      "name": "Neu-ReSpec",
+      "summary": "Respec / Manage attributes, perks and skills / Integrates into Hub menu",
+      "author": "psiberx",
+      "uploader": {
+        "name": "psiberx",
+        "memberId": 108159138
+      },
+      "version": "1.2.1",
+      "status": "published",
+      "category": "Gameplay",
+      "adultContent": false,
+      "createdAt": "2021-07-03T12:49:13Z",
+      "updatedAt": "2023-10-04T21:13:05Z",
+      "downloads": 621387,
+      "endorsements": 7150,
+      "uniqueDownloads": 364917,
+      "pictureUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/2881/2881-1625247955-545206607.jpeg",
+      "thumbnailUrl": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/2881/2881-1625247955-545206607.jpeg",
+      "requirements": 1,
+      "requiredBy": 5,
+      "files": [
+        {
+          "fileId": 51100,
+          "name": "NeureSpec",
+          "version": "1.2.1",
+          "category": "MAIN",
+          "size": 35,
+          "sizeInBytes": 35658,
+          "date": 1696453985,
+          "primary": 1,
+          "uri": "NeureSpec-2881-1-2-1-1696453985.zip",
+          "description": "",
+          "totalDownloads": 361065,
+          "uniqueDownloads": 234094,
+          "groupId": 2515579,
+          "scannedV2": "VERIFIED",
+          "changelogText": [
+            "Fixed new perks validation",
+            "Fixed Korean localization"
+          ]
+        }
+      ],
+      "oldFiles": 9,
+      "pinned": false,
+      "links": {
+        "page": "https://www.nexusmods.com/cyberpunk2077/mods/2881",
+        "files": "https://www.nexusmods.com/cyberpunk2077/mods/2881?tab=files",
+        "posts": "https://www.nexusmods.com/cyberpunk2077/mods/2881?tab=posts",
+        "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/2881?tab=bugs",
+        "logs": "https://www.nexusmods.com/cyberpunk2077/mods/2881?tab=logs",
+        "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=2881",
+        "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=2881&step=files"
+      }
+    }
+  ],
+  "totals": {
+    "mods": 9,
+    "downloads": 52407848,
+    "uniqueDownloads": 16212162,
+    "endorsements": 493908,
+    "files": 15
+  },
+  "thisMonth": {
+    "year": 2026,
+    "month": 11,
+    "downloads": 755315,
+    "uniqueDownloads": 192977
+  },
+  "own": false,
+  "missingPinned": [],
+  "links": {
+    "profile": "https://www.nexusmods.com/users/108159138",
+    "addMod": "https://www.nexusmods.com/cyberpunk2077/mods/add"
+  },
+  "fetchedAt": 1793797790,
+  "fromCache": false
+}

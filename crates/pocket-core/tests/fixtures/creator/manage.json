@@ -1,0 +1,657 @@
+{
+  "mod": {
+    "modId": 18839,
+    "modRequirements": {
+      "dlcRequirements": [],
+      "modsRequiringThisMod": {
+        "nodes": [
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "14238",
+            "modName": "MATEO THIAGO NPC EX",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "12151",
+            "modName": "THOMPSON NPC EX",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "12273",
+            "modName": "SANDRA DORSETT NPC EX",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "14477",
+            "modName": "EVELYN PARKER NPC EX",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19076",
+            "modName": "- House of Vesna - Kurt Hansen Overhaul",
+            "notes": "Mandatory for adding his apperances to PhotoMode"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "8357",
+            "modName": "Poses - Quality Time - 2.31",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "8298",
+            "modName": "Poses - Hanging Out - both body genders",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19478",
+            "modName": "BLUE MOON NPC EX",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19515",
+            "modName": "Shibari Vol. 3 Poses",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "15232",
+            "modName": "Miranda Lawson NPC - Mass Effect",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19607",
+            "modName": "Judy Additional Appearances (AMM - Photo Mode)",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19506",
+            "modName": "NSFW - Erotic Poses FF - PM and AMM",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19726",
+            "modName": "Ganger NPCs for Photomode-Ex",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19750",
+            "modName": "High Voltage - Poses (AMM and PM)",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "17631",
+            "modName": "Goro Takemura _New Clothes 2.0",
+            "notes": "Required for the Photo Mode"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "18308",
+            "modName": "Evelyn - High Class Escort",
+            "notes": "Required for the Photo Mode"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19806",
+            "modName": "Arcane Finn NPC",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "17455",
+            "modName": "Bearded Officer River Ward",
+            "notes": "Required for the Photo Mode"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19920",
+            "modName": "More Alternate Clothes for Panam Enhanced Body (AIO) AMM - Photo Mode 2.2 Compatibility Patch",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19944",
+            "modName": "Shibari Vol. 4 Poses",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19948",
+            "modName": "Enchanted Elegance Pt. 2 Poses",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "19999",
+            "modName": "Shibari Vol.1 Poses",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "20229",
+            "modName": "Naughty Selfie Pose Pack (MaleV) - DELETED",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "20243",
+            "modName": "Climbing Jumping and Falling Poses",
+            "notes": "for using the poses in Photomode on NPCs"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "20300",
+            "modName": "Photomode Fix - Man Big Action Category",
+            "notes": "optional, but heavily recommended"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "20988",
+            "modName": "BlushEater x Rysyu Warped Tour Pose Pack",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "20951",
+            "modName": "Kerry Android Bodyguard Photomode NPC",
+            "notes": "Required"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21126",
+            "modName": "SOLO Vol.7 pose pack -PM Prop-",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "20961",
+            "modName": "Casual Sex Pose Pack - DELETED",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "17206",
+            "modName": "AIO AMM EDITION - More Alternate Clothes for Panam Enhanced Body - DELETED",
+            "notes": "OPTIONAL - Needed only to change appearance in Photomode"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "17497",
+            "modName": "More Alternate Clothes for Judy Enhanced Body and Vanilla Body",
+            "notes": "OPTIONAL - Needed to change appearance in Photomode"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21250",
+            "modName": "ELF_CYBERSPITFIRE Nashville - Friends Pose Pack - DELETED",
+            "notes": "Recommended."
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21255",
+            "modName": "ELF_LEO As Long As You're Next To Me - Couple Pose Pack - DELETED",
+            "notes": "Recommended."
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21316",
+            "modName": "Pole Bondage Pose Pack",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21534",
+            "modName": "Shibari Vol.5 Poses",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21500",
+            "modName": "We Had It All - Couple Posepack",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21577",
+            "modName": "NCPD Uniform 2.0",
+            "notes": "Required for the Photo Mode"
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21670",
+            "modName": "Joytoy Agustin Pose Pack - DELETED - DELETED",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21744",
+            "modName": "Emmjay's NSFW Threesome Pose Pack (F-F-F)",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "21894",
+            "modName": "Fem V pose pack - Feathers - PM and AMM - DELETED",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "22108",
+            "modName": "CoD Ghost NPV AMM and Photomode",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "22240",
+            "modName": "Footish Feast 2 Poses",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "22254",
+            "modName": "LOVE Couple Custom Pose Pack 11 -PM Prop-",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "22427",
+            "modName": "Pinup Bondage Poses",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "22514",
+            "modName": "Relaxing Sensations Poses",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "22437",
+            "modName": "Little Talks - Couple Posepack",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "22871",
+            "modName": "Game Of Trust Pose Pack",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "23369",
+            "modName": "Standing 101 Fem V PM and  AMM Poses - DELETED",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "23580",
+            "modName": "Rev's Poses - Preem Kicks Volume One (REVised)",
+            "notes": ""
+          },
+          {
+            "externalRequirement": false,
+            "gameId": "3333",
+            "modId": "22753",
+            "modName": "Simple Poses",
+            "notes": ""
+          }
+        ],
+        "totalCount": 190
+      },
+      "nexusRequirements": {
+        "nodes": [
+          {
+            "externalRequirement": false,
+            "modId": "7780",
+            "modName": "Codeware",
+            "notes": "",
+            "url": ""
+          },
+          {
+            "externalRequirement": false,
+            "modId": "2380",
+            "modName": "RED4ext",
+            "notes": "",
+            "url": ""
+          },
+          {
+            "externalRequirement": false,
+            "modId": "1511",
+            "modName": "redscript",
+            "notes": "",
+            "url": ""
+          }
+        ],
+        "totalCount": 3
+      }
+    },
+    "name": "PhotoMode-EX",
+    "status": "published",
+    "uid": "14315126016407",
+    "version": "1.5.0"
+  },
+  "modFiles": [
+    {
+      "category": "ARCHIVED",
+      "changelogText": [],
+      "date": 1736036736,
+      "description": "",
+      "fileId": 96789,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 3,
+      "sizeInBytes": "2919",
+      "totalDownloads": 449,
+      "uniqueDownloads": 432,
+      "uri": "PhotoMode-EX-18839-1-0-0-1736036736.zip",
+      "version": "1.0.0"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Added precise position inputs",
+        "Disabled Depth Of Field effect by default"
+      ],
+      "date": 1736082580,
+      "description": "",
+      "fileId": 96834,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 3,
+      "sizeInBytes": "3026",
+      "totalDownloads": 696,
+      "uniqueDownloads": 665,
+      "uri": "PhotoMode-EX-18839-1-1-0-1736082580.zip",
+      "version": "1.1.0"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Fixed character selector for base game NPCs"
+      ],
+      "date": 1736163656,
+      "description": "",
+      "fileId": 96927,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 3,
+      "sizeInBytes": "3097",
+      "totalDownloads": 3879,
+      "uniqueDownloads": 3659,
+      "uri": "PhotoMode-EX-18839-1-1-1-1736163656.zip",
+      "version": "1.1.1"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Fixed Depth Of Field switch not showing correct state"
+      ],
+      "date": 1736449168,
+      "description": "",
+      "fileId": 97329,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 3,
+      "sizeInBytes": "3199",
+      "totalDownloads": 22,
+      "uniqueDownloads": 19,
+      "uri": "PhotoMode-EX-18839-1-1-2-1736449168.zip",
+      "version": "1.1.2"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Fixed Depth Of Field switch not showing correct state"
+      ],
+      "date": 1736449345,
+      "description": "",
+      "fileId": 97331,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 3,
+      "sizeInBytes": "3199",
+      "totalDownloads": 85,
+      "uniqueDownloads": 77,
+      "uri": "PhotoMode-EX-18839-1-1-2-1736449345.zip",
+      "version": "1.1.2"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Reuploaded correct release archive"
+      ],
+      "date": 1736450252,
+      "description": "",
+      "fileId": 97333,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 3,
+      "sizeInBytes": "3099",
+      "totalDownloads": 10565,
+      "uniqueDownloads": 9379,
+      "uri": "PhotoMode-EX-18839-1-1-3-1736450252.zip",
+      "version": "1.1.3"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [],
+      "date": 1737298144,
+      "description": "",
+      "fileId": 98617,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320235",
+      "totalDownloads": 5460,
+      "uniqueDownloads": 5017,
+      "uri": "PhotoMode-EX-18839-1-2-0-1737298144.zip",
+      "version": "1.2.0"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [],
+      "date": 1737652020,
+      "description": "",
+      "fileId": 99125,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320597",
+      "totalDownloads": 158,
+      "uniqueDownloads": 148,
+      "uri": "PhotoMode-EX-18839-1-3-0-1737652020.zip",
+      "version": "1.3.0"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Updated compatibility to game patch 2.21"
+      ],
+      "date": 1737653440,
+      "description": "",
+      "fileId": 99129,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320577",
+      "totalDownloads": 83140,
+      "uniqueDownloads": 63870,
+      "uri": "PhotoMode-EX-18839-1-3-1-1737653440.zip",
+      "version": "1.3.1"
+    },
+    {
+      "category": "ARCHIVED",
+      "changelogText": [
+        "Updated compatibility to game patch 2.21"
+      ],
+      "date": 1737653472,
+      "description": "",
+      "fileId": 99130,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320577",
+      "totalDownloads": 10,
+      "uniqueDownloads": 7,
+      "uri": "PhotoMode-EX-18839-1-3-1-1737653472.zip",
+      "version": "1.3.1"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Added \"Look At Camera\" preset for eyes only",
+        "Fixed NPCs using their own inventory for poses"
+      ],
+      "date": 1741787851,
+      "description": "",
+      "fileId": 103825,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320869",
+      "totalDownloads": 100169,
+      "uniqueDownloads": 73573,
+      "uri": "PhotoMode-EX-18839-1-3-2-1741787851.zip",
+      "version": "1.3.2"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Updated compatibility to game patch 2.3"
+      ],
+      "date": 1755552524,
+      "description": "",
+      "fileId": 118330,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 313,
+      "sizeInBytes": "320005",
+      "totalDownloads": 351445,
+      "uniqueDownloads": 223145,
+      "uri": "PhotoMode-EX-18839-1-4-0-1755552524.zip",
+      "version": "1.4.0"
+    },
+    {
+      "category": "OLD_VERSION",
+      "changelogText": [
+        "Added ability to adjust step of position sliders (photo_mode.character.position_adjust_step)"
+      ],
+      "date": 1778256050,
+      "description": "",
+      "fileId": 144627,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 0,
+      "scannedV2": "VERIFIED",
+      "size": 326,
+      "sizeInBytes": "334319",
+      "totalDownloads": 285161,
+      "uniqueDownloads": 178566,
+      "uri": "PhotoMode-EX-18839-1-4-1-1778256050.zip",
+      "version": "1.4.1"
+    },
+    {
+      "category": "MAIN",
+      "changelogText": [
+        "Updated compatibility to game patch 2.5 (thanks to arm4ni)"
+      ],
+      "date": 1793345239,
+      "description": "Thanks to arm4ni (https://www.nexusmods.com/profile/arm4ni) for helping with this update",
+      "fileId": 170889,
+      "groupId": 2828359,
+      "name": "PhotoMode-EX",
+      "primary": 1,
+      "scannedV2": "VERIFIED",
+      "size": 332,
+      "sizeInBytes": "340778",
+      "totalDownloads": 39048,
+      "uniqueDownloads": 33368,
+      "uri": "c8/cc/d8/c8ccd808-fb86-414c-9b6c-b6fe0fa3c289",
+      "version": "1.5.0"
+    }
+  ]
+}

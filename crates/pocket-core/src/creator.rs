@@ -7,8 +7,14 @@
 //!   POST /uploads/{id}/finalise → poll GET /uploads/{id} until data.state == "available"
 //!   POST /mod-files/{file_id}/versions { upload_id, name, version, description?, file_category (main|optional|miscellaneous),
 //!        archive_existing_file, update_mod_version, ... } → { data: { version: { id } } }
-//!   POST /mods/{mod_id}/changelogs { version, changelog }
+//!   POST /mods/{mod_uid}/changelogs { version, changelog }
+//! The v3 schema calls these ids "the unique identifier": for a mod that is the composite uid (gameId << 32 | modId,
+//! verified live to equal GraphQL `uid` and v3 `GET /games/{domain}/mods/{id}` → `data.id`), not the number in the
+//! page's address, so the changelog call converts it. The file id is the update chain ("file group id" in earlier
+//! versions of the action); `mods` lists them so authors do not have to look them up.
 //! UNVERIFIED here (needs an author's key): every call. A brand-new mod page still needs the website's upload form.
+
+pub mod mods;
 
 use crate::archive;
 use crate::cyberpunk::layout::{plan_install, FileKind, InstallPlan};
@@ -29,7 +35,13 @@ pub struct Check {
     /// Things that work but could be better.
     pub tips: Vec<String>,
     pub files: usize,
+    /// Frameworks the files show the mod needs: list them as requirements on the mod page.
+    pub needs: Vec<Needed>,
 }
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Needed { pub key: &'static str, pub name: &'static str, pub mod_id: u32, pub url: String }
 
 fn listing(path: &Path) -> Result<Vec<String>> {
     if path.is_dir() {
@@ -62,7 +74,9 @@ pub fn check(path: &Path, name: &str) -> Result<Check> {
     }
     if !plan.warnings.is_empty() { problems.extend(plan.warnings.iter().filter(|w| w.contains("same path")).cloned()); }
     if entries.iter().any(|e| e.to_lowercase().ends_with(".exe") || e.to_lowercase().ends_with(".msi")) { problems.push("It contains an installer program. Nexus may hold it for a virus scan and managers will not run it.".into()); }
-    Ok(Check { files: entries.len(), plan, problems, tips })
+    let needs = plan.uses.iter().map(|f| crate::cyberpunk::frameworks::info(*f))
+        .map(|i| Needed { key: i.key, name: i.name, mod_id: i.nexus_mod_id, url: format!("https://www.nexusmods.com/{}/mods/{}", crate::GAME_DOMAIN, i.nexus_mod_id) }).collect();
+    Ok(Check { files: entries.len(), plan, problems, tips, needs })
 }
 
 /// A .zip with each file at its game path (archive/pc/mod/…, r6/scripts/…). Only folders can be packed.
@@ -86,8 +100,10 @@ pub fn package(folder: &Path, out_dir: &Path, name: &str, version: &str) -> Resu
 #[serde(rename_all = "camelCase")]
 pub struct Publish {
     pub file: PathBuf,
-    /// The Nexus file to add a version to (mod page, Files tab, "Advanced").
-    pub file_id: u64,
+    /// The Nexus file (update chain) to add a version to. A number or a string, as the Upload API lists it.
+    #[serde(deserialize_with = "id_string")]
+    pub file_id: String,
+    /// The mod's id from its page address (or its composite uid), for the changelog.
     pub mod_id: Option<u64>,
     pub version: String,
     pub display_name: Option<String>,
@@ -148,20 +164,39 @@ pub async fn publish(http: &reqwest::Client, key: &str, p: &Publish, mut progres
     }
     let body = serde_json::json!({ "upload_id": id, "name": p.display_name.clone().unwrap_or(fname), "description": p.description, "version": p.version,
         "file_category": p.category, "archive_existing_file": p.archive_existing, "update_mod_version": p.update_mod_version });
-    let r = api(reqwest::Method::POST, &format!("/mod-files/{}/versions", p.file_id)).json(&body).send().await?;
+    let r = api(reqwest::Method::POST, &format!("/mod-files/{}/versions", p.file_id.trim())).json(&body).send().await?;
     let st = r.status().as_u16();
     if !r.status().is_success() { return Err(fail("Nexus did not add the version", st, r.text().await.unwrap_or_default())); }
     let v: serde_json::Value = r.json().await?;
     let version_id = v["data"]["version"]["id"].as_u64().unwrap_or(0);
     if let (Some(text), Some(mod_id)) = (p.changelog.as_deref().filter(|t| !t.trim().is_empty()), p.mod_id) {
-        let _ = api(reqwest::Method::POST, &format!("/mods/{mod_id}/changelogs")).json(&serde_json::json!({ "version": p.version, "changelog": text })).send().await?;
+        let uid = mods::mod_uid(mod_id);
+        let _ = api(reqwest::Method::POST, &format!("/mods/{uid}/changelogs")).json(&serde_json::json!({ "version": p.version, "changelog": text })).send().await?;
     }
     Ok(version_id)
+}
+
+fn id_string<'de, D: serde::Deserializer<'de>>(d: D) -> std::result::Result<String, D::Error> {
+    match serde_json::Value::deserialize(d)? {
+        serde_json::Value::String(s) if !s.trim().is_empty() => Ok(s.trim().to_owned()),
+        serde_json::Value::Number(n) => Ok(n.to_string()),
+        _ => Err(serde::de::Error::custom("a file id")),
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn publish_takes_a_file_id_as_number_or_text() {
+        let a: Publish = serde_json::from_value(serde_json::json!({ "file": "x.zip", "fileId": 2828359, "version": "1", "category": "main", "archiveExisting": true, "updateModVersion": false })).unwrap();
+        let b: Publish = serde_json::from_value(serde_json::json!({ "file": "x.zip", "fileId": " 2828359 ", "modId": 18839, "version": "1", "category": "main", "archiveExisting": true, "updateModVersion": false })).unwrap();
+        assert_eq!(a.file_id, "2828359");
+        assert_eq!(b.file_id, a.file_id);
+        assert_eq!(mods::mod_uid(b.mod_id.unwrap()), 14315126016407);
+    }
+
     #[test]
     fn checks_and_packs_a_folder() {
         let dir = tempfile::tempdir().unwrap();
@@ -174,6 +209,7 @@ mod tests {
         let c = check(&m, "My Mod").unwrap();
         assert!(c.problems.iter().any(|p| p.contains("installer program")));
         assert!(c.tips.iter().any(|t| t.contains("archive/pc/mod")));
+        assert!(c.needs.iter().any(|n| n.key == "redscript" && n.mod_id == 1511), "the .reds file needs redscript: {:?}", c.needs);
         let out = package(&m, &dir.path().join("out"), "My Mod", "1.2").unwrap();
         let names = archive::list(&out).unwrap();
         assert!(names.contains(&"archive/pc/mod/jacket.archive".to_string()) && names.contains(&"r6/scripts/My/x.reds".to_string()));

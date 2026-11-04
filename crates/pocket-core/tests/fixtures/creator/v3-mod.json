@@ -1,0 +1,50 @@
+{
+  "data": {
+    "adult_content": false,
+    "author": "psiberx",
+    "category": {
+      "id": "9",
+      "name": "Utilities"
+    },
+    "description": "",
+    "gallery_images": [
+      {
+        "blurred_large_thumbnail_url": "https://images.nexusmods.com/mod-images/3333/tb/large/18/18839/18839-1736036811-20136042.png",
+        "blurred_thumbnail_url": "https://images.nexusmods.com/mod-images/3333/tb/med/18/18839/18839-1736036811-20136042.png",
+        "id": "286747",
+        "large_thumbnail_url": "https://images.nexusmods.com/mod-images/3333/t/large/18/18839/18839-1736036811-20136042.png",
+        "thumbnail_url": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/18839/18839-1736036811-20136042.png",
+        "title": "",
+        "url": "https://staticdelivery.nexusmods.com/mods/3333/images/18839/18839-1736036811-20136042.png"
+      }
+    ],
+    "game_id": "3333",
+    "game_scoped_id": "18839",
+    "id": "14315126016407",
+    "name": "PhotoMode-EX",
+    "primary_file_version": {
+      "game_scoped_id": "170889",
+      "id": "14315126168457"
+    },
+    "primary_image": {
+      "blurred_large_thumbnail_url": "https://images.nexusmods.com/mod-images/3333/tb/large/18/18839/18839-1736036811-20136042.png",
+      "blurred_thumbnail_url": "https://images.nexusmods.com/mod-images/3333/tb/med/18/18839/18839-1736036811-20136042.png",
+      "large_thumbnail_url": "https://images.nexusmods.com/mod-images/3333/t/large/18/18839/18839-1736036811-20136042.png",
+      "thumbnail_url": "https://staticdelivery.nexusmods.com/mods/3333/images/thumbnails/18839/18839-1736036811-20136042.png",
+      "url": "https://staticdelivery.nexusmods.com/mods/3333/images/18839/18839-1736036811-20136042.png"
+    },
+    "stats": {
+      "downloads": 881135,
+      "endorsements": 4623,
+      "unique_downloads": 438593,
+      "views": 0
+    },
+    "status": "published",
+    "tags": [],
+    "uploader": {
+      "id": "108159138",
+      "name": "psiberx"
+    },
+    "version": "1.5.0"
+  }
+}

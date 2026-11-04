@@ -381,8 +381,8 @@ export const testHandler = () => call<void>("nxm_handler_test");
 
 // ── for mod authors ──
 
-export interface CreatorCheck { plan: InstallPlan; problems: string[]; tips: string[]; files: number }
-export interface PublishRequest { file: string; fileId: number; modId?: number | null; version: string; displayName?: string | null; description?: string | null; category: "main" | "optional" | "miscellaneous"; changelog?: string | null; archiveExisting: boolean; updateModVersion: boolean }
+export interface CreatorCheck { plan: InstallPlan; problems: string[]; tips: string[]; files: number; needs: Array<{ key: FrameworkKey; name: string; modId: number; url: string }> }
+export interface PublishRequest { file: string; fileId: number | string; modId?: number | null; version: string; displayName?: string | null; description?: string | null; category: "main" | "optional" | "miscellaneous"; changelog?: string | null; archiveExisting: boolean; updateModVersion: boolean }
 export const creator = {
   check: (path: string, name: string) => call<CreatorCheck>("creator_check", { path, name }),
   pack: (path: string, name: string, version: string) => call<string>("creator_package", { path, name, version }),
@@ -437,3 +437,42 @@ export const addons = {
 };
 /** A JSON file from the marketplace folder (`index.json`, `themes/x.json` …), cached for an hour. */
 export const marketGet = (path: string, fresh = false) => call<string>("market_get", { path, fresh });
+
+// ── for mod authors: their own mods on Nexus ──
+
+/** One file version of an author's mod. groupId is the update chain every version shares (the Upload API's file id). */
+export interface AuthorFile {
+  fileId: number; name: string; version: string; category: string; size: number; sizeInBytes: number | null; date: number; primary: number; uri: string;
+  description?: string | null; totalDownloads: number; uniqueDownloads: number; groupId: number | null; scannedV2: string | null; changelogText: string[];
+}
+/** Website pages for one mod, opened in the in-app Nexus window. */
+export interface ModLinks { page: string; files: string; posts: string; bugs: string; logs: string; edit: string; editFiles: string }
+export interface MyMod {
+  modId: number; uid: string; name: string; summary: string; author: string | null; uploader: { name: string; memberId: number } | null; version: string;
+  status: string; category: string; adultContent: boolean; createdAt: string; updatedAt: string; downloads: number; endorsements: number;
+  uniqueDownloads: number | null; pictureUrl: string | null; thumbnailUrl: string | null; requirements: number; requiredBy: number;
+  files: AuthorFile[]; oldFiles: number; pinned: boolean; links: ModLinks;
+}
+export interface MyMods {
+  author: { memberId: number; name: string; avatar: string | null; modCount: number; uniqueModDownloads: number; kudos: number; recognizedAuthor: boolean; joined: string | null };
+  mods: MyMod[];
+  totals: { mods: number; downloads: number; uniqueDownloads: number; endorsements: number; files: number };
+  thisMonth: { year: number; month: number; downloads: number; uniqueDownloads: number } | null;
+  own: boolean; missingPinned: Array<{ modId: number; links: ModLinks }>; links: { profile: string; addMod: string }; fetchedAt: number; fromCache: boolean;
+}
+export interface ModManage {
+  modId: number; uid: string; name: string; version: string; status: string; uniqueDownloads: number | null; files: AuthorFile[];
+  changelog: Array<{ version: string; date: number; lines: string[] }>;
+  requirements: Requirement[]; requirementsTotal: number; dlc: string[]; requiredBy: Requirement[]; requiredByTotal: number; links: ModLinks;
+}
+export interface UploadTarget { id: string; name: string; versionsCount: number | null; lastUploadedAt: string | null; isActive: boolean | null; groupId: number | null }
+export const authoring = {
+  /** A member's Cyberpunk mods. user: a name, member id or profile link; null for the signed-in member. */
+  myMods: (user: string | null, refresh = false) => call<MyMods>("creator_my_mods", { user, refresh }),
+  modFiles: (modId: number) => call<ModManage>("creator_mod_files", { modId }),
+  uploadTargets: (modId: number) => call<UploadTarget[]>("creator_upload_targets", { modId }),
+  pin: (memberId: number, modRef: string) => call<number>("creator_pin", { memberId, modRef }),
+  unpin: (memberId: number, modId: number) => call<void>("creator_unpin", { memberId, modId }),
+};
+/** A link to one file on a mod's Files tab. */
+export const fileLink = (links: ModLinks, fileId: number) => `${links.files}&file_id=${fileId}`;
