@@ -254,7 +254,7 @@ pub const PANEL_SHELL: &str = include_str!("panel-shell.html");
 
 /// No network at all (fetch, images, fonts, frames, forms); inline script and style only. `sandbox` keeps the page in
 /// an opaque origin even if it is opened outside its frame.
-pub const PANEL_CSP: &str = "sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:; base-uri 'none'; form-action 'none'";
+pub const PANEL_CSP: &str = "sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:; frame-src 'none'; child-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'";
 
 fn decode(s: &str) -> String {
     let b = s.as_bytes();
@@ -284,6 +284,13 @@ pub fn panel_page(app: &AppHandle, path: &str) -> Result<String> {
 
 /// The `pmext` protocol: a panel's page with its own CSP.
 pub fn panel_protocol(app: &AppHandle, request: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    // a panel loads only as the Add-ons screen's frame; opened as a page of its own (a navigation in some window)
+    // it would get that window's access to the app
+    let dest = request.headers().get("sec-fetch-dest").and_then(|v| v.to_str().ok()).unwrap_or("iframe").to_ascii_lowercase();
+    if dest != "iframe" && dest != "frame" && dest != "empty" {
+        return Response::builder().status(StatusCode::FORBIDDEN).header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
+            .body(b"A panel opens only inside Pocket Mods' Add-ons screen.".to_vec()).unwrap_or_else(|_| Response::new(Vec::new()));
+    }
     let page = panel_page(app, request.uri().path());
     let (status, kind, body) = match page {
         Ok(html) => (StatusCode::OK, "text/html; charset=utf-8", html.into_bytes()),

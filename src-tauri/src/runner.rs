@@ -91,10 +91,18 @@ pub fn open_nexus(app: &AppHandle, url: &str) -> tauri::Result<()> {
                 tauri::async_runtime::spawn(async move { handle_nxm(&h, &s).await });
                 return false;
             }
-            true
+            nexus_window_may_open(u)
         })
         .build()?;
     Ok(())
+}
+
+/// The Nexus window is for the web (Nexus, its sign-in providers, sites mods link to). It never opens the app's own
+/// pages (the app, extension panels, files): those would get the window's access to the app.
+pub fn nexus_window_may_open(u: &url::Url) -> bool {
+    let host = u.host_str().unwrap_or("").to_ascii_lowercase();
+    let local = host == "localhost" || host.ends_with(".localhost") || host == "127.0.0.1" || host == "[::1]" || host == "0.0.0.0";
+    matches!(u.scheme(), "https" | "http") && !local
 }
 
 /// An nxm:// link from the Nexus window or the OS.
@@ -341,4 +349,16 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
             ItemState::Done { install_id: None, note: Some("This mod has installer options. Choose them in the window that opened (or in Library, Downloaded).".into()) }
         }
     })
+}
+
+#[cfg(test)]
+mod nav_tests {
+    #[test]
+    fn the_nexus_window_never_opens_app_pages() {
+        let ok = |s: &str| super::nexus_window_may_open(&s.parse().unwrap());
+        assert!(ok("https://www.nexusmods.com/cyberpunk2077/mods/107") && ok("https://users.nexusmods.com/auth") && ok("https://accounts.google.com/x"));
+        for bad in ["http://pmext.localhost/evil/panel", "pmext://localhost/evil/panel", "tauri://localhost/", "http://tauri.localhost/", "file:///c:/x", "http://127.0.0.1:1420/", "ipc://localhost/x"] {
+            assert!(!ok(bad), "{bad}");
+        }
+    }
 }

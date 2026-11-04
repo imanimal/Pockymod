@@ -108,3 +108,27 @@ describe("example themes in docs/examples", () => {
     });
   }
 });
+
+describe("theme css that tries to get out", async () => {
+  const { parseThemePackage } = await import("./themePkg");
+  const { validateTheme } = await import("./addon-rules.mjs");
+  const base = { format: "pocket-mods.theme", version: 1, id: "evil", name: "Evil", scheme: "dark", tokens: { "--bg": "#000" } };
+  const attacks = [
+    'a { content: "x\r} body{background-image:image-set(\'https://evil/p.png\' 1x)} q{" }',
+    'a { content: "x\f} body{background:red} q{" }',
+    "a { background: url(data:image/png,x\"y)z\"w); content:\"A} body{color:red}\" }",
+    "a { background: \\75 rl(https://evil/p.png) }",
+    "a { background-image: image-set(\"https://evil/p.png\" 1x) }",
+    "@import 'https://evil/x.css';",
+    "@font-face { font-family: x; src: local(Arial) }",
+  ];
+  for (const css of attacks) {
+    it(`refuses ${JSON.stringify(css).slice(0, 50)}`, () => {
+      expect(() => parseThemePackage(JSON.stringify({ ...base, css }))).toThrow();
+      expect(validateTheme({ ...base, css }).ok).toBe(false);
+    });
+  }
+  it("still takes plain scoped css", () => {
+    expect(() => parseThemePackage(JSON.stringify({ ...base, css: ".panel { border-radius: 2px; }" }))).not.toThrow();
+  });
+});

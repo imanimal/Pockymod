@@ -60,7 +60,8 @@ function skipString(src: string, i: number): number {
   let j = i + 1;
   while (j < src.length && src[j] !== q) {
     if (src[j] === "\\") j++;
-    else if (src[j] === "\n") fail("A string in the theme is not closed.");
+    // CSS ends a line, and so an unclosed string, at \n, \r and \f alike
+    else if (src[j] === "\n" || src[j] === "\r" || src[j] === "\f") fail("A string in the theme is not closed.");
     j++;
   }
   if (j >= src.length) fail("A string in the theme is not closed.");
@@ -108,13 +109,21 @@ function masked(s: string): string {
   return out;
 }
 
+/** What a theme's css may never contain, whatever the parser below makes of it: escapes and the other CSS line
+ * breaks (the ways to make it see something else than the browser does), and anything that loads or runs. */
+const CSS_NEVER = /url\s*\(|image-set|\bimage\s*\(|cross-fade|element\s*\(|expression\s*\(|@import|@font-face|@namespace|-moz-binding|behavior\s*:/i;
+export function checkCssText(css: string): void {
+  if (/[\\\r\f\0]/.test(css)) fail("css: backslashes, carriage returns and form feeds are not allowed. Write characters as they are.");
+  if (CSS_NEVER.test(css)) fail("css: it cannot load anything (no url(), image-set(), @import or @font-face). Put pictures in a token as data:image instead.");
+}
+
 /** A token value: one CSS value, no way to end the declaration or reach outside the theme. */
 export function checkValue(name: string, v: unknown): string {
   if (typeof v !== "string") return fail(`${name}: the value must be text, for example "#101014".`);
   const s = v.trim();
   if (!s) fail(`${name} has no value.`);
   if (s.length > LIMITS.value) fail(`${name}: the value is too long.`);
-  if (/[{}\\]/.test(s)) fail(`${name}: a value cannot contain { } or \\.`);
+  if (/[{}\\\r\f\0]/.test(s)) fail(`${name}: a value cannot contain { } \\ or line breaks.`);
   if (/javascript:/i.test(s)) fail(`${name}: that value is not allowed.`);
   const bare = masked(s);
   if (/[;<>!]/.test(bare)) fail(`${name}: a value cannot contain ; < > or ! (outside a string).`);
@@ -175,7 +184,7 @@ export function checkThemePackage(raw: unknown): ThemePackage {
     light: checkTokens(p.light, "light"),
     css: p.css as string | undefined,
   };
-  if (pkg.css) scopeCss(pkg.css, id); // throws if it cannot be used
+  if (pkg.css) { checkCssText(pkg.css); scopeCss(pkg.css, id); } // throws if it cannot be used
   for (const k of Object.keys(pkg) as Array<keyof ThemePackage>) if (pkg[k] === undefined) delete pkg[k];
   return pkg;
 }

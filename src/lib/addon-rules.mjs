@@ -232,7 +232,9 @@ export function approvalItems(m) {
 // ── themes (the format is the theme engine's, src/lib/theme.ts; these are the marketplace checks) ──
 
 const TOKEN = /^--[a-z][a-z0-9-]*$/;
-const NO_NETWORK = /url\s*\(|@import|expression\s*\(/i;
+const NO_NETWORK = /url\s*\(|@import|@font-face|@namespace|expression\s*\(|image-set|\bimage\s*\(|cross-fade|element\s*\(|-moz-binding|behavior\s*:/i;
+/** Escapes and the other CSS line breaks let css say one thing to a checker and another to the browser. */
+const NO_TRICKS = /[\\\r\f\0]/;
 
 export function validateTheme(t) {
   const c = checker();
@@ -253,14 +255,15 @@ export function validateTheme(t) {
     for (const [key, val] of Object.entries(v)) {
       any++;
       if (!TOKEN.test(key)) c.err(`${part}.${key}`, "is not a CSS custom property (they start with --, like --bg).");
-      if (typeof val !== "string" || !val.trim() || val.length > 300 || /[;{}<>]/.test(val)) c.err(`${part}.${key}`, "must be one CSS value, without ; { } < or >.");
+      if (typeof val !== "string" || !val.trim() || val.length > 300 || /[;{}<>]/.test(val) || NO_TRICKS.test(val)) c.err(`${part}.${key}`, "must be one CSS value, without ; { } < > \\ or line breaks.");
       else if (NO_NETWORK.test(val)) c.err(`${part}.${key}`, "may not load anything (no url() or @import).");
     }
   }
   if (!any) c.err("tokens", "a theme needs colours in tokens, dark or light.");
   if (t.css !== undefined) {
     if (typeof t.css !== "string" || t.css.length > 64 * 1024) c.err("css", "must be text of up to 64 KB.");
-    else if (NO_NETWORK.test(t.css)) c.err("css", "may not load anything (no url() or @import).");
+    else if (NO_TRICKS.test(t.css)) c.err("css", "may not contain backslashes, carriage returns or form feeds.");
+    else if (NO_NETWORK.test(t.css)) c.err("css", "may not load anything (no url(), image-set(), @import or @font-face).");
   }
   return { ok: c.errors.length === 0, errors: c.errors, warnings: c.warnings };
 }

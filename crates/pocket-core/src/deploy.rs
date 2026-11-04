@@ -121,6 +121,10 @@ fn owner_of(db: &Db, target_key: &str) -> Result<Option<(i64, String)>> {
 /// The user's standing choices (`rules`) apply: archive renames change targets, and a remembered "Take them over"
 /// settles a clash without asking (this mod takes the paths, or stays out of them while the winner is there).
 pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &Path, plan: &[Placement], opts: &DeployOptions) -> Result<DeployOutcome> {
+    // every file stays inside the game folder and comes from inside the staging folder, whatever wrote the plan
+    if let Some(bad) = plan.iter().find(|p| !crate::cyberpunk::layout::safe_target(&p.target) || !crate::cyberpunk::layout::safe_target(&p.source)) {
+        return Err(Error::Invalid(format!("This mod asks to put a file outside the game folder ({}). Nothing was installed.", bad.target)));
+    }
     let plan = &crate::rules::apply_renames(db, install_id, plan)?[..];
     // 1. conflicts with other installs
     let mut conflicts = Vec::new();
@@ -352,7 +356,9 @@ fn write_manifest(staging: &Path, db: &Db, install_id: i64) -> Result<()> {
 fn manifest_source(staging: &Path, target_key: &str) -> Option<PathBuf> {
     let text = fs::read_to_string(staging.join(MANIFEST)).ok()?;
     let v: serde_json::Value = serde_json::from_str(&text).ok()?;
+    // only a file inside this staging folder: the manifest says where a file came from, it cannot send us elsewhere
     v["files"].as_array()?.iter().find(|f| f["target"] == target_key).and_then(|f| f["source"].as_str()).map(PathBuf::from)
+        .filter(|p| p.starts_with(staging) && !p.components().any(|c| matches!(c, std::path::Component::ParentDir)))
 }
 
 /// Is the file in the game still the one the mod put there? Hard links must be the same file; copies the same size;

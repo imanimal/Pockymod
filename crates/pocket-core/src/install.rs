@@ -245,6 +245,13 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
     if req.keep_existing {
         if let Some(out) = keep_users_copy(db, game, library, req, &plan)? { let _ = fs::remove_dir_all(&fresh); return Ok(out); }
     }
+    // the app's own files (.pocket-plan.json, .pocket-manifest.json …) come from the app, never from a mod's archive
+    for e in fs::read_dir(&fresh).into_iter().flatten().flatten() {
+        if e.file_name().to_string_lossy().to_lowercase().starts_with(".pocket-") {
+            let p = e.path();
+            if p.is_dir() { let _ = fs::remove_dir_all(&p); } else { let _ = fs::remove_file(&p); }
+        }
+    }
     if let Some(files) = &chosen { fs::write(fresh.join(PLAN_FILE), serde_json::to_string(files).unwrap_or_default())?; }
     if let (Some(cfg), Some(c)) = (&fomod_cfg, &req.fomod_choices) { fs::write(fresh.join(CHOICES_FILE), serde_json::json!({ "config": cfg, "choices": c }).to_string())?; }
 
@@ -793,6 +800,31 @@ mod tests {
         assert!(game.join("archive/pc/mod/extra.archive").exists());
         assert!(list_installs(&db).unwrap().iter().all(|r| r.enabled));
         assert!(duplicates(&db).unwrap().is_empty(), "main and optional are not duplicates");
+    }
+
+    #[test]
+    fn a_mod_cannot_put_files_outside_the_game_folder() {
+        let dir = tempfile::tempdir().unwrap();
+        let game = dir.path().join("game");
+        fs::create_dir_all(game.join("bin/x64")).unwrap();
+        let lib = dir.path().join("PocketMods");
+        let db = Db::memory().unwrap();
+        // an archive that brings its own plan file, pointing outside the game
+        let a = dir.path().join("evil.zip");
+        zip(&a, &[("mods/Evil/info.json", "{}"), ("mods/Evil/archives/m.archive", "m"), ("payload.exe", "x"),
+                  (".pocket-plan.json", r#"[{"source":"payload.exe","target":"../outside/evil.exe","kind":"gamefile"}]"#)]);
+        let req = InstallRequest { mod_id: 66, file_id: 1, name: "Evil".into(), version: "1".into(), archive: a, accept_unknown: true, replace_older: true,
+            options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
+        let InstallOutcome::Installed { install_id, .. } = install(&db, &game, &lib, &req).unwrap() else { panic!() };
+        crate::profiles::set_enabled(&db, &game, &lib, install_id, false, &Default::default()).unwrap();
+        crate::profiles::set_enabled(&db, &game, &lib, install_id, true, &Default::default()).unwrap();
+        assert!(!dir.path().join("outside").exists(), "the archive's own plan file was not trusted");
+        // a plan that reaches outside is refused outright
+        let bad = vec![crate::cyberpunk::layout::Placement { source: "payload.exe".into(), target: "../outside/evil.exe".into(), kind: crate::cyberpunk::layout::FileKind::GameFile }];
+        assert!(deploy::deploy(&db, &game, &lib, install_id, &staging_dir(&lib, 66, 1), &bad, &Default::default()).is_err());
+        assert!(crate::cyberpunk::layout::placement("payload.exe", "..\\..\\steam.exe").is_none());
+        assert!(crate::cyberpunk::layout::placement("payload.exe", "C:\\Users\\Public\\x.exe").is_none());
+        assert!(!dir.path().join("outside").exists());
     }
 
     #[test]

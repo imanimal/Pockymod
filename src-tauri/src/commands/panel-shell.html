@@ -2,10 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:; frame-src 'none'; child-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>Panel</title>
+<script>
+// A panel runs only as a frame of the Add-ons screen. Opened as a page of its own it stops here, before any of the
+// extension's code: as a top-level page it could otherwise reach the window it was opened in.
+if (window.top === window.self) { window.stop(); document.documentElement.innerHTML = ""; throw new Error("A panel opens only inside Pocket Mods."); }
+// No peer-to-peer connections either (WebRTC could reach the network past the CSP).
+for (const k of ["RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel", "RTCSessionDescription", "RTCIceCandidate"]) {
+  try { Object.defineProperty(window, k, { value: undefined, writable: false, configurable: false }); } catch (_) { /* not there */ }
+}
+// frames the panel makes would bring fresh copies of what was removed above: no frames
+try {
+  const desc = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, "contentWindow");
+  Object.defineProperty(HTMLIFrameElement.prototype, "contentWindow", { get() { return null; }, configurable: false });
+  Object.defineProperty(HTMLIFrameElement.prototype, "contentDocument", { get() { return null; }, configurable: false });
+  void desc;
+} catch (_) { /* older engines */ }
+</script>
 <style>
 /* The panel's page. The app sends its colours on start and whenever the theme changes (see docs/extensions.md). */
 :root {

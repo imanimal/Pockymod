@@ -119,11 +119,15 @@ pub fn extract(path: &Path, dest: &Path) -> Result<Vec<String>> {
             while let Some(header) = arch.read_header().map_err(|e| Error::Archive(e.to_string()))? {
                 let entry = header.entry();
                 let rel = entry.is_file().then(|| safe_relative(&entry.filename.to_string_lossy())).flatten();
+                // read the entry and write it ourselves, as for zip and 7z: UnRAR's own extraction would follow
+                // symlink, hardlink and file-copy entries, which can point outside the folder
                 arch = match rel {
                     Some(rel) => {
                         let t = target(&rel)?;
+                        let (data, next) = header.read().map_err(|e| Error::Archive(e.to_string()))?;
+                        std::fs::write(&t, data)?;
                         written.push(rel_string(&rel));
-                        header.extract_to(t).map_err(|e| Error::Archive(e.to_string()))?
+                        next
                     }
                     None => header.skip().map_err(|e| Error::Archive(e.to_string()))?,
                 };

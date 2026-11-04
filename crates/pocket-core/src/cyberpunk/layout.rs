@@ -203,8 +203,16 @@ pub fn plan_install(entries: &[String], mod_name: &str) -> InstallPlan {
     plan
 }
 
-/// A placement for an explicit target (FOMOD choices), or None for docs and images.
+/// A game-relative path that stays inside the folder: no `..`, no root, no drive letter or stream (`:`).
+pub fn safe_target(p: &str) -> bool {
+    let p = p.replace('\\', "/");
+    !p.is_empty() && !p.starts_with('/') && !p.contains('\0') && p.split('/').all(|s| s != ".." && !s.contains(':'))
+}
+
+/// A placement for an explicit target (FOMOD choices), or None for docs and images, and for any path that would
+/// leave the game folder (an installer's XML is the mod author's to write).
 pub fn placement(source: &str, target: &str) -> Option<Placement> {
+    if !safe_target(source) || !safe_target(target) { return None; }
     let target = norm(target);
     let kind = kind_of_target(&target);
     (kind != FileKind::Doc && !target.is_empty()).then(|| Placement { source: norm(source), target, kind })
