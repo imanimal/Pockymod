@@ -766,9 +766,9 @@ mod tests {
     #[test]
     fn reads_members_and_mods_as_typed() {
         assert_eq!(member_ref(" 108159138 "), Some(MemberRef::Id(108159138)));
-        assert_eq!(member_ref("@psiberx"), Some(MemberRef::Name("psiberx".into())));
+        assert_eq!(member_ref("@some-author"), Some(MemberRef::Name("some-author".into())));
         assert_eq!(member_ref("https://www.nexusmods.com/users/108159138?tab=user+files"), Some(MemberRef::Id(108159138)));
-        assert_eq!(member_ref("https://www.nexusmods.com/profile/psiberx/mods"), Some(MemberRef::Name("psiberx".into())));
+        assert_eq!(member_ref("https://www.nexusmods.com/profile/some-author/mods"), Some(MemberRef::Name("some-author".into())));
         assert_eq!(member_ref("https://example.com/users/1"), None);
         assert_eq!(member_ref("  "), None);
         assert_eq!(mod_ref("4198"), Some(4198));
