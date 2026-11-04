@@ -7,8 +7,8 @@ The app comes with three themes:
 
 | Theme | Look | Schemes | Effects it suggests |
 | --- | --- | --- | --- |
-| Standard (the default) | a plain modern layout: flat keys, darkened bands, LCDs as status readouts, line icons | dark and light | subtle |
-| Redline | a heads-up display: red lines on black, cut corners, bracket marks, uppercase labels | dark | full |
+| Standard | a plain modern layout: flat keys, darkened bands, LCDs as status readouts, line icons | dark and light | subtle |
+| Redline (the default) | a heads-up display: red lines on black, cut corners, bracket marks, uppercase labels | dark | full |
 | Pocket | the handheld: raised keys, green LCDs, pixel icons, a dot grid | light (Cream) and dark (Night) | off |
 
 Your theme builds on one of these. It keeps that theme's shapes and changes the colours and anything else you set.
@@ -218,7 +218,7 @@ from the app is the file you share.
 
 - Picking a theme you installed asks **Keep this theme?** and goes back to the one you had after 12 seconds unless
   you press Keep.
-- **Ctrl+Alt+Shift+T** switches back to Standard from anywhere, even when the theme hides the menus.
+- **Ctrl+Alt+Shift+T** switches back to Redline, the default, from anywhere, even when the theme hides the menus.
 - A theme's own css is switched off while the extension review dialog is open, so what an extension asks for always
   shows as it is.
 - Theme css cannot load anything: `url()`, `image-set()`, `@import` and `@font-face` are refused, and so are

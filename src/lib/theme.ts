@@ -32,13 +32,15 @@ export interface ThemeInfo {
   text?: string;
 }
 
-export const DEFAULT_THEME = "standard";
+/** Redline, styled after the game's own HUD, is what a new install starts in. */
+export const DEFAULT_THEME = "redline";
 
+/** The default first: it is also where the app falls back to when a theme is removed. */
 export const BUILTIN_THEMES: ThemeInfo[] = [
+  { id: "redline", name: "Redline", builtin: true, look: "redline", schemes: ["dark"],
+    description: "A heads-up display: red lines on black, cut corners, cyan highlights and one yellow key. The default." },
   { id: "standard", name: "Standard", builtin: true, look: "standard", schemes: ["dark", "light"],
     description: "A plain modern layout: dark blue-grey, a yellow accent, cyan for what is selected, dark bands." },
-  { id: "redline", name: "Redline", builtin: true, look: "redline", schemes: ["dark"],
-    description: "A heads-up display: red lines on black, cut corners, cyan highlights and one yellow key." },
   { id: "pocket", name: "Pocket", builtin: true, look: "pocket", schemes: ["light", "dark"],
     description: "The handheld: raised keys, green LCDs and pixel icons, in Cream and Night." },
 ];
@@ -73,8 +75,8 @@ export interface ThemeState {
 
 let installed = new Map<string, ThemeInfo>();
 let state: ThemeState = {
-  id: DEFAULT_THEME, name: "Standard", look: "standard", choice: "dark", scheme: "dark", schemes: ["dark", "light"],
-  fx: "subtle", fxChoice: null, fxTheme: "subtle", icons: "line", motion: true,
+  id: DEFAULT_THEME, name: "Redline", look: "redline", choice: "dark", scheme: "dark", schemes: ["dark"],
+  fx: "full", fxChoice: null, fxTheme: "full", icons: "line", motion: true,
 };
 const subs = new Set<() => void>();
 
@@ -197,7 +199,7 @@ function infoFrom(text: string): ThemeInfo {
   const pkg = parseThemePackage(text);
   return {
     id: pkg.id, name: pkg.name, author: pkg.author, description: pkg.description, builtin: false,
-    look: pkg.base ?? DEFAULT_THEME, schemes: packageSchemes(pkg), css: compileTheme(pkg), pkg, text,
+    look: pkg.base ?? "standard", schemes: packageSchemes(pkg), css: compileTheme(pkg), pkg, text,
   };
 }
 
@@ -231,8 +233,8 @@ export function suspendUserCss(on: boolean) {
   if (st) st.media = on ? "not all" : "";
 }
 
-/** Back to Standard, from anywhere (Ctrl+Alt+Shift+T): the way out when a theme hides the app. */
-export function resetTheme(): Promise<void> { return setTheme("standard", "dark"); }
+/** Back to the built-in default (Redline), from anywhere (Ctrl+Alt+Shift+T): the way out when a theme hides the app. */
+export function resetTheme(): Promise<void> { return setTheme(DEFAULT_THEME, "dark"); }
 
 export async function setTheme(id: string, choice?: SchemeChoice): Promise<void> {
   let info = themeInfo(id);

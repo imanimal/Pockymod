@@ -26,9 +26,9 @@ import { Toasts, toast } from "./ui/toast";
 import { installPrefs } from "./lib/prefs";
 import { errorText, game, handler, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
 import { resetTheme, toggleScheme, useTheme, watchSystemTheme } from "./lib/theme";
-import { channel } from "./ui/fx";
+import { channel, powerOff, powerOn } from "./ui/fx";
 import { nope } from "./ui/motion";
-import { windowAction } from "./lib/tauri";
+import { call, inTauri, listen, windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
 
 export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "create" | "gallery" | "addons";
@@ -60,11 +60,24 @@ export function App() {
   useEffect(() => { settings.get("onboarded").then((v) => setOnboard(v !== "1")).catch(() => {}); }, []);
 
   useEffect(() => watchSystemTheme(() => {}), []);
-  useEffect(() => channel(), [view]);
+  useEffect(() => {
+    channel();
+    // while the new view settles in, its scrollbars stay out of sight (fx.css), so none flashes for the slide
+    const v = document.querySelector(".shell > .view");
+    v?.classList.add("entering");
+    const t = setTimeout(() => v?.classList.remove("entering"), 900);
+    return () => { clearTimeout(t); v?.classList.remove("entering"); };
+  }, [view]);
+  // closing the window: the picture turns off like a tube, then the app quits (src-tauri/src/power.rs)
+  useEffect(() => {
+    let off: (() => void) | undefined;
+    listen<{ seq: number }>("power-off", (p) => powerOff(() => { void call("power_done", { seq: p.seq }).catch(() => {}); })).then((u) => { off = u; });
+    return () => off?.();
+  }, []);
   useEffect(() => installUndoKeys(), []);
   // the way out of a theme that hides the app: Ctrl+Alt+Shift+T, wherever the focus is
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); void resetTheme().then(() => toast("Theme reset to Standard.")); } };
+    const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); void resetTheme().then(() => toast("Theme reset to Redline.")); } };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, []);
@@ -127,7 +140,7 @@ export function App() {
         <span className="winkeys">
           <button type="button" className="wk" aria-label="Minimise" onClick={() => void windowAction("minimize")}><Icon name="minus" size={9} /></button>
           <button type="button" className="wk" aria-label="Maximise" onClick={() => void windowAction("toggleMaximize")}><Icon name="max" size={9} /></button>
-          <button type="button" className="wk wk-x" aria-label="Close" onClick={() => void windowAction("close")}><Icon name="x" size={9} /></button>
+          <button type="button" className="wk wk-x" aria-label="Close" onClick={() => { if (inTauri()) void windowAction("close"); else powerOff(() => setTimeout(() => powerOn(), 700)); }}><Icon name="x" size={9} /></button>
         </span>
       </header>
 

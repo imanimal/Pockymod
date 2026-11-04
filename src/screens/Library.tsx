@@ -206,6 +206,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       {replacedRows.length > 0 && (
         <Module icon="warn" title="Your own files were set aside" count={replacedRows.length}>
           <p>When these went in, files you already had in the game (yours, or Vortex's) were set aside to make room. You can go back to yours: these copies come out and yours are tracked as your own mods.</p>
+          {replacedRows.length > 1 && <div className="actions" style={{ marginTop: ".5em" }}><Key icon="check" disabled={busy} onClick={() => useMine(replacedRows.map((r) => r.id))}>Use mine for all {replacedRows.length}</Key></div>}
           <div className="rows" style={{ marginTop: ".5em" }}>
             {replacedRows.map((r) => (
               <div key={r.id} className="row" style={{ cursor: "default" }}>
@@ -215,9 +216,6 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
               </div>
             ))}
           </div>
-          <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".5em" }}>
-            {replacedRows.length > 1 && <Key icon="check" disabled={busy} onClick={() => useMine(replacedRows.map((r) => r.id))}>Use mine for all {replacedRows.length}</Key>}
-          </div>
         </Module>
       )}
 
@@ -225,6 +223,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         <Module icon="library" title="Mods you have twice" count={dupes.length}
           tools={<Key size="sm" variant="ghost" icon={showExtra ? "hide" : "eye"} onClick={() => setShowExtra(!showExtra)}>{showExtra ? "Hide extra copies" : "Show extra copies"}</Key>}>
           <p className="dim" style={{ fontSize: ".9em" }}>Only one copy of each shows below: the one that is on, your own before one added for another mod. Keep one to tidy up; the others go to Recently removed (a Vortex copy stays in Vortex).</p>
+          {dupes.length > 1 && <div className="actions" style={{ marginTop: ".5em" }}><Key icon="check" disabled={busy} onClick={keepAll}>Tidy up all {dupes.length}</Key></div>}
           <div className="rows" style={{ marginTop: ".5em" }}>
             {dupes.map((d) => {
               const keep = byId.get(d[0]);
@@ -240,7 +239,6 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
               );
             })}
           </div>
-          {dupes.length > 1 && <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".5em" }}><Key icon="check" disabled={busy} onClick={keepAll}>Tidy up all {dupes.length}</Key></div>}
         </Module>
       )}
 

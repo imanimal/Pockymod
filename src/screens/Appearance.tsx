@@ -37,7 +37,7 @@ export function Appearance() {
     setTheme(id).then(() => {
       if (builtin || before === id) return;
       let kept = false;
-      toast("Keep this theme? It goes back in 12 seconds otherwise (Ctrl+Alt+Shift+T resets to Standard any time).", false, { label: "Keep", run: () => { kept = true; toast("Theme kept."); } });
+      toast("Keep this theme? It goes back in 12 seconds otherwise (Ctrl+Alt+Shift+T resets to Redline any time).", false, { label: "Keep", run: () => { kept = true; toast("Theme kept."); } });
       setTimeout(() => { if (!kept) void setTheme(before).then(() => toast("Back to the theme you had.")); }, 12_000);
     }).catch((e) => toast(errorText(e), true));
   };

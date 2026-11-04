@@ -6,18 +6,18 @@
     <title>Pocket Mods</title>
     <script>
       // Apply the theme before first paint, as lib/theme.ts does: the saved theme and scheme (an installed theme from
-      // its cached CSS), else Pocket for someone who used the app before themes, else Standard in dark.
+      // its cached CSS), else Pocket for someone who used the app before themes, else Redline (the default).
       (function () {
         var r = document.documentElement;
         var g = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
-        var old = g("pm.theme"), id = g("pm.theme.id") || (old ? "pocket" : "standard"), c = g("pm.theme.scheme");
+        var old = g("pm.theme"), id = g("pm.theme.id") || (old ? "pocket" : "redline"), c = g("pm.theme.scheme");
         if (!c) c = old === "cream" ? "light" : old === "night" ? "dark" : old === "system" ? "system" : null;
         var looks = { standard: ["dark", "light"], redline: ["dark"], pocket: ["light", "dark"] };
         var look = id, schemes = looks[id], css = null;
         if (!schemes) {
           try { var k = JSON.parse(g("pm.theme.css") || "null"); if (k && k.id === id && looks[k.look]) { look = k.look; schemes = k.schemes; css = k.css; } } catch (e) {}
         }
-        if (!schemes) { id = look = "standard"; schemes = looks.standard; }
+        if (!schemes) { id = look = "redline"; schemes = looks.redline; }
         var want = c === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : c || schemes[0];
         var s = schemes.indexOf(want) >= 0 ? want : schemes[0];
         r.setAttribute("data-theme", id);

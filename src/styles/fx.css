@@ -4,10 +4,12 @@
      subtle  faint scanlines on LCDs and the title bar, a soft vignette at the window's edge, and short flickers when
              the app starts, the view changes and the theme changes. Nothing over body text is blurred or warped.
      full    scanlines over the whole window, a deeper vignette, warped glass on the title bar and toasts (an SVG
-             displacement filter, #pm-glass, from ui/fx.ts), glowing LCD figures and the full moments: the picture
-             opens from a line on power-on, jumps on a channel change, wobbles in colour on a degauss.
-   The overlay (.crt) never takes a click. ui/fx.ts sets the moments as one-shot classes on <html>: fx-power, fx-chan,
-   fx-dg; each lasts calc(var(--m) * N), so the motion setting and reduced motion skip them. */
+             displacement filter, #pm-glass, from ui/fx.ts), glowing LCD figures and the full moments: Collegiapp's
+             channel change between views and a colour wobble on a degauss.
+   With the layer on (subtle or full) the app turns on and off like a tube TV (Collegiapp's power sequences); with it
+   off the picture fades in and out. The overlays (.crt, .tube) never take a click. ui/fx.ts runs the power sequences
+   and the channel change with the Web Animations API, and sets the short moments as one-shot classes on <html>:
+   fx-chan (subtle) and fx-dg. Every duration scales with --m, so the motion setting and reduced motion skip them. */
 
 .crt { position: fixed; inset: 0; z-index: 90; pointer-events: none; display: none; overflow: hidden; }
 html:is([data-fx="subtle"], [data-fx="full"]) .crt { display: block; }
@@ -22,13 +24,6 @@ html[data-fx="full"] .crt > .vig {
     linear-gradient(to bottom, rgba(255, 255, 255, .035), transparent 18%);
   box-shadow: inset 0 0 5em rgba(0, 0, 0, .28);
 }
-/* the beam and the snow, only seen during the moments */
-.crt > .beam { opacity: 0; background: linear-gradient(to bottom, transparent calc(50% - 2px), rgba(var(--glow-rgb), .95) 50%, transparent calc(50% + 2px)); }
-.crt > .snow {
-  opacity: 0; mix-blend-mode: screen;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
-}
-
 /* LCDs and the title bar: faint scanlines (subtle and full) */
 html:is([data-fx="subtle"], [data-fx="full"]) .display::after {
   background-image: repeating-linear-gradient(to bottom, rgba(0, 0, 0, calc(var(--scan) * .22)) 0 1px, transparent 1px 3px), var(--lcd-tex, none);
@@ -56,35 +51,53 @@ html:root[data-fx="full"] .toast {
 html:root[data-fx="full"][data-look="redline"] .toast { background-image: var(--corners-br); }
 html[data-fx="full"] .toast::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(255, 255, 255, .07), transparent 55%); }
 
-/* power on: the picture opens from a bright line across the middle, overbright, then settles (full); a short
-   flicker in (subtle) */
-@keyframes crtOn {
-  0% { clip-path: inset(50% 0 50% 0); filter: brightness(5) saturate(0); }
-  20% { clip-path: inset(49.4% 4% 49.4% 4%); filter: brightness(5) saturate(0); }
-  45% { clip-path: inset(0); filter: brightness(1.9) saturate(.6); }
-  65% { filter: brightness(.85); }
-  80% { filter: brightness(1.1); }
-  100% { clip-path: inset(0); filter: none; }
+/* power: a tube TV on and off, and the channel change between views (ui/fx.ts, Collegiapp's fx.js powerOn, powerOff
+   and channel; this block is its crt.css). The face is the dead tube's dark glass; .tube holds the snow, the hum bar,
+   a veil whose backdrop-filter carries brightness, colour and focus, the degauss blotches, the phosphor's afterglow,
+   the beam's line and its spot. It sits under the scanlines (.crt) and never takes a click. */
+:root { --tube: #080a09; }
+html.off, html.crt-run, html.off body, html.crt-run body { background: var(--tube); }
+html[data-fx="off"].off, html[data-fx="off"].off body { background: var(--bg); }
+html.off .shell { visibility: hidden; }
+/* the app's own start (modules settling in, LCDs switching on) waits for the static to clear */
+html.crt-hold .shell * { animation-play-state: paused !important; }
+.tube { position: fixed; inset: 0; z-index: 89; pointer-events: none; overflow: hidden; display: none; }
+.tube * { pointer-events: none; }
+html.crt-run > body > .tube, html.crt-blip > body > .tube { display: block; }
+.tube > * { position: absolute; inset: 0; display: block; opacity: 0; }
+.crt-snow { width: 100%; height: 100%; image-rendering: auto; filter: contrast(1.15); }
+/* a channel change's static: over the part that changes only, blended so it textures the picture without lighting it */
+.crt-snow.soft { mix-blend-mode: soft-light; filter: none; }
+.crt-hum { bottom: auto; height: 28%; background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, .34) 32%, rgba(0, 0, 0, .46) 50%, rgba(0, 0, 0, .34) 68%, transparent); }
+.crt-veil { opacity: 1; }
+.crt-tint {
+  inset: -30%; mix-blend-mode: color;
+  background:
+    radial-gradient(circle at 34% 38%, rgba(255, 40, 160, .9), transparent 34%),
+    radial-gradient(circle at 66% 62%, rgba(20, 220, 130, .85), transparent 36%),
+    radial-gradient(circle at 62% 30%, rgba(60, 90, 255, .85), transparent 30%),
+    radial-gradient(circle at 36% 70%, rgba(255, 190, 30, .8), transparent 30%);
 }
-@keyframes crtSoft { 0% { opacity: 0; } 30% { opacity: .75; } 45% { opacity: .4; } 65% { opacity: 1; } 80% { opacity: .85; } 100% { opacity: 1; } }
-@keyframes beamOn { 0% { opacity: 1; transform: scaleX(0); } 20% { opacity: 1; transform: scaleX(1); } 45%, 100% { opacity: 0; transform: scaleX(1); } }
-html.fx-power { background: #000; }
-html.fx-power body { background: #000; }
-html.fx-power[data-fx="full"] .shell { animation: crtOn calc(var(--m) * 720ms + 1ms) steps(16, end) both; }
-html.fx-power[data-fx="full"] .crt > .beam { animation: beamOn calc(var(--m) * 720ms + 1ms) steps(12, end) both; }
-html.fx-power[data-fx="subtle"] .shell { animation: crtSoft calc(var(--m) * 380ms + 1ms) steps(1, end) both; }
+.crt-glow { background: radial-gradient(ellipse 46% 34% at 50% 50%, rgba(var(--glow-rgb, 210, 230, 255), .55), rgba(var(--glow-rgb, 210, 230, 255), .12) 60%, transparent 80%); mix-blend-mode: screen; }
+.crt-line {
+  inset: 50% 0 auto; height: 2px; margin-top: -1px; border-radius: 1px; background: #f4f9ff;
+  box-shadow: 0 0 3px 1px #fff, 0 0 12px 3px rgba(190, 220, 255, .85), 0 0 34px 10px rgba(140, 190, 255, .45);
+}
+.crt-dot {
+  inset: 50% auto auto 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 4px 2px #fff, 0 0 16px 6px rgba(200, 225, 255, .9), 0 0 48px 18px rgba(140, 190, 255, .45);
+}
 
-/* channel change on a new view: the picture jumps sideways through a burst of snow (full); a brightness blip (subtle) */
-@keyframes chanFull {
-  0% { filter: brightness(1.7) contrast(1.25); transform: translateX(-5px) skewX(-1.2deg); }
-  20% { filter: brightness(.7); transform: translateX(4px); }
-  40% { filter: brightness(1.25); transform: translateX(-2px); }
-  60%, 100% { filter: none; transform: none; }
-}
+/* the window never scrolls, and the shell clips what moves inside it: a view swinging into place, a key's glitch.
+   While a view settles in, its scrollbars stay out of sight (App.tsx sets .entering), so nothing flashes. */
+html, body { overflow: hidden; }
+.shell { overflow: clip; }
+.shell > .view { scrollbar-gutter: stable; }
+.shell > .view.entering { scrollbar-color: transparent transparent; }
+.shell > .view.entering::-webkit-scrollbar-thumb { background: transparent; }
+
+/* channel change (subtle): a brightness blip; full plays Collegiapp's channel change (ui/fx.ts) */
 @keyframes chanSoft { 0% { filter: brightness(1.22); } 40% { filter: brightness(.94); } 100% { filter: none; } }
-@keyframes snowBurst { 0% { opacity: .32; background-position: 0 0; } 34% { opacity: .22; background-position: 57px 31px; } 67% { opacity: .12; background-position: 13px 89px; } 100% { opacity: 0; } }
-html.fx-chan[data-fx="full"] .shell > .view { animation: chanFull calc(var(--m) * 260ms + 1ms) steps(5, end); }
-html.fx-chan[data-fx="full"] .crt > .snow { animation: snowBurst calc(var(--m) * 220ms + 1ms) steps(1, end); }
 html.fx-chan[data-fx="subtle"] .shell > .view { animation: chanSoft calc(var(--m) * 180ms + 1ms) steps(3, end); }
 
 /* degauss after a theme change: the colours swim and the picture wobbles, then settle (full); a colour wobble only

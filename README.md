@@ -18,7 +18,7 @@ Built milestone by milestone from [docs/build-prompt.md](docs/build-prompt.md). 
 - **Your own mods first**: mods Vortex installed or you copied in by hand are tracked as ordinary mods (Vortex's stay in Vortex's format); a requirement you already have is never installed over yours.
 - **Undo** every change to your mods (Ctrl+Z, Ctrl+Y), and put back removed mods for 14 days. **Play** with or **without mods** from the launch deck.
 - **For authors**: your uploaded mods with their numbers and files, and new versions published from the app. [docs/creators.md](docs/creators.md).
-- **Themes**: Standard (the default, dark or light), Redline and Pocket, an optional CRT layer, and themes you make in the app or import as a file. [docs/themes.md](docs/themes.md) explains how to make one.
+- **Themes**: Redline (the default, styled after the game's HUD), Standard (dark or light) and Pocket, an optional CRT layer, and themes you make in the app or import as a file. [docs/themes.md](docs/themes.md) explains how to make one.
 
 ## Add-ons
 

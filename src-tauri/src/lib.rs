@@ -1,6 +1,7 @@
 //! Tauri shell: window setup and commands. All Nexus and file logic lives in `pocket-core`.
 
 mod commands;
+mod power;
 mod runner;
 mod state;
 
@@ -23,6 +24,16 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
+        .manage(power::Power::default())
+        // closing the main window turns the picture off like a tube first (power.rs), then the app quits
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == "main" {
+                    api.prevent_close();
+                    power::off(window.app_handle());
+                }
+            }
+        })
         // extension panels: their page, with its own strict CSP, for a sandboxed frame (docs/extensions.md)
         .register_uri_scheme_protocol("pmext", |ctx, request| commands::extensions::panel_protocol(ctx.app_handle(), request))
         .setup(|app| {
@@ -63,6 +74,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             app_info,
+            power::power_done,
             commands::nexus::nexus_status,
             commands::nexus::nexus_set_key,
             commands::nexus::nexus_clear_key,
