@@ -14,7 +14,6 @@ pub struct AppState {
     pub keys: Box<dyn SecretStore>,
     pub user: RwLock<Option<NexusUser>>,
     pub db: Arc<Mutex<Db>>,
-    pub data_dir: PathBuf,
     pub queue: Arc<Mutex<Queue>>,
     /// Wakes the queue runner.
     pub pump: Arc<Notify>,
@@ -29,7 +28,7 @@ impl AppState {
         // old pages are useless once their TTL has passed; keep the file small
         let _ = db.cache_prune(pocket_core::db::now() - 7 * 86400);
         Ok(AppState {
-            nexus: Arc::new(NexusClient::new(key)?), keys, user: RwLock::new(None), db: Arc::new(Mutex::new(db)), data_dir,
+            nexus: Arc::new(NexusClient::new(key)?), keys, user: RwLock::new(None), db: Arc::new(Mutex::new(db)),
             queue: Arc::new(Mutex::new(Queue::default())), pump: Arc::new(Notify::new()),
         })
     }
