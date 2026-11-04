@@ -184,3 +184,57 @@
 .fplugin-h { display: flex; align-items: center; gap: .4em; flex-wrap: wrap; }
 .fplugin-h b { color: var(--text); }
 .fplugin-d { font-size: .82em; opacity: .85; white-space: pre-wrap; }
+
+/* Create: My mods cards, the manage drawer, the new-mod checklist */
+.cr-who { display: flex; flex-wrap: wrap; align-items: center; gap: .5em; }
+.cr-who .fbox { flex: 1 1 18em; }
+.cr-who .btn { margin-bottom: 3px; }
+.cr-head { display: flex; align-items: center; gap: .8em; min-width: 0; }
+.cr-avatar { width: 3.2em; height: 3.2em; border-radius: 9px; object-fit: cover; background: var(--surface-2); box-shadow: 0 0 0 1px var(--line); flex: none; }
+.cr-head .m-t { white-space: normal; }
+.cr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(31em, 100%), 1fr)); gap: var(--gap); align-items: start; }
+.cr-card .ph .pill { font-size: .72em; }
+/* pills on a graphite band need a solid base to stay readable */
+.ph .pill.ok { background: color-mix(in srgb, var(--ok) 24%, var(--surface)); }
+.ph .pill.soon { background: color-mix(in srgb, var(--warn) 24%, var(--surface)); }
+.cr-drawer .hero-img { aspect-ratio: 21 / 8; }
+.cr-drawer .lcds > .display { flex: 1 1 6em; }
+.cr-top { display: grid; grid-template-columns: 11em minmax(0, 1fr); gap: .8em; align-items: start; }
+.cr-pic { all: unset; box-sizing: border-box; cursor: pointer; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden; background: var(--surface-2); display: grid; place-items: center; color: var(--line); box-shadow: inset 0 0 0 1px var(--line); }
+.cr-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cr-pic:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cr-info { display: flex; flex-direction: column; gap: .35em; min-width: 0; }
+.cr-lcds { gap: .25em; }
+.cr-lcds > .display { flex: 1 1 5.5em; }
+.cr-card .sub-h .dim { font-weight: 400; margin-left: .3em; }
+.row.cr-file { cursor: default; grid-template-columns: minmax(0, 1fr) auto; }
+.cr-file .m-t { font-size: .92em; }
+.cr-file-k { display: flex; align-items: center; gap: .35em; }
+.cr-file-k .btn { margin-bottom: 3px; }
+.cr-file-sub { font-size: .78em; padding: 0 .6em .35em; }
+.cr-foot { margin-top: .6em; padding-top: .55em; border-top: 1px solid var(--line); }
+.cr-subh { display: flex; align-items: center; gap: .5em; }
+.cr-subh .seg .chip { font-size: .9em; }
+.cr-missing { margin-top: .5em; display: flex; align-items: center; gap: .5em; flex-wrap: wrap; }
+.cr-missing > span { flex: 1; min-width: 12em; }
+.cr-log { display: flex; flex-direction: column; gap: .5em; max-height: 20em; overflow: auto; padding-right: .3em; }
+.cr-log-v { padding: .45em .65em; border-radius: 8px; background: var(--surface-2); font-size: .9em; }
+.cr-log-v ul { margin: .25em 0 0; padding-left: 1.2em; color: var(--text-2); }
+.cr-field { display: flex; align-items: center; gap: .6em; margin-bottom: .5em; }
+.cr-field .lab { font-size: .86em; color: var(--text-3); width: 4em; flex: none; }
+.cr-field select { flex: 1; min-width: 0; }
+.cr-checks { display: flex; flex-direction: column; gap: .4em; margin-top: .8em; }
+.cr-check { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .55em; align-items: start; padding: .55em .6em; border-radius: 9px; background: var(--surface-2); }
+.cr-check .pick { margin-top: .2em; }
+.cr-check.done { background: color-mix(in srgb, var(--ok) 9%, var(--surface)); }
+.cr-check.done > .cr-check-b > b { text-decoration: line-through; text-decoration-color: var(--text-3); }
+.cr-check-b { display: flex; flex-direction: column; gap: .3em; min-width: 0; }
+.cr-check-t { font-size: .9em; color: var(--text-2); overflow-wrap: anywhere; }
+.cr-check-t textarea, .cr-check-t select { display: block; width: 100%; }
+.cr-count { display: block; font-size: .78em; margin-top: .2em; }
+.cr-check-k .btn { margin-bottom: 0; }
+.cr-tagk { all: unset; cursor: pointer; }
+.cr-tagk:focus-visible { outline: 2px solid var(--accent); border-radius: 6px; }
+@media (max-width: 1100px) { .cr-publish { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1000px) { .cr-new > .grid2 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .cr-top { grid-template-columns: minmax(0, 1fr); } }

@@ -1,0 +1,3613 @@
+[
+  {
+    "modId": 18839,
+    "uid": "14315126016407",
+    "name": "PhotoMode-EX",
+    "version": "1.5.0",
+    "status": "published",
+    "uniqueDownloads": 438593,
+    "files": [
+      {
+        "fileId": 170889,
+        "name": "PhotoMode-EX",
+        "version": "1.5.0",
+        "category": "MAIN",
+        "size": 332,
+        "sizeInBytes": 340778,
+        "date": 1793345239,
+        "primary": 1,
+        "uri": "c8/cc/d8/c8ccd808-fb86-414c-9b6c-b6fe0fa3c289",
+        "description": "Thanks to arm4ni (https://www.nexusmods.com/profile/arm4ni) for helping with this update",
+        "totalDownloads": 39048,
+        "uniqueDownloads": 33368,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.5 (thanks to arm4ni)"
+        ]
+      },
+      {
+        "fileId": 144627,
+        "name": "PhotoMode-EX",
+        "version": "1.4.1",
+        "category": "OLD_VERSION",
+        "size": 326,
+        "sizeInBytes": 334319,
+        "date": 1778256050,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-4-1-1778256050.zip",
+        "description": "",
+        "totalDownloads": 285161,
+        "uniqueDownloads": 178566,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added ability to adjust step of position sliders (photo_mode.character.position_adjust_step)"
+        ]
+      },
+      {
+        "fileId": 118330,
+        "name": "PhotoMode-EX",
+        "version": "1.4.0",
+        "category": "OLD_VERSION",
+        "size": 313,
+        "sizeInBytes": 320005,
+        "date": 1755552524,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-4-0-1755552524.zip",
+        "description": "",
+        "totalDownloads": 351445,
+        "uniqueDownloads": 223145,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.3"
+        ]
+      },
+      {
+        "fileId": 103825,
+        "name": "PhotoMode-EX",
+        "version": "1.3.2",
+        "category": "OLD_VERSION",
+        "size": 313,
+        "sizeInBytes": 320869,
+        "date": 1741787851,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-3-2-1741787851.zip",
+        "description": "",
+        "totalDownloads": 100169,
+        "uniqueDownloads": 73573,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added \"Look At Camera\" preset for eyes only",
+          "Fixed NPCs using their own inventory for poses"
+        ]
+      },
+      {
+        "fileId": 99130,
+        "name": "PhotoMode-EX",
+        "version": "1.3.1",
+        "category": "ARCHIVED",
+        "size": 313,
+        "sizeInBytes": 320577,
+        "date": 1737653472,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-3-1-1737653472.zip",
+        "description": "",
+        "totalDownloads": 10,
+        "uniqueDownloads": 7,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.21"
+        ]
+      },
+      {
+        "fileId": 99129,
+        "name": "PhotoMode-EX",
+        "version": "1.3.1",
+        "category": "ARCHIVED",
+        "size": 313,
+        "sizeInBytes": 320577,
+        "date": 1737653440,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-3-1-1737653440.zip",
+        "description": "",
+        "totalDownloads": 83140,
+        "uniqueDownloads": 63870,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.21"
+        ]
+      },
+      {
+        "fileId": 99125,
+        "name": "PhotoMode-EX",
+        "version": "1.3.0",
+        "category": "ARCHIVED",
+        "size": 313,
+        "sizeInBytes": 320597,
+        "date": 1737652020,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-3-0-1737652020.zip",
+        "description": "",
+        "totalDownloads": 158,
+        "uniqueDownloads": 148,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 98617,
+        "name": "PhotoMode-EX",
+        "version": "1.2.0",
+        "category": "OLD_VERSION",
+        "size": 313,
+        "sizeInBytes": 320235,
+        "date": 1737298144,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-2-0-1737298144.zip",
+        "description": "",
+        "totalDownloads": 5460,
+        "uniqueDownloads": 5017,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 97333,
+        "name": "PhotoMode-EX",
+        "version": "1.1.3",
+        "category": "ARCHIVED",
+        "size": 3,
+        "sizeInBytes": 3099,
+        "date": 1736450252,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-1-3-1736450252.zip",
+        "description": "",
+        "totalDownloads": 10565,
+        "uniqueDownloads": 9379,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Reuploaded correct release archive"
+        ]
+      },
+      {
+        "fileId": 97331,
+        "name": "PhotoMode-EX",
+        "version": "1.1.2",
+        "category": "ARCHIVED",
+        "size": 3,
+        "sizeInBytes": 3199,
+        "date": 1736449345,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-1-2-1736449345.zip",
+        "description": "",
+        "totalDownloads": 85,
+        "uniqueDownloads": 77,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed Depth Of Field switch not showing correct state"
+        ]
+      },
+      {
+        "fileId": 97329,
+        "name": "PhotoMode-EX",
+        "version": "1.1.2",
+        "category": "ARCHIVED",
+        "size": 3,
+        "sizeInBytes": 3199,
+        "date": 1736449168,
+        "primary": 0,
+        "uri": "PhotoMode-EX-18839-1-1-2-1736449168.zip",
+        "description": "",
+        "totalDownloads": 22,
+        "uniqueDownloads": 19,
+        "groupId": 2828359,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed Depth Of Field switch not showing correct state"
+        ]
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.5.0",
+        "date": 1793345239,
+        "lines": [
+          "Updated compatibility to game patch 2.5 (thanks to arm4ni)"
+        ]
+      },
+      {
+        "version": "1.4.1",
+        "date": 1778256050,
+        "lines": [
+          "Added ability to adjust step of position sliders (photo_mode.character.position_adjust_step)"
+        ]
+      },
+      {
+        "version": "1.4.0",
+        "date": 1755552524,
+        "lines": [
+          "Updated compatibility to game patch 2.3"
+        ]
+      },
+      {
+        "version": "1.3.2",
+        "date": 1741787851,
+        "lines": [
+          "Added \"Look At Camera\" preset for eyes only",
+          "Fixed NPCs using their own inventory for poses"
+        ]
+      },
+      {
+        "version": "1.3.1",
+        "date": 1737653440,
+        "lines": [
+          "Updated compatibility to game patch 2.21"
+        ]
+      },
+      {
+        "version": "1.1.3",
+        "date": 1736450252,
+        "lines": [
+          "Reuploaded correct release archive"
+        ]
+      },
+      {
+        "version": "1.1.2",
+        "date": 1736449168,
+        "lines": [
+          "Fixed Depth Of Field switch not showing correct state"
+        ]
+      },
+      {
+        "version": "1.1.1",
+        "date": 1736163656,
+        "lines": [
+          "Fixed character selector for base game NPCs"
+        ]
+      },
+      {
+        "version": "1.1.0",
+        "date": 1736082580,
+        "lines": [
+          "Added precise position inputs",
+          "Disabled Depth Of Field effect by default"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 7780,
+        "modName": "Codeware",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 2380,
+        "modName": "RED4ext",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 1511,
+        "modName": "redscript",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      }
+    ],
+    "requirementsTotal": 3,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 14238,
+        "modName": "MATEO THIAGO NPC EX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 12151,
+        "modName": "THOMPSON NPC EX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 12273,
+        "modName": "SANDRA DORSETT NPC EX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 14477,
+        "modName": "EVELYN PARKER NPC EX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 19076,
+        "modName": "- House of Vesna - Kurt Hansen Overhaul",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory for adding his apperances to PhotoMode"
+      },
+      {
+        "modId": 8357,
+        "modName": "Poses - Quality Time - 2.31",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 8298,
+        "modName": "Poses - Hanging Out - both body genders",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 19478,
+        "modName": "BLUE MOON NPC EX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 19515,
+        "modName": "Shibari Vol. 3 Poses",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 15232,
+        "modName": "Miranda Lawson NPC - Mass Effect",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 19607,
+        "modName": "Judy Additional Appearances (AMM - Photo Mode)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 19506,
+        "modName": "NSFW - Erotic Poses FF - PM and AMM",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 19726,
+        "modName": "Ganger NPCs for Photomode-Ex",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 19750,
+        "modName": "High Voltage - Poses (AMM and PM)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 17631,
+        "modName": "Goro Takemura _New Clothes 2.0",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required for the Photo Mode"
+      },
+      {
+        "modId": 18308,
+        "modName": "Evelyn - High Class Escort",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required for the Photo Mode"
+      },
+      {
+        "modId": 19806,
+        "modName": "Arcane Finn NPC",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 17455,
+        "modName": "Bearded Officer River Ward",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required for the Photo Mode"
+      },
+      {
+        "modId": 19920,
+        "modName": "More Alternate Clothes for Panam Enhanced Body (AIO) AMM - Photo Mode 2.2 Compatibility Patch",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 19944,
+        "modName": "Shibari Vol. 4 Poses",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      }
+    ],
+    "requiredByTotal": 190,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/18839",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/18839?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/18839?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/18839?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/18839?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=18839",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=18839&step=files"
+    }
+  },
+  {
+    "modId": 4198,
+    "uid": "14315126001766",
+    "name": "ArchiveXL",
+    "version": "1.28.6",
+    "status": "published",
+    "uniqueDownloads": 3854297,
+    "files": [
+      {
+        "fileId": 170440,
+        "name": "ArchiveXL",
+        "version": "1.28.6",
+        "category": "MAIN",
+        "size": 1046,
+        "sizeInBytes": 1072116,
+        "date": 1793278782,
+        "primary": 1,
+        "uri": "a1/f3/28/a1f328af-5991-4e62-8da3-08c32814ad18",
+        "description": "",
+        "totalDownloads": 351651,
+        "uniqueDownloads": 278252,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added temporary fix for Panam hair"
+        ]
+      },
+      {
+        "fileId": 170431,
+        "name": "ArchiveXL",
+        "version": "1.28.5",
+        "category": "OLD_VERSION",
+        "size": 1048,
+        "sizeInBytes": 1073445,
+        "date": 1793276426,
+        "primary": 0,
+        "uri": "3a/f9/b9/3af9b943-1b95-41c1-9df3-691025e4090d",
+        "description": "",
+        "totalDownloads": 5000,
+        "uniqueDownloads": 4706,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed rendering of patched static materials"
+        ]
+      },
+      {
+        "fileId": 170409,
+        "name": "ArchiveXL",
+        "version": "1.28.4",
+        "category": "OLD_VERSION",
+        "size": 1048,
+        "sizeInBytes": 1073435,
+        "date": 1793271740,
+        "primary": 0,
+        "uri": "00/57/70/005770d3-f622-4bf4-ad7c-9dc8aff0ac80",
+        "description": "",
+        "totalDownloads": 7206,
+        "uniqueDownloads": 6747,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added auto fix for meshes with broken/missing materials"
+        ]
+      },
+      {
+        "fileId": 170117,
+        "name": "ArchiveXL",
+        "version": "1.28.3",
+        "category": "OLD_VERSION",
+        "size": 1046,
+        "sizeInBytes": 1071586,
+        "date": 1793215019,
+        "primary": 0,
+        "uri": "fa/89/4f/fa894ffe-7cf4-4af1-963e-fdb43bb6c208",
+        "description": "",
+        "totalDownloads": 108595,
+        "uniqueDownloads": 91106,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed character feet state detection in some scenarios",
+          "Fixed rendering of some eye and hair customization",
+          "Fixed instanced mesh world node mutations"
+        ]
+      },
+      {
+        "fileId": 169881,
+        "name": "ArchiveXL",
+        "version": "1.28.2",
+        "category": "OLD_VERSION",
+        "size": 1046,
+        "sizeInBytes": 1071426,
+        "date": 1793177224,
+        "primary": 0,
+        "uri": "e5/a5/63/e5a563d6-00ac-4a13-8764-81317d9903ab",
+        "description": "",
+        "totalDownloads": 53980,
+        "uniqueDownloads": 48464,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed rendering of some clothing and character meshes"
+        ]
+      },
+      {
+        "fileId": 169484,
+        "name": "ArchiveXL",
+        "version": "1.28.1",
+        "category": "OLD_VERSION",
+        "size": 1045,
+        "sizeInBytes": 1070699,
+        "date": 1793123964,
+        "primary": 0,
+        "uri": "c9/56/b8/c956b8f5-6526-4dd6-9ba1-59209a90fdb8",
+        "description": "",
+        "totalDownloads": 84874,
+        "uniqueDownloads": 73668,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Improved support of cooked world nodes",
+          "Fixed forced hair visual tag",
+          "Fixed randomly missing meshes"
+        ]
+      },
+      {
+        "fileId": 168222,
+        "name": "ArchiveXL",
+        "version": "1.28.0",
+        "category": "OLD_VERSION",
+        "size": 1049,
+        "sizeInBytes": 1074623,
+        "date": 1792915841,
+        "primary": 0,
+        "uri": "bf/4e/6a/bf4e6a9d-c0e8-4dce-a235-4ddc5dbc4251",
+        "description": "",
+        "totalDownloads": 265992,
+        "uniqueDownloads": 207377,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.5",
+          "Fixed potential crash when patching .ent resources"
+        ]
+      },
+      {
+        "fileId": 167253,
+        "name": "ArchiveXL",
+        "version": "1.27.5",
+        "category": "OLD_VERSION",
+        "size": 1040,
+        "sizeInBytes": 1065299,
+        "date": 1792493526,
+        "primary": 0,
+        "uri": "01/e8/5a/01e85ac0-8149-4327-a4e6-b3c926287c2d",
+        "description": "",
+        "totalDownloads": 285275,
+        "uniqueDownloads": 200270,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added config option to control debug logging (disabled by default to prevent excessive logging related to resource patching)",
+          "Fixed potential crash when patching .ent resources"
+        ]
+      },
+      {
+        "fileId": 164580,
+        "name": "ArchiveXL",
+        "version": "1.27.4",
+        "category": "OLD_VERSION",
+        "size": 1009,
+        "sizeInBytes": 1033326,
+        "date": 1791362054,
+        "primary": 0,
+        "uri": "33/91/42/3391428c-5d74-4512-965a-78b7ac886805",
+        "description": "",
+        "totalDownloads": 171712,
+        "uniqueDownloads": 127069,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed occasional crashes during dynamic material initialization"
+        ]
+      },
+      {
+        "fileId": 159683,
+        "name": "ArchiveXL",
+        "version": "1.27.3",
+        "category": "OLD_VERSION",
+        "size": 1009,
+        "sizeInBytes": 1033812,
+        "date": 1788776157,
+        "primary": 0,
+        "uri": "8f/ba/44/8fba44ab-cdc1-4a1f-8b11-327dac30e29f",
+        "description": "",
+        "totalDownloads": 278869,
+        "uniqueDownloads": 198062,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed override tags parsing"
+        ]
+      },
+      {
+        "fileId": 159571,
+        "name": "ArchiveXL",
+        "version": "1.27.2",
+        "category": "ARCHIVED",
+        "size": 1009,
+        "sizeInBytes": 1033308,
+        "date": 1788725423,
+        "primary": 0,
+        "uri": "28/f5/f9/28f5f95d-5971-4676-b1eb-2c9fa6286012",
+        "description": "",
+        "totalDownloads": 10780,
+        "uniqueDownloads": 9733,
+        "groupId": 2583817,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added .inkanim resource patching",
+          "Fixed potential crashes for .app patches",
+          "Fixed entity animations config parsing"
+        ]
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.28.6",
+        "date": 1793278782,
+        "lines": [
+          "Added temporary fix for Panam hair"
+        ]
+      },
+      {
+        "version": "1.28.5",
+        "date": 1793276426,
+        "lines": [
+          "Fixed rendering of patched static materials"
+        ]
+      },
+      {
+        "version": "1.28.4",
+        "date": 1793271740,
+        "lines": [
+          "Added auto fix for meshes with broken/missing materials"
+        ]
+      },
+      {
+        "version": "1.28.3",
+        "date": 1793215019,
+        "lines": [
+          "Fixed character feet state detection in some scenarios",
+          "Fixed rendering of some eye and hair customization",
+          "Fixed instanced mesh world node mutations"
+        ]
+      },
+      {
+        "version": "1.28.2",
+        "date": 1793177224,
+        "lines": [
+          "Fixed rendering of some clothing and character meshes"
+        ]
+      },
+      {
+        "version": "1.28.1",
+        "date": 1793123964,
+        "lines": [
+          "Improved support of cooked world nodes",
+          "Fixed forced hair visual tag",
+          "Fixed randomly missing meshes"
+        ]
+      },
+      {
+        "version": "1.28.0",
+        "date": 1792915841,
+        "lines": [
+          "Updated compatibility to game patch 2.5",
+          "Fixed potential crash when patching .ent resources"
+        ]
+      },
+      {
+        "version": "1.27.5",
+        "date": 1792493526,
+        "lines": [
+          "Added config option to control debug logging (disabled by default to prevent excessive logging related to resource patching)",
+          "Fixed potential crash when patching .ent resources"
+        ]
+      },
+      {
+        "version": "1.27.4",
+        "date": 1791362054,
+        "lines": [
+          "Fixed occasional crashes during dynamic material initialization"
+        ]
+      },
+      {
+        "version": "1.27.3",
+        "date": 1788776157,
+        "lines": [
+          "Fixed override tags parsing"
+        ]
+      },
+      {
+        "version": "1.27.2",
+        "date": 1788725423,
+        "lines": [
+          "Added .inkanim resource patching",
+          "Fixed potential crashes for .app patches",
+          "Fixed entity animations config parsing"
+        ]
+      },
+      {
+        "version": "1.27.1",
+        "date": 1785439967,
+        "lines": [
+          "Fixed potential crash when loading resource patches"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 2380,
+        "modName": "RED4ext",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      }
+    ],
+    "requirementsTotal": 1,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 4202,
+        "modName": "Mod Community Tshirt - ArchiveXL version",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Replaces CSVMerge part"
+      },
+      {
+        "modId": 4225,
+        "modName": "Add On Vehicle  Brennan Aether",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4243,
+        "modName": "SHS - The Maiden",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required."
+      },
+      {
+        "modId": 2156,
+        "modName": "Company Man",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4272,
+        "modName": "Halvkyrie's Vehicles Core",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4277,
+        "modName": "The ArchNemesis - Standalone Mox variants",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4281,
+        "modName": "CMAv2 - Wear Masks With Glasses - ArchiveXL version",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4327,
+        "modName": "Custom Standalone Quadra BiTurbo",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4330,
+        "modName": "Succubus Outfit and Scythe - ARCHIVE-XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4349,
+        "modName": "Kaneda Red Add on vehicle",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4356,
+        "modName": "MaxTac Uniform Standalone - NPC version - ArchiveXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4364,
+        "modName": "Blaidd Sword - Archive-XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 2335,
+        "modName": "Standalone Masamune",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4392,
+        "modName": "Johnson' s Stuff White Wedding Collection for Female V - Dress - Veil - Gloves - Shoes - Lingerie - ArchiveXL version",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4405,
+        "modName": "Alt Cunningham Bustier for V",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Necessary for this mod to work"
+      },
+      {
+        "modId": 4438,
+        "modName": "Alvarix Hair Collection - Archive-XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4472,
+        "modName": "DOWNTOWN Hair Saloon - New Styles for Fem- and MascV",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required for adding the new items to the game."
+      },
+      {
+        "modId": 4479,
+        "modName": "Lynx Paws Reimagined (Not updated for 2.0)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4485,
+        "modName": "Johnson's Stuff Exotics Set 1 - Fluffy Ears and Tail with physics",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4515,
+        "modName": "How To Mod Cyberpunk 2077  Ultimate Guide With 100 Plus Mods and Mod List Step By Step Beginner Friendly",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Pre-requisite mods, don't forget to install them, not required to download the guide of course but you will in the future"
+      }
+    ],
+    "requiredByTotal": 7763,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/4198",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/4198?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/4198?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/4198?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/4198?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=4198",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=4198&step=files"
+    }
+  },
+  {
+    "modId": 7780,
+    "uid": "14315126005348",
+    "name": "Codeware",
+    "version": "1.21.2",
+    "status": "published",
+    "uniqueDownloads": 3349139,
+    "files": [
+      {
+        "fileId": 170432,
+        "name": "Codeware",
+        "version": "1.21.2",
+        "category": "MAIN",
+        "size": 1915,
+        "sizeInBytes": 1961325,
+        "date": 1793276558,
+        "primary": 1,
+        "uri": "f3/7a/64/f37a64cb-1592-4e56-b516-443779b8140f",
+        "description": "",
+        "totalDownloads": 346923,
+        "uniqueDownloads": 274450,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Improved support of cooked world nodes",
+          "Fixed native implementation of inkWidgetLibraryResource"
+        ]
+      },
+      {
+        "fileId": 168538,
+        "name": "Codeware",
+        "version": "1.21.1",
+        "category": "OLD_VERSION",
+        "size": 1907,
+        "sizeInBytes": 1953350,
+        "date": 1792962366,
+        "primary": 0,
+        "uri": "5a/ad/e8/5aade8c2-9674-4498-96ef-b9ada88a841e",
+        "description": "",
+        "totalDownloads": 339639,
+        "uniqueDownloads": 260126,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed node setup to support different versions of streaming sectors",
+          "Fixed event propagation for scripted ink widgets"
+        ]
+      },
+      {
+        "fileId": 168220,
+        "name": "Codeware",
+        "version": "1.21.0",
+        "category": "OLD_VERSION",
+        "size": 1901,
+        "sizeInBytes": 1947045,
+        "date": 1792915835,
+        "primary": 0,
+        "uri": "b7/f4/95/b7f49597-632e-4c8c-bea2-0d5a5b752acf",
+        "description": "",
+        "totalDownloads": 109802,
+        "uniqueDownloads": 92855,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.5"
+        ]
+      },
+      {
+        "fileId": 167255,
+        "name": "Codeware",
+        "version": "1.20.6",
+        "category": "OLD_VERSION",
+        "size": 1897,
+        "sizeInBytes": 1943237,
+        "date": 1792493541,
+        "primary": 0,
+        "uri": "ab/82/06/ab820667-cf10-4a78-a1d7-de4b416e9433",
+        "description": "",
+        "totalDownloads": 267056,
+        "uniqueDownloads": 190243,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed entSkinnedMeshComponent native field import"
+        ]
+      },
+      {
+        "fileId": 161780,
+        "name": "Codeware",
+        "version": "1.20.5",
+        "category": "OLD_VERSION",
+        "size": 1916,
+        "sizeInBytes": 1962550,
+        "date": 1789892426,
+        "primary": 0,
+        "uri": "09/02/32/0902320b-ef94-4de7-ad42-755049838dae",
+        "description": "",
+        "totalDownloads": 303897,
+        "uniqueDownloads": 214852,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fix world state system initialization"
+        ]
+      },
+      {
+        "fileId": 161439,
+        "name": "Codeware",
+        "version": "1.20.4",
+        "category": "OLD_VERSION",
+        "size": 1916,
+        "sizeInBytes": 1962661,
+        "date": 1789738215,
+        "primary": 0,
+        "uri": "55/f3/71/55f37110-2f51-4751-90b2-1f3c30d0e7d6",
+        "description": "",
+        "totalDownloads": 24689,
+        "uniqueDownloads": 21526,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added fail-safe check for world nodes toggling prior to world state system initialization",
+          "Added fail-safe check and logging when loading appearance for uninitialized component",
+          "Fixed potential crashes in static and dynamic entity systems",
+          "Updated native types imports"
+        ]
+      },
+      {
+        "fileId": 144164,
+        "name": "Codeware",
+        "version": "1.20.3",
+        "category": "OLD_VERSION",
+        "size": 1915,
+        "sizeInBytes": 1960546,
+        "date": 1777845006,
+        "primary": 0,
+        "uri": "Codeware-7780-1-20-3-1777845006.zip",
+        "description": "",
+        "totalDownloads": 1183617,
+        "uniqueDownloads": 762546,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed potential crash when creating new curve"
+        ]
+      },
+      {
+        "fileId": 144143,
+        "name": "Codeware",
+        "version": "1.20.2",
+        "category": "ARCHIVED",
+        "size": 1915,
+        "sizeInBytes": 1960610,
+        "date": 1777828123,
+        "primary": 0,
+        "uri": "Codeware-7780-1-20-2-1777828123.zip",
+        "description": "",
+        "totalDownloads": 3680,
+        "uniqueDownloads": 3463,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed potential crash when modifying HDRColor curves"
+        ]
+      },
+      {
+        "fileId": 143679,
+        "name": "Codeware",
+        "version": "1.20.1",
+        "category": "OLD_VERSION",
+        "size": 1915,
+        "sizeInBytes": 1960513,
+        "date": 1777388804,
+        "primary": 0,
+        "uri": "Codeware-7780-1-20-1-1777388804.zip",
+        "description": "",
+        "totalDownloads": 48575,
+        "uniqueDownloads": 41043,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Improved dynamic entity handling to guarantee all lifecycle events for despawned entity",
+          "Fixed potential deadlocks when despawning dynamic entity",
+          "Updated native types imports"
+        ]
+      },
+      {
+        "fileId": 142008,
+        "name": "Codeware",
+        "version": "1.20.0",
+        "category": "OLD_VERSION",
+        "size": 1898,
+        "sizeInBytes": 1943373,
+        "date": 1775997625,
+        "primary": 0,
+        "uri": "Codeware-7780-1-20-0-1775997625.zip",
+        "description": "",
+        "totalDownloads": 130008,
+        "uniqueDownloads": 100212,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added async jobs support",
+          "Added resource loading jobs hooks",
+          "Updated native types imports",
+          "Improved compatibility between inkComponent and inkCustomController",
+          "Improved stack trace output for static functions",
+          "Fixed potential crash when the game settings are reporting invalid resolution"
+        ]
+      },
+      {
+        "fileId": 134059,
+        "name": "Codeware",
+        "version": "1.19.0",
+        "category": "OLD_VERSION",
+        "size": 1881,
+        "sizeInBytes": 1925675,
+        "date": 1769434058,
+        "primary": 0,
+        "uri": "Codeware-7780-1-19-0-1769434058.zip",
+        "description": "",
+        "totalDownloads": 537509,
+        "uniqueDownloads": 365179,
+        "groupId": 2682862,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added ability to hook and modify soundbanks.json at runtime",
+          "Added utility function to create TweakDBID from hash number",
+          "Fixed Session/Ready event"
+        ]
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.21.2",
+        "date": 1793276558,
+        "lines": [
+          "Improved support of cooked world nodes",
+          "Fixed native implementation of inkWidgetLibraryResource"
+        ]
+      },
+      {
+        "version": "1.21.1",
+        "date": 1792962366,
+        "lines": [
+          "Fixed node setup to support different versions of streaming sectors",
+          "Fixed event propagation for scripted ink widgets"
+        ]
+      },
+      {
+        "version": "1.21.0",
+        "date": 1792915835,
+        "lines": [
+          "Updated compatibility to game patch 2.5"
+        ]
+      },
+      {
+        "version": "1.20.6",
+        "date": 1792493541,
+        "lines": [
+          "Fixed entSkinnedMeshComponent native field import"
+        ]
+      },
+      {
+        "version": "1.20.5",
+        "date": 1789892426,
+        "lines": [
+          "Fix world state system initialization"
+        ]
+      },
+      {
+        "version": "1.20.4",
+        "date": 1789738215,
+        "lines": [
+          "Added fail-safe check for world nodes toggling prior to world state system initialization",
+          "Added fail-safe check and logging when loading appearance for uninitialized component",
+          "Fixed potential crashes in static and dynamic entity systems",
+          "Updated native types imports"
+        ]
+      },
+      {
+        "version": "1.20.3",
+        "date": 1777845006,
+        "lines": [
+          "Fixed potential crash when creating new curve"
+        ]
+      },
+      {
+        "version": "1.20.2",
+        "date": 1777828123,
+        "lines": [
+          "Fixed potential crash when modifying HDRColor curves"
+        ]
+      },
+      {
+        "version": "1.20.1",
+        "date": 1777388804,
+        "lines": [
+          "Improved dynamic entity handling to guarantee all lifecycle events for despawned entity",
+          "Fixed potential deadlocks when despawning dynamic entity",
+          "Updated native types imports"
+        ]
+      },
+      {
+        "version": "1.20.0",
+        "date": 1775997625,
+        "lines": [
+          "Added async jobs support",
+          "Added resource loading jobs hooks",
+          "Updated native types imports",
+          "Improved compatibility between inkComponent and inkCustomController",
+          "Improved stack trace output for static functions",
+          "Fixed potential crash when the game settings are reporting invalid resolution"
+        ]
+      },
+      {
+        "version": "1.19.0",
+        "date": 1769434058,
+        "lines": [
+          "Added ability to hook and modify soundbanks.json at runtime",
+          "Added utility function to create TweakDBID from hash number",
+          "Fixed Session/Ready event"
+        ]
+      },
+      {
+        "version": "1.18.1",
+        "date": 1764441367,
+        "lines": [
+          "Added function to reset material cache for mesh",
+          "Added bitfield reflection"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 2380,
+        "modName": "RED4ext",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      }
+    ],
+    "requirementsTotal": 1,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 4521,
+        "modName": "Named Saves",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 6945,
+        "modName": "Equipment-EX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 8112,
+        "modName": "Cute Game Over Dress Hyst Refit - Archive XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 8256,
+        "modName": "Ziva Dress Archive XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 8340,
+        "modName": "Find-EX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 8376,
+        "modName": "Lilith Daughter of Hatred",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 8395,
+        "modName": "XRX Latex Gloves  MascV Archive XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 8411,
+        "modName": "Ziva Jewelry Navel Piercing",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 8403,
+        "modName": "LUCY - LAST LINE",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 5622,
+        "modName": "Improved Neon Rims Controls",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Necessary"
+      },
+      {
+        "modId": 8430,
+        "modName": "V's Detachable Penis (Archive XL)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 8497,
+        "modName": "Alt Cunningham's Bracelet - ArchiveXL - EquipmentEX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 8490,
+        "modName": "Corpo Platform High Heels - HD FEET - ArchiveXL - EquipmentEX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 6925,
+        "modName": "Projectile Launcher Rework",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 8560,
+        "modName": "ToolTips Fixer",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 5091,
+        "modName": "CustomHackingSystem",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 8627,
+        "modName": "XRX Low Waist Leggings 2023 Archive XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 8738,
+        "modName": "XRX TankTop 2023 Archive XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 8794,
+        "modName": "Cat Antenna Archive XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 8838,
+        "modName": "CatEars Helmet Archive XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      }
+    ],
+    "requiredByTotal": 2058,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/7780",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/7780?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/7780?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/7780?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/7780?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=7780",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=7780&step=files"
+    }
+  },
+  {
+    "modId": 6945,
+    "uid": "14315126004513",
+    "name": "Equipment-EX",
+    "version": "1.2.10",
+    "status": "published",
+    "uniqueDownloads": 2192968,
+    "files": [
+      {
+        "fileId": 168539,
+        "name": "Equipment-EX",
+        "version": "1.2.10",
+        "category": "MAIN",
+        "size": 87,
+        "sizeInBytes": 89560,
+        "date": 1792962438,
+        "primary": 1,
+        "uri": "8b/73/d6/8b73d6bd-e9b8-40e2-8e75-ee48bb605e3e",
+        "description": "",
+        "totalDownloads": 369994,
+        "uniqueDownloads": 272367,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated requirements to match game patch 2.5"
+        ]
+      },
+      {
+        "fileId": 145554,
+        "name": "Equipment-EX Hide Hub Buttons Patch",
+        "version": "1.0",
+        "category": "OPTIONAL",
+        "size": 1,
+        "sizeInBytes": 798,
+        "date": 1778915785,
+        "primary": 0,
+        "uri": "EquipmentEx-HideHubButtons-6945-1-0-1778915785.zip",
+        "description": "This optional patch hides the HUB menu buttons, leaving the wardrobe accessible only from apartments.",
+        "totalDownloads": 13378,
+        "uniqueDownloads": 11410,
+        "groupId": 7424867,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 139837,
+        "name": "Equipment-EX",
+        "version": "1.2.9",
+        "category": "OLD_VERSION",
+        "size": 87,
+        "sizeInBytes": 89413,
+        "date": 1773737132,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-9-1773737132.zip",
+        "description": "",
+        "totalDownloads": 1211055,
+        "uniqueDownloads": 734143,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added public function to get outfit parts",
+          "Improved compatibility with redscript 1",
+          "Updated requirements and conflicts"
+        ]
+      },
+      {
+        "fileId": 99128,
+        "name": "Equipment-EX",
+        "version": "1.2.8",
+        "category": "OLD_VERSION",
+        "size": 87,
+        "sizeInBytes": 89340,
+        "date": 1737652896,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-8-1737652896.zip",
+        "description": "",
+        "totalDownloads": 2057536,
+        "uniqueDownloads": 1131291,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.21"
+        ]
+      },
+      {
+        "fileId": 94659,
+        "name": "Equipment-EX",
+        "version": "1.2.7",
+        "category": "OLD_VERSION",
+        "size": 79,
+        "sizeInBytes": 81128,
+        "date": 1734071331,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-7-1734071331.zip",
+        "description": "",
+        "totalDownloads": 273362,
+        "uniqueDownloads": 213139,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.2",
+          "Fixed NPC outfits in photo mode"
+        ]
+      },
+      {
+        "fileId": 89416,
+        "name": "Equipment-EX",
+        "version": "1.2.6",
+        "category": "OLD_VERSION",
+        "size": 79,
+        "sizeInBytes": 81119,
+        "date": 1728938996,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-6-1728938996.zip",
+        "description": "",
+        "totalDownloads": 228631,
+        "uniqueDownloads": 174229,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added compatibility with New Game Plus"
+        ]
+      },
+      {
+        "fileId": 86902,
+        "name": "Equipment-EX",
+        "version": "1.2.5",
+        "category": "OLD_VERSION",
+        "size": 79,
+        "sizeInBytes": 81099,
+        "date": 1726208378,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-5-1726208378.zip",
+        "description": "",
+        "totalDownloads": 170976,
+        "uniqueDownloads": 133186,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.13"
+        ]
+      },
+      {
+        "fileId": 86237,
+        "name": "Equipment-EX",
+        "version": "1.2.4",
+        "category": "OLD_VERSION",
+        "size": 79,
+        "sizeInBytes": 81057,
+        "date": 1725352987,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-4-1725352987.zip",
+        "description": "",
+        "totalDownloads": 36927,
+        "uniqueDownloads": 31301,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated requirements and conflicts"
+        ]
+      },
+      {
+        "fileId": 84183,
+        "name": "Equipment-EX",
+        "version": "1.2.3",
+        "category": "OLD_VERSION",
+        "size": 79,
+        "sizeInBytes": 81078,
+        "date": 1722900646,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-3-1722900646.zip",
+        "description": "",
+        "totalDownloads": 103728,
+        "uniqueDownloads": 82098,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed possible crashes during scenes transitions",
+          "Updated requirements and conflicts",
+          "Updated Czech translation"
+        ]
+      },
+      {
+        "fileId": 83992,
+        "name": "Equipment-EX",
+        "version": "1.2.2",
+        "category": "ARCHIVED",
+        "size": 79,
+        "sizeInBytes": 80998,
+        "date": 1722732310,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-2-1722732310.zip",
+        "description": "",
+        "totalDownloads": 10424,
+        "uniqueDownloads": 9545,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed item list not updating when item is added to inventory",
+          "Updated requirements and conflicts"
+        ]
+      },
+      {
+        "fileId": 83942,
+        "name": "Equipment-EX",
+        "version": "1.2.1",
+        "category": "ARCHIVED",
+        "size": 79,
+        "sizeInBytes": 80989,
+        "date": 1722697715,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-1-1722697715.zip",
+        "description": "",
+        "totalDownloads": 3209,
+        "uniqueDownloads": 3056,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated requirements and conflicts"
+        ]
+      },
+      {
+        "fileId": 83676,
+        "name": "Equipment-EX",
+        "version": "1.2.0",
+        "category": "ARCHIVED",
+        "size": 79,
+        "sizeInBytes": 80903,
+        "date": 1722282296,
+        "primary": 0,
+        "uri": "Equipment-EX-6945-1-2-0-1722282296.zip",
+        "description": "",
+        "totalDownloads": 16721,
+        "uniqueDownloads": 14612,
+        "groupId": 2663014,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Optimized TweakDB patches for faster startups in some configurations",
+          "Switched to latest versions of core mods"
+        ]
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.2.10",
+        "date": 1792962438,
+        "lines": [
+          "Updated requirements to match game patch 2.5"
+        ]
+      },
+      {
+        "version": "1.2.9",
+        "date": 1773737132,
+        "lines": [
+          "Added public function to get outfit parts",
+          "Improved compatibility with redscript 1",
+          "Updated requirements and conflicts"
+        ]
+      },
+      {
+        "version": "1.2.8",
+        "date": 1737652896,
+        "lines": [
+          "Updated compatibility to game patch 2.21"
+        ]
+      },
+      {
+        "version": "1.2.7",
+        "date": 1734071331,
+        "lines": [
+          "Updated compatibility to game patch 2.2",
+          "Fixed NPC outfits in photo mode"
+        ]
+      },
+      {
+        "version": "1.2.6",
+        "date": 1728938996,
+        "lines": [
+          "Added compatibility with New Game Plus"
+        ]
+      },
+      {
+        "version": "1.2.5",
+        "date": 1726208378,
+        "lines": [
+          "Updated compatibility to game patch 2.13"
+        ]
+      },
+      {
+        "version": "1.2.4",
+        "date": 1725352987,
+        "lines": [
+          "Updated requirements and conflicts"
+        ]
+      },
+      {
+        "version": "1.2.3",
+        "date": 1722900646,
+        "lines": [
+          "Fixed possible crashes during scenes transitions",
+          "Updated requirements and conflicts",
+          "Updated Czech translation"
+        ]
+      },
+      {
+        "version": "1.2.2",
+        "date": 1722732310,
+        "lines": [
+          "Fixed item list not updating when item is added to inventory",
+          "Updated requirements and conflicts"
+        ]
+      },
+      {
+        "version": "1.2.1",
+        "date": 1722697715,
+        "lines": [
+          "Updated requirements and conflicts"
+        ]
+      },
+      {
+        "version": "1.2.0",
+        "date": 1722282296,
+        "lines": [
+          "Optimized TweakDB patches for faster startups in some configurations",
+          "Switched to latest versions of core mods"
+        ]
+      },
+      {
+        "version": "1.1.19",
+        "date": 1714382960,
+        "lines": [
+          "Updated German translation",
+          "Updated Spanish translation"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 4198,
+        "modName": "ArchiveXL",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 7780,
+        "modName": "Codeware",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 2380,
+        "modName": "RED4ext",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 1511,
+        "modName": "redscript",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 4197,
+        "modName": "TweakXL",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      }
+    ],
+    "requirementsTotal": 5,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 6958,
+        "modName": "Kwek's Fingerless gloves. Designed for EquipmentEX. ArchiveXL TweakXL. FPP friendly.",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6942,
+        "modName": "Kwek's Basic Arm Sleeves. Male and Female. Designed for EquipmentEX. req ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6930,
+        "modName": "Kwek's Shaolin Warrior Monk Bracelet with dangle physics. Designed for Equipment EX. Requires ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6912,
+        "modName": "Kwek's Johnny Silverhand's String Bracelet. w Physics. Male and Female. Requires ArchiveXL TweakXL. Designed for EquipmentEX.",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6933,
+        "modName": "Kwek's Fancy Nipple Pasties - X-travagant model. Requires ArchiveXL TweakXL. EquipmentEX Compatible.",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6895,
+        "modName": "Kwek's Fancy Nipple Pasties - Heartfelt model. Requires ArchiveXL TweakXL. EquipmentEX Compatible.",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6897,
+        "modName": "Kwek's Fancy Nipple Pasties - Round Disc-O model. Requires ArchiveXL TweakXL. EquipmentEX Compatible.",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6899,
+        "modName": "Kwek's Fancy Nipple Pasties - Starstruck model. Requires ArchiveXL TweakXL. EquipmentEX Compatible.",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6814,
+        "modName": "Kwek's Extreme Micro Mini Skirt 02 - METAL REBEL - Requires ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6781,
+        "modName": "Kwek's Extreme Micro Mini Skirt 01 - Requires ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6536,
+        "modName": "Kwek's Parasol Oversized Round Glasses requires ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6527,
+        "modName": "Kwek's Wicked Easel Micro Bikini Bottom Only - Requires ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6504,
+        "modName": "Kwek's Bay Ran Faywarer Oversized Square Glasses requires ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6412,
+        "modName": "Kwek's Wicked Easel Micro Bikini - Requires ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6359,
+        "modName": "Kwekshops Exclusive StarshipCaptainNemo's Revealing Monokini in 4 Colors. Requires ArchiveXL TweakXL. Supports multiple female bodies.",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6250,
+        "modName": "Simple Sling Bikini in 11 Colors - Requires ArchiveXL and TweakXL - supports multiple female bodies",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6975,
+        "modName": "Equipment-EX - Simplified Chinese Translation",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "主体，必须安装！"
+      },
+      {
+        "modId": 6990,
+        "modName": "Kwek's Parasol Oversized Heart Glasses requires ArchiveXL TweakXL. EquipmentEX compatible",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 6973,
+        "modName": "Kwek's Simple Elegance Basic Choker. Male and Female. Designed for EquipmentEX. Req ArchiveXL TweakXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended for layering!"
+      },
+      {
+        "modId": 7011,
+        "modName": "Vanilla Shake for Equipment-EX",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      }
+    ],
+    "requiredByTotal": 2218,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/6945",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/6945?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/6945?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/6945?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/6945?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=6945",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=6945&step=files"
+    }
+  },
+  {
+    "modId": 9429,
+    "uid": "14315126006997",
+    "name": "Cyberware-EX",
+    "version": "1.6.0",
+    "status": "published",
+    "uniqueDownloads": 1221420,
+    "files": [
+      {
+        "fileId": 168239,
+        "name": "Cyberware-EX",
+        "version": "1.6.0",
+        "category": "MAIN",
+        "size": 16,
+        "sizeInBytes": 17264,
+        "date": 1792918421,
+        "primary": 1,
+        "uri": "51/ce/b2/51ceb261-492b-45c6-a99c-cc8c3a463029",
+        "description": "Special thanks to MysteriousLetters for help with bug fixes",
+        "totalDownloads": 232129,
+        "uniqueDownloads": 177105,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "- Updated compatibility to game patch 2.5"
+        ]
+      },
+      {
+        "fileId": 168238,
+        "name": "Cyberware-EX",
+        "version": "1.6.0",
+        "category": "ARCHIVED",
+        "size": 16,
+        "sizeInBytes": 17264,
+        "date": 1792918293,
+        "primary": 0,
+        "uri": "b8/a2/89/b8a289e1-66b8-4b9a-a4dc-bd10d7a4476f",
+        "description": "Special thanks to MysteriousLetters for help with bug fixes",
+        "totalDownloads": 52,
+        "uniqueDownloads": 46,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "- Updated compatibility to game patch 2.5"
+        ]
+      },
+      {
+        "fileId": 144031,
+        "name": "Cyberware-EX",
+        "version": "1.5.6",
+        "category": "OLD_VERSION",
+        "size": 17,
+        "sizeInBytes": 17127,
+        "date": 1777717378,
+        "primary": 0,
+        "uri": "Cyberware-EX-9429-1-5-6-1777717378.zip",
+        "description": "Special thanks to MysteriousLetters for help with bug fixes",
+        "totalDownloads": 567863,
+        "uniqueDownloads": 370206,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed animations and tooltips in cyberware hub menu",
+          "Fixed cyberware info not displayed property in radial wheel",
+          "Fixed skeleton extra slots not working properly in some cases",
+          "Improved compatibility with redscript 1"
+        ]
+      },
+      {
+        "fileId": 105001,
+        "name": "Cyberware-EX",
+        "version": "1.5.5",
+        "category": "OLD_VERSION",
+        "size": 17,
+        "sizeInBytes": 17020,
+        "date": 1743165705,
+        "primary": 0,
+        "uri": "Cyberware-EX-9429-1-5-5-1743165705.zip",
+        "description": "",
+        "totalDownloads": 945804,
+        "uniqueDownloads": 554327,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed HUD key hints size to include all cyberware icons"
+        ]
+      },
+      {
+        "fileId": 99126,
+        "name": "Cyberware-EX",
+        "version": "1.5.4",
+        "category": "OLD_VERSION",
+        "size": 17,
+        "sizeInBytes": 16934,
+        "date": 1737652727,
+        "primary": 0,
+        "uri": "Cyberware-EX-9429-1-5-4-1737652727.zip",
+        "description": "",
+        "totalDownloads": 202314,
+        "uniqueDownloads": 151815,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.21"
+        ]
+      },
+      {
+        "fileId": 86901,
+        "name": "Cyberware-EX",
+        "version": "1.5.3",
+        "category": "OLD_VERSION",
+        "size": 17,
+        "sizeInBytes": 16937,
+        "date": 1726208250,
+        "primary": 0,
+        "uri": "Cyberware-EX-9429-1-5-3-1726208250.zip",
+        "description": "",
+        "totalDownloads": 288409,
+        "uniqueDownloads": 203990,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.13"
+        ]
+      },
+      {
+        "fileId": 86521,
+        "name": "Cyberware-EX",
+        "version": "1.5.2",
+        "category": "OLD_VERSION",
+        "size": 17,
+        "sizeInBytes": 16936,
+        "date": 1725710797,
+        "primary": 0,
+        "uri": "Cyberware-EX-9429-1-5-2-1725710797.zip",
+        "description": "",
+        "totalDownloads": 14709,
+        "uniqueDownloads": 12949,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Improved cyberware quick access slots in inventory screen",
+          "Fixed cyberware slots rendering behind capacity and armor bars",
+          "Fixed Johnny right arm in flashbacks"
+        ]
+      },
+      {
+        "fileId": 83765,
+        "name": "Cyberware-EX",
+        "version": "1.5.1",
+        "category": "OLD_VERSION",
+        "size": 16,
+        "sizeInBytes": 16653,
+        "date": 1722443962,
+        "primary": 0,
+        "uri": "Cyberware-EX-9429-1-5-1-1722443962.zip",
+        "description": "",
+        "totalDownloads": 60618,
+        "uniqueDownloads": 48481,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed double arms when firing projectile launcher"
+        ]
+      },
+      {
+        "fileId": 83677,
+        "name": "Cyberware-EX",
+        "version": "1.5.0",
+        "category": "ARCHIVED",
+        "size": 16,
+        "sizeInBytes": 16413,
+        "date": 1722282613,
+        "primary": 0,
+        "uri": "Cyberware-EX-9429-1-5-0-1722282613.zip",
+        "description": "",
+        "totalDownloads": 4614,
+        "uniqueDownloads": 4275,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added compatibility checks",
+          "Fixed multiple arms visible at the same time after using projectile launcher",
+          "Fixed player money not updating at ripperdoc in override mode",
+          "Switched to latest versions of core mods"
+        ]
+      },
+      {
+        "fileId": 76098,
+        "name": "CyberwareEx-Patch-HudSizeFix",
+        "version": "999999999999999999999999999999999",
+        "category": "ARCHIVED",
+        "size": 1,
+        "sizeInBytes": 820,
+        "date": 1714349424,
+        "primary": 0,
+        "uri": "CyberwareEx-Patch-HudSizeFix-9429-999999999999999999999999999999999-1714349424.zip",
+        "description": "Adjusts HUD to fit all cyberware abilities\n<br />Requires Codeware 1.9.0+\n<br />Don't install it if you have Custom Quickslots mod",
+        "totalDownloads": 36690,
+        "uniqueDownloads": 28804,
+        "groupId": 2718595,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 76094,
+        "name": "Cyberware-EX",
+        "version": "1.4.5",
+        "category": "OLD_VERSION",
+        "size": 15,
+        "sizeInBytes": 14965,
+        "date": 1714342328,
+        "primary": 0,
+        "uri": "Cyberware-EX-9429-1-4-5-1714342328.zip",
+        "description": "",
+        "totalDownloads": 149286,
+        "uniqueDownloads": 111511,
+        "groupId": 2718592,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Improved block handling (thanks to Metool)"
+        ]
+      },
+      {
+        "fileId": 52998,
+        "name": "CyberwareEx-Config-OverrideMode",
+        "version": "1.0.4",
+        "category": "MISCELLANEOUS",
+        "size": 1,
+        "sizeInBytes": 980,
+        "date": 1697310603,
+        "primary": 0,
+        "uri": "CyberwareEx-Config-OverrideMode-9429-1-0-4-1697310603.zip",
+        "description": "User configuration template for Override Mode (slots unlockable with money)",
+        "totalDownloads": 25665,
+        "uniqueDownloads": 18825,
+        "groupId": 2718601,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 51398,
+        "name": "CyberwareEx-Config-ExpansionMode",
+        "version": "1.0.2",
+        "category": "MISCELLANEOUS",
+        "size": 1,
+        "sizeInBytes": 1049,
+        "date": 1696584762,
+        "primary": 0,
+        "uri": "CyberwareEx-Config-ExpansionMode-9429-1-0-2-1696584762.zip",
+        "description": "User configuration template for Expansion Mode (slots unlockable by perks)",
+        "totalDownloads": 33266,
+        "uniqueDownloads": 24333,
+        "groupId": 2718598,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 51006,
+        "name": "CyberwareEx-Reset",
+        "version": "1.0.0",
+        "category": "MISCELLANEOUS",
+        "size": 1,
+        "sizeInBytes": 801,
+        "date": 1696420767,
+        "primary": 0,
+        "uri": "CyberwareEx-Reset-9429-1-0-0-1696420767.zip",
+        "description": "Removes all cyberware slots added using Cyberware-EX (use to properly uninstall the mod)",
+        "totalDownloads": 16920,
+        "uniqueDownloads": 13210,
+        "groupId": 4434469,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 50472,
+        "name": "CyberwareEx-Addon-ExtendedSlots",
+        "version": "1.0.0",
+        "category": "OPTIONAL",
+        "size": 1,
+        "sizeInBytes": 682,
+        "date": 1696174758,
+        "primary": 0,
+        "uri": "CyberwareEx-ExtendedMode-9429-1-0-0-1696174758.zip",
+        "description": "Adds 10 new cyberware slots in expansion mode\n<br />\n<br />INCOMPATIBLE WITH OVERRIDE MODE\n<br />DO NOT INSTALL TOGETHER",
+        "totalDownloads": 1078560,
+        "uniqueDownloads": 558202,
+        "groupId": 4434466,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 50436,
+        "name": "CyberwareEx-Addon-OverrideMode",
+        "version": "1.0.0",
+        "category": "OPTIONAL",
+        "size": 1,
+        "sizeInBytes": 682,
+        "date": 1696161416,
+        "primary": 0,
+        "uri": "CyberwareEx-OverrideMode-9429-1-0-0-1696161416.zip",
+        "description": "Activates override mode (allows to buy slots with money, slots aren't locked behind perks)\n<br />\n<br />INCOMPATIBLE WITH EXTENDED SLOTS ADDON\n<br />DO NOT INSTALL TOGETHER",
+        "totalDownloads": 382470,
+        "uniqueDownloads": 231301,
+        "groupId": 4434460,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.6.0",
+        "date": 1792918293,
+        "lines": [
+          "Updated compatibility to game patch 2.5"
+        ]
+      },
+      {
+        "version": "1.5.6",
+        "date": 1777717378,
+        "lines": [
+          "Fixed animations and tooltips in cyberware hub menu",
+          "Fixed cyberware info not displayed property in radial wheel",
+          "Fixed skeleton extra slots not working properly in some cases",
+          "Improved compatibility with redscript 1"
+        ]
+      },
+      {
+        "version": "1.5.5",
+        "date": 1743165705,
+        "lines": [
+          "Fixed HUD key hints size to include all cyberware icons"
+        ]
+      },
+      {
+        "version": "1.5.4",
+        "date": 1737652727,
+        "lines": [
+          "Updated compatibility to game patch 2.21"
+        ]
+      },
+      {
+        "version": "1.5.3",
+        "date": 1726208250,
+        "lines": [
+          "Updated compatibility to game patch 2.13"
+        ]
+      },
+      {
+        "version": "1.5.2",
+        "date": 1725710797,
+        "lines": [
+          "Improved cyberware quick access slots in inventory screen",
+          "Fixed cyberware slots rendering behind capacity and armor bars",
+          "Fixed Johnny right arm in flashbacks"
+        ]
+      },
+      {
+        "version": "1.5.1",
+        "date": 1722443962,
+        "lines": [
+          "Fixed double arms when firing projectile launcher"
+        ]
+      },
+      {
+        "version": "1.5.0",
+        "date": 1722282613,
+        "lines": [
+          "Added compatibility checks",
+          "Fixed multiple arms visible at the same time after using projectile launcher",
+          "Fixed player money not updating at ripperdoc in override mode",
+          "Switched to latest versions of core mods"
+        ]
+      },
+      {
+        "version": "1.4.5",
+        "date": 1714342328,
+        "lines": [
+          "Improved block handling (thanks to Metool)"
+        ]
+      },
+      {
+        "version": "1.4.4",
+        "date": 1697866642,
+        "lines": [
+          "Added support for powered-up skeleton slots",
+          "Improved alternative Overclock activation for controllers",
+          "Fixed melee cyber arms showing incorrectly in weapon wheel"
+        ]
+      },
+      {
+        "version": "1.4.3",
+        "date": 1697216395,
+        "lines": [
+          "Improved cyberware cooldown handling"
+        ]
+      },
+      {
+        "version": "1.4.1",
+        "date": 1697143969,
+        "lines": [
+          "Improved locked slots handling"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 1511,
+        "modName": "redscript",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 4197,
+        "modName": "TweakXL",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 7780,
+        "modName": "Codeware",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      }
+    ],
+    "requirementsTotal": 3,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 9631,
+        "modName": "Perk Descriptions for Cyberware-Ex",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Hard requirement"
+      },
+      {
+        "modId": 10034,
+        "modName": "Expand All Cyberware Slots",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 10230,
+        "modName": "Female V ACT 1 Super Starter Save",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 10488,
+        "modName": "Cyberware-EX ExpansionMode Config - Balanced Jailbreak Version - DELETED",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required (This was made for it)"
+      },
+      {
+        "modId": 12052,
+        "modName": "Save games Female V Harem Romance (Kerry Panam Judy River)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 12154,
+        "modName": "More Slot for Cyberware-Ex",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 12350,
+        "modName": "Enough slots to equip all cyberware in the game",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 12062,
+        "modName": "Cyberware-EX-ExpansionMode Choom Config",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Hard require( this config cant work without this mod)"
+      },
+      {
+        "modId": 12429,
+        "modName": "NotSoBalanced Config for Cyberware-Ex Expansion mode",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Will not work without it"
+      },
+      {
+        "modId": 5657,
+        "modName": "Cyberarm Cycle",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required to increase cyberarm slots. (Override Mode Recommended)"
+      },
+      {
+        "modId": 12839,
+        "modName": "Cyberware-EX with Native Triple Jump",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory"
+      },
+      {
+        "modId": 13971,
+        "modName": "Cyberware-EX - Preem Config",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "(and all its requirements) duh"
+      },
+      {
+        "modId": 14499,
+        "modName": "Cyberware-EX - Custom Expansion Mode (Raito Labs Config)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 14923,
+        "modName": "Cyberware-EX - SOLA Config",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "本體MOD"
+      },
+      {
+        "modId": 15791,
+        "modName": "HemoFlux - Raito Labs (Circulatory System - Stamina)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory (Latest update)"
+      },
+      {
+        "modId": 14569,
+        "modName": "Tool Hand - Raito Labs (Hands - Technical Ability Skill Check Bonus)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory (Latest update)"
+      },
+      {
+        "modId": 14579,
+        "modName": "NanoFibril - Raito Labs (Skeleton - Body Skill Check Bonus)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory (Latest update)"
+      },
+      {
+        "modId": 15178,
+        "modName": "NeuraSafe - Raito Labs (Cyberware Capacity - Multisystem)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory (Latest update)"
+      },
+      {
+        "modId": 15415,
+        "modName": "DataScan - Raito Labs (Eyes - Optics)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory (Latest update)"
+      },
+      {
+        "modId": 15529,
+        "modName": "GraviStasis - Raito Labs (Legs - Custom Thrusters - Double and Charge Jump)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Mandatory (Latest update)"
+      }
+    ],
+    "requiredByTotal": 58,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/9429",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/9429?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/9429?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/9429?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/9429?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=9429",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=9429&step=files"
+    }
+  },
+  {
+    "modId": 4197,
+    "uid": "14315126001765",
+    "name": "TweakXL",
+    "version": "1.12.0",
+    "status": "published",
+    "uniqueDownloads": 3655507,
+    "files": [
+      {
+        "fileId": 168221,
+        "name": "TweakXL",
+        "version": "1.12.0",
+        "category": "MAIN",
+        "size": 1045,
+        "sizeInBytes": 1070421,
+        "date": 1792915838,
+        "primary": 1,
+        "uri": "6a/a4/d6/6aa4d6f0-fabc-476d-9e5c-e312e806ce50",
+        "description": "",
+        "totalDownloads": 629248,
+        "uniqueDownloads": 456073,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.5"
+        ]
+      },
+      {
+        "fileId": 167254,
+        "name": "TweakXL",
+        "version": "1.11.5",
+        "category": "OLD_VERSION",
+        "size": 1040,
+        "sizeInBytes": 1065616,
+        "date": 1792493527,
+        "primary": 0,
+        "uri": "99/79/87/997987ad-20d6-4966-9c14-c20dba4d1e3d",
+        "description": "",
+        "totalDownloads": 262844,
+        "uniqueDownloads": 191135,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Improved hash collision diagnostics"
+        ]
+      },
+      {
+        "fileId": 154092,
+        "name": "TweakXL",
+        "version": "1.11.4",
+        "category": "OLD_VERSION",
+        "size": 1021,
+        "sizeInBytes": null,
+        "date": 1785439921,
+        "primary": 0,
+        "uri": "77/9f/d7/779fd729-8ab5-4e22-b27b-49501d20d50e",
+        "description": "",
+        "totalDownloads": 766932,
+        "uniqueDownloads": 504569,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Improved error handling and logging"
+        ]
+      },
+      {
+        "fileId": 130803,
+        "name": "TweakXL",
+        "version": "1.11.3",
+        "category": "OLD_VERSION",
+        "size": 1005,
+        "sizeInBytes": 1028720,
+        "date": 1766690034,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-11-3-1766690034.zip",
+        "description": "",
+        "totalDownloads": 1710885,
+        "uniqueDownloads": 1066994,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed bug when array mutations can be interpreted incorrectly inside template"
+        ]
+      },
+      {
+        "fileId": 128147,
+        "name": "TweakXL",
+        "version": "1.11.2",
+        "category": "OLD_VERSION",
+        "size": 1005,
+        "sizeInBytes": 1028881,
+        "date": 1763807957,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-11-2-1763807957.zip",
+        "description": "",
+        "totalDownloads": 301637,
+        "uniqueDownloads": 223262,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Optimized YAML templates processing"
+        ]
+      },
+      {
+        "fileId": 127456,
+        "name": "TweakXL",
+        "version": "1.11.1",
+        "category": "OLD_VERSION",
+        "size": 1003,
+        "sizeInBytes": 1027453,
+        "date": 1763055933,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-11-1-1763055933.zip",
+        "description": "",
+        "totalDownloads": 68430,
+        "uniqueDownloads": 56365,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed bug when incorrect element can be deleted from array",
+          "Fixed bug when hot reload without mods doesn't restore initial TweakDB state"
+        ]
+      },
+      {
+        "fileId": 113975,
+        "name": "TweakXL",
+        "version": "1.11.0",
+        "category": "OLD_VERSION",
+        "size": 1005,
+        "sizeInBytes": 1028706,
+        "date": 1752792546,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-11-0-1752792546.zip",
+        "description": "",
+        "totalDownloads": 1105495,
+        "uniqueDownloads": 729056,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Updated compatibility to game patch 2.3"
+        ]
+      },
+      {
+        "fileId": 108558,
+        "name": "TweakXL",
+        "version": "1.10.10",
+        "category": "OLD_VERSION",
+        "size": 1003,
+        "sizeInBytes": 1027097,
+        "date": 1746727772,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-10-10-1746727772.zip",
+        "description": "",
+        "totalDownloads": 467976,
+        "uniqueDownloads": 350565,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed YAML templates processing for array mutations"
+        ]
+      },
+      {
+        "fileId": 104269,
+        "name": "TweakXL",
+        "version": "1.10.9",
+        "category": "OLD_VERSION",
+        "size": 1003,
+        "sizeInBytes": 1027069,
+        "date": 1742302647,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-10-9-1742302647.zip",
+        "description": "",
+        "totalDownloads": 295390,
+        "uniqueDownloads": 225892,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed handling of abstract scriptable tweaks"
+        ]
+      },
+      {
+        "fileId": 100261,
+        "name": "TweakXL",
+        "version": "1.10.8",
+        "category": "OLD_VERSION",
+        "size": 1003,
+        "sizeInBytes": 1027030,
+        "date": 1738500388,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-10-8-1738500388.zip",
+        "description": "",
+        "totalDownloads": 353164,
+        "uniqueDownloads": 265687,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed retrospective inheritance for arrays of strings"
+        ]
+      },
+      {
+        "fileId": 96781,
+        "name": "TweakXL",
+        "version": "1.10.7",
+        "category": "ARCHIVED",
+        "size": 1002,
+        "sizeInBytes": 1026214,
+        "date": 1736032571,
+        "primary": 0,
+        "uri": "TweakXL-4197-1-10-7-1736032571.zip",
+        "description": "",
+        "totalDownloads": 333121,
+        "uniqueDownloads": 254967,
+        "groupId": 2583823,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added icon fixes for status effects and vehicle manufacturers"
+        ]
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.12.0",
+        "date": 1792915838,
+        "lines": [
+          "Updated compatibility to game patch 2.5"
+        ]
+      },
+      {
+        "version": "1.11.5",
+        "date": 1792493527,
+        "lines": [
+          "Improved hash collision diagnostics"
+        ]
+      },
+      {
+        "version": "1.11.4",
+        "date": 1785439921,
+        "lines": [
+          "Improved error handling and logging"
+        ]
+      },
+      {
+        "version": "1.11.3",
+        "date": 1766690034,
+        "lines": [
+          "Fixed bug when array mutations can be interpreted incorrectly inside template"
+        ]
+      },
+      {
+        "version": "1.11.2",
+        "date": 1763807957,
+        "lines": [
+          "Optimized YAML templates processing"
+        ]
+      },
+      {
+        "version": "1.11.1",
+        "date": 1763055933,
+        "lines": [
+          "Fixed bug when incorrect element can be deleted from array",
+          "Fixed bug when hot reload without mods doesn't restore initial TweakDB state"
+        ]
+      },
+      {
+        "version": "1.11.0",
+        "date": 1752792546,
+        "lines": [
+          "Updated compatibility to game patch 2.3"
+        ]
+      },
+      {
+        "version": "1.10.10",
+        "date": 1746727772,
+        "lines": [
+          "Fixed YAML templates processing for array mutations"
+        ]
+      },
+      {
+        "version": "1.10.9",
+        "date": 1742302647,
+        "lines": [
+          "Fixed handling of abstract scriptable tweaks"
+        ]
+      },
+      {
+        "version": "1.10.8",
+        "date": 1738500388,
+        "lines": [
+          "Fixed retrospective inheritance for arrays of strings"
+        ]
+      },
+      {
+        "version": "1.10.7",
+        "date": 1736032571,
+        "lines": [
+          "Added icon fixes for status effects and vehicle manufacturers"
+        ]
+      },
+      {
+        "version": "1.10.6",
+        "date": 1734287084,
+        "lines": [
+          "Updated metadata"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 2380,
+        "modName": "RED4ext",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      }
+    ],
+    "requirementsTotal": 1,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 2169,
+        "modName": "No Camera Auto Centering",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4202,
+        "modName": "Mod Community Tshirt - ArchiveXL version",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Replaces CET part"
+      },
+      {
+        "modId": 4217,
+        "modName": "No Scanner Time Dilation",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4225,
+        "modName": "Add On Vehicle  Brennan Aether",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4243,
+        "modName": "SHS - The Maiden",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required."
+      },
+      {
+        "modId": 2156,
+        "modName": "Company Man",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4272,
+        "modName": "Halvkyrie's Vehicles Core",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4277,
+        "modName": "The ArchNemesis - Standalone Mox variants",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4281,
+        "modName": "CMAv2 - Wear Masks With Glasses - ArchiveXL version",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4327,
+        "modName": "Custom Standalone Quadra BiTurbo",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4330,
+        "modName": "Succubus Outfit and Scythe - ARCHIVE-XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4349,
+        "modName": "Kaneda Red Add on vehicle",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4356,
+        "modName": "MaxTac Uniform Standalone - NPC version - ArchiveXL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4364,
+        "modName": "Blaidd Sword - Archive-XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 2335,
+        "modName": "Standalone Masamune",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4392,
+        "modName": "Johnson' s Stuff White Wedding Collection for Female V - Dress - Veil - Gloves - Shoes - Lingerie - ArchiveXL version",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4405,
+        "modName": "Alt Cunningham Bustier for V",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Necessary for this mod to work"
+      },
+      {
+        "modId": 4438,
+        "modName": "Alvarix Hair Collection - Archive-XL",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4472,
+        "modName": "DOWNTOWN Hair Saloon - New Styles for Fem- and MascV",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Required for adding the new items to the game."
+      },
+      {
+        "modId": 4485,
+        "modName": "Johnson's Stuff Exotics Set 1 - Fluffy Ears and Tail with physics",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      }
+    ],
+    "requiredByTotal": 6654,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/4197",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/4197?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/4197?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/4197?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/4197?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=4197",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=4197&step=files"
+    }
+  },
+  {
+    "modId": 8340,
+    "uid": "14315126005908",
+    "name": "Find-EX",
+    "version": "1.2.0",
+    "status": "published",
+    "uniqueDownloads": 659058,
+    "files": [
+      {
+        "fileId": 52766,
+        "name": "Find-EX",
+        "version": "1.2.0",
+        "category": "MAIN",
+        "size": 6,
+        "sizeInBytes": 5720,
+        "date": 1697203025,
+        "primary": 1,
+        "uri": "Find-EX-8340-1-2-0-1697203025.zip",
+        "description": "",
+        "totalDownloads": 1408527,
+        "uniqueDownloads": 641922,
+        "groupId": 2697877,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Support patch 2.01"
+        ]
+      },
+      {
+        "fileId": 44735,
+        "name": "Find-EX",
+        "version": "1.1.0",
+        "category": "OLD_VERSION",
+        "size": 6,
+        "sizeInBytes": 6232,
+        "date": 1684932368,
+        "primary": 0,
+        "uri": "Find-EX-8340-1-1-0-1684932368.zip",
+        "description": "",
+        "totalDownloads": 53345,
+        "uniqueDownloads": 37099,
+        "groupId": 2697877,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 44683,
+        "name": "Find-EX",
+        "version": "1.0.1",
+        "category": "OLD_VERSION",
+        "size": 6,
+        "sizeInBytes": 6132,
+        "date": 1684827896,
+        "primary": 0,
+        "uri": "Find-EX-8340-1-0-1-1684827896.zip",
+        "description": "",
+        "totalDownloads": 507,
+        "uniqueDownloads": 493,
+        "groupId": 2697877,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 44357,
+        "name": "Find-EX",
+        "version": "1.0.0",
+        "category": "OLD_VERSION",
+        "size": 6,
+        "sizeInBytes": 6117,
+        "date": 1684270100,
+        "primary": 0,
+        "uri": "Find-EX-8340-1-0-0-1684270100.zip",
+        "description": "",
+        "totalDownloads": 2916,
+        "uniqueDownloads": 2541,
+        "groupId": 2697877,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.2.0",
+        "date": 1697203025,
+        "lines": [
+          "Support patch 2.01"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 2380,
+        "modName": "RED4ext",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 7780,
+        "modName": "Codeware",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      },
+      {
+        "modId": 1511,
+        "modName": "redscript",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      }
+    ],
+    "requirementsTotal": 3,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 36213,
+        "modName": "Better Journal - Accordion List",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Highly recommended!"
+      }
+    ],
+    "requiredByTotal": 1,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/8340",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/8340?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/8340?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/8340?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/8340?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=8340",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=8340&step=files"
+    }
+  },
+  {
+    "modId": 9302,
+    "uid": "14315126006870",
+    "name": "RipperDeck",
+    "version": "1.1.0",
+    "status": "published",
+    "uniqueDownloads": 476263,
+    "files": [
+      {
+        "fileId": 52667,
+        "name": "RipperDeck",
+        "version": "1.1.0",
+        "category": "MAIN",
+        "size": 2,
+        "sizeInBytes": 2278,
+        "date": 1697144960,
+        "primary": 1,
+        "uri": "RipperDeck-9302-1-1-0-1697144960.zip",
+        "description": "",
+        "totalDownloads": 901875,
+        "uniqueDownloads": 467694,
+        "groupId": 2718679,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Added ability to drop cyberware"
+        ]
+      },
+      {
+        "fileId": 52586,
+        "name": "RipperDeck",
+        "version": "1.0.3",
+        "category": "ARCHIVED",
+        "size": 2,
+        "sizeInBytes": 1968,
+        "date": 1697099575,
+        "primary": 0,
+        "uri": "RipperDeck-9302-1-0-3-1697099575.zip",
+        "description": "",
+        "totalDownloads": 5811,
+        "uniqueDownloads": 5352,
+        "groupId": 2718679,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed possible issues with first visit to ripperdoc"
+        ]
+      },
+      {
+        "fileId": 51930,
+        "name": "RipperDeck",
+        "version": "1.0.2",
+        "category": "ARCHIVED",
+        "size": 2,
+        "sizeInBytes": 1952,
+        "date": 1696803044,
+        "primary": 0,
+        "uri": "RipperDeck-9302-1-0-2-1696803044.zip",
+        "description": "",
+        "totalDownloads": 11007,
+        "uniqueDownloads": 10134,
+        "groupId": 2718679,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed possible issues with first quest in new game"
+        ]
+      },
+      {
+        "fileId": 50759,
+        "name": "RipperDeck",
+        "version": "1.0.1",
+        "category": "ARCHIVED",
+        "size": 2,
+        "sizeInBytes": 1976,
+        "date": 1696313767,
+        "primary": 0,
+        "uri": "RipperDeck-9302-1-0-1-1696313767.zip",
+        "description": "",
+        "totalDownloads": 18137,
+        "uniqueDownloads": 15327,
+        "groupId": 2718679,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed tutorial triggered in new game"
+        ]
+      },
+      {
+        "fileId": 50758,
+        "name": "RipperDeck",
+        "version": "1.0.1",
+        "category": "ARCHIVED",
+        "size": 2,
+        "sizeInBytes": 1971,
+        "date": 1696313588,
+        "primary": 0,
+        "uri": "RipperDeck-9302-1-0-1-1696313588.zip",
+        "description": "",
+        "totalDownloads": 9,
+        "uniqueDownloads": 9,
+        "groupId": 2718679,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed tutorial triggered in new game"
+        ]
+      },
+      {
+        "fileId": 50474,
+        "name": "RipperDeck",
+        "version": "1.0.0",
+        "category": "ARCHIVED",
+        "size": 2,
+        "sizeInBytes": 1869,
+        "date": 1696176934,
+        "primary": 0,
+        "uri": "RipperDeck-9302-1-0-0-1696176934.zip",
+        "description": "",
+        "totalDownloads": 6298,
+        "uniqueDownloads": 5886,
+        "groupId": 2718679,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.1.0",
+        "date": 1697144960,
+        "lines": [
+          "Added ability to drop cyberware"
+        ]
+      },
+      {
+        "version": "1.0.3",
+        "date": 1697099575,
+        "lines": [
+          "Fixed possible issues with first visit to ripperdoc"
+        ]
+      },
+      {
+        "version": "1.0.2",
+        "date": 1696803044,
+        "lines": [
+          "Fixed possible issues with first quest in new game"
+        ]
+      },
+      {
+        "version": "1.0.1",
+        "date": 1696313588,
+        "lines": [
+          "Fixed tutorial triggered in new game"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 1511,
+        "modName": "redscript",
+        "externalRequirement": false,
+        "url": "",
+        "notes": ""
+      }
+    ],
+    "requirementsTotal": 1,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 24911,
+        "modName": "Progression For RipperDeck",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Require"
+      },
+      {
+        "modId": 28072,
+        "modName": "UNDEFINED PROTOCOL-NEW CYBERWARE MOD",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "Not necessary, but recommended"
+      },
+      {
+        "modId": 10479,
+        "modName": "Weapon Conditioning (Tier System Overhaul)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "optional; for self-repairing Cyberware arms; remember to configure the behavior"
+      }
+    ],
+    "requiredByTotal": 3,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/9302",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/9302?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/9302?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/9302?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/9302?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=9302",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=9302&step=files"
+    }
+  },
+  {
+    "modId": 2881,
+    "uid": "14315126000449",
+    "name": "Neu-ReSpec",
+    "version": "1.2.1",
+    "status": "published",
+    "uniqueDownloads": 364917,
+    "files": [
+      {
+        "fileId": 51100,
+        "name": "NeureSpec",
+        "version": "1.2.1",
+        "category": "MAIN",
+        "size": 35,
+        "sizeInBytes": 35658,
+        "date": 1696453985,
+        "primary": 1,
+        "uri": "NeureSpec-2881-1-2-1-1696453985.zip",
+        "description": "",
+        "totalDownloads": 361065,
+        "uniqueDownloads": 234094,
+        "groupId": 2515579,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Fixed new perks validation",
+          "Fixed Korean localization"
+        ]
+      },
+      {
+        "fileId": 50745,
+        "name": "NeureSpec",
+        "version": "1.2.0",
+        "category": "ARCHIVED",
+        "size": 35,
+        "sizeInBytes": 36086,
+        "date": 1696307544,
+        "primary": 0,
+        "uri": "NeureSpec-2881-1-2-0-1696307544.zip",
+        "description": "",
+        "totalDownloads": 3247,
+        "uniqueDownloads": 3026,
+        "groupId": 2515579,
+        "scannedV2": "VERIFIED",
+        "changelogText": [
+          "Support patch 2.0"
+        ]
+      },
+      {
+        "fileId": 34710,
+        "name": "Neu-Re-Spec",
+        "version": "1.1.0",
+        "category": "OLD_VERSION",
+        "size": 34,
+        "sizeInBytes": 35273,
+        "date": 1669976864,
+        "primary": 0,
+        "uri": "Neu-Re-Spec-2881-1-1-0-1669976864.zip",
+        "description": "",
+        "totalDownloads": 136555,
+        "uniqueDownloads": 94458,
+        "groupId": 2515579,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 21241,
+        "name": "Neu-Re-Spec",
+        "version": "1.0.0",
+        "category": "OLD_VERSION",
+        "size": 33,
+        "sizeInBytes": 34175,
+        "date": 1646304791,
+        "primary": 0,
+        "uri": "Neu-Re-Spec-2881-1-0-0-1646304791.zip",
+        "description": "Compatible with patch 1.5",
+        "totalDownloads": 112081,
+        "uniqueDownloads": 84816,
+        "groupId": 2515579,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 16486,
+        "name": "NeureSpec",
+        "version": "0.9.5",
+        "category": "OLD_VERSION",
+        "size": 33,
+        "sizeInBytes": 33847,
+        "date": 1630777996,
+        "primary": 0,
+        "uri": "NeureSpec-2881-0-9-5-1630777996.zip",
+        "description": "",
+        "totalDownloads": 5363,
+        "uniqueDownloads": 4514,
+        "groupId": 2515579,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 15171,
+        "name": "NeureSpec",
+        "version": "0.9.4",
+        "category": "OLD_VERSION",
+        "size": 32,
+        "sizeInBytes": 32739,
+        "date": 1626778895,
+        "primary": 0,
+        "uri": "NeureSpec-2881-0-9-4-1626778895.zip",
+        "description": "",
+        "totalDownloads": 1755,
+        "uniqueDownloads": 1574,
+        "groupId": 2515579,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 14983,
+        "name": "NeureSpec",
+        "version": "0.9.3",
+        "category": "OLD_VERSION",
+        "size": 31,
+        "sizeInBytes": 32182,
+        "date": 1625853745,
+        "primary": 0,
+        "uri": "NeureSpec-2881-0-9-3-1625853745.zip",
+        "description": "Fixed crashes when leaving the Perks screen",
+        "totalDownloads": 725,
+        "uniqueDownloads": 671,
+        "groupId": 2515579,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 14887,
+        "name": "NeureSpec",
+        "version": "0.9.2",
+        "category": "ARCHIVED",
+        "size": 31,
+        "sizeInBytes": 31950,
+        "date": 1625315737,
+        "primary": 0,
+        "uri": "NeureSpec-2881-0-9-2-1625315737.zip",
+        "description": "",
+        "totalDownloads": 529,
+        "uniqueDownloads": 489,
+        "groupId": 2515579,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 14886,
+        "name": "NeureSpec",
+        "version": "0.9.2",
+        "category": "ARCHIVED",
+        "size": 29,
+        "sizeInBytes": 29373,
+        "date": 1625315431,
+        "primary": 0,
+        "uri": "NeureSpec-2881-0-9-2-1625315431.zip",
+        "description": "",
+        "totalDownloads": 0,
+        "uniqueDownloads": 0,
+        "groupId": 2515576,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      },
+      {
+        "fileId": 14877,
+        "name": "NeureSpec",
+        "version": "0.9.1",
+        "category": "ARCHIVED",
+        "size": 26,
+        "sizeInBytes": 26654,
+        "date": 1625246204,
+        "primary": 0,
+        "uri": "NeureSpec-2881-0-9-1-1625246204.zip",
+        "description": "",
+        "totalDownloads": 0,
+        "uniqueDownloads": 0,
+        "groupId": 2515576,
+        "scannedV2": "VERIFIED",
+        "changelogText": []
+      }
+    ],
+    "changelog": [
+      {
+        "version": "1.2.1",
+        "date": 1696453985,
+        "lines": [
+          "Fixed new perks validation",
+          "Fixed Korean localization"
+        ]
+      },
+      {
+        "version": "1.2.0",
+        "date": 1696307544,
+        "lines": [
+          "Support patch 2.0"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "modId": 107,
+        "modName": "Cyber Engine Tweaks",
+        "externalRequirement": false,
+        "url": "",
+        "notes": "1.26+"
+      }
+    ],
+    "requirementsTotal": 1,
+    "dlc": [],
+    "requiredBy": [
+      {
+        "modId": 4839,
+        "modName": "Female Corpo ACT 1 Patch 1.5",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4846,
+        "modName": "Female Corpo ACT 2 Patch 1.5 (High Roller Game Save)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 4857,
+        "modName": "Female Nomad ACT 1 Patch 1.5 (High Roller Game Save)",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 5500,
+        "modName": "Neu-ReSpec - Brazilian Portuguese Translation",
+        "externalRequirement": false,
+        "url": null,
+        "notes": ""
+      },
+      {
+        "modId": 18918,
+        "modName": "Neu-Re-Spec",
+        "externalRequirement": false,
+        "url": null,
+        "notes": "MAIN MOD"
+      }
+    ],
+    "requiredByTotal": 5,
+    "links": {
+      "page": "https://www.nexusmods.com/cyberpunk2077/mods/2881",
+      "files": "https://www.nexusmods.com/cyberpunk2077/mods/2881?tab=files",
+      "posts": "https://www.nexusmods.com/cyberpunk2077/mods/2881?tab=posts",
+      "bugs": "https://www.nexusmods.com/cyberpunk2077/mods/2881?tab=bugs",
+      "logs": "https://www.nexusmods.com/cyberpunk2077/mods/2881?tab=logs",
+      "edit": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=2881",
+      "editFiles": "https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=2881&step=files"
+    }
+  }
+]

@@ -2,12 +2,14 @@
 // with fixed data recorded from the live Nexus API (src/lib/demo/*.json, made by the demo_fixture example), so
 // screens can be built and checked without Tauri. Nothing here talks to Nexus.
 import { demoEmit, inTauri, registerDemo } from "./tauri";
-import type { HealthReport, Profile, BrowseQuery, BrowseResult, CardView, DetailView, InstallRow, LocalFilter, NexusStatus, PathsView, QueueItem, QueueSnapshot, RateDisplay } from "./api";
+import type { ModManage, MyMods, HealthReport, Profile, BrowseQuery, BrowseResult, CardView, DetailView, InstallRow, LocalFilter, NexusStatus, PathsView, QueueItem, QueueSnapshot, RateDisplay } from "./api";
 import browseFixture from "./demo/browse.json";
 import detailFixture from "./demo/details.json";
 import collectionsFixture from "./demo/collections.json";
 import checkFixture from "./demo/collection-check.json";
 import mediaFixture from "./demo/media.json";
+import myModsFixture from "./demo/my-mods.json";
+import myModFilesFixture from "./demo/my-mod-files.json";
 
 // the marketplace folder in this repository, so the demo shows what the app would fetch
 const marketFiles = import.meta.glob("../../marketplace/**/*.json", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
@@ -278,3 +280,59 @@ export function installDemo() {
       .map(([version, released]) => [{ version, released }, Date.parse(`${released}T00:00:00Z`) / 1000]),
   });
 }
+
+// ── for mod authors: My mods from a recorded anonymous answer (src/lib/demo/my-mods.json, made by the
+// creator_fixture example), plus a pretend check, pack and publish ──
+const demoPins: number[] = [];
+const demoMine = myModsFixture as unknown as MyMods;
+const demoManage = myModFilesFixture as unknown as ModManage[];
+const later = <T,>(v: T, ms = 250) => new Promise<T>((ok) => setTimeout(() => ok(v), ms));
+if (!inTauri()) registerDemo({
+  creator_my_mods: ({ user }) => {
+    const typed = String(user ?? "").trim();
+    if (!typed && !status.hasKey) throw { kind: "invalid", message: "Add your Nexus API key in Settings, or type your Nexus user name to see your mods." };
+    const known = new Set(demoMine.mods.map((m) => m.modId));
+    const missingPinned = demoPins.filter((id) => !known.has(id)).map((modId) => ({ modId, links: { ...demoMine.mods[0].links,
+      page: `https://www.nexusmods.com/cyberpunk2077/mods/${modId}`, edit: `https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=${modId}` } }));
+    return later({ ...demoMine, own: status.hasKey && !typed, missingPinned, fetchedAt: Math.floor(Date.now() / 1000), fromCache: false }, 400);
+  },
+  creator_mod_files: ({ modId }) => {
+    const d = demoManage.find((x) => x.modId === Number(modId));
+    if (!d) throw { kind: "demo", message: "The demo data has no files for that mod." };
+    return later(d);
+  },
+  creator_upload_targets: ({ modId }) => {
+    if (!status.hasKey) throw { kind: "no_key", message: "No Nexus API key is set. Add one in Settings." };
+    const m = demoMine.mods.find((x) => x.modId === Number(modId));
+    return later((m?.files ?? []).filter((f) => f.groupId != null).map((f) => ({ id: String(f.groupId), name: f.name, versionsCount: 1 + (m?.oldFiles ?? 0),
+      lastUploadedAt: new Date(f.date * 1000).toISOString(), isActive: true, groupId: f.groupId })));
+  },
+  creator_pin: ({ modRef }) => {
+    const t = String(modRef).trim();
+    const id = Number(/^\d+$/.test(t) ? t : /cyberpunk2077\/mods\/(\d+)/.exec(t)?.[1] ?? /[?&]id=(\d+)/.exec(t)?.[1] ?? NaN);
+    if (!id) throw { kind: "invalid", message: "Paste the link to the mod's page (nexusmods.com/cyberpunk2077/mods/…) or its number." };
+    if (!demoPins.includes(id)) demoPins.push(id);
+    return id;
+  },
+  creator_unpin: ({ modId }) => { const k = demoPins.indexOf(Number(modId)); if (k >= 0) demoPins.splice(k, 1); },
+  creator_check: ({ path, name }) => {
+    const n = String(name || "My mod").replace(/[^\w -]/g, "").trim() || "mod";
+    const files = [`archive/pc/mod/${n}.archive`, `archive/pc/mod/${n}.archive.xl`, `r6/scripts/${n}/${n}.reds`];
+    return later({ files: files.length + 1, problems: [], tips: String(path).toLowerCase().endsWith(".zip") ? [] : ["Everything sits in one extra top folder. It works here, but packing from inside it (archive, r6 … at the top) suits every manager."],
+      needs: [{ key: "archivexl", name: "ArchiveXL", modId: 4198, url: "https://www.nexusmods.com/cyberpunk2077/mods/4198" }, { key: "redscript", name: "redscript", modId: 1511, url: "https://www.nexusmods.com/cyberpunk2077/mods/1511" }],
+      plan: { files: files.map((f) => ({ source: f, target: f, kind: f.endsWith(".reds") ? "script" : "archive" })), skipped: ["readme.txt"], unknown: [], modType: "mixed", warnings: [] } }, 500);
+  },
+  creator_package: ({ path, name, version }) => {
+    const dir = String(path).replace(/[\\/][^\\/]*$/, "");
+    return later(`${dir}\\${String(name).replace(/ /g, "_")}-${String(version)}.zip`, 600);
+  },
+  creator_publish: () => new Promise((ok) => {
+    const total = 3_400_000;
+    let sent = 0;
+    const t = setInterval(() => {
+      sent = Math.min(total, sent + 850_000);
+      demoEmit("publish-progress", [sent, total]);
+      if (sent >= total) { clearInterval(t); setTimeout(() => ok(0), 600); }
+    }, 300);
+  }),
+});
