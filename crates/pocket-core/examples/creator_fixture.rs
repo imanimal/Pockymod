@@ -47,8 +47,10 @@ async fn main() {
     let mut views = Vec::new();
     for m in &my.mods {
         let mut v = mods::manage(&client, &db, m.mod_id).await.unwrap();
-        // keep the demo data small: the newest files and the first mods that require it
-        v.files.truncate(16);
+        // keep the demo data small: every current file, the newest old ones, and the first mods that require it
+        let (current, old): (Vec<_>, Vec<_>) = v.files.into_iter().partition(|f| f.is_current());
+        v.files = current.into_iter().chain(old.into_iter().take(10)).collect();
+        v.files.sort_by(|a, b| b.date.cmp(&a.date));
         v.changelog.truncate(12);
         v.required_by.truncate(20);
         views.push(v);

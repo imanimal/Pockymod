@@ -395,7 +395,8 @@ pub fn changelog(files: &[AuthorFile]) -> Vec<ChangelogEntry> {
         let e = by_version.entry(f.version.clone()).or_insert_with(|| ChangelogEntry { version: f.version.clone(), date: f.date, lines: Vec::new() });
         e.date = e.date.min(f.date);
         for l in &f.changelog_text {
-            let l = l.trim();
+            // authors often start lines with their own bullet
+            let l = l.trim().trim_start_matches(['-', '*', '•']).trim();
             if !l.is_empty() && !e.lines.iter().any(|x| x == l) { e.lines.push(l.to_owned()); }
         }
     }
@@ -724,6 +725,8 @@ mod tests {
         // one entry per version, lines not repeated (two files of 1.3.1 carry the same lines)
         let versions: BTreeSet<&str> = m.changelog.iter().map(|e| e.version.as_str()).collect();
         assert_eq!(versions.len(), m.changelog.len());
+        let bullets = changelog(&[AuthorFile { changelog_text: vec!["- Fixed a crash".into(), "* Fixed a crash".into(), "  ".into()], ..file(1, "x", 1) }]);
+        assert_eq!(bullets[0].lines, vec!["Fixed a crash"]);
     }
 
     #[test]
