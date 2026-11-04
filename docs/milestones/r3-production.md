@@ -64,10 +64,21 @@ Library groups sit side by side; Settings and Health flow into columns.
 - Drop .zip, .7z or .rar files on the window to install them; a "Manual download" in the Nexus window lands in the
   library and offers Install. Archives named like Nexus downloads are matched to their mod for update checks.
 - Endorse and track from a mod's drawer; stop a running download (it resumes on Retry); skip one version of an update.
+- **Logs in Health**: RED4ext and its plugins (ArchiveXL, TweakXL, Codeware), redscript and Cyber Engine Tweaks logs from
+  the last game start, errors grouped by the mod that owns the file they name, "Turn this mod off" (undoable), Open log,
+  and Copy report (a plain-text summary for forums, with personal folders as `%USERPROFILE%`).
+- **Overlapping archives in Load order**: the file tables inside `.archive` files are read (header and table only,
+  cached), so two mods that change the same game files show as a pair with the winner; "Make X win" renames the
+  deployed link with a `!` prefix, as players do by hand, and can be undone. A stray `modlist.txt` is flagged.
+- **Change options** after install for mods with installer options (no new download).
+- **Take them over is remembered**: a clash decision stays on profile switches and redeploys; Load order lists your
+  choices with Forget.
+- **Move the library** to another folder or drive from Settings, with every stored path rewritten and the game's
+  links checked; moving the game folder re-links the mods.
 
 ## Fixed from the complaint audit
 
-A helper collected 99 recurring complaints about Vortex, the Nexus Mods app and the site, and checked each against
+A research pass collected 99 recurring complaints about Vortex, the Nexus Mods app and the site, and checked each against
 this code. Fixed this round:
 - **Downloads over 60 seconds failed** (the shared HTTP client's overall timeout). Downloads have no overall limit now,
   only a stalled connection ends one; a dropped connection resumes up to five times; a finished part is accepted
@@ -114,3 +125,5 @@ The audit with every source is kept with the session notes, not in the repositor
 - Extension panels in WebView2 (`http://pmext.localhost`), opening the browser with `rundll32`, `.exe` tools.
 - The CRT layer's warped glass and view transitions in WebView2.
 - Every Upload API call (needs an author's key).
+- The log parsers against real logs (they follow each tool's source and the modding wiki), the archive reader on real
+  mod archives, where archives a `modlist.txt` does not name load, and moving the library while files are in use.
