@@ -1,0 +1,288 @@
+{
+  "totalCount": 202,
+  "facetsData": {
+    "gameVersion": {
+      "2.1.3.0": 1,
+      "2.2.0.0": 1,
+      "2.2.1.0": 19,
+      "2.3.0.0": 14,
+      "2.3.1.0": 114,
+      "2.5": 1,
+      "2.5.0.0": 50,
+      "3.0.77.64623": 1,
+      "5.6.0.18": 1
+    }
+  },
+  "nodes": [
+    {
+      "id": 11525,
+      "slug": "iszwwe",
+      "name": "Welcome to Night City 2.5",
+      "summary": "No hassle, no fuss, just fun",
+      "endorsements": 11870,
+      "totalDownloads": 1183317,
+      "adultContent": false,
+      "user": {
+        "name": "z9r"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/2/8/28273ff6-0178-4015-ab81-280dee6782d7.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/2/8/t/med/28273ff6-0178-4015-ab81-280dee6782d7.webp"
+      },
+      "category": {
+        "name": "Total Overhaul"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 483,
+        "modCount": 350,
+        "totalSize": 491562403,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.5.0.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": 157452,
+      "slug": "rcuccp",
+      "name": "NCR Core 2.5",
+      "summary": "✅ V2.5| 🖼️ Super Graphics | 🌀 Fully Immersive | 🧭 New Locations | 🎮 Smooth Optimized | 📦 300+ Mods | ⚡ 1-Click Install | 🔄 Updated | 🚫 No DLC Required",
+      "endorsements": 3783,
+      "totalDownloads": 580227,
+      "adultContent": false,
+      "user": {
+        "name": "rVeinz"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/f/a/fab3952f-ac47-4995-88c0-7954e6c126e5.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/f/a/t/med/fab3952f-ac47-4995-88c0-7954e6c126e5.webp"
+      },
+      "category": {
+        "name": "Total Overhaul"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 193,
+        "modCount": 416,
+        "totalSize": 562573750,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.5.0.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": 86397,
+      "slug": "n0nymh",
+      "name": "CET+Essentials",
+      "summary": "Includes the ArchiveXL, Codeware, Cyber Engine Tweaks, Equipment-EX, Mod Settings, No Intro Videos, RED4ext, redscript, TweakXL and Virtual Atelier.",
+      "endorsements": 946,
+      "totalDownloads": 307677,
+      "adultContent": false,
+      "user": {
+        "name": "Reyik"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/e/a/ead5b0e0-66df-4257-bb6d-95145c351ad6.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/e/a/t/med/ead5b0e0-66df-4257-bb6d-95145c351ad6.webp"
+      },
+      "category": {
+        "name": "Essentials"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 49,
+        "modCount": 11,
+        "totalSize": 41619010,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.3.1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": 196009,
+      "slug": "srpv39",
+      "name": "NCR - Extras",
+      "summary": "✅ Compatible with Game Version 2.5 ✨ Extras for Night City Reborn Collection",
+      "endorsements": 885,
+      "totalDownloads": 154774,
+      "adultContent": false,
+      "user": {
+        "name": "rVeinz"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/b/1/b18745a8-51d0-403d-968d-a5841861b460.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/b/1/t/med/b18745a8-51d0-403d-968d-a5841861b460.webp"
+      },
+      "category": {
+        "name": "Total Overhaul"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 133,
+        "modCount": 275,
+        "totalSize": 7101792502,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.5.0.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": 331294,
+      "slug": "4vbvcp",
+      "name": "The Zenitex Military Gear Collection",
+      "summary": "Lore-friendly, modular, military equipment. Supports both genders and VTK female body mods.",
+      "endorsements": 490,
+      "totalDownloads": 125644,
+      "adultContent": false,
+      "user": {
+        "name": "ScorpionTank"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/c/7/c74f7886-18e5-472a-b7c0-21ef9d6e309b.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/c/7/t/med/c74f7886-18e5-472a-b7c0-21ef9d6e309b.webp"
+      },
+      "category": {
+        "name": "Themed"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 18,
+        "modCount": 29,
+        "totalSize": 948492862,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.3.1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": 332157,
+      "slug": "7xfiar",
+      "name": "Nola Dreamer's CCXL hairs",
+      "summary": "All my CCXL hairs in one Collection.",
+      "endorsements": 57,
+      "totalDownloads": 27422,
+      "adultContent": false,
+      "user": {
+        "name": "NolaDreamer"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/d/2/d270c799-35ff-428c-9394-96f8f5c41541.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/d/2/t/med/d270c799-35ff-428c-9394-96f8f5c41541.webp"
+      },
+      "category": {
+        "name": "Themed"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 4,
+        "modCount": 42,
+        "totalSize": 817940257,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.3.1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": 271802,
+      "slug": "bv1pax",
+      "name": "Graphics - Environment",
+      "summary": "Compatible 2.31a ✅ - Living colors, magnificent rain and sunset, and real nights. The essentials for removing yellow/green filter, correcting lights, improving distant shadows, and enhancing the environment. VRAM-friendly✅",
+      "endorsements": 33,
+      "totalDownloads": 9086,
+      "adultContent": false,
+      "user": {
+        "name": "ellios2normandie"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/8/2/827c0d40-79cf-400e-a48b-5d26d4c0e4dd.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/8/2/t/med/827c0d40-79cf-400e-a48b-5d26d4c0e4dd.webp"
+      },
+      "category": {
+        "name": "Essentials"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 50,
+        "modCount": 52,
+        "totalSize": 775339106,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.3.1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": 321447,
+      "slug": "hzrr8v",
+      "name": "Zenitex Military Collection ",
+      "summary": "☑️Always Up-to-Date & One Click Install, A modular, lore-friendly tactical gear collection for Cyberpunk 2077, designed by ScorpionTank. Featuring combat-ready outfits, gloves, goggles, and accessories with full customization, and shop integration.",
+      "endorsements": 32,
+      "totalDownloads": 15569,
+      "adultContent": false,
+      "user": {
+        "name": "xXCmdrStrikerXx"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/c/1/c1c359c0-4da3-433a-8877-59ecef380720.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/c/1/t/med/c1c359c0-4da3-433a-8877-59ecef380720.webp"
+      },
+      "category": {
+        "name": "Themed"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 33,
+        "modCount": 48,
+        "totalSize": 936779606,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.3.1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": 89333,
+      "slug": "xfktu4",
+      "name": "City of Your Dreams (Core) by v2",
+      "summary": "✅ Compatible with Patch 2.21🎮Main Core Mods needed to Mod Cyberpunk 2077 🔮",
+      "endorsements": 26,
+      "totalDownloads": 13355,
+      "adultContent": false,
+      "user": {
+        "name": "2077v2"
+      },
+      "tileImage": {
+        "url": "https://media.nexusmods.com/2/a/2a1319cb-dc83-4f1e-b6c1-823045b57dfa.webp",
+        "thumbnailUrl": "https://media.nexusmods.com/2/a/t/med/2a1319cb-dc83-4f1e-b6c1-823045b57dfa.webp"
+      },
+      "category": {
+        "name": "Essentials"
+      },
+      "latestPublishedRevision": {
+        "revisionNumber": 12,
+        "modCount": 22,
+        "totalSize": 74080261,
+        "adultContent": false,
+        "gameVersions": [
+          {
+            "reference": "2.2.1.0"
+          }
+        ]
+      }
+    }
+  ]
+}

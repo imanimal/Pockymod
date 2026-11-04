@@ -150,9 +150,21 @@ impl Queue {
     }
 }
 
+/// Whether a Nexus file can be installed automatically. Its `uri` is usually the archive's name
+/// (`Mod-123-1-0.zip`), but files listed in collections can carry a storage path with no extension
+/// (`4c/ec/e3/4cece3d6-…`, seen live); those are taken as archives and checked by content when installed.
 pub fn is_archive_name(uri: &str) -> bool {
-    let l = uri.to_lowercase();
-    l.ends_with(".zip") || l.ends_with(".7z") || l.ends_with(".rar")
+    let name = uri.rsplit('/').next().unwrap_or(uri).to_lowercase();
+    match name.rsplit_once('.') {
+        Some((_, ext)) if ext.len() <= 4 && ext.chars().all(|c| c.is_ascii_alphanumeric()) && ext.chars().any(|c| c.is_ascii_alphabetic()) => matches!(ext, "zip" | "7z" | "rar"),
+        _ => true,
+    }
+}
+
+/// The local file name for a download: the archive's name, or `<mod>-<file>-<id>` for storage paths.
+pub fn download_name(mod_id: u32, file_id: u32, uri: &str) -> String {
+    let last = uri.rsplit('/').next().unwrap_or(uri);
+    if uri.contains('/') || !last.contains('.') { format!("{mod_id}-{file_id}-{last}") } else { last.to_string() }
 }
 
 /// A mod's file and every Nexus mod it requires that is not installed, dependencies first.
@@ -234,6 +246,16 @@ mod tests {
         let n = q.accept_nxm(link(7, 70), |l| item(l.mod_id, l.file_id, "x.zip"));
         assert_ne!(n, a);
         assert!(q.get(n).unwrap().nxm.is_some());
+    }
+
+    #[test]
+    fn file_names_from_nexus() {
+        assert!(is_archive_name("ArchiveXL-4198-1-28-6.zip"));
+        assert!(!is_archive_name("Setup-1-0.exe"));
+        assert!(is_archive_name("4c/ec/e3/4cece3d6-4ffb-4c5a-b4d0-12635932ae9e"), "storage path from a collection");
+        assert!(is_archive_name("My.Mod.v1.2"), "dots in a name are not an extension");
+        assert_eq!(download_name(1, 2, "4c/ec/e3/4cece3d6"), "1-2-4cece3d6");
+        assert_eq!(download_name(1, 2, "A-1.7z"), "A-1.7z");
     }
 
     #[test]

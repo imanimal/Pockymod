@@ -162,7 +162,7 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
             let mut last = Instant::now();
             let id = item.id;
             let app2 = app.clone();
-            let dl = download::download(st.nexus.http(), &url, &library.join("downloads"), &item.uri, move |rec, total| {
+            let dl = download::download(st.nexus.http(), &url, &library.join("downloads"), &pocket_core::queue::download_name(item.mod_id, item.file_id, &item.uri), move |rec, total| {
                 if last.elapsed().as_millis() >= 250 {
                     last = Instant::now();
                     let s = app2.state::<AppState>();

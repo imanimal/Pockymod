@@ -27,5 +27,12 @@ async fn main() {
         details.push(d);
     }
     std::fs::write(out.join("details.json"), serde_json::to_string_pretty(&details).unwrap()).unwrap();
+    let mut cols = pocket_core::collections::browse(&client, &db, &Default::default()).await.unwrap();
+    cols.nodes.truncate(9);
+    std::fs::write(out.join("collections.json"), serde_json::to_string_pretty(&cols).unwrap()).unwrap();
+    let rev = pocket_core::collections::revision(&client, &cols.nodes[0].slug, None).await.unwrap();
+    let mut check = pocket_core::collections::check_revision(&db.lock().unwrap(), &rev, Some("2.5".into()), false).unwrap();
+    check.entries.truncate(60);
+    std::fs::write(out.join("collection-check.json"), serde_json::to_string_pretty(&check).unwrap()).unwrap();
     println!("{} cards, {} details", r.nodes.len(), details.len());
 }

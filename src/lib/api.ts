@@ -235,3 +235,45 @@ export const updates = {
   onChange: (cb: (u: Update[]) => void) => listen<Update[]>("updates", cb),
 };
 export const queueMod = (modId: number) => call<QueueSnapshot>("queue_add_mod", { modId });
+
+// ── collections ──
+
+export interface CollectionCard {
+  id: number; slug: string; name: string; summary: string; endorsements: number; totalDownloads: number; adultContent: boolean | null;
+  user: { name: string }; tileImage: { url: string; thumbnailUrl: string | null } | null; category: { name: string } | null;
+  latestPublishedRevision: { revisionNumber: number; modCount: number; totalSize: number; adultContent: boolean; gameVersions: Array<{ reference: string }> } | null;
+}
+export interface CollectionsPage { totalCount: number; facetsData: { gameVersion?: Record<string, number> } | null; nodes: CollectionCard[] }
+export interface CollectionQuery { text?: string | null; gameVersion?: string | null; sort?: string | null; includeAdult: boolean; offset: number }
+export interface CollectionEntry {
+  modId: number; fileId: number; name: string; fileName: string; version: string; size: number; uri: string; optional: boolean; md5: string | null;
+  status: "installed" | "other" | "missing" | "unavailable"; replacement: [number, string] | null;
+}
+export interface CollectionCheck {
+  name: string; collectionVersions: string[]; currentPatch: string | null; gameVersionOk: boolean | null; entries: CollectionEntry[];
+  missing: number; installed: number; unavailable: number; needsClick: number; downloadBytes: number;
+}
+export interface LocalCollection {
+  format: string; version: number; name: string; description: string; game: string; gameVersion: string | null; createdAt: string;
+  mods: Array<{ modId: number; fileId: number; name: string; fileName: string; version: string; md5: string | null; size: number; optional: boolean; requires: number[]; uri: string }>;
+  loadOrder: number[];
+}
+export const collections = {
+  browse: (query: CollectionQuery) => call<CollectionsPage>("collections_browse", { query }),
+  check: (slug: string, revision?: number) => call<CollectionCheck>("collection_check", { slug, revision }),
+  install: (check: CollectionCheck, includeOptional: boolean) => call<QueueSnapshot>("collection_install", { check, includeOptional }),
+  createLocal: (name: string, description: string) => call<LocalCollection>("local_collection_create", { name, description }),
+  exportLocal: (collection: LocalCollection, path: string) => call<void>("local_collection_export", { collection, path }),
+  importLocal: (path: string) => call<[LocalCollection, CollectionCheck]>("local_collection_import", { path }),
+};
+export async function pickSavePath(defaultName: string): Promise<string | null> {
+  if (!("__TAURI_INTERNALS__" in window)) return window.prompt("Save as", defaultName) || null;
+  const { save } = await import("@tauri-apps/plugin-dialog");
+  return (await save({ title: "Export collection", defaultPath: defaultName, filters: [{ name: "Pocket Mods collection", extensions: ["pmcollection.json", "json"] }] })) ?? null;
+}
+export async function pickCollectionFile(): Promise<string | null> {
+  if (!("__TAURI_INTERNALS__" in window)) return window.prompt("Collection file") || null;
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ title: "Import a collection", filters: [{ name: "Pocket Mods collection", extensions: ["json"] }] });
+  return typeof r === "string" ? r : null;
+}

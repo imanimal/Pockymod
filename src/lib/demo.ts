@@ -5,6 +5,8 @@ import { demoEmit, inTauri, registerDemo } from "./tauri";
 import type { HealthReport, Profile, BrowseQuery, BrowseResult, CardView, DetailView, InstallRow, LocalFilter, NexusStatus, PathsView, QueueItem, QueueSnapshot, RateDisplay } from "./api";
 import browseFixture from "./demo/browse.json";
 import detailFixture from "./demo/details.json";
+import collectionsFixture from "./demo/collections.json";
+import checkFixture from "./demo/collection-check.json";
 
 const rate: RateDisplay = { level: "unknown", remaining: null, limit: null, window: "hour", resetsAt: null, throttledUntil: null };
 let status: NexusStatus = { hasKey: false, user: null, rateLimit: rate };
@@ -175,6 +177,22 @@ export function installDemo() {
     updates_check: () => [],
     updates_last: () => [],
     queue_add_mod: () => snapshot(),
+    collections_browse: () => collectionsFixture,
+    collection_check: () => new Promise((ok) => setTimeout(() => ok(checkFixture), 300)),
+    collection_install: ({ check }) => {
+      for (const e of (check as { entries: Array<{ modId: number; fileId: number; name: string; fileName: string; version: string; size: number; uri: string; status: string }> }).entries.filter((x) => x.status !== "installed").slice(0, 5))
+        q.push({ id: ++qid, modId: e.modId, fileId: e.fileId, modName: e.name, fileName: e.fileName, version: e.version, uri: e.uri, size: e.size, requiredBy: "collection", manualOnly: false, state: { state: "waiting" } });
+      pump();
+      return snapshot();
+    },
+    local_collection_create: ({ name, description }) => {
+      if (installs.length === 0) throw { kind: "invalid", message: "There are no Nexus mods enabled to put in a collection. Mods installed from a file cannot be shared." };
+      return { format: "pocket-mods.collection", version: 1, name, description, game: "cyberpunk2077", gameVersion: "2.5", createdAt: new Date().toISOString(),
+        mods: installs.map((i) => ({ modId: i.modId, fileId: i.fileId, name: i.name, fileName: i.name, version: i.version, md5: "d41d8cd98f00b204e9800998ecf8427e", size: 1000, optional: false, requires: [], uri: "" })),
+        loadOrder: installs.map((i) => i.modId) };
+    },
+    local_collection_export: () => {},
+    local_collection_import: () => { throw { kind: "demo", message: "Importing a file needs the desktop app." }; },
     nxm_handler_status: () => ({ supported: true, ours: false, owner: "Vortex", command: null }),
     nxm_handler_register: () => ({ supported: true, ours: true, owner: "Pocket Mods", command: null }),
     patches: () => [["2.0", "2023-09-21"], ["2.1", "2023-12-05"], ["2.12", "2024-03-01"], ["2.2", "2024-12-10"], ["2.3", "2025-07-17"], ["2.5", "2026-10-22"]]

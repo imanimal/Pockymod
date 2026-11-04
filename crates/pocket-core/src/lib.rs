@@ -2,6 +2,7 @@
 
 pub mod archive;
 pub mod browse;
+pub mod collections;
 pub mod credentials;
 pub mod cyberpunk;
 pub mod db;

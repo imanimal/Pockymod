@@ -34,3 +34,21 @@ async fn search_detail_and_cache() {
     assert!(d.file_list.as_ref().is_some_and(|l| l.iter().any(|p| p.ends_with("ArchiveXL.dll"))), "file list: {:?}", d.file_list);
     println!("search total {} · first {} · ArchiveXL files {:?}", r.total, r.nodes[0].card.name, d.file_list.map(|l| l.len()));
 }
+
+#[tokio::test]
+#[ignore]
+async fn collections_browse_revision_and_check() {
+    use pocket_core::collections::{self, CollectionQuery};
+    let client = NexusClient::new(None).unwrap();
+    let db = Mutex::new(Db::memory().unwrap());
+    let page = collections::browse(&client, &db, &CollectionQuery::default()).await.unwrap();
+    assert!(page.total_count > 0 && !page.nodes.is_empty());
+    assert!(page.facets_data.as_ref().and_then(|f| f.get("gameVersion")).is_some(), "game version facet");
+    let slug = page.nodes[0].slug.clone();
+    let rev = collections::revision(&client, &slug, None).await.unwrap();
+    assert!(!rev.mod_files.is_empty());
+    let mut check = collections::check_revision(&db.lock().unwrap(), &rev, Some("2.5".into()), false).unwrap();
+    assert_eq!(check.installed, 0);
+    collections::resolve_files(&client, &db, &mut check, 3, false).await.unwrap();
+    println!("{}: {} mods, {} missing, {} unavailable, {} clicks, game ok {:?}", check.name, check.entries.len(), check.missing, check.unavailable, check.needs_click, check.game_version_ok);
+}

@@ -10,6 +10,7 @@ import { Library } from "./screens/Library";
 import { InstallDialog } from "./screens/InstallDialog";
 import { Health } from "./screens/Health";
 import { LoadOrder } from "./screens/LoadOrder";
+import { Collections } from "./screens/Collections";
 import { Toasts, toast } from "./ui/toast";
 import { errorText, game, nexus, nexusPages, onToast, queue, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
 import { applyTheme, getThemeChoice, setThemeChoice, watchSystemTheme } from "./lib/theme";
@@ -112,6 +113,7 @@ export function App() {
           : view === "library" ? <Library updates={new Map(updates.map((u) => [u.modId, u.latest]))} />
           : view === "health" ? <Health onNavigate={setView} onIssues={setHealthIssues} />
           : view === "loadorder" ? <LoadOrder />
+          : view === "collections" ? <Collections onQueued={() => setView("downloads")} />
           : view === "browse" ? null
           : <Placeholder view={here.label} icon={here.icon} />}
       </main>
