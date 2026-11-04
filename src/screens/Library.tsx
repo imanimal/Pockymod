@@ -47,7 +47,13 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const [sortPlan, setSortPlan] = useState<ReturnType<typeof planGroups> | null>(null);
   const [layout, setLayoutState] = useState<"grid" | "list">(() => { try { return localStorage.getItem("pm.libraryLayout") === "list" ? "list" : "grid"; } catch { return "grid"; } });
   const setLayout = (l: "grid" | "list") => { setLayoutState(l); try { localStorage.setItem("pm.libraryLayout", l); } catch { /* storage unavailable */ } };
-  const upd = useMemo(() => new Map((updates ?? []).map((u) => [u.modId, u])), [updates]);
+  // updates are per install (the main file and an optional one of the same mod can each have one)
+  const upd = useMemo(() => {
+    const byInstall = new Map<number, Update>(); const byMod = new Map<number, Update>();
+    for (const u of updates ?? []) { if (u.installId) byInstall.set(u.installId, u); else byMod.set(u.modId, u); }
+    return { byInstall, byMod };
+  }, [updates]);
+  const updOf = (r: InstallRow): Update | undefined => upd.byInstall.get(r.id) ?? upd.byMod.get(r.modId);
 
   const load = useCallback(() => {
     library.list().then((r) => { setRows(r); setSel((s) => new Set([...s].filter((id) => r.some((x) => x.id === id)))); }).catch((e) => toast(errorText(e), true));
@@ -76,7 +82,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     if (t && !`${r.name} ${r.category ?? ""} ${r.group} ${r.frameworks.join(" ")}`.toLowerCase().includes(t)) return false;
     if (show === "on" && !r.enabled) return false;
     if (show === "off" && r.enabled) return false;
-    if (show === "updates" && !upd.has(r.modId)) return false;
+    if (show === "updates" && !!!updOf(r)) return false;
     return true;
   });
   const order = [...customGroups, ...presets];
@@ -86,7 +92,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const selected = (rows ?? []).filter((r) => sel.has(r.id));
   const toggle = (id: number) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleAll = (ids: number[]) => setSel((s) => { const all = ids.every((i) => s.has(i)); const n = new Set(s); ids.forEach((i) => all ? n.delete(i) : n.add(i)); return n; });
-  const withUpdates = (rows ?? []).filter((r) => upd.has(r.modId) && r.modId < 900_000_000);
+  const withUpdates = (rows ?? []).filter((r) => !!updOf(r) && r.modId < 900_000_000);
 
   // every change goes through ops, so it can be undone (Ctrl+Z, or the toast's Undo)
   const doBulk = (action: "enable" | "disable" | "uninstall", ids: number[]) => run(async () => {
@@ -95,7 +101,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     else await ops.setEnabled(list, action === "enable");
   });
   // an update queues the file that follows the installed one (2K stays 2K)
-  const queueUpdate = (r: InstallRow) => { const u = upd.get(r.modId); return u?.fileId ? queue.add(u.modId, u.fileId, true) : queueMod(r.modId); };
+  const queueUpdate = (r: InstallRow) => { const u = updOf(r); return u?.fileId ? queue.add(u.modId, u.fileId, true) : queueMod(r.modId); };
   const updateMany = (list: InstallRow[]) => run(async () => {
     let n = 0;
     for (const r of list) { try { await queueUpdate(r); n++; } catch { /* reported by the queue */ } }
@@ -168,7 +174,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
           <span className="display sm inline"><span className="d-lbl">Selected</span><span className="d-num">{String(sel.size).padStart(2, "0")}</span></span>
           <Key size="sm" icon="check" disabled={busy} onClick={() => doBulk("enable", [...sel])}>Turn on</Key>
           <Key size="sm" icon="minus" disabled={busy} onClick={() => doBulk("disable", [...sel])}>Turn off</Key>
-          {selected.some((r) => upd.has(r.modId)) && <Key size="sm" icon="downloads" disabled={busy} onClick={() => updateMany(selected.filter((r) => upd.has(r.modId)))}>Update</Key>}
+          {selected.some((r) => !!updOf(r)) && <Key size="sm" icon="downloads" disabled={busy} onClick={() => updateMany(selected.filter((r) => !!updOf(r)))}>Update</Key>}
           <Key size="sm" icon="folder" disabled={busy} onClick={() => setMoveOpen(true)}>Move to group</Key>
           <Key size="sm" variant="ghost" icon="trash" disabled={busy} onClick={() => doBulk("uninstall", [...sel])}>Remove</Key>
           <span className="sp" />
@@ -252,14 +258,14 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                     <span className="lcard-img">
                       {r.picture ? <img src={r.picture.replace("/images/", "/images/thumbnails/")} alt="" loading="lazy" onError={(e) => { const i = e.target as HTMLImageElement; if (r.picture && i.src !== r.picture) i.src = r.picture; }} /> : <Icon name={r.modType === "framework" ? "chip" : "file"} size={27} />}
                       <input type="checkbox" className="pick" checked={sel.has(r.id)} onChange={() => toggle(r.id)} onClick={(e) => e.stopPropagation()} aria-label={`Select ${r.name}`} />
-                      {upd.get(r.modId) && <span className="lcard-badge"><Pill tone="soon">Update</Pill></span>}
+                      {updOf(r) && <span className="lcard-badge"><Pill tone="soon">Update</Pill></span>}
                     </span>
                     <span className="lcard-b">
                       <span className="m-t">{r.name}</span>
                       <span className="m-meta">{r.version && <span>v{r.version}</span>}{SOURCE[r.source] && <span>{SOURCE[r.source]}</span>}</span>
                       <span className="lcard-f" onClick={(e) => e.stopPropagation()}>
                         <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}>{r.enabled ? "On" : "Off"}</Switch>
-                        {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
+                        {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
                       </span>
                     </span>
                   </div>
@@ -278,7 +284,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                         <span>{r.deployedFiles} files in the game</span>
                         {r.category && <span>{r.category}</span>}
                         {SOURCE[r.source] && <span><Pill tone={r.source === "vortex" ? "soon" : undefined}>{SOURCE[r.source]}</Pill></span>}
-                        {upd.get(r.modId) && <span><Pill tone="soon">Update {upd.get(r.modId)!.latest}</Pill></span>}
+                        {updOf(r) && <span><Pill tone="soon">Update {updOf(r)!.latest}</Pill></span>}
                       </span>
                       <span className="m-tags">
                         <Tag kind={r.modType === "unknown" || r.modType === "mixed" ? undefined : r.modType} square>{r.modType === "redmod" ? "REDmod" : r.modType}</Tag>
@@ -286,8 +292,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       </span>
                     </span>
                     <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
-                      {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
-                      {upd.get(r.modId) && <Key size="sm" variant="ghost" onClick={() => run(async () => { const u = upd.get(r.modId)!; await updatesApi.skip(u.modId, u.latest); toast(`Skipping ${r.name} ${u.latest}. A newer version shows again.`); })} disabled={busy} title="Do not offer this version again">Skip</Key>}
+                      {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
+                      {updOf(r) && <Key size="sm" variant="ghost" onClick={() => run(async () => { const u = updOf(r)!; await updatesApi.skip(u.modId, u.latest); toast(`Skipping ${r.name} ${u.latest}. A newer version shows again.`); })} disabled={busy} title="Do not offer this version again">Skip</Key>}
                       {r.enabled && r.deployedFiles === 0 && <Key size="sm" onClick={() => deploy(r)} disabled={busy}>Deploy</Key>}
                       <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}><span className="sr-only">On</span></Switch>
                       <Key size="sm" variant="ghost" icon="trash" onClick={() => doBulk("uninstall", [r.id])} disabled={busy} aria-label={`Remove ${r.name}`} title={r.source === "vortex" ? "Remove from the game; it stays in Vortex" : "Remove"} />

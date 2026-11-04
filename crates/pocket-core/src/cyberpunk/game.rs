@@ -263,27 +263,24 @@ mod tests {
 }
 
 /// redscript compiles every script into r6/cache/final.redscripts and keeps the game's own as .bk. Without
-/// redscript (removed, or after a game patch) a stale compiled file breaks the game; this puts the game's own
-/// back and empties the modded cache. Returns how many files it changed.
+/// redscript (removed, or after a game patch) a stale compiled file breaks the game; this puts the game's own back.
+/// A .bk older than the game's executable predates the last patch (the patch already wrote a fresh file), so it is
+/// left alone. r6/cache/modded is REDmod's deploy output and is not touched. Returns how many files it changed.
 pub fn reset_scripts(game: &Path) -> std::io::Result<usize> {
     let cache = game.join("r6/cache");
-    let mut n = 0;
     let bk = cache.join("final.redscripts.bk");
-    if bk.is_file() {
-        let fin = cache.join("final.redscripts");
-        let _ = std::fs::remove_file(&fin);
-        std::fs::rename(&bk, &fin)?;
-        n += 1;
-    }
-    if let Ok(rd) = std::fs::read_dir(cache.join("modded")) {
-        for e in rd.flatten() {
-            if e.path().is_file() && std::fs::remove_file(e.path()).is_ok() { n += 1; }
-        }
-    }
-    Ok(n)
+    if !bk.is_file() { return Ok(0); }
+    let (bk_time, exe_time) = (mtime(&bk), mtime(&game.join(EXE)));
+    if matches!((bk_time, exe_time), (Some(b), Some(e)) if b + 60 < e) { return Ok(0); }
+    let fin = cache.join("final.redscripts");
+    let _ = std::fs::remove_file(&fin);
+    std::fs::rename(&bk, &fin)?;
+    Ok(1)
 }
 
 /// Compiled scripts are left over from a redscript that is gone.
 pub fn stale_scripts(game: &Path) -> bool {
-    game.join("r6/cache/final.redscripts.bk").is_file() && !game.join("engine/tools/scc.exe").is_file()
+    let bk = game.join("r6/cache/final.redscripts.bk");
+    let current = matches!((mtime(&bk), mtime(&game.join(EXE))), (Some(b), Some(e)) if b + 60 >= e) || mtime(&game.join(EXE)).is_none();
+    bk.is_file() && current && !game.join("engine/tools/scc.exe").is_file()
 }

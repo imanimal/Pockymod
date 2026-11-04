@@ -45,6 +45,9 @@ pub struct QueueItem {
     pub state: ItemState,
     #[serde(skip)]
     pub nxm: Option<NxmLink>,
+    /// Part of a collection (which asks for this very file), not a requirement (any copy of the mod will do).
+    #[serde(default)]
+    pub from_collection: bool,
 }
 
 impl QueueItem {
@@ -215,7 +218,7 @@ pub async fn with_dependencies(client: &NexusClient, db: &Mutex<Db>, mod_id: u32
         let Some(file) = file else { continue };
         out.push(QueueItem {
             id: 0, mod_id: id, file_id: file.file_id, mod_name: d.detail.name.clone(), file_name: file.name.clone(), version: file.version.clone(),
-            uri: file.uri.clone(), size: file.bytes(), required_by: required_by.clone(), manual_only: !is_archive_name(&file.uri), state: ItemState::Waiting, nxm: None,
+            uri: file.uri.clone(), size: file.bytes(), required_by: required_by.clone(), manual_only: !is_archive_name(&file.uri), state: ItemState::Waiting, nxm: None, from_collection: false,
         });
         if depth >= 4 { continue; }
         for r in &d.detail.mod_requirements.nexus_requirements.nodes {
@@ -235,7 +238,7 @@ mod tests {
 
     fn item(m: u32, f: u32, uri: &str) -> QueueItem {
         QueueItem { id: 0, mod_id: m, file_id: f, mod_name: format!("m{m}"), file_name: "f".into(), version: "1".into(), uri: uri.into(), size: 1000,
-            required_by: None, manual_only: !is_archive_name(uri), state: ItemState::Waiting, nxm: None }
+            required_by: None, manual_only: !is_archive_name(uri), state: ItemState::Waiting, nxm: None, from_collection: false }
     }
     fn link(m: u32, f: u32) -> NxmLink { NxmLink::parse(&format!("nxm://cyberpunk2077/mods/{m}/files/{f}?key=k&expires=9999999999")).unwrap() }
 

@@ -32,6 +32,7 @@ export function FomodDialog({ need, onClose, onInstalled }: { need: ChoicesNeede
       const out = await library.installFile({ ...need.request, fomodChoices: choices });
       if (out.status === "installed") toast(`Installed ${need.request.name}${out.needsRedmodDeploy ? ". Run the REDmod deploy from Load order." : "."}`);
       else if (out.status === "staged") toast(`${need.request.name} is staged: its files clash with other mods. Decide in Library.`, true);
+      else if (out.status === "alreadyHave") toast(`You already have ${need.request.name}. Kept yours.`);
       onInstalled?.(); onClose();
     } catch (e) { toast(errorText(e), true); setBusy(false); }
   };

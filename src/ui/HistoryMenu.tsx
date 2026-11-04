@@ -33,12 +33,11 @@ export function HistoryMenu({ onRemoved }: { onRemoved: () => void }) {
             {h.entries.length === 0 && <p className="dim" style={{ padding: ".4em .2em" }}>Changes to your mods show here. Ctrl+Z undoes the last one, Ctrl+Y redoes it.</p>}
             <div className="rows">
               {h.entries.slice(0, 30).map((e) => (
-                <div key={e.id} className={`row${e.state === "undone" ? " off" : ""}`} style={{ cursor: "default" }}>
-                  <span className="m-main"><span className="m-t" style={{ whiteSpace: "normal" }}>{e.label}</span><span className="m-meta"><span>{when(e.at)}</span>{e.state === "undone" && <span>undone</span>}</span></span>
+                <div key={e.id} className={`row${e.state !== "done" ? " off" : ""}`} style={{ cursor: "default" }}>
+                  <span className="m-main"><span className="m-t" style={{ whiteSpace: "normal" }}>{e.label}</span><span className="m-meta"><span>{when(e.at)}</span>{e.state !== "done" && <span>undone</span>}</span></span>
                   <span className="m-side" style={{ flexDirection: "row" }}>
-                    {e.state === "done"
-                      ? <Key size="sm" variant="ghost" icon="undo" onClick={() => void undo(e)} aria-label={`Undo: ${e.label}`} />
-                      : <Key size="sm" variant="ghost" icon="redo" onClick={() => void redo(e)} aria-label={`Redo: ${e.label}`} />}
+                    {e.state === "done" && <Key size="sm" variant="ghost" icon="undo" onClick={() => void undo(e)} aria-label={`Undo: ${e.label}`} />}
+                    {e.state === "undone" && <Key size="sm" variant="ghost" icon="redo" onClick={() => void redo(e)} aria-label={`Redo: ${e.label}`} />}
                   </span>
                 </div>
               ))}

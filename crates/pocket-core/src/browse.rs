@@ -142,8 +142,9 @@ pub fn file_line(name: &str) -> String {
     let lower = name.to_lowercase();
     let words: Vec<String> = lower.split(|c: char| !c.is_alphanumeric() && c != '.').filter(|w| !w.is_empty())
         .filter(|w| {
+            // a version has dots or a leading v ("1.2", "v3"); a bare number is part of the name ("Hair 200")
             let v = w.trim_start_matches('v');
-            let version = !v.is_empty() && v.chars().all(|c| c.is_ascii_digit() || c == '.') && (v.contains('.') || w.starts_with('v') || v.len() >= 3);
+            let version = !v.is_empty() && v.chars().all(|c| c.is_ascii_digit() || c == '.') && (v.contains('.') || w.starts_with('v'));
             !version && !["main", "file", "files", "update", "version", "ver", "the", "latest", "new"].contains(w)
         })
         .map(|w| w.trim_matches('.').to_string()).filter(|w| !w.is_empty()).collect();
@@ -155,24 +156,37 @@ pub fn file_line(name: &str) -> String {
 pub fn successor<'a>(files: &'a [ModFile], old_file_id: u32, old_name: Option<&str>) -> Option<&'a ModFile> {
     let old = files.iter().find(|f| f.file_id == old_file_id);
     let line = old.map(|f| file_line(&f.name)).or_else(|| old_name.map(file_line)).filter(|l| !l.is_empty());
-    let current = || files.iter().filter(|f| f.is_current());
+    // a file is followed by one of its own kind: a main file by a main file, an update patch by an update patch. An
+    // old version's first category is lost, so it may be followed by a main or an optional file
+    let kinds: &[&str] = match old.map(|f| f.category.as_str()) {
+        Some("MAIN") => &["MAIN"],
+        Some("OPTIONAL") => &["OPTIONAL"],
+        Some("UPDATE") => &["UPDATE"],
+        Some("MISCELLANEOUS") => &["MISCELLANEOUS"],
+        _ => &["MAIN", "OPTIONAL"],
+    };
+    let current = || files.iter().filter(|f| kinds.contains(&f.category.as_str()));
     if let Some(l) = &line {
         if let Some(f) = current().filter(|f| &file_line(&f.name) == l).max_by_key(|f| f.date) { return Some(f); }
     }
+    // an optional file or a patch with no newer copy of its own has no update
+    if old.is_some_and(|f| matches!(f.category.as_str(), "OPTIONAL" | "MISCELLANEOUS" | "UPDATE")) { return None; }
     let mains: Vec<&ModFile> = files.iter().filter(|f| f.category == "MAIN").collect();
-    // an optional file with no newer copy of its own has no update
-    if old.is_some_and(|f| f.category == "OPTIONAL" || f.category == "MISCELLANEOUS") { return None; }
     if mains.len() == 1 { return Some(mains[0]); }
     if old.is_none() && line.is_none() { return main_file(files); }
     None
 }
 
-/// Whether installing `new` should take out an install of `old_file_id` of the same mod: same line, or (for a
-/// mod with a single main file) the old main file. An optional file never takes out the main one.
+/// Whether installing `new` should take out an install of `old_file_id` of the same mod: the same file, or the file
+/// `new` updates (same kind and line; for a mod with a single main file, the old main file). An optional file or an
+/// update patch never takes out the main one.
 pub fn replaces(files: &[ModFile], new: &ModFile, old_file_id: u32, old_name: Option<&str>) -> bool {
     if new.file_id == old_file_id { return true; }
-    if new.category == "OPTIONAL" || new.category == "MISCELLANEOUS" {
-        let old_line = files.iter().find(|f| f.file_id == old_file_id).map(|f| file_line(&f.name)).or_else(|| old_name.map(file_line));
+    if matches!(new.category.as_str(), "OPTIONAL" | "MISCELLANEOUS" | "UPDATE") {
+        let old = files.iter().find(|f| f.file_id == old_file_id);
+        // only an older copy of the same add-on: same kind when it is known, and the same line
+        if old.is_some_and(|o| o.category != new.category && matches!(o.category.as_str(), "MAIN" | "OPTIONAL" | "UPDATE" | "MISCELLANEOUS")) { return false; }
+        let old_line = old.map(|f| file_line(&f.name)).or_else(|| old_name.map(file_line));
         return old_line.is_some_and(|l| l == file_line(&new.name));
     }
     successor(files, old_file_id, old_name).is_some_and(|f| f.file_id == new.file_id)
@@ -286,6 +300,12 @@ mod line_tests {
         // a single-main mod that renamed its file between versions
         let one = vec![f(10, "TweakXL", "OLD_VERSION", 1), f(11, "TweakXL Release", "MAIN", 2)];
         assert_eq!(successor(&one, 10, None).map(|x| x.file_id), Some(11));
+        // a patch named after the main file is not its update and does not replace it
+        let patch = vec![f(20, "Cool Mod", "MAIN", 1), f(21, "Cool Mod Update 1.1", "UPDATE", 2)];
+        assert_eq!(successor(&patch, 20, None).map(|x| x.file_id), Some(20));
+        assert!(!replaces(&patch, &patch[1], 20, None));
+        // numbered variants stay apart
+        assert_ne!(file_line("Hair 100"), file_line("Hair 200"));
         // a file Nexus no longer lists, known only by an old name
         assert_eq!(successor(&files, 999, Some("Body 4K 0.9")).map(|x| x.file_id), Some(4));
     }

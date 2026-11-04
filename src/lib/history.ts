@@ -13,7 +13,8 @@ export interface Op {
   redo: () => Promise<unknown>;
   at: number;
 }
-export interface Entry extends Op { id: number; state: "done" | "undone" }
+/** "gone": undone, then a new change was made, so it can no longer be redone. */
+export interface Entry extends Op { id: number; state: "done" | "undone" | "gone" }
 
 let seq = 1;
 const past: Entry[] = [];
@@ -33,6 +34,8 @@ export function record(op: Omit<Op, "at">, quiet = false): Entry {
   const e: Entry = { ...op, at: Date.now(), id: seq++, state: "done" };
   past.push(e);
   if (past.length > 100) past.shift();
+  // a new change ends the redo chain: those entries stay in the list, marked gone
+  for (const f of future) f.state = "gone";
   future.length = 0;
   log.unshift(e);
   if (log.length > 200) log.pop();
@@ -56,7 +59,7 @@ function offerRedo(e: Entry, toastId?: number) { show(e, `Undone: ${e.label.char
 export async function undo(target?: Entry, toastId?: number): Promise<boolean> {
   if (running) return false;
   const e = target ?? past[past.length - 1];
-  if (!e || e.state !== "done") { if (!target) toast("Nothing to undo."); return false; }
+  if (!e || e.state !== "done" || !past.includes(e)) { if (!target) toast("Nothing to undo."); return false; }
   // undoing an older one first undoes what came after it, so the inverse runs on the state it expects
   while (past.length && past[past.length - 1] !== e) { const later = past[past.length - 1]; if (!(await undoOne(later))) return false; }
   const ok = await undoOne(e);
@@ -78,7 +81,7 @@ async function undoOne(e: Entry): Promise<boolean> {
 export async function redo(target?: Entry, toastId?: number): Promise<boolean> {
   if (running) return false;
   const e = target ?? future[future.length - 1];
-  if (!e || e.state !== "undone") { if (!target) toast("Nothing to redo."); return false; }
+  if (!e || e.state !== "undone" || !future.includes(e)) { if (!target) toast("Nothing to redo."); return false; }
   while (future.length && future[future.length - 1] !== e) { const later = future[future.length - 1]; if (!(await redoOne(later))) return false; }
   const ok = await redoOne(e);
   if (ok) offerUndo(e, toastId);

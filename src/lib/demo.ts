@@ -312,7 +312,7 @@ export function installDemo() {
     group_delete: ({ name }) => { const k = customGroups.indexOf(String(name)); if (k >= 0) customGroups.splice(k, 1); for (const i of installs) if (i.group === name) { i.group = groupOf(i.category); i.customGroup = false; } },
     library_bulk: ({ installIds, action }) => {
       const ids = installIds as number[];
-      for (const i of [...installs]) if (ids.includes(i.id)) { if (action === "uninstall") { toTrash(i); installs.splice(installs.indexOf(i), 1); } else i.enabled = action === "enable"; }
+      for (const i of [...installs]) if (ids.includes(i.id)) { if (action === "uninstall") { toTrash(i); installs.splice(installs.indexOf(i), 1); } else i.enabled = action === "enable" || action === "enable-win"; }
       demoEmit("library-changed", null);
       return { done: ids.length, failed: [] };
     },

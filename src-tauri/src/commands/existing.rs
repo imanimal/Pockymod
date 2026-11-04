@@ -146,7 +146,14 @@ pub async fn library_bulk(app: AppHandle, state: State<'_, AppState>, install_id
         let mut rep = BulkReport::default();
         for id in install_ids {
             let r = match action.as_str() {
-                "enable" => profiles::set_enabled(&d, &game, &library, id, true, &opts).map(|_| ()),
+                // on, but clashing with mods that are on: say so instead of counting it as done
+                "enable" => match profiles::set_enabled(&d, &game, &library, id, true, &opts) {
+                    Ok(Some(pocket_core::deploy::DeployOutcome::Conflicts { conflicts })) => Err(Error::Invalid(format!("{} of its files clash with other mods. Open it in Library to choose.", conflicts.len()))),
+                    Ok(Some(pocket_core::deploy::DeployOutcome::NeedsCopy { reason })) => Err(Error::Invalid(reason)),
+                    other => other.map(|_| ()),
+                },
+                // undoing "turned off": back as it was, winning its clashes again
+                "enable-win" => profiles::set_enabled(&d, &game, &library, id, true, &pocket_core::deploy::DeployOptions { take_conflicts: true, ..opts.clone() }).map(|_| ()),
                 "disable" => profiles::set_enabled(&d, &game, &library, id, false, &opts).map(|_| ()),
                 "uninstall" => install::uninstall(&d, &game, id).map(|_| ()),
                 other => Err(Error::Invalid(format!("Unknown action {other}"))),

@@ -155,7 +155,10 @@ export type InstallOutcome =
   | { status: "staged"; installId: number; deploy: DeployOutcome }
   | { status: "needsChoices"; fomod: Fomod; defaults: Choice[] }
   | { status: "alreadyHave"; installId: number | null; files: number };
-export interface InstallRequest { modId: number; fileId: number; name: string; version: string; archive: string; acceptUnknown?: boolean; replaceOlder?: boolean; options?: DeployOptions; fomodChoices?: Choice[]; fileName?: string | null }
+export interface InstallRequest {
+  modId: number; fileId: number; name: string; version: string; archive: string; acceptUnknown?: boolean; replaceOlder?: boolean; options?: DeployOptions; fomodChoices?: Choice[];
+  fileName?: string | null; origin?: string | null; keepExisting?: boolean; sameFileOnly?: boolean;
+}
 export type Choice = [number, number, number];
 export interface FomodPlugin { name: string; description: string; image: string | null; kind: string }
 export interface Fomod { name: string; root: string; steps: Array<{ name: string; groups: Array<{ name: string; kind: string; plugins: FomodPlugin[] }> }> }
@@ -368,7 +371,7 @@ export const groups = {
   rename: (from: string, to: string) => call<void>("group_rename", { from, to }),
   remove: (name: string) => call<void>("group_delete", { name }),
 };
-export const bulk = (installIds: number[], action: "enable" | "disable" | "uninstall") => call<{ done: number; failed: Array<[number, string]> }>("library_bulk", { installIds, action });
+export const bulk = (installIds: number[], action: "enable" | "enable-win" | "disable" | "uninstall") => call<{ done: number; failed: Array<[number, string]> }>("library_bulk", { installIds, action });
 
 export const launchGame = () => call<{ started: boolean; modded?: boolean; redmod?: RedmodResult | null }>("game_launch");
 /** Start without mods: they come out of the game and go back when it closes. */

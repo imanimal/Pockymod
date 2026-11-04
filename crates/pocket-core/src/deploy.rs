@@ -107,7 +107,9 @@ fn existing_ancestor(p: &Path) -> PathBuf {
     fs::canonicalize(&cur).unwrap_or(cur)
 }
 
-struct Row { target_key: String, target_path: String, source: String, method: String, backup: Option<String>, prev_install: Option<i64>, size: u64 }
+struct Row { target_key: String, target_path: String, source: String, method: String, backup: Option<String>, prev_install: Option<i64>, size: u64,
+    /// The file was already this very file (a hard link left by Vortex): a rollback must leave it in place.
+    in_place: bool }
 
 fn owner_of(db: &Db, target_key: &str) -> Result<Option<(i64, String)>> {
     Ok(db.conn.query_row(
@@ -186,7 +188,7 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
                 }
                 Err(e) => return Err(Error::Invalid(format!("Could not hard-link {}: {e}. Allow the copy fallback in Settings to copy instead.", p.target))),
             } };
-            let row = Row { target_key: tkey, target_path: p.target.clone(), source: src.to_string_lossy().into_owned(), method: method.as_str().into(), backup, prev_install, size };
+            let row = Row { target_key: tkey, target_path: p.target.clone(), source: src.to_string_lossy().into_owned(), method: method.as_str().into(), backup, prev_install, size, in_place };
             db.conn.execute(
                 "INSERT INTO deployed_files (target, install_id, source, method, size, deployed_at, target_path, backup, prev_install) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
                  ON CONFLICT(target) DO UPDATE SET install_id = ?2, source = ?3, method = ?4, size = ?5, deployed_at = ?6, target_path = ?7, backup = COALESCE(?8, backup), prev_install = ?9",
@@ -207,7 +209,7 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
 
 fn undo_row(db: &Db, game: &Path, r: &Row) -> Result<()> {
     let dst = game.join(&r.target_path);
-    let _ = fs::remove_file(&dst);
+    if !r.in_place { let _ = fs::remove_file(&dst); }
     db.conn.execute("DELETE FROM deployed_files WHERE target = ?1", params![r.target_key])?;
     if let Some(b) = &r.backup { let _ = move_file(Path::new(b), &dst); }
     if let Some(prev) = r.prev_install { relink_previous(db, game, &r.target_key, &r.target_path, prev)?; }
@@ -235,7 +237,7 @@ fn relink_previous(db: &Db, game: &Path, target_key: &str, target_path: &str, pr
 pub fn undeploy(db: &Db, game: &Path, install_id: i64) -> Result<UndeployReport> {
     let rows: Vec<Row> = {
         let mut st = db.conn.prepare("SELECT target, target_path, source, method, backup, prev_install, size FROM deployed_files WHERE install_id = ?1")?;
-        let it = st.query_map(params![install_id], |r| Ok(Row { target_key: r.get(0)?, target_path: r.get(1)?, source: r.get(2)?, method: r.get(3)?, backup: r.get(4)?, prev_install: r.get(5)?, size: r.get::<_, i64>(6)? as u64 }))?;
+        let it = st.query_map(params![install_id], |r| Ok(Row { target_key: r.get(0)?, target_path: r.get(1)?, source: r.get(2)?, method: r.get(3)?, backup: r.get(4)?, prev_install: r.get(5)?, size: r.get::<_, i64>(6)? as u64, in_place: false }))?;
         it.collect::<std::result::Result<_, _>>()?
     };
     let mut rep = UndeployReport::default();

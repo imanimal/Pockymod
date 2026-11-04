@@ -69,7 +69,7 @@ pub async fn library_deploy(app: AppHandle, state: State<'_, AppState>, install_
 /// Install an archive from disk: a manual download, or a queued download that needed review.
 #[tauri::command]
 pub async fn library_install_file(app: AppHandle, state: State<'_, AppState>, mut request: InstallRequest) -> Result<InstallOutcome> {
-    if request.replace_only.is_none() { request.replace_only = Some(runner::replaced_by_file(&state.db.lock().unwrap(), request.mod_id, request.file_id)); }
+    if request.replace_only.is_none() { request.replace_only = Some(runner::replaced_by_file(&state.db.lock().unwrap(), request.mod_id, request.file_id, request.file_name.as_deref())); }
     let paths = Paths::load(&state.db.lock().unwrap());
     let (game, library) = paths.require()?;
     let db = state.db.clone();
@@ -253,7 +253,7 @@ pub async fn library_identify(state: State<'_, AppState>, path: String) -> Resul
 /// Stop a running download (its part is kept for a retry), or take a waiting item out.
 #[tauri::command]
 pub fn queue_cancel(app: AppHandle, state: State<'_, AppState>, id: u64) -> QueueSnapshot {
-    let busy = state.queue.lock().unwrap().get(id).is_some_and(|i| matches!(i.state, pocket_core::queue::ItemState::Downloading { .. }));
+    let busy = state.queue.lock().unwrap().get(id).is_some_and(|i| i.is_busy());
     if busy { state.cancel.lock().unwrap().insert(id); } else { state.queue.lock().unwrap().remove(id); }
     state.pump.notify_one();
     runner::emit(&app);

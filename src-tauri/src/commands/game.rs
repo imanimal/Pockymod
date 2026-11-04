@@ -140,9 +140,16 @@ pub async fn game_launch_vanilla(app: tauri::AppHandle, state: State<'_, AppStat
     let p = Paths::load(&state.db.lock().unwrap());
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
+    crate::commands::not_while_running()?;
     let db = state.db.clone();
-    let g = game.clone();
-    let (out, left) = blocking(move || pocket_core::launch::vanilla_prepare(&db.lock().unwrap(), &g)).await?;
+    let (g, l, o) = (game.clone(), library.clone(), opts.clone());
+    let prepared = blocking(move || {
+        let d = db.lock().unwrap();
+        // half out is worse than all in: on a failure put back what came out
+        pocket_core::launch::vanilla_prepare(&d, &g).inspect_err(|_| { let _ = pocket_core::launch::vanilla_restore(&d, &g, &l, &o); })
+    }).await;
+    let _ = app.emit("library-changed", ());
+    let (out, left) = prepared?;
     let _ = app.emit("library-changed", ());
     if let Err(e) = pocket_core::launch::launch(&game, false) {
         let db = state.db.clone();
@@ -153,13 +160,16 @@ pub async fn game_launch_vanilla(app: tauri::AppHandle, state: State<'_, AppStat
     // watch for the game to close: seen running, then gone; or never seen within two minutes (it did not start)
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let mut seen = false;
+        // closed means gone for three checks in a row (a Steam copy may exit and start again); never seen within
+        // three minutes means it did not start
+        let (mut seen, mut gone) = (false, 0);
         let started = std::time::Instant::now();
         loop {
             tokio::time::sleep(std::time::Duration::from_secs(4)).await;
             let running = tauri::async_runtime::spawn_blocking(pocket_core::launch::game_running).await.unwrap_or(false);
-            if running { seen = true; continue; }
-            if seen || started.elapsed().as_secs() > 120 { break; }
+            if running { seen = true; gone = 0; continue; }
+            gone += 1;
+            if (seen && gone >= 3) || (!seen && started.elapsed().as_secs() > 180) { break; }
         }
         let st = app2.state::<AppState>();
         let db = st.db.clone();

@@ -26,7 +26,7 @@ export function LaunchDeck({ onHealth }: { onHealth: () => void }) {
       const r = await launchVanilla();
       setOut(true);
       toast(`Starting Cyberpunk 2077 without mods: ${r.out} ${r.out === 1 ? "mod is" : "mods are"} out until the game closes.`);
-    } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
+    } catch (e) { toast(errorText(e), true); vanilla.pending().then(setOut).catch(() => {}); } finally { setBusy(false); }
   };
   return (
     <div className="launch" aria-label="Start the game">

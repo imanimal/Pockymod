@@ -397,7 +397,7 @@ pub fn queue_items(check: &Check, include_optional: bool, collection: &str) -> V
         .map(|e| {
             let (file_id, version) = e.replacement.clone().unwrap_or((e.file_id, e.version.clone()));
             QueueItem { id: 0, mod_id: e.mod_id, file_id, mod_name: e.name.clone(), file_name: e.file_name.clone(), version, uri: e.uri.clone(), size: e.size,
-                required_by: Some(collection.to_string()), manual_only: !is_archive_name(&e.uri), state: ItemState::Waiting, nxm: None }
+                required_by: Some(collection.to_string()), manual_only: !is_archive_name(&e.uri), state: ItemState::Waiting, nxm: None, from_collection: true }
         }).collect()
 }
 

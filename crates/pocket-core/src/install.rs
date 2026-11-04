@@ -54,6 +54,10 @@ pub struct InstallRequest {
     /// With `replace_older`: take out only these installs of the mod (the ones this file updates), not every one.
     #[serde(default)]
     pub replace_only: Option<Vec<i64>>,
+    /// With `keep_existing`: only a copy of this very file counts as the user's (a collection asks for the file;
+    /// a requirement is met by any copy of the mod).
+    #[serde(default)]
+    pub same_file_only: bool,
 }
 fn yes() -> bool { true }
 
@@ -179,7 +183,8 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
     if let Some(files) = &chosen { fs::write(fresh.join(PLAN_FILE), serde_json::to_string(files).unwrap_or_default())?; }
 
     let existing: Option<i64> = db.conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 AND file_id = ?2", params![req.mod_id, req.file_id], |r| r.get(0)).optional()?;
-    if let Some(id) = existing { deploy::undeploy(db, game, id)?; }
+    // the same file again; one tracked from Vortex leaves Vortex's manifest properly and becomes ours
+    if let Some(id) = existing { undeploy_any(db, game, id)?; }
     let _ = fs::remove_dir_all(&staging);
     fs::rename(&fresh, &staging)?;
 
@@ -187,7 +192,7 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
     let mod_type = plan.mod_type.unwrap_or(ModType::Unknown);
     db.conn.execute(
         "INSERT INTO installs (mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-         ON CONFLICT(mod_id, file_id) DO UPDATE SET name = ?3, version = ?4, mod_type = ?5, frameworks = ?6, staging = ?7, installed_at = ?8",
+         ON CONFLICT(mod_id, file_id) DO UPDATE SET name = ?3, version = ?4, mod_type = ?5, frameworks = ?6, staging = ?7, installed_at = ?8, source = 'pocket', external = NULL",
         params![req.mod_id, req.file_id, req.name, req.version, mod_type.as_str(), serde_json::to_string(&frameworks).unwrap_or_default(), staging.to_string_lossy(), now()])?;
     let install_id: i64 = db.conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 AND file_id = ?2", params![req.mod_id, req.file_id], |r| r.get(0))?;
     if let Some((d, _)) = db.mod_get(req.mod_id, None)? {
@@ -217,13 +222,26 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
             Ok(InstallOutcome::Installed { install_id, mod_type, files: plan.files.len(), needs_redmod_deploy: plan.needs_redmod_deploy, deploy: d, replaced: older, warnings: plan.warnings })
         }
         other => {
-            for id in &older { let _ = redeploy_any(db, game, library, *id, &DeployOptions { allow_copy: req.options.allow_copy, ..Default::default() }); }
+            // the old version goes back as it was, including paths it had won from other mods
+            for id in &older { let _ = redeploy_any(db, game, library, *id, &DeployOptions { allow_copy: req.options.allow_copy, take_conflicts: true, ..Default::default() }); }
             match other {
                 Ok(d) => Ok(InstallOutcome::Staged { install_id, deploy: d }),
                 Err(e) => Err(e),
             }
         }
     }
+}
+
+/// Where mods put files. A file set aside from anywhere else (r6/config, the game's own archives) is the game's,
+/// not a mod the user installed, so "Use mine" never tracks it as one. Keys are lowercase, forward slashes.
+pub const MOD_PATH_SQL: &str = "(d.target LIKE 'archive/pc/mod/%' OR d.target LIKE 'mods/%' OR d.target LIKE 'r6/scripts/%' OR d.target LIKE 'r6/tweaks/%'
+    OR d.target LIKE 'r6/audioware/%' OR d.target LIKE 'red4ext/%' OR d.target LIKE 'bin/x64/plugins/%' OR d.target LIKE 'engine/tools/%'
+    OR d.target IN ('bin/x64/winmm.dll', 'bin/x64/version.dll', 'bin/x64/global.ini', 'engine/config/base/scripts.ini'))";
+
+pub fn is_mod_path(p: &str) -> bool {
+    let l = p.to_lowercase().replace('\\', "/");
+    ["archive/pc/mod/", "mods/", "r6/scripts/", "r6/tweaks/", "r6/audioware/", "red4ext/", "bin/x64/plugins/", "engine/tools/"].iter().any(|r| l.starts_with(r))
+        || ["bin/x64/winmm.dll", "bin/x64/version.dll", "bin/x64/global.ini", "engine/config/base/scripts.ini"].contains(&l.as_str())
 }
 
 /// Game-relative files of a plan that are already in the game folder and that no install owns: the user's own.
@@ -246,8 +264,21 @@ pub fn present_unowned(db: &Db, game: &Path, targets: &[String]) -> Result<Vec<S
 /// keep theirs. Their copy is one of: an install of the same Nexus mod, an install from Vortex or the game folder
 /// that owns these paths, Vortex's deployed files, or loose files nobody tracks (which are then tracked).
 fn keep_users_copy(db: &Db, game: &Path, library: &Path, req: &InstallRequest, plan: &InstallPlan) -> Result<Option<InstallOutcome>> {
-    let same: Option<i64> = db.conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 ORDER BY installed_at LIMIT 1", params![req.mod_id], |r| r.get(0)).optional()?;
-    if let Some(id) = same { return Ok(Some(InstallOutcome::AlreadyHave { install_id: Some(id), files: 0 })); }
+    let line = req.file_name.as_deref().map(crate::browse::file_line);
+    let copies: Vec<(i64, u32, Option<String>)> = {
+        let mut st = db.conn.prepare("SELECT id, file_id, file_name FROM installs WHERE mod_id = ?1 ORDER BY installed_at")?;
+        let v = st.query_map(params![req.mod_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?.collect::<std::result::Result<_, _>>()?;
+        v
+    };
+    let same = copies.iter().find(|(_, fid, name)| !req.same_file_only || *fid == req.file_id
+        || matches!((&line, name.as_deref().map(crate::browse::file_line)), (Some(a), Some(b)) if *a == b)).map(|c| c.0);
+    if let Some(id) = same {
+        // the user's copy is turned off in this profile: the mod that needs it needs it on
+        let active = active_profile(db)?;
+        let on: bool = db.conn.query_row("SELECT COALESCE((SELECT enabled FROM profile_mods WHERE install_id = ?1 AND profile_id = ?2), 0)", params![id, active], |r| r.get(0))?;
+        if !on { let _ = crate::profiles::set_enabled(db, game, library, id, true, &req.options); }
+        return Ok(Some(InstallOutcome::AlreadyHave { install_id: Some(id), files: 0 }));
+    }
     let targets: Vec<String> = plan.files.iter().map(|p| p.target.clone()).collect();
     // a tracked copy (from Vortex or the game folder) owns some of these paths
     for t in &targets {
@@ -289,31 +320,55 @@ fn keep_users_copy(db: &Db, game: &Path, library: &Path, req: &InstallRequest, p
 pub fn restore_replaced(db: &Db, game: &Path, library: &Path, install_id: i64) -> Result<Option<i64>> {
     let (mod_id, name, kind): (u32, String, String) = db.conn.query_row("SELECT mod_id, name, mod_type FROM installs WHERE id = ?1", params![install_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
     let files: Vec<String> = {
-        let mut st = db.conn.prepare("SELECT target_path FROM deployed_files WHERE install_id = ?1 AND backup IS NOT NULL")?;
+        let mut st = db.conn.prepare(&format!("SELECT d.target_path FROM deployed_files d WHERE d.install_id = ?1 AND d.backup IS NOT NULL AND {MOD_PATH_SQL}"))?;
         let v = st.query_map(params![install_id], |r| r.get(0))?.collect::<std::result::Result<_, _>>()?;
         v
     };
     if files.is_empty() { return Err(Error::Invalid(format!("{name} did not replace any of your files."))); }
+    // files Vortex deployed go back to Vortex (the undeploy below restores them); they are not a new mod of the user's
+    let vortex: std::collections::BTreeSet<String> = crate::vortex::find(game)
+        .map(|s| crate::vortex::list_mods(&s, game).into_iter().filter(|m| m.deployed).flat_map(|m| m.files).map(|f| f.to_lowercase()).collect())
+        .unwrap_or_default();
     let group: Option<String> = db.conn.query_row("SELECT group_name FROM installs WHERE id = ?1", params![install_id], |r| r.get(0))?;
     deploy::undeploy(db, game, install_id)?;
     to_trash(db, install_id, "replaced your files")?;
-    let back: Vec<String> = files.into_iter().filter(|f| game.join(f).is_file()).collect();
+    let back: Vec<String> = files.into_iter().filter(|f| game.join(f).is_file() && !vortex.contains(&f.to_lowercase())).collect();
     if back.is_empty() { return Ok(None); }
     let ids = crate::found::track(db, game, library, &[crate::found::FoundMod { name, kind: ModType::parse(&kind), files: back, mod_id: Some(mod_id) }])?;
     if let (Some(id), Some(g)) = (ids.first(), group) { db.conn.execute("UPDATE installs SET group_name = ?2 WHERE id = ?1", params![id, g])?; }
     Ok(ids.first().copied())
 }
 
-/// Installs that share a Nexus mod with another install: the extra copies, newest first, after the one to keep.
-/// The one to keep is the one that is on, then the user's own (Vortex, found, installed by hand), then the newest.
+/// Installs that are the same thing twice: one Nexus mod and the same file line (main + optional are not
+/// duplicates, a Vortex copy and a Pocket copy of the main file are). The one to keep comes first: the one that is
+/// on, then the user's own (Vortex, found, installed by hand), then the newest.
 pub fn duplicates(db: &Db) -> Result<Vec<Vec<i64>>> {
     let rows = list_installs(db)?;
+    let names: std::collections::BTreeMap<i64, Option<String>> = {
+        let mut st = db.conn.prepare("SELECT id, file_name FROM installs")?;
+        let v = st.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?.collect::<std::result::Result<_, _>>()?;
+        v
+    };
+    let line = |id: i64| names.get(&id).cloned().flatten().map(|n| crate::browse::file_line(&n));
     let mut by: std::collections::BTreeMap<u32, Vec<&InstallRow>> = std::collections::BTreeMap::new();
     for r in rows.iter().filter(|r| r.mod_id < 900_000_000) { by.entry(r.mod_id).or_default().push(r); }
-    Ok(by.into_values().filter(|v| v.len() > 1).map(|mut v| {
-        v.sort_by_key(|r| (!r.enabled, r.origin.is_some(), r.source == "pocket", -r.installed_at));
-        v.into_iter().map(|r| r.id).collect()
-    }).collect())
+    let mut out = Vec::new();
+    for (_, list) in by {
+        // join copies whose lines match, or where a line is unknown (found or tracked copies know no file name)
+        let mut sets: Vec<Vec<&InstallRow>> = Vec::new();
+        for r in list {
+            let l = line(r.id);
+            match sets.iter_mut().find(|s| s.iter().any(|o| { let lo = line(o.id); l.is_none() || lo.is_none() || lo == l })) {
+                Some(s) => s.push(r),
+                None => sets.push(vec![r]),
+            }
+        }
+        for mut s in sets.into_iter().filter(|s| s.len() > 1) {
+            s.sort_by_key(|r| (!r.enabled, r.origin.is_some(), r.source == "pocket", -r.installed_at));
+            out.push(s.into_iter().map(|r| r.id).collect());
+        }
+    }
+    Ok(out)
 }
 
 /// Deploy an install that is already staged (after a conflict or copy decision, or a profile switch).
@@ -329,8 +384,11 @@ pub fn uninstall(db: &Db, game: &Path, install_id: i64) -> Result<UndeployReport
     let is_redscript: bool = db.conn.query_row("SELECT mod_id = 1511 FROM installs WHERE id = ?1", params![install_id], |r| r.get(0)).optional()?.unwrap_or(false);
     let rep = undeploy_any(db, game, install_id)?;
     remove_install_record(db, install_id)?;
-    // without redscript its compiled scripts break the game: put the game's own back
-    if is_redscript { let _ = crate::cyberpunk::game::reset_scripts(game); }
+    // without redscript its compiled scripts break the game: put the game's own back (once no copy of it is left)
+    if is_redscript {
+        let left: bool = db.conn.query_row("SELECT EXISTS(SELECT 1 FROM installs WHERE mod_id = 1511)", [], |r| r.get(0))?;
+        if !left { let _ = crate::cyberpunk::game::reset_scripts(game); let _ = db.set_setting("loadorder.changedAt", &now().to_string()); }
+    }
     Ok(rep)
 }
 
@@ -422,15 +480,20 @@ pub fn list_trash(db: &Db) -> Result<Vec<TrashRow>> {
 /// Put a removed install back: its record under its old id (when free), its files where they were, its profile
 /// entries, and into the game when it was on in the active profile. Returns the install id.
 pub fn restore_trash(db: &Db, game: &Path, library: &Path, trash_id: i64, opts: &DeployOptions) -> Result<i64> {
-    let (old_id, data, kept): (i64, String, Option<String>) = db.conn.query_row("SELECT install_id, data, kept FROM trash WHERE id = ?1", params![trash_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+    let (old_id, data, kept, reason): (i64, String, Option<String>, String) = db.conn.query_row("SELECT install_id, data, kept, reason FROM trash WHERE id = ?1", params![trash_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
         .optional()?.ok_or_else(|| Error::Invalid("That mod is no longer in Recently removed.".into()))?;
     let v: serde_json::Value = serde_json::from_str(&data).map_err(|e| Error::Decode(e.to_string()))?;
     let staging = PathBuf::from(v["staging"].as_str().unwrap_or(""));
     let (mod_id, file_id) = (v["modId"].as_u64().unwrap_or(0) as u32, v["fileId"].as_u64().unwrap_or(0) as u32);
     let taken: Option<i64> = db.conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 AND file_id = ?2", params![mod_id, file_id], |r| r.get(0)).optional()?;
     if let Some(id) = taken { return Err(Error::Invalid(format!("{} is installed again already (install {id}). Remove that one first.", v["name"].as_str().unwrap_or("This mod")))); }
+    // the folder it lived in may belong to a live install now (found installs are named by mod name): never delete
+    // that, put this one beside it
+    let mut staging = staging;
+    let in_use: bool = db.conn.query_row("SELECT EXISTS(SELECT 1 FROM installs WHERE staging = ?1)", params![staging.to_string_lossy()], |r| r.get(0))?;
+    if kept.is_some() && in_use { staging = staging.with_file_name(format!("{}-restored-{}", staging.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), now())); }
     if let Some(k) = &kept {
-        if staging.exists() { let _ = fs::remove_dir_all(&staging); }
+        if staging.exists() && !in_use { let _ = fs::remove_dir_all(&staging); }
         if let Some(p) = staging.parent() { fs::create_dir_all(p)?; }
         fs::rename(k, &staging).map_err(|e| Error::Invalid(format!("Could not put the files back: {e}")))?;
     } else if v["source"] != "vortex" {
@@ -443,7 +506,7 @@ pub fn restore_trash(db: &Db, game: &Path, library: &Path, trash_id: i64, opts: 
         "INSERT INTO installs (id, mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, updated_at, source, external, category, group_name, origin, file_name)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
         params![if free { Some(old_id) } else { None }, mod_id, file_id, v["name"].as_str(), v["version"].as_str(), v["modType"].as_str(), v["frameworks"].as_str().unwrap_or("[]"),
-            v["staging"].as_str(), v["installedAt"].as_i64().unwrap_or_else(now), v["updatedAt"].as_str(), v["source"].as_str().unwrap_or("pocket"), v["external"].as_str(),
+            staging.to_string_lossy(), v["installedAt"].as_i64().unwrap_or_else(now), v["updatedAt"].as_str(), v["source"].as_str().unwrap_or("pocket"), v["external"].as_str(),
             v["category"].as_str(), v["group"].as_str(), v["origin"].as_str(), v["fileName"].as_str()])?;
     let id = db.conn.last_insert_rowid();
     for p in v["profiles"].as_array().into_iter().flatten() {
@@ -453,13 +516,20 @@ pub fn restore_trash(db: &Db, game: &Path, library: &Path, trash_id: i64, opts: 
     db.conn.execute("DELETE FROM trash WHERE id = ?1", params![trash_id])?;
     let on: bool = db.conn.query_row("SELECT COALESCE((SELECT enabled FROM profile_mods WHERE install_id = ?1 AND profile_id = ?2), 0)", params![id, active_profile(db)?], |r| r.get(0))?;
     if on {
-        // another copy of the same mod went in meanwhile (an update): it comes out, the old one goes back
-        let newer: Vec<i64> = {
-            let mut st = db.conn.prepare("SELECT id FROM installs WHERE mod_id = ?1 AND id != ?2")?;
-            let v = st.query_map(params![mod_id, id], |r| r.get(0))?.collect::<std::result::Result<_, _>>()?;
-            v
-        };
-        for n in newer { let _ = profiles_set_off(db, game, n); }
+        // an old version an update replaced: the version that replaced it (same file line) comes out, this one goes
+        // back. A file removed on its own (an optional file) leaves the mod's other files alone.
+        if reason == "updated" {
+            let line = v["fileName"].as_str().map(crate::browse::file_line);
+            let newer: Vec<(i64, Option<String>)> = {
+                let mut st = db.conn.prepare("SELECT id, file_name FROM installs WHERE mod_id = ?1 AND id != ?2")?;
+                let v = st.query_map(params![mod_id, id], |r| Ok((r.get(0)?, r.get(1)?)))?.collect::<std::result::Result<_, _>>()?;
+                v
+            };
+            for (n, name) in newer {
+                let same_line = match (&line, name.as_deref().map(crate::browse::file_line)) { (Some(a), Some(b)) => *a == b, _ => true };
+                if same_line { let _ = profiles_set_off(db, game, n); }
+            }
+        }
         redeploy_any(db, game, library, id, opts)?;
     }
     Ok(id)
@@ -501,12 +571,12 @@ fn add_to_active_profile(db: &Db, install_id: i64) -> Result<()> {
 
 pub fn list_installs(db: &Db) -> Result<Vec<InstallRow>> {
     let p = active_profile(db)?;
-    let mut st = db.conn.prepare(
+    let mut st = db.conn.prepare(&
         "SELECT i.id, i.mod_id, i.file_id, i.name, i.version, i.mod_type, i.frameworks, i.staging, i.installed_at, i.updated_at,
                 (SELECT COUNT(*) FROM deployed_files d WHERE d.install_id = i.id), COALESCE(pm.enabled, 0), COALESCE(pm.load_order, 9999),
                 i.source, i.category, i.group_name, (SELECT detail FROM mod_cache c WHERE c.mod_id = i.mod_id), i.origin,
-                (SELECT COUNT(*) FROM deployed_files d WHERE d.install_id = i.id AND d.backup IS NOT NULL)
-         FROM installs i LEFT JOIN profile_mods pm ON pm.install_id = i.id AND pm.profile_id = ?1 ORDER BY COALESCE(pm.load_order, 9999), i.name")?;
+                (SELECT COUNT(*) FROM deployed_files d WHERE d.install_id = i.id AND d.backup IS NOT NULL AND MOD_PATHS)
+         FROM installs i LEFT JOIN profile_mods pm ON pm.install_id = i.id AND pm.profile_id = ?1 ORDER BY COALESCE(pm.load_order, 9999), i.name".replace("MOD_PATHS", MOD_PATH_SQL))?;
     let rows = st.query_map(params![p], |r| {
         let name: String = r.get(3)?;
         let mod_type = ModType::parse(&r.get::<_, String>(5)?);
@@ -572,7 +642,7 @@ mod tests {
         zip(&a, &[("red4ext/plugins/TweakXL/TweakXL.dll", "theirs"), ("r6/scripts/TweakXL/TweakXL.reds", "x")]);
         let db = Db::memory().unwrap();
         let req = InstallRequest { mod_id: 4197, file_id: 9, name: "TweakXL".into(), version: "1.10".into(), archive: a, accept_unknown: false, replace_older: true,
-            options: Default::default(), fomod_choices: None, origin: Some("requirement".into()), keep_existing: true, file_name: None, replace_only: None };
+            options: Default::default(), fomod_choices: None, origin: Some("requirement".into()), keep_existing: true, file_name: None, replace_only: None, same_file_only: false };
         let out = install(&db, &game, &lib, &req).unwrap();
         let InstallOutcome::AlreadyHave { install_id: Some(id), .. } = out else { panic!("{out:?}") };
         assert_eq!(fs::read_to_string(&mine).unwrap(), "mine", "the user's file is untouched");
@@ -599,7 +669,7 @@ mod tests {
         let db = Db::memory().unwrap();
         // an install from before this fix: the user's file was set aside
         let req = InstallRequest { mod_id: 4198, file_id: 3, name: "ArchiveXL".into(), version: "1.2".into(), archive: a, accept_unknown: false, replace_older: true,
-            options: Default::default(), fomod_choices: None, origin: Some("requirement".into()), keep_existing: false, file_name: None, replace_only: None };
+            options: Default::default(), fomod_choices: None, origin: Some("requirement".into()), keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
         let InstallOutcome::Installed { install_id, .. } = install(&db, &game, &lib, &req).unwrap() else { panic!() };
         assert_eq!(fs::read_to_string(&mine).unwrap(), "theirs");
         assert_eq!(list_installs(&db).unwrap()[0].replaced, 1);
@@ -612,6 +682,51 @@ mod tests {
     }
 
     #[test]
+    fn the_games_own_files_set_aside_are_not_called_yours() {
+        let dir = tempfile::tempdir().unwrap();
+        let game = dir.path().join("game");
+        fs::create_dir_all(game.join("r6/config")).unwrap();
+        fs::create_dir_all(game.join("bin/x64")).unwrap();
+        fs::write(game.join("r6/config/inputUserMappings.xml"), "vanilla").unwrap();
+        let lib = dir.path().join("PocketMods");
+        let a = dir.path().join("keys.zip");
+        zip(&a, &[("r6/config/inputUserMappings.xml", "modded")]);
+        let db = Db::memory().unwrap();
+        let req = InstallRequest { mod_id: 9, file_id: 9, name: "Keys".into(), version: "1".into(), archive: a, accept_unknown: true, replace_older: true,
+            options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
+        install(&db, &game, &lib, &req).unwrap();
+        assert_eq!(list_installs(&db).unwrap()[0].replaced, 0, "a game file is not one of the user's mods");
+        let id = list_installs(&db).unwrap()[0].id;
+        uninstall(&db, &game, id).unwrap();
+        assert_eq!(fs::read_to_string(game.join("r6/config/inputUserMappings.xml")).unwrap(), "vanilla");
+    }
+
+    #[test]
+    fn putting_back_an_optional_file_leaves_the_main_one_on() {
+        let dir = tempfile::tempdir().unwrap();
+        let game = dir.path().join("game");
+        fs::create_dir_all(game.join("bin/x64")).unwrap();
+        let lib = dir.path().join("PocketMods");
+        let db = Db::memory().unwrap();
+        let mut ids = Vec::new();
+        for (fid, file, name) in [(1u32, "main.archive", "Coat"), (2, "extra.archive", "Coat colours")] {
+            let a = dir.path().join(format!("{fid}.zip"));
+            zip(&a, &[(&format!("archive/pc/mod/{file}"), "x")]);
+            let req = InstallRequest { mod_id: 5, file_id: fid, name: "Coat".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true,
+                options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: Some(name.into()), replace_only: Some(vec![]), same_file_only: false };
+            let InstallOutcome::Installed { install_id, .. } = install(&db, &game, &lib, &req).unwrap() else { panic!() };
+            ids.push(install_id);
+        }
+        uninstall(&db, &game, ids[1]).unwrap();
+        let t = list_trash(&db).unwrap()[0].id;
+        restore_trash(&db, &game, &lib, t, &Default::default()).unwrap();
+        assert!(game.join("archive/pc/mod/main.archive").exists(), "the main file is still in");
+        assert!(game.join("archive/pc/mod/extra.archive").exists());
+        assert!(list_installs(&db).unwrap().iter().all(|r| r.enabled));
+        assert!(duplicates(&db).unwrap().is_empty(), "main and optional are not duplicates");
+    }
+
+    #[test]
     fn a_removed_mod_can_be_put_back() {
         let dir = tempfile::tempdir().unwrap();
         let game = dir.path().join("game");
@@ -621,7 +736,7 @@ mod tests {
         zip(&a, &[("archive/pc/mod/coat.archive", "coat")]);
         let db = Db::memory().unwrap();
         let req = InstallRequest { mod_id: 7, file_id: 70, name: "Coat".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true,
-            options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
+            options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
         let InstallOutcome::Installed { install_id, .. } = install(&db, &game, &lib, &req).unwrap() else { panic!() };
         set_group(&db, &[install_id], Some("Night look")).unwrap();
         uninstall(&db, &game, install_id).unwrap();
@@ -653,7 +768,7 @@ mod tests {
         let db = Db::memory().unwrap();
         let a1 = dir.path().join("v1.zip");
         zip(&a1, &[("Mod/archive/pc/mod/m.archive", "v1"), ("Mod/readme.txt", "hi")]);
-        let req = InstallRequest { mod_id: 5, file_id: 10, name: "My Mod".into(), version: "1".into(), archive: a1, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
+        let req = InstallRequest { mod_id: 5, file_id: 10, name: "My Mod".into(), version: "1".into(), archive: a1, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
         let out = install(&db, &game, &lib, &req).unwrap();
         let InstallOutcome::Installed { install_id: first, files, .. } = out else { panic!("{out:?}") };
         assert_eq!(files, 1);
@@ -688,7 +803,7 @@ mod tests {
             </plugins></group></optionalFileGroups></installStep></installSteps></config>"#;
         zip(&a, &[("fomod/ModuleConfig.xml", xml), ("a/j.archive", "A"), ("b/j.archive", "B")]);
         let db = Db::memory().unwrap();
-        let req = InstallRequest { mod_id: 3, file_id: 3, name: "J".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
+        let req = InstallRequest { mod_id: 3, file_id: 3, name: "J".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
         let InstallOutcome::NeedsChoices { fomod, defaults } = install(&db, &game, &lib, &req).unwrap() else { panic!() };
         assert_eq!(fomod.steps[0].groups[0].plugins[1].name, "B");
         assert_eq!(defaults, [[0, 0, 0]]);
@@ -730,7 +845,7 @@ mod tests {
         let a = dir.path().join("x.zip");
         zip(&a, &[("a.archive", "x"), ("tool.exe", "x")]);
         let db = Db::memory().unwrap();
-        let req = InstallRequest { mod_id: 1, file_id: 1, name: "X".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
+        let req = InstallRequest { mod_id: 1, file_id: 1, name: "X".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
         assert!(matches!(install(&db, &game, &dir.path().join("lib"), &req).unwrap(), InstallOutcome::NeedsReview { .. }));
         let ok = install(&db, &game, &dir.path().join("lib"), &InstallRequest { accept_unknown: true, ..req }).unwrap();
         assert!(matches!(ok, InstallOutcome::Installed { .. }));
@@ -742,7 +857,7 @@ mod tests {
         let a = dir.path().join("x.zip");
         zip(&a, &[("a.archive", "x")]);
         let db = Db::memory().unwrap();
-        let req = InstallRequest { mod_id: 1, file_id: 1, name: "X".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None };
+        let req = InstallRequest { mod_id: 1, file_id: 1, name: "X".into(), version: "1".into(), archive: a, accept_unknown: false, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
         assert!(install(&db, dir.path(), &dir.path().join("lib"), &req).is_err());
     }
 }

@@ -21,7 +21,7 @@ export async function setEnabled(rows: InstallRow[], on: boolean) {
   if (!r.done) return;
   record({
     label: `Turned ${on ? "on" : "off"} ${named(change)}`,
-    undo: () => bulk(ids, on ? "disable" : "enable"),
+    undo: () => bulk(ids, on ? "disable" : "enable-win"),
     redo: () => bulk(ids, on ? "enable" : "disable"),
   });
 }

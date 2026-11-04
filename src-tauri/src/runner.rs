@@ -112,7 +112,7 @@ pub async fn handle_nxm(app: &AppHandle, raw: &str) {
         browse::detail(&st.nexus, &st.db, link.mod_id, None).await.ok().and_then(|d| {
             d.files.iter().find(|f| f.file_id == link.file_id).map(|f| QueueItem {
                 id: 0, mod_id: link.mod_id, file_id: f.file_id, mod_name: d.detail.name.clone(), file_name: f.name.clone(), version: f.version.clone(),
-                uri: f.uri.clone(), size: f.bytes(), required_by: None, manual_only: !pocket_core::queue::is_archive_name(&f.uri), state: ItemState::Waiting, nxm: None,
+                uri: f.uri.clone(), size: f.bytes(), required_by: None, manual_only: !pocket_core::queue::is_archive_name(&f.uri), state: ItemState::Waiting, nxm: None, from_collection: false,
             })
         })
     };
@@ -120,7 +120,7 @@ pub async fn handle_nxm(app: &AppHandle, raw: &str) {
         let mut q = st.queue.lock().unwrap();
         q.accept_nxm(link.clone(), |l| fallback.unwrap_or_else(|| QueueItem {
             id: 0, mod_id: l.mod_id, file_id: l.file_id, mod_name: format!("Mod {}", l.mod_id), file_name: format!("File {}", l.file_id), version: String::new(),
-            uri: format!("{}-{}.zip", l.mod_id, l.file_id), size: 0, required_by: None, manual_only: false, state: ItemState::Waiting, nxm: None,
+            uri: format!("{}-{}.zip", l.mod_id, l.file_id), size: 0, required_by: None, manual_only: false, state: ItemState::Waiting, nxm: None, from_collection: false,
         }));
     }
     emit(app);
@@ -168,6 +168,7 @@ async fn step(app: &AppHandle, action: Action) -> bool {
         }
         Action::FetchLink(_) | Action::DownloadWith(_) => {
             let result = fetch_and_install(app, &item).await;
+            st.cancel.lock().unwrap().remove(&id);
             let mut q = st.queue.lock().unwrap();
             match result {
                 Ok(state) => q.set(id, state),
@@ -191,9 +192,9 @@ async fn step(app: &AppHandle, action: Action) -> bool {
 }
 
 /// Installs of the item's mod that the item's file updates, from the cached file list.
-pub fn replaced_by(db: &pocket_core::db::Db, item: &QueueItem) -> Vec<i64> { replaced_by_file(db, item.mod_id, item.file_id) }
+pub fn replaced_by(db: &pocket_core::db::Db, item: &QueueItem) -> Vec<i64> { replaced_by_file(db, item.mod_id, item.file_id, Some(&item.file_name)) }
 
-pub fn replaced_by_file(db: &pocket_core::db::Db, mod_id: u32, file_id: u32) -> Vec<i64> {
+pub fn replaced_by_file(db: &pocket_core::db::Db, mod_id: u32, file_id: u32, file_name: Option<&str>) -> Vec<i64> {
     let files: Vec<pocket_core::nexus::types::ModFile> = db.mod_get(mod_id, None).ok().flatten()
         .and_then(|(_, f)| serde_json::from_str(&f).ok()).unwrap_or_default();
     let others: Vec<(i64, u32, Option<String>)> = db.conn.prepare("SELECT id, file_id, file_name FROM installs WHERE mod_id = ?1").and_then(|mut q| {
@@ -201,8 +202,10 @@ pub fn replaced_by_file(db: &pocket_core::db::Db, mod_id: u32, file_id: u32) -> 
         v
     }).unwrap_or_default();
     let Some(new) = files.iter().find(|f| f.file_id == file_id) else {
-        // no file list: the old behaviour, one copy of the mod
-        return others.into_iter().map(|o| o.0).collect();
+        // a file the list does not know: replace only the same file, or one of the same line by name
+        let line = file_name.map(pocket_core::browse::file_line).filter(|l| !l.is_empty());
+        return others.into_iter().filter(|(_, fid, name)| *fid == file_id
+            || matches!((&line, name.as_deref().map(pocket_core::browse::file_line)), (Some(a), Some(b)) if *a == b)).map(|o| o.0).collect();
     };
     others.into_iter().filter(|(_, fid, name)| pocket_core::browse::replaces(&files, new, *fid, name.as_deref())).map(|o| o.0).collect()
 }
@@ -213,7 +216,23 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
     let (game, library) = paths.require()?;
     // added for another mod, and the user has it by now (from Vortex, by hand, or an earlier install): keep theirs
     let for_another = item.required_by.is_some();
-    if for_another && crate::commands::library::present_mod_ids(&st.db)?.contains(&item.mod_id) {
+    // a requirement is met by any copy of the mod the user has (turned on if it is off); a collection asks for this
+    // file, so only a copy of the same file counts
+    if for_another && !item.from_collection && crate::commands::library::present_mod_ids(&st.db)?.contains(&item.mod_id) {
+        let off: Option<i64> = {
+            let d = st.db.lock().unwrap();
+            let active = install::active_profile(&d)?;
+            let any_on: bool = d.conn.query_row("SELECT EXISTS(SELECT 1 FROM installs i JOIN profile_mods pm ON pm.install_id = i.id AND pm.profile_id = ?2 WHERE i.mod_id = ?1 AND pm.enabled = 1)",
+                rusqlite::params![item.mod_id, active], |r| r.get(0))?;
+            if any_on { None } else { d.conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 ORDER BY installed_at DESC LIMIT 1", [item.mod_id], |r| r.get(0)).ok() }
+        };
+        if let Some(id) = off {
+            let db = st.db.clone();
+            let (g, l, o) = (game.clone(), library.clone(), paths.deploy_options());
+            let _ = tauri::async_runtime::spawn_blocking(move || pocket_core::profiles::set_enabled(&db.lock().unwrap(), &g, &l, id, true, &o)).await;
+            let _ = app.emit("library-changed", ());
+            return Ok(ItemState::Done { install_id: Some(id), note: Some(format!("You already have {}: it was off, so it is on now.", item.mod_name)) });
+        }
         return Ok(ItemState::Done { install_id: None, note: Some(format!("You already have {}. Kept yours.", item.mod_name)) });
     }
     st.queue.lock().unwrap().set(item.id, ItemState::Downloading { received: 0, total: Some(item.size) });
@@ -250,6 +269,8 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         }
     };
 
+    // stopped while the archive was already here or being checked
+    if st.cancel.lock().unwrap().remove(&item.id) { return Err(Error::Invalid(pocket_core::download::CANCELLED.into())); }
     // the game locks its files: an install waits until it is closed
     if pocket_core::launch::game_running() {
         return Err(Error::Invalid("Downloaded. Close Cyberpunk 2077, then press Retry to install it.".into()));
@@ -261,6 +282,14 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
     let keep_vortex = st.db.lock().unwrap().setting("vortex.keepFormat")?.as_deref() != Some("0");
     // the installs of this mod that this file updates (same file line); the others (an optional file, another
     // variant) stay
+    // a new upload is often missing from an old cached file list: fetch it again before deciding what this replaces
+    let known = st.db.lock().unwrap().mod_get(item.mod_id, None).ok().flatten()
+        .and_then(|(_, f)| serde_json::from_str::<Vec<pocket_core::nexus::types::ModFile>>(&f).ok()).is_some_and(|f| f.iter().any(|x| x.file_id == item.file_id));
+    if !known {
+        if let Ok((d, f)) = st.nexus.mod_detail(item.mod_id).await {
+            let _ = st.db.lock().unwrap().mod_put(item.mod_id, &d.updated_at, &serde_json::to_string(&d).unwrap_or_default(), &serde_json::to_string(&f).unwrap_or_default(), pocket_core::db::now());
+        }
+    }
     let replace_only = replaced_by(&st.db.lock().unwrap(), item);
     let vortex_id: Option<i64> = if keep_vortex {
         let ids: Vec<i64> = {
@@ -286,7 +315,8 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
     }
     let archive_for_choices = archive.to_string_lossy().into_owned();
     let req = InstallRequest { mod_id: item.mod_id, file_id: item.file_id, name: item.mod_name.clone(), version: item.version.clone(), archive, accept_unknown: false, replace_older: true, options: paths.deploy_options(), fomod_choices: None,
-        origin: item.required_by.clone(), keep_existing: for_another, file_name: Some(item.file_name.clone()), replace_only: Some(replace_only) };
+        origin: item.required_by.clone(), keep_existing: for_another, file_name: Some(item.file_name.clone()), replace_only: Some(replace_only),
+        same_file_only: item.from_collection };
     let db = st.db.clone();
     let out = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &game, &library, &req)).await
         .map_err(|e| Error::Invalid(e.to_string()))??;
@@ -305,7 +335,8 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         InstallOutcome::NeedsChoices { fomod, defaults } => {
             // ask now: the app opens the installer's options
             let _ = app.emit("install-choices", serde_json::json!({
-                "request": { "modId": item.mod_id, "fileId": item.file_id, "name": item.mod_name, "version": item.version, "archive": archive_for_choices },
+                "request": { "modId": item.mod_id, "fileId": item.file_id, "name": item.mod_name, "version": item.version, "archive": archive_for_choices,
+                    "origin": item.required_by, "keepExisting": for_another, "fileName": item.file_name, "sameFileOnly": item.from_collection },
                 "fomod": fomod, "defaults": defaults }));
             ItemState::Done { install_id: None, note: Some("This mod has installer options. Choose them in the window that opened (or in Library, Downloaded).".into()) }
         }

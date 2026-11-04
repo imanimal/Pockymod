@@ -46,6 +46,17 @@ const MIGRATIONS: &[&str] = &[
     // 7: the Nexus file's own name (its line: 2K or 4K, main or optional), and faster per-install lookups
     "ALTER TABLE installs ADD COLUMN file_name TEXT;
      CREATE INDEX IF NOT EXISTS deployed_by_install ON deployed_files (install_id);",
+    // 8: install ids are never reused (undo, redo and Recently removed refer to mods by id), so the table gets
+    // AUTOINCREMENT, starting above every id in use or in the trash
+    "CREATE TABLE installs_v8 (id INTEGER PRIMARY KEY AUTOINCREMENT, mod_id INTEGER NOT NULL, file_id INTEGER NOT NULL, name TEXT NOT NULL,
+        version TEXT NOT NULL, mod_type TEXT NOT NULL, frameworks TEXT NOT NULL, staging TEXT NOT NULL, installed_at INTEGER NOT NULL, updated_at TEXT,
+        source TEXT NOT NULL DEFAULT 'pocket', external TEXT, category TEXT, group_name TEXT, origin TEXT, file_name TEXT, UNIQUE (mod_id, file_id));
+     INSERT INTO installs_v8 (id, mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, updated_at, source, external, category, group_name, origin, file_name)
+        SELECT id, mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, updated_at, source, external, category, group_name, origin, file_name FROM installs;
+     DROP TABLE installs;
+     ALTER TABLE installs_v8 RENAME TO installs;
+     DELETE FROM sqlite_sequence WHERE name IN ('installs', 'installs_v8');
+     INSERT INTO sqlite_sequence (name, seq) VALUES ('installs', MAX(COALESCE((SELECT MAX(id) FROM installs), 0), COALESCE((SELECT MAX(install_id) FROM trash), 0)));",
 ];
 
 pub struct Db { pub conn: Connection }
@@ -225,5 +236,18 @@ mod tests {
         db.set_flag(2, Flag::Ignored, false).unwrap();
         let f = db.flags().unwrap();
         assert!(f.hidden.contains(&1) && f.ignored.contains(&1) && !f.ignored.contains(&2));
+    }
+}
+
+#[cfg(test)]
+mod id_tests {
+    #[test]
+    fn install_ids_are_never_reused() {
+        let db = super::Db::memory().unwrap();
+        let ins = |m: i64| { db.conn.execute("INSERT INTO installs (mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at) VALUES (?1, 1, 'x', '1', 'archive', '[]', '', 0)", [m]).unwrap(); db.conn.last_insert_rowid() };
+        let a = ins(1);
+        db.conn.execute("DELETE FROM installs WHERE id = ?1", [a]).unwrap();
+        let b = ins(2);
+        assert!(b > a, "{b} reuses {a}");
     }
 }
