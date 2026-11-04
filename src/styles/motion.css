@@ -1,0 +1,37 @@
+/* motion.css — arrival, hover and press motion for the app's own parts (the layouts in app.css). The kit's motion,
+   keyframes and the stagger (--i) are in pocket-os.css; every duration scales with --m. */
+
+/* cards and tiles settle in one after another */
+:is(.mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards) > * { animation: cardIn calc(var(--m) * 280ms + 1ms) var(--ease) backwards; animation-delay: calc(var(--m) * var(--i, 0) * 28ms); }
+.gstrip > * { animation: cardIn calc(var(--m) * 240ms + 1ms) var(--ease) backwards; }
+.bulkbar { animation: barDrop calc(var(--m) * 260ms + 1ms) var(--ease-back); }
+@keyframes barDrop { from { opacity: 0; transform: translateY(-.5em); } }
+.pmenu { animation: dealIn calc(var(--m) * 180ms + 1ms) var(--ease); transform-origin: top right; }
+@keyframes dealIn { from { opacity: 0; transform: translateY(-.4em) scale(.98); } }
+.cmds-list > * { animation: dealIn calc(var(--m) * 180ms + 1ms) var(--ease) backwards; }
+.onb > * { animation: modIn calc(var(--m) * 320ms + 1ms) var(--ease) backwards; }
+.onb > :nth-child(2) { animation-delay: calc(var(--m) * 60ms); }
+.onb > :nth-child(n+3) { animation-delay: calc(var(--m) * 120ms); }
+.drawer { animation: drawerIn calc(var(--m) * 260ms + 1ms) var(--ease-back); }
+.lb-stage > * { animation: scrimIn calc(var(--m) * 180ms + 1ms) ease-out; }
+
+/* hover and press: everything you can click answers */
+:is(.mcard, .hero, .lcard, .cat, .mtile, .gthumb, .fplugin, .pswitch-k, .tcard, .cmd) {
+  transition: translate calc(var(--m) * 120ms) var(--ease), box-shadow calc(var(--m) * 120ms), background-color calc(var(--m) * 120ms), filter calc(var(--m) * 120ms);
+}
+:is(.mcard-img, .lcard-img, .hero-pic) img { transition: scale calc(var(--m) * 260ms) var(--ease), filter calc(var(--m) * 200ms); }
+:is(.hero, .lcard, .cat, .mtile, .gthumb, .fplugin:not([disabled]), .pswitch-k, .tcard):active { translate: 0 1px; transition-duration: calc(var(--m) * 40ms); }
+.mcard:active { translate: 0 0; transition-duration: calc(var(--m) * 40ms); }
+.cmds-h .i { transition: rotate calc(var(--m) * 160ms) var(--ease); }
+@media (hover: hover) {
+  .mcard:hover .mcard-img img, .hero:hover .hero-pic img { scale: 1.035; }
+  .lcard:hover .lcard-img img { scale: 1.03; }
+  .hero:hover { translate: 0 -2px; }
+  .lcard:not(.sel):hover { box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 30%, var(--line)), 0 4px 12px rgba(0, 0, 0, .12); }
+  .mtile:hover, .gthumb:hover { filter: brightness(1.08); }
+  .mtile:hover { translate: 0 -1px; }
+  .fplugin:not(.on):not([disabled]):hover, .pswitch-k:hover { background-color: var(--surface-2); }
+  .cmds-h:hover { color: var(--accent-ink); }
+  .cmd:hover { background-color: var(--bg2); }
+  .linkish:hover { text-decoration-thickness: 2px; }
+}

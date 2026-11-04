@@ -1,0 +1,225 @@
+/* themes/standard.css — Standard, the default theme: a plain modern desktop look on the Pocket kit.
+   Dark by default, light on data-scheme="light". Flat keys with 1 px of travel, modules under a darkened band,
+   LCDs drawn as status readouts, line icons. Colours: near-black blue-grey surfaces, a hot yellow accent kept for the
+   one primary action and the current view, cyan (--sel) for what is selected and for focus.
+   The CRT touches are the effects layer's (fx.css): Standard suggests "subtle", faint scanlines on LCDs and the title
+   bar. Everything here is under html[data-look="standard"], so a user theme that builds on Standard
+   ("base": "standard") gets these shapes with its own tokens. */
+
+/* ───────────── tokens ───────────── */
+:root[data-look="standard"], .tprev[data-look="standard"] {
+  --bg: #0b0e13; --bg2: #07090d; --surface: #11151c; --surface-2: #19202a; --line: #27303d;
+  --text: #e9ecf1; --text-2: #bac1cd; --text-3: #8b95a6;
+  --accent: #f3e600; --on-accent: #0b0e13; --accent-ink: #f3e600;
+  --acc2: #4fd6df;
+  --chrome-bg: #06080c; --chrome-fg: #c9d0db;
+  --disp-bg: #061115; --disp-fg: #5fe3ea; --disp-hot: #f4c84a; --disp-bad: #ff7b6e;
+  --ok: #4fce88; --warn: #f2b84b; --bad: #ff6b5f; --on-bad: #0b0e13;
+  --sel: var(--acc2); --sel-soft: color-mix(in srgb, var(--sel) 15%, transparent);
+  --focus: var(--acc2); --on-ring: var(--line); --k-framework: #c9d0db;
+  --radius: 8px; --btn-r: 6px; --win-r: 10px;
+  --font-num: "Space Grotesk", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; --num-scale: .7;
+  --rail-bg: color-mix(in srgb, var(--chrome-bg) 55%, var(--bg));
+  --hl: rgba(255, 255, 255, .04);
+  --card-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, .35);
+  --drop: 0 18px 48px rgba(0, 0, 0, .55), 0 0 0 1px var(--line);
+  --scrim: rgba(3, 5, 8, .62);
+  --glow-rgb: 79, 214, 223; --scan: .7;
+  --lcd-glow: 0 0 .5em color-mix(in srgb, var(--disp-fg) 40%, transparent);
+  --fx: subtle; --icons: line;
+  color-scheme: dark;
+}
+:root[data-look="standard"][data-scheme="light"], .tprev[data-look="standard"][data-scheme="light"] {
+  --bg: #eef1f5; --bg2: #ffffff; --surface: #ffffff; --surface-2: #f0f3f7; --line: #d5dbe4;
+  --text: #0f131a; --text-2: #363f4d; --text-3: #5b6577;
+  --accent: #f3e600; --on-accent: #0f131a; --accent-ink: #6f6500;
+  --acc2: #007c88;
+  --chrome-bg: #1a202b; --chrome-fg: #e3e8ef;
+  --disp-bg: #111a24; --disp-fg: #5fe3ea; --disp-hot: #f4c84a; --disp-bad: #ff8a7e;
+  --ok: #1d8a4c; --warn: #9c6200; --bad: #cc2f27; --on-bad: #fff;
+  --k-framework: #1a202b;
+  --rail-bg: #e4e8ee;
+  --hl: rgba(255, 255, 255, .6);
+  --card-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(16, 24, 40, .06);
+  --drop: 0 18px 48px rgba(16, 24, 40, .22), 0 0 0 1px var(--line);
+  --scrim: rgba(16, 22, 32, .4);
+  --scan: .45;
+  color-scheme: light;
+}
+
+html[data-look="standard"] {
+  /* ───────────── base: a flat window, no dot grid ───────────── */
+  & body, & .content, & .ov.full { background: var(--bg); }
+  & .screen :is(input, select, textarea) { border-radius: 6px; background: var(--bg2); }
+  & .screen ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text) 16%, transparent); background-clip: padding-box; }
+  & .screen code { background: color-mix(in srgb, var(--text) 8%, transparent); }
+  & .shelf-h > .i { color: var(--accent-ink); }
+  & .i.big, & .m-empty .i.big, & .thumb.ph-img, & .mcard-img, & .lcard-img { color: color-mix(in srgb, var(--text-3) 55%, transparent); }
+
+  /* ───────────── keys: flat, one pixel of travel ───────────── */
+  & .btn {
+    --travel: 1px; --ring: var(--line); --lip: color-mix(in srgb, var(--line) 65%, #000);
+    margin-bottom: 1px; padding: .5em .9em; font-weight: 600; color: var(--text); background: var(--surface-2);
+    box-shadow: 0 0 0 1px var(--ring), 0 calc((1 - var(--press, 0)) * var(--travel)) 0 var(--lip);
+    transition: --press calc(var(--m) * 60ms) ease-out, background calc(var(--m) * 120ms), box-shadow calc(var(--m) * 120ms);
+  }
+  & .btn.sm { padding: .32em .62em; }
+  & .btn.lg { padding: .7em 1.1em; }
+  & .btn.icon { padding-inline: .55em; }
+  & .btn.sm.icon { padding-inline: .4em; }
+  & .btn.primary { --ring: color-mix(in srgb, var(--accent) 72%, #000); --lip: color-mix(in srgb, var(--accent) 50%, #000); color: var(--on-accent); background: var(--accent); }
+  & .btn.dark { --ring: color-mix(in srgb, #fff 8%, var(--chrome-bg)); --lip: #000; color: var(--chrome-fg); background: var(--chrome-bg); }
+  & .btn.dark .i { color: inherit; }
+  & .btn:is(.on, [aria-pressed="true"]) { --press: .6; --ring: color-mix(in srgb, var(--sel) 55%, var(--line)); color: var(--text); background: color-mix(in srgb, var(--sel) 14%, var(--surface-2)); }
+  & .btn:is(.on, [aria-pressed="true"]) .i { color: var(--sel); }
+  & .btn.ghost { --travel: 0px; background: transparent; box-shadow: none; color: var(--text-2); }
+  & .ph .btn { margin-block: 0 1px; }
+  & .ph .btn:not(.primary):not(.ghost) { --ring: color-mix(in srgb, #fff 10%, var(--chrome-bg)); --lip: #000; color: var(--chrome-fg); background: color-mix(in srgb, #fff 6%, var(--chrome-bg)); }
+  & .ph .btn.ghost { color: var(--chrome-fg); }
+  & .actions .btn, & .browse-top .btn { margin-bottom: 1px; }
+
+  /* ───────────── program keys: a plain sidebar list; the current view has a yellow edge ───────────── */
+  & .nv {
+    background: transparent; box-shadow: none; transform: none; margin-bottom: 0; border-radius: 6px;
+    padding: .55em .75em; font-weight: 500; color: var(--text-2);
+  }
+  & .nv .i { color: var(--text-3); }
+  & .nv:active { background: color-mix(in srgb, var(--text) 8%, transparent); }
+  & .nv.on { background: var(--surface-2); color: var(--text); }
+  & .nv.on::before { content: ""; position: absolute; left: 0; top: 22%; bottom: 22%; width: 3px; border-radius: 0 2px 2px 0; background: var(--accent); }
+  & .nv.on .i { color: var(--accent-ink); }
+  & .nv .ct { border-radius: 99px; padding: .24em .5em; background: var(--surface-2); }
+  & .nv.on .ct { background: var(--line); color: var(--text); }
+  & .nv .ct.hot, & .nv.on .ct.hot { background: var(--accent); color: var(--on-accent); }
+  & .nv .prog { bottom: 3px; height: 2px; }
+  & .nv .prog::after { background: var(--sel); }
+  & .led { border-radius: 50%; box-shadow: none; }
+
+  /* ───────────── the window: title bar and rail framing the view ───────────── */
+  & .shell > .mtop { background: var(--chrome-bg); color: var(--chrome-fg); box-shadow: inset 0 -1px 0 var(--line); padding: .3em .5em .3em .95em; min-height: 3em; }
+  & .shell > .side { background: var(--rail-bg); box-shadow: inset -1px 0 0 var(--line); padding: .7em .6em 1em; gap: .7em; }
+  & .shell > .view { padding: 1em 1.2em 1.2em; }
+  & .nkeys.rail { gap: 2px; }
+  & .mtop .brandmark { color: var(--text); font-size: .98em; }
+  & .mtop .crumb .v { font-size: .98em; }
+  & .shell > .mtop :is(.brandmark, .crumb .v) { color: color-mix(in srgb, var(--chrome-fg) 70%, #fff); }
+  & .shell > .mtop .crumb .ctx { color: color-mix(in srgb, var(--chrome-fg) 60%, transparent); }
+  & .shell > .mtop > .btn.ghost { color: var(--chrome-fg); }
+  & .logo {
+    width: 1.65em; height: 1.65em; padding: 0; border-radius: 5px; background: var(--accent); color: var(--on-accent);
+    font: 700 1em/1 var(--font-body); box-shadow: none;
+  }
+  & .winkeys { background: transparent; box-shadow: none; padding: 0; gap: 2px; }
+  & .wk { width: 2.5em; height: 2em; margin: 0; border-radius: 6px; background: transparent; box-shadow: none; transform: none; color: var(--text-2); }
+  & .shell > .mtop .wk { color: var(--chrome-fg); }
+  & .wk:active { background: color-mix(in srgb, var(--text) 12%, transparent); }
+  & .win > .mtop { background: var(--chrome-bg); box-shadow: inset 0 -1px 0 var(--line); }
+  & .win > .mtop :is(.brandmark, .crumb .v) { color: var(--chrome-fg); }
+  & .deck { background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line); border-radius: 8px; }
+  & .pswitch-k { background: color-mix(in srgb, #fff 5%, var(--chrome-bg)); color: var(--chrome-fg); box-shadow: 0 0 0 1px color-mix(in srgb, #fff 9%, var(--chrome-bg)); border-radius: 6px; }
+
+  /* ───────────── modules: a card under a darkened band ───────────── */
+  & .panel { border-radius: var(--radius); }
+  & .ph { --band: var(--chrome-bg); --band-fg: var(--chrome-fg); min-height: 2.45em; padding: .25em .4em .25em .85em; box-shadow: inset 0 -1px 0 var(--line); }
+  & .ph .pt { font-size: .74em; font-weight: 700; letter-spacing: .09em; }
+  & .ph .pt .i { color: color-mix(in srgb, var(--chrome-fg) 62%, transparent); }
+  & .ph .cnt { opacity: .7; }
+  & .ph::after { display: none; }
+  & .panel.hot > .ph { --band: var(--chrome-bg); --band-fg: var(--chrome-fg); box-shadow: inset 0 2px 0 var(--accent), inset 0 -1px 0 var(--line); }
+  & .panel.hot > .ph :is(.pt, .pt .i) { color: var(--accent); }
+  & .panel.bad { box-shadow: 0 0 0 1px color-mix(in srgb, var(--bad) 60%, var(--line)), var(--card-shadow); }
+  & .panel.bad > .ph { --band: color-mix(in srgb, var(--bad) 16%, var(--chrome-bg)); --band-fg: var(--chrome-fg); box-shadow: inset 0 2px 0 var(--bad), inset 0 -1px 0 var(--line); }
+  & .panel.bad > .ph .pt .i { color: color-mix(in srgb, var(--bad) 70%, #fff); }
+  & .pb { padding: .9em 1em 1em; }
+  & .pb.flush { padding: 0; }
+  & .pb.list { padding: .3em .45em .7em; }
+
+  /* ───────────── LCDs: status readouts, dark glass with lit figures ───────────── */
+  & .display {
+    --lcd-tex: none; margin: 2px; padding: .62em .85em .7em; border-radius: 6px; background: var(--disp-bg); color: var(--disp-fg);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--disp-fg) 16%, var(--line));
+  }
+  & .display.sm { padding: .38em .62em .42em; }
+  & .display.big { padding: 1em 1.6em 1.1em; }
+  & .display .d-lbl { font: 600 .68em/1.25 var(--font-body); letter-spacing: .09em; color: color-mix(in srgb, var(--disp-fg) 60%, var(--disp-bg)); }
+  & .display .d-num { font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; text-shadow: none; }
+  & .display .d-num small { font: 600 .42em var(--font-body); letter-spacing: .05em; color: color-mix(in srgb, var(--disp-fg) 70%, var(--disp-bg)); }
+  & .display .d-sub { font-size: .8em; color: color-mix(in srgb, #dfe6ee 78%, var(--disp-bg)); }
+  & .display .d-bar { height: 3px; background: color-mix(in srgb, var(--disp-fg) 15%, transparent); }
+  & .d-lvl { gap: 2px; height: .55em; }
+  & .d-lvl i { border-radius: 1px; background: color-mix(in srgb, var(--disp-fg) 13%, transparent); }
+  & .display :is(.d-lvl i.on, .d-bar i) { background: var(--disp-fg); }
+  & .display:is(.hot, .bad, .nope) { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--disp-fg) 30%, transparent); }
+  & .display.hot { --disp-bg: color-mix(in srgb, var(--disp-hot) 10%, #05080b); --disp-fg: var(--disp-hot); }
+  & .display:is(.bad, .nope) { --disp-bg: color-mix(in srgb, var(--disp-bad) 11%, #05080b); --disp-fg: var(--disp-bad); }
+  & .display.boot::before { background: color-mix(in srgb, var(--disp-fg) 22%, transparent); }
+  & .lcd-chip { border-radius: 4px; background: var(--disp-bg); color: var(--disp-fg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--disp-fg) 18%, var(--line)); }
+  & .log { margin: 0; border-radius: 6px; background: var(--disp-bg); color: color-mix(in srgb, var(--disp-fg) 75%, #fff); box-shadow: inset 0 0 0 1px var(--line); }
+
+  /* ───────────── fields, chips, segments ───────────── */
+  & .fbox { border-radius: 6px; background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line); }
+  & .fbox:focus-within { box-shadow: inset 0 0 0 1px var(--focus), 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+  & .fbox .chip { border-radius: 4px; }
+  & .chip { border-radius: 6px; background: transparent; border-color: var(--line); color: var(--text-2); }
+  & .chip.on { background: var(--sel-soft); border-color: color-mix(in srgb, var(--sel) 55%, transparent); color: var(--text); }
+  & .seg { border-radius: 7px; background: var(--bg2); }
+  & .seg .chip { border-radius: 5px; }
+  & .seg .chip.on { background: var(--surface-2); color: var(--text); box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, .25); }
+  & .seg .chip[disabled] { opacity: .4; }
+  & .vtabs .chip { border-radius: 6px; }
+
+  /* ───────────── switches, pills, tags ───────────── */
+  & .sw-t { width: 2.4em; height: 1.35em; border-radius: 99px; background: var(--bg2); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, var(--line)); }
+  & .sw-t::after { top: .2em; left: .2em; width: .95em; height: .95em; border-radius: 50%; background: var(--text-3); box-shadow: none; }
+  & .sw input:checked + .sw-t { background: var(--sel); box-shadow: none; }
+  & .sw input:checked + .sw-t::after { translate: 1.05em 0; background: var(--surface); }
+  & .cchip { border-radius: 4px; }
+  & .onb-dot { border-radius: 99px; }
+  & .onb-dot.on { background: var(--sel-soft); color: var(--text); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sel) 60%, transparent); }
+
+  /* ───────────── rows and cards ───────────── */
+  & .row { border-radius: 6px; }
+  & .row.sel { background: var(--sel-soft); box-shadow: inset 2px 0 0 var(--sel); }
+  & .detail-mod .row.sel { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--text-3); }
+  & .thumb { border-radius: 4px; }
+  & .lcard { background: var(--surface); border-radius: var(--radius); }
+  & .lcard.sel { background: var(--sel-soft); box-shadow: 0 0 0 2px var(--sel); }
+  & .cat { border-radius: var(--radius); box-shadow: 0 0 0 1px var(--line); }
+  & .fplugin { border-radius: var(--radius); box-shadow: 0 0 0 1px var(--line); }
+  & .fplugin.on { background: var(--sel-soft); color: var(--text); box-shadow: 0 0 0 1px var(--sel); }
+  & .fplugin.on b { color: var(--text); }
+  & .cmds { border-radius: var(--radius); background: var(--bg2); }
+  & .cmd { background: var(--surface); }
+  & .gplay .i { border-radius: 50%; }
+  & .bulkbar { border-radius: var(--radius); box-shadow: 0 0 0 1px var(--line); }
+
+  /* ───────────── overlays ───────────── */
+  & .dialog { border-radius: 10px; }
+  & .toast { border-radius: 8px; background: var(--surface-2); padding: .6em .65em .65em .85em; }
+  & .toast .i { color: var(--ok); }
+  & .note { border-radius: 6px; }
+  & .lightbox, & .lb-bar { background: #05070a; }
+
+  /* ───────────── hover ───────────── */
+  @media (hover: hover) {
+    & .btn:not([disabled]):hover { background: color-mix(in srgb, var(--text) 8%, var(--surface-2)); }
+    & .btn.primary:not([disabled]):hover { background: color-mix(in srgb, #fff 22%, var(--accent)); }
+    & .btn.dark:not([disabled]):hover { background: color-mix(in srgb, #fff 8%, var(--chrome-bg)); }
+    & .btn:is(.on, [aria-pressed="true"]):not([disabled]):hover { background: color-mix(in srgb, var(--sel) 22%, var(--surface-2)); }
+    & .btn.ghost:not([disabled]):hover { background: color-mix(in srgb, currentColor 10%, transparent); color: var(--text); }
+    & .ph .btn:not(.primary):not(.ghost):not([disabled]):hover { background: color-mix(in srgb, #fff 12%, var(--chrome-bg)); }
+    & .ph .btn.ghost:not([disabled]):hover, & .shell > .mtop > .btn.ghost:hover { color: #fff; }
+    & .btn[disabled]:hover { background: var(--surface-2); }
+    & .btn.primary[disabled]:hover { background: var(--accent); }
+    & .nv:not(.on):hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
+    & .chip:not([disabled]):not(.on):hover { background: color-mix(in srgb, var(--text) 5%, transparent); }
+    & .row:not(.sel):hover { background: color-mix(in srgb, var(--text) 5%, transparent); }
+    & .wk:hover { background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--text); }
+    & .shell > .mtop .wk:hover { color: #fff; background: color-mix(in srgb, #fff 9%, var(--chrome-bg)); }
+    & .wk-x:hover, & .shell > .mtop .wk-x:hover { background: var(--bad); color: var(--on-bad); }
+    & .pswitch-k:hover { background: color-mix(in srgb, #fff 10%, var(--chrome-bg)); }
+    & .cat:hover, & .fplugin:not(.on):not([disabled]):hover { background: var(--surface-2); }
+  }
+  & .btn.hov { background: color-mix(in srgb, var(--text) 8%, var(--surface-2)); }
+  & .btn.primary.hov { background: color-mix(in srgb, #fff 22%, var(--accent)); }
+}

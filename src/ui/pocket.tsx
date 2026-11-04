@@ -2,6 +2,7 @@
 import type { ReactNode, ButtonHTMLAttributes } from "react";
 import { Icon } from "./Icon";
 import type { IconName } from "./icons";
+import { useOneShot } from "./motion";
 
 type KeyVariant = "primary" | "dark" | "ghost";
 type KeySize = "sm" | "lg";
@@ -57,8 +58,10 @@ export type LcdTone = "ok" | "hot" | "bad";
 export function Lcd({ label, value, unit, sub, bar, level, tone = "ok", size, className = "" }:
   { label: string; value: ReactNode; unit?: string; sub?: ReactNode; bar?: number; level?: { on: number; of: number }; tone?: LcdTone; size?: "sm" | "big"; className?: string }) {
   const cls = ["display", tone === "ok" ? "" : tone, size, className].filter(Boolean).join(" ");
+  // the LCD switches on again (a stepped flicker) whenever its figure changes
+  const ref = useOneShot<HTMLDivElement>("boot", typeof value === "string" || typeof value === "number" ? `${value}${unit ?? ""}` : label);
   return (
-    <div className={cls} role="group" aria-label={label}>
+    <div ref={ref} className={cls} role="group" aria-label={label}>
       <span className="d-lbl">{label}</span>
       <span className="d-num">{value}{unit && <small>{unit}</small>}</span>
       {sub && <span className="d-sub">{sub}</span>}
@@ -88,11 +91,12 @@ export function Chip({ on, count, children, onClick, disabled, title }:
 }
 
 export function Seg<T extends string>({ value, options, onChange, label }:
-  { value: T; options: Array<{ value: T; label: string }>; onChange: (v: T) => void; label: string }) {
+  { value: T; options: Array<{ value: T; label: string; disabled?: boolean; title?: string }>; onChange: (v: T) => void; label: string }) {
   return (
     <div className="seg" role="radiogroup" aria-label={label}>
       {options.map((o) => (
-        <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className={`chip${o.value === value ? " on" : ""}`} onClick={() => onChange(o.value)}>
+        <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className={`chip${o.value === value ? " on" : ""}`}
+          disabled={o.disabled} title={o.title} onClick={() => onChange(o.value)}>
           {o.label}
         </button>
       ))}

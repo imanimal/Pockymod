@@ -27,9 +27,11 @@
 @font-face { font-family: "Doto"; font-style: normal; font-display: block; font-weight: 900; src: url(./fonts/doto-latin-900-normal.woff2) format("woff2"); }
 
 /* ───────────── tokens ─────────────
-   Cream (P9) is the default; Night (P11) is html.night (and data-scheme="dark", the reference's switch). theme.ts sets
-   both from the saved choice or, by default, the system setting. */
-:root {
+   These are the Pocket theme: Cream (P9) and Night (P11, html.night and data-scheme="dark", the reference's switch).
+   They are also every theme's fallback, so each token a component reads is defined here. Other themes
+   (themes/*.css) set the same tokens on html[data-look="…"]; theme.ts sets data-theme, data-look, data-scheme and
+   .night from the saved choice. .tprev[data-look] is a theme sample (Settings cards, theme.ts reading a theme's values). */
+:root, .tprev[data-look="pocket"] {
   /* Cream (P9) */
   --bg: #e6e2d8; --bg2: #fbf9f4; --surface: #f6f3ec; --surface-2: #ebe7dd; --line: #d3ccbd;
   --text: #1b1915; --text-2: #4a453c; --text-3: #6a645a;
@@ -57,9 +59,15 @@
   --ease: cubic-bezier(.2, .9, .3, 1);
   --ease-back: cubic-bezier(.3, 1.45, .5, 1);
   --ease-in: cubic-bezier(.5, 0, .9, .4);
+  /* added for themes: the ring of a latched key, focus rings, accent used as text or an icon on a surface, the
+     Framework tag, and the CRT layer's glow (r, g, b) and scanline strength. --fx and --icons are read by theme.ts:
+     the effects level the theme suggests (off, subtle, full) and its icon set (pixel, line). */
+  --on-ring: #000; --focus: var(--accent); --accent-ink: var(--accent); --k-framework: #2a2722;
+  --glow-rgb: 255, 106, 43; --scan: .5;
+  --fx: off; --icons: pixel;
   color-scheme: light;
 }
-:root.night, :root[data-scheme="dark"] {
+:root.night, :root[data-scheme="dark"], .tprev[data-look="pocket"][data-scheme="dark"] {
   /* Night (P11) */
   --bg: #1a1917; --bg2: #2a2926; --surface: #262522; --surface-2: #302e2a; --line: #3f3c36;
   --text: #f4efe5; --text-2: #d0c9ba; --text-3: #a39c8d;
@@ -72,6 +80,7 @@
   --drop: 0 24px 60px rgba(0, 0, 0, .55), 0 0 0 1px var(--line);
   --scrim: rgba(0, 0, 0, .5);
   --on-bad: #1b1915;
+  --on-ring: color-mix(in srgb, var(--accent) 70%, #000); --k-framework: #ece6da;
   color-scheme: dark;
 }
 html[data-motion="0"] { --m: 0; }
@@ -103,7 +112,7 @@ a { color: var(--acc2); }
   font-family: var(--font-ui); font-size: .92em; color: var(--text); background: var(--bg2); caret-color: var(--accent);
   border: 1px solid var(--line); border-radius: 8px; padding: .4em .6em;
 }
-.screen :is(input, select, textarea):focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.screen :is(input, select, textarea):focus { outline: 2px solid var(--focus); outline-offset: -1px; }
 .screen :is(input, textarea)::placeholder { color: var(--text-3); opacity: 1; }
 .screen kbd { font-family: var(--font-mono); }
 .screen code { font: .92em var(--font-mono); background: var(--surface-2); padding: .05em .35em; border-radius: 4px; }
@@ -118,6 +127,10 @@ a { color: var(--acc2); }
 .i.s27 { width: 27px; height: 27px; }
 .i.big, .i.s36 { width: 36px; height: 36px; }
 .i.s54 { width: 54px; height: 54px; }
+/* added: line icons (icons-line.ts) for themes with --icons: line; strokes stay the same width at every size */
+.i.ln { fill: none; stroke: currentColor; stroke-width: 1.6px; stroke-linecap: round; stroke-linejoin: round; shape-rendering: geometricPrecision; }
+.i.ln.s9 { width: 12px; height: 12px; vertical-align: -.15em; }
+.i.ln:is(.s36, .big, .s54) { stroke-width: 2px; }
 
 /* ───────────── B8 keys: raised hardware keys that travel ─────────────
    A key sits on a 3 px lip. Pressing (--press → 1) sinks it onto the lip and pulls its shadow in; letting go springs
@@ -136,15 +149,14 @@ a { color: var(--acc2); }
 .btn:active, .btn.down { --press: 1; }
 .btn.ack { animation: keyUp calc(var(--m) * 240ms + 1ms) var(--ease); }
 .btn[disabled] { --press: 0; animation: none; opacity: .45; cursor: default; }
-.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .btn .i { margin-inline: -.1em; }
 .btn kbd { font: 500 .76em/1 var(--font-mono); border-radius: 4px; padding: .24em .42em; opacity: .85; background: color-mix(in srgb, currentColor 15%, transparent); }
 .btn.primary { --ring: color-mix(in srgb, var(--accent) 62%, #000); --lip: color-mix(in srgb, var(--accent) 52%, #000); --shade: rgba(0, 0, 0, .16); color: var(--on-accent); background: linear-gradient(to bottom, color-mix(in srgb, #fff 16%, var(--accent)), var(--accent)); }
 .btn.dark, .btn.on, .btn[aria-pressed="true"] { --ring: #000; --lip: #000; --shade: rgba(0, 0, 0, .2); color: var(--chrome-fg); background: linear-gradient(to bottom, color-mix(in srgb, #fff 12%, var(--chrome-bg)), var(--chrome-bg)); }
 .btn:is(.dark, .on, [aria-pressed="true"]) .i { color: var(--accent); }
 /* latched keys stay down a step, like a locked hardware key */
-.btn:is(.on, [aria-pressed="true"]) { --press: .55; }
-:root.night .btn:is(.on, [aria-pressed="true"]) { --ring: color-mix(in srgb, var(--accent) 70%, #000); }
+.btn:is(.on, [aria-pressed="true"]) { --press: .55; --ring: var(--on-ring); }
 .btn.ghost { --travel: 1px; background: transparent; box-shadow: none; margin-bottom: 0; color: var(--text-2); }
 .btn.lg { font-size: 1em; padding: .72em 1.1em .7em; }
 .btn.sm { font-size: .82em; padding: .32em .62em; }
@@ -165,13 +177,12 @@ a { color: var(--acc2); }
   box-shadow: 0 0 0 1px var(--ring), 0 calc((1 - var(--press, 0)) * 2px) 0 var(--lip);
   transition: --press calc(var(--m) * 60ms) ease-out, background calc(var(--m) * 120ms), color calc(var(--m) * 120ms);
 }
-.nv:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nv:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .nv:active, .nv.down { --press: 1; }
 .nv.ack { animation: keyUp calc(var(--m) * 220ms + 1ms) var(--ease); }
 .nv .i { color: var(--text-3); }
 .nv .lb { flex: 1; }
-.nv.on { --ring: #000; --lip: #000; background: var(--chrome-bg); color: var(--chrome-fg); }
-:root.night .nv.on { --ring: color-mix(in srgb, var(--accent) 70%, #000); }
+.nv.on { --ring: var(--on-ring); --lip: #000; background: var(--chrome-bg); color: var(--chrome-fg); }
 .nv.on .i { color: var(--accent); }
 .nv.on.ack .i { animation: ledOn calc(var(--m) * 260ms + 1ms) steps(1, end); }
 .nv .ct { font: 700 .78em/1 var(--font-mono); padding: .26em .45em; border-radius: 5px; background: var(--surface-2); color: var(--text-2); }
@@ -221,11 +232,10 @@ a { color: var(--acc2); }
   background: linear-gradient(170deg, color-mix(in srgb, #fff 18%, var(--disp-bg)), var(--disp-bg) 60%); color: var(--disp-fg);
   border-radius: 6px; overflow: hidden; isolation: isolate; margin: 5px;
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, .28), inset 0 0 0 1px rgba(0, 0, 0, .3), 0 0 0 4px var(--chrome-bg), 0 0 0 5px #000;
+  /* the panel's texture; a theme can swap it, and the effects layer lays scanlines over it */
+  --lcd-tex: repeating-linear-gradient(90deg, rgba(0, 0, 0, .045) 0 1px, transparent 1px 3px), repeating-linear-gradient(0deg, rgba(0, 0, 0, .045) 0 1px, transparent 1px 3px);
 }
-.display::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .045) 0 1px, transparent 1px 3px), repeating-linear-gradient(0deg, rgba(0, 0, 0, .045) 0 1px, transparent 1px 3px);
-}
+.display::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background-image: var(--lcd-tex); }
 .display .d-lbl { font: 700 .74em/1.2 var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: color-mix(in srgb, var(--disp-fg) 74%, var(--disp-bg)); }
 .display .d-num { font-family: var(--font-num); font-weight: 800; font-size: calc(2.7em * var(--num-scale)); line-height: 1; white-space: nowrap; color: var(--disp-fg); text-shadow: 2px 2px 0 rgba(0, 0, 0, .12); }
 .display .d-num small { font: 700 .45em var(--font-mono); margin-left: .25em; text-shadow: none; }
@@ -252,7 +262,7 @@ a { color: var(--acc2); }
    .fbox is the search field (an input inside a recessed box); .chip a filter chip, .on when applied, with an
    optional mono count (.n, added); .seg a segmented control built from chips. */
 .fbox { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: .4em; padding: .34em .6em; border-radius: 9px; background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line), inset 0 2px 0 rgba(0, 0, 0, .03); cursor: text; }
-.fbox:focus-within { box-shadow: inset 0 0 0 2px var(--accent); }
+.fbox:focus-within { box-shadow: inset 0 0 0 2px var(--focus); }
 .fbox > .i { color: var(--text-3); }
 .screen .fbox .finput, .fbox .finput { border: 0; background: transparent; outline: none; padding: .25em .2em; flex: 1 0 7em; min-width: min(7em, 100%); font-size: .95em; border-radius: 0; }
 .fbox .finput:focus { outline: none; }
@@ -265,7 +275,7 @@ a { color: var(--acc2); }
 .chip .n { font: .86em var(--font-mono); color: var(--text-3); }
 .chip.on .n { color: var(--text-2); }
 .chip .x { opacity: .7; }
-.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .chip[disabled] { opacity: .5; cursor: default; }
 .chip.zero { opacity: .55; }
 .chips { display: flex; flex-wrap: wrap; gap: .35em; }
@@ -296,7 +306,7 @@ a { color: var(--acc2); }
 }
 .sw input:checked + .sw-t { background: color-mix(in srgb, var(--accent) 55%, var(--bg)); }
 .sw input:checked + .sw-t::after { translate: 1.2em 0; }
-.sw input:focus-visible + .sw-t { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw input:focus-visible + .sw-t { outline: 2px solid var(--focus); outline-offset: 2px; }
 .sw input:disabled + .sw-t { opacity: .5; }
 /* the reference's .duepill, also as .pill: a status in words. .ok normal (added), .soon amber wash, .hot amber, .over red,
    .live orange (the screen's do-first, so use it once) */
@@ -314,8 +324,7 @@ a { color: var(--acc2); }
 /* tag colours: the frameworks and mod types */
 .k-cet { --kc: #2f6fde; } .k-red4ext { --kc: #c8341b; } .k-redscript { --kc: #8a4fd0; } .k-archivexl { --kc: #1f8a70; }
 .k-tweakxl { --kc: #b8860b; } .k-codeware { --kc: #d0457b; } .k-cybercmd { --kc: #5a7a2b; }
-.k-redmod { --kc: #ff5b1f; } .k-archive { --kc: #6a645a; } .k-script { --kc: #8a4fd0; } .k-framework { --kc: #2a2722; } .k-other { --kc: #a39c8d; }
-:root.night .k-framework { --kc: #ece6da; }
+.k-redmod { --kc: #ff5b1f; } .k-archive { --kc: #6a645a; } .k-script { --kc: #8a4fd0; } .k-framework { --kc: var(--k-framework); } .k-other { --kc: #a39c8d; }
 
 /* ───────────── list rows ───────────── */
 .rows { display: flex; flex-direction: column; gap: 1px; }
@@ -326,9 +335,8 @@ a { color: var(--acc2); }
   position: relative; display: grid; align-items: center; grid-template-columns: minmax(0, 1fr) auto; column-gap: .75em;
   padding: calc(var(--rowpad) + .3em) .6em; border-radius: 9px; cursor: pointer; text-align: left;
   font: inherit; color: inherit; background: none; border: 0; width: 100%;
-  transition: background calc(var(--m) * 120ms);
 }
-.row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .row.sel { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
 .row.off { opacity: .55; }
 .m-main { display: flex; flex-direction: column; gap: .14em; min-width: 0; }
@@ -343,8 +351,6 @@ a { color: var(--acc2); }
 .row.modrow { grid-template-columns: 4.6em minmax(0, 1fr) auto; }
 .thumb { width: 4.6em; aspect-ratio: 16 / 10; border-radius: 6px; object-fit: cover; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); display: block; }
 .thumb.ph-img { display: grid; place-items: center; color: var(--line); }
-.row.new { animation: rowNew calc(var(--m) * 1400ms + 1ms) ease-out; }
-.rows.anim > .row { animation: rowIn calc(var(--m) * 260ms + 1ms) ease-out both; animation-delay: calc(var(--m) * min(var(--i, 0), 12) * 18ms); }
 .m-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .35em; padding: 1.6em .8em; color: var(--text-3); }
 .m-empty .i.big { color: var(--line); margin-bottom: .3em; }
 .m-empty b { color: var(--text); font-size: 1.05em; }
@@ -382,7 +388,7 @@ a { color: var(--acc2); }
 }
 .wk .i { width: 9px; height: 9px; vertical-align: 0; }
 .wk:active { --press: 1; }
-.wk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wk:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .wk-x:active { background: var(--bad); color: var(--on-bad); }
 /* the key deck: a recessed strip of view keys at the window's foot */
 .deck {
@@ -423,24 +429,132 @@ a { color: var(--acc2); }
 .log { white-space: pre-wrap; background: var(--disp-bg); color: var(--disp-fg); font: .8em/1.55 var(--font-mono); border-radius: 8px; padding: .8em 1em; margin: 5px; max-height: 18em; overflow: auto; box-shadow: inset 0 2px 6px rgba(0, 0, 0, .3), 0 0 0 4px var(--chrome-bg), 0 0 0 5px #000; }
 
 /* ───────────── motion and feedback ─────────────
-   Keys travel and spring back; LCDs never tween, they switch in steps; anything that loops is stepped. */
+   Pocket moves like the hardware it draws (the reference's motion section). Keys travel and spring back. LCDs never
+   tween: they switch on in steps over a backlight flash (.boot, added by the Lcd part when its value changes) and their
+   bars fill a segment at a time. Parts settle in when they arrive, one after another (--i is the place among the first
+   twelve), and parts that leave play a short exit (.gone) before they go. Every duration is calc(var(--m) * N + 1ms),
+   so the motion setting and reduced motion make it instant; anything that loops is a loading indicator or an LED.
+   One-shot classes (ui/motion.ts, off when they end): .ack released · .boot LCD on · .nope refused · .gone leaving ·
+   .saved stored. The CRT moments (power on, channel change, degauss) are fx.css. */
+
+/* keys and chips */
 @keyframes keyUp { 0% { --press: 1; } 45% { --press: -.35; } 100% { --press: 0; } }
 @keyframes ledOn { 0% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: .2; } 65%, 100% { opacity: 1; } }
 @keyframes blink { 50% { opacity: .25; } }
-@keyframes rowIn { from { opacity: 0; transform: translateY(4px); } }
-@keyframes rowNew { 0%, 30% { background: color-mix(in srgb, var(--accent) 30%, transparent); } 100% { background: transparent; } }
-@keyframes scrimIn { from { opacity: 0; } }
-@keyframes dlgIn { from { transform: scale(.96) translateY(8px); opacity: 0; } }
-@keyframes toastIn { from { transform: translateY(30%); opacity: 0; } }
-@keyframes focusIn { from { outline-offset: 6px; outline-color: transparent; } }
 @keyframes chipUp { 0% { translate: 0 1px; } 45% { translate: 0 -1px; } }
-@keyframes lcdBoot { 0% { opacity: .2; } 20% { opacity: 1; } 35% { opacity: .5; } 50%, 100% { opacity: 1; } }
+@keyframes chipOn { 0% { translate: 0 1px; box-shadow: 0 0 0 .3em var(--sel-soft, var(--accent-soft)); } 45% { translate: 0 -1px; } }
 .chip { transition: background calc(var(--m) * 120ms), border-color calc(var(--m) * 120ms), color calc(var(--m) * 120ms), translate calc(var(--m) * 60ms); }
 .chip:active { translate: 0 1px; }
 .chip.ack { animation: chipUp calc(var(--m) * 220ms + 1ms) var(--ease); }
-.display.boot > * { animation: lcdBoot calc(var(--m) * 320ms + 1ms) steps(1, end); }
-:is(.btn, .nv, .wk, .chip):focus-visible { animation: focusIn calc(var(--m) * 160ms + 1ms) var(--ease); }
+.chip.on.ack { animation-name: chipOn; }
+.sw:active .sw-t::after { scale: .94; }
+.sw-t::after { transition: translate calc(var(--m) * 140ms) var(--ease-back), scale calc(var(--m) * 60ms); }
+.sw input:checked + .sw-t { animation: swOn calc(var(--m) * 300ms + 1ms) steps(1, end); }
+@keyframes swOn { 0% { filter: brightness(1.35); } 40% { filter: brightness(.9); } 70%, 100% { filter: none; } }
+
+/* the focus ring closes in instead of appearing; parts in app.css take the theme's focus colour too */
+@keyframes focusIn { from { outline-offset: 6px; outline-color: transparent; } }
+:is(.btn, .nv, .wk, .chip, .row, .mcard, .hero, .cat, .gthumb, .mtile, .fplugin, .pswitch-k, .linkish, .cmds-h, .tcard):focus-visible { animation: focusIn calc(var(--m) * 160ms + 1ms) var(--ease); }
+html :is(.linkish, .cmds-h, .mcard, .cat, .hero, .gthumb, .mtile, .pswitch-k, .fplugin, .tcard):focus-visible { outline-color: var(--focus); }
+html .lcard:focus-visible { box-shadow: 0 0 0 2px var(--focus); }
+
+/* views: the new view settles in (App wraps the view that stays mounted in .keep) */
+@keyframes viewIn { from { opacity: 0; transform: translateY(.4em); } }
+.shell > .view > :not(.keep), .shell > .view > .keep > * { animation: viewIn calc(var(--m) * 220ms + 1ms) var(--ease) backwards; }
+
+/* parts that arrive: modules, cards and rows settle one after another */
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(2) { --i: 1; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(3) { --i: 2; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(4) { --i: 3; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(5) { --i: 4; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(6) { --i: 5; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(7) { --i: 6; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(8) { --i: 7; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(9) { --i: 8; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(10) { --i: 9; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(11) { --i: 10; }
+:is(.stack, .grid2, .grid3, .rows, .mgrid, .lgrid2, .shelf-row, .cat-tiles, .hero2, .mwall, .fplugins, .tcards, .lcds) > :nth-child(n+12) { --i: 11; }
+@keyframes modIn { from { opacity: 0; transform: translateY(.6em) scale(.99); } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(.5em); } }
+@keyframes rowIn { from { opacity: 0; transform: translateY(4px); } }
+@keyframes rowNew { 0%, 30% { background: color-mix(in srgb, var(--accent) 30%, transparent); } 100% { background: transparent; } }
+:is(.stack, .grid2, .grid3) > .panel { animation: modIn calc(var(--m) * 320ms + 1ms) var(--ease) backwards; animation-delay: calc(var(--m) * var(--i, 0) * 45ms); }
+.rows > :is(.row, .grp) { animation: rowIn calc(var(--m) * 240ms + 1ms) ease-out backwards; animation-delay: calc(var(--m) * var(--i, 0) * 16ms); }
+.row.new, .rows > .row.new { animation: rowIn calc(var(--m) * 240ms + 1ms) ease-out backwards, rowNew calc(var(--m) * 1400ms + 1ms) ease-out; }
+.row { transition: background calc(var(--m) * 120ms), box-shadow calc(var(--m) * 120ms); }
+.row:active:not(.sel) { background: var(--surface-2); }
+.row.sel.ack { animation: selIn calc(var(--m) * 200ms + 1ms) var(--ease); }
+@keyframes selIn { from { box-shadow: inset 0 0 0 var(--accent); background: transparent; } }
+
+/* LCDs: segments flicker on over a backlight flash; bars and levels fill a segment at a time */
+@keyframes lcdOn { 0% { opacity: 0; } 30% { opacity: .35; } 45% { opacity: .1; } 60% { opacity: .75; } 75%, 100% { opacity: 1; } }
+@keyframes lcdBack { 0% { opacity: 0; } 10% { opacity: 1; } 40% { opacity: .55; } 70%, 100% { opacity: 0; } }
+@keyframes barFill { from { width: 0; } }
+@keyframes segOn { 0% { opacity: 0; } 50% { opacity: 1; } 75% { opacity: .4; } 100% { opacity: 1; } }
+.display.boot > * { animation: lcdOn calc(var(--m) * 460ms + 1ms) steps(1, end) backwards; }
+.display.boot::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0; background: color-mix(in srgb, #fff 45%, transparent); animation: lcdBack calc(var(--m) * 820ms + 1ms) steps(1, end) forwards; }
+.display.boot .d-bar i { animation: barFill calc(var(--m) * 520ms + 1ms) steps(12, end) calc(var(--m) * 200ms) backwards; }
+.display.boot .d-lvl i.on { animation: segOn calc(var(--m) * 260ms + 1ms) steps(1, end) backwards; animation-delay: calc(var(--m) * (200ms + var(--i, 0) * 30ms)); }
+.d-lvl > :nth-child(2) { --i: 1; } .d-lvl > :nth-child(3) { --i: 2; } .d-lvl > :nth-child(4) { --i: 3; } .d-lvl > :nth-child(5) { --i: 4; }
+.d-lvl > :nth-child(6) { --i: 5; } .d-lvl > :nth-child(7) { --i: 6; } .d-lvl > :nth-child(8) { --i: 7; } .d-lvl > :nth-child(n+9) { --i: 8; }
+.display .d-bar i { transition: width calc(var(--m) * 300ms) steps(5, end); }
+.nv .prog::after { transition: width calc(var(--m) * 300ms) steps(6, end); }
+.logo.boot { animation: lcdOn calc(var(--m) * 460ms + 1ms) steps(1, end); }
+
+/* overlays: the scrim fades, the dialog rises in and drops back out (ui/Dialog.tsx plays .gone before closing) */
+@keyframes scrimIn { from { opacity: 0; } }
+@keyframes scrimOut { to { opacity: 0; } }
+@keyframes dlgIn { from { transform: scale(.96) translateY(8px); opacity: 0; } }
+@keyframes dlgOut { to { opacity: 0; transform: scale(.97) translateY(6px); } }
+@keyframes drawerOut { to { opacity: 0; translate: 2em 0; } }
+.ov.gone, .drawer-ov.gone { animation: scrimOut calc(var(--m) * 180ms + 1ms) ease-in forwards; pointer-events: none; }
+.ov.gone .dialog { animation: dlgOut calc(var(--m) * 160ms + 1ms) var(--ease-in) forwards; }
+.drawer-ov.gone .drawer { animation: drawerOut calc(var(--m) * 180ms + 1ms) var(--ease-in) forwards; }
+
+/* toasts slide in from the edge and back out; a bar drains for the time one has left; a problem shakes once */
+@keyframes toastIn { from { transform: translateX(1.4em); opacity: 0; } }
+@keyframes toastOut { to { transform: translateX(1.4em); opacity: 0; } }
+@keyframes tLife { to { transform: scaleX(0); } }
+.toast { position: relative; overflow: hidden; }
+.toast.gone { animation: toastOut calc(var(--m) * 220ms + 1ms) var(--ease-in) forwards; }
+.toast.bad:not(.gone) { animation: toastIn calc(var(--m) * 260ms + 1ms) ease-out, nope calc(var(--m) * 300ms + 1ms) steps(1, end) calc(var(--m) * 260ms); }
+.toast .t-life { position: absolute; left: .8em; right: .8em; bottom: 3px; height: 2px; border-radius: 1px; background: var(--accent); opacity: .6; transform-origin: left; pointer-events: none; animation: tLife linear forwards; }
+.toast.bad .t-life { background: var(--bad); }
+.toasts:hover .t-life { animation-play-state: paused; }
+
+/* refused: a two-pixel shake; an LCD flashes its red backlight, a field its red ring. Problems shake as they appear. */
+@keyframes nope { 0% { translate: 2px 0; } 17% { translate: -2px 0; } 34% { translate: 2px 0; } 51% { translate: -2px 0; } 68% { translate: 1px 0; } 85%, 100% { translate: 0; } }
+.nope { animation: nope calc(var(--m) * 300ms + 1ms) steps(1, end); }
+.display.nope { --disp-bg: var(--disp-bad); --disp-fg: #2b0b02; }
+.fbox.nope { box-shadow: inset 0 0 0 2px var(--bad); }
+.note.bad { animation: nope calc(var(--m) * 300ms + 1ms) steps(1, end) calc(var(--m) * 80ms); }
+/* stored: a green ring that fades */
+@keyframes saved { from { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 75%, transparent); } }
+.saved { animation: saved calc(var(--m) * 800ms + 1ms) ease-out; }
+
+/* loading: a skeleton is a blank part with a bright line stepping down it, like a picture coming in line by line */
+@keyframes skelScan { from { background-position: 0 -60%, 0 0; } to { background-position: 0 160%, 0 0; } }
+.skel { position: relative; overflow: hidden; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); border-radius: var(--radius); }
+.skel::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--text) 10%, transparent) 50%, transparent) 0 0 / 100% 35% no-repeat,
+    repeating-linear-gradient(to bottom, color-mix(in srgb, var(--text) 4%, transparent) 0 1px, transparent 1px 3px);
+  animation: skelScan calc(var(--m) * 1500ms + 1ms) steps(12, end) infinite;
+}
+.skel-line { display: block; height: .8em; border-radius: 4px; }
+
+/* whole-screen swaps: a theme or Light/Dark change redraws top-down in steps, like an LCD refresh (theme.ts) */
+@keyframes vtWipe { from { clip-path: inset(0 0 100% 0); } }
+html[data-vt="theme"]::view-transition-old(root) { animation: none; mix-blend-mode: normal; }
+html[data-vt="theme"]::view-transition-new(root) { animation: vtWipe calc(var(--m) * 440ms + 1ms) steps(14, end) both; mix-blend-mode: normal; }
+
+/* M0 and reduced motion: nothing loops (the LED and skeleton rules above run once in 1 ms) */
 html[data-motion="0"] .led.run { animation: none; }
+html[data-motion="0"] *, html[data-motion="0"] *::before, html[data-motion="0"] *::after { animation-iteration-count: 1 !important; }
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="1"]) *, :root:not([data-motion="1"]) *::before, :root:not([data-motion="1"]) *::after { animation-iteration-count: 1 !important; }
+  :root:not([data-motion="1"])::view-transition-group(*), :root:not([data-motion="1"])::view-transition-old(*), :root:not([data-motion="1"])::view-transition-new(*) { animation: none !important; }
+}
 
 /* ───────────── hover (pointer devices only) ───────────── */
 @media (hover: hover) {
@@ -459,7 +573,7 @@ html[data-motion="0"] .led.run { animation: none; }
 /* gallery only: hover and focus pinned on, to show those states at rest */
 .btn.hov { background: linear-gradient(to bottom, color-mix(in srgb, #fff 26%, var(--surface-2)), var(--surface-2)); }
 .btn.primary.hov { background: linear-gradient(to bottom, color-mix(in srgb, #fff 30%, var(--accent)), var(--accent)); }
-.btn.focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.focus { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* ───────────── sizes ───────────── */
 @media (max-width: 1100px) {

@@ -1,0 +1,321 @@
+/* themes/redline.css — Redline: a heads-up display in the style of a near-future game UI, dark only.
+   Near-black glass, salmon-red lines and labels, cyan for highlights and what is selected, the yellow kept for the one
+   primary action. Panels and keys have cut corners (clip-path) with thin 1 px outlines, modules carry bracket marks on
+   their square corners, labels are uppercase Chakra Petch; body text stays Space Grotesk at normal size so it reads.
+   Hover and press add a short glitch. Redline suggests the "full" effects level (fx.css): scanlines, glass, flickers.
+   How a cut outline is drawn: the element is clipped to --shape, an inset box-shadow draws the straight edges and
+   --corners (two background layers) draws the diagonal edges in --ring. Everything is under html[data-look="redline"]. */
+
+/* Chakra Petch (OFL, see fonts/OFL-ChakraPetch.txt) */
+@font-face { font-family: "Chakra Petch"; font-style: normal; font-display: swap; font-weight: 500; src: url(../fonts/chakra-petch-latin-500-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Chakra Petch"; font-style: normal; font-display: swap; font-weight: 600; src: url(../fonts/chakra-petch-latin-600-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Chakra Petch"; font-style: normal; font-display: swap; font-weight: 700; src: url(../fonts/chakra-petch-latin-700-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+/* ───────────── tokens ───────────── */
+:root[data-look="redline"], .tprev[data-look="redline"] {
+  --bg: #07070b; --bg2: #0c090d; --surface: #100b10; --surface-2: #1b1117; --line: #6a2a29;
+  --text: #ff6f63; --text-2: #f1d3ce; --text-3: #bb7f78;
+  --accent: #fcee0a; --on-accent: #07070b; --accent-ink: #fcee0a;
+  --acc2: #5ef6ff;
+  --chrome-bg: #170b0e; --chrome-fg: #ff8a7f;
+  --disp-bg: #04151a; --disp-fg: #5ef6ff; --disp-hot: #fcee0a; --disp-bad: #ff4d5e;
+  --ok: #3df5b0; --warn: #ffb03a; --bad: #ff3355; --on-bad: #07070b;
+  --sel: var(--acc2); --sel-soft: color-mix(in srgb, var(--acc2) 12%, transparent);
+  --focus: var(--acc2); --on-ring: var(--text); --k-framework: #f1d3ce;
+  --radius: 0px; --btn-r: 0px; --win-r: 0px;
+  --font-hud: "Chakra Petch", "Bahnschrift", "Segoe UI", system-ui, sans-serif;
+  --font-num: var(--font-hud); --num-scale: .7;
+  --hl: transparent;
+  --card-shadow: none;
+  --drop: none;
+  --scrim: rgba(2, 2, 4, .74);
+  --glow-rgb: 255, 95, 87; --scan: 1;
+  --lcd-glow: 0 0 .45em color-mix(in srgb, var(--disp-fg) 55%, transparent);
+  --fx: full; --icons: line;
+  --cut: 10px;
+  color-scheme: dark;
+}
+
+html[data-look="redline"] {
+  /* every cut part: its shape, its diagonal edges and its outline colour (in :where, so each part's own rules win) */
+  & :is(.panel, .btn:not(.ghost), .display, .chip, .fbox, .toast, .lcard, .hero, .cat, .fplugin, .pswitch-k, .onb-dot, .pill, .duepill,
+    .cmds, .tcard, .seg, .bulkbar, .mtile, .gthumb, .nv, .logo, .lcd-chip, .log, .patchsel, .cchip) { border-radius: 0; }
+  & :where(.panel, .btn, .display, .chip, .fbox, .toast, .lcard, .hero, .cat, .fplugin, .pswitch-k, .onb-dot, .pill, .duepill,
+    .cmds, .tcard, .seg, .bulkbar, .mtile, .gthumb, .nv, .logo, .lcd-chip, .log, .patchsel, .cchip) {
+    --ring: var(--line);
+    --cutline: linear-gradient(to bottom right, transparent calc(50% - 1px), var(--ring) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+    --corners: var(--cutline) 0 0 / var(--cut) var(--cut) no-repeat, var(--cutline) 100% 100% / var(--cut) var(--cut) no-repeat;
+    --corners-br: var(--cutline) 100% 100% / var(--cut) var(--cut) no-repeat;
+    --shape: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+    --shape-br: polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+  }
+
+  /* ───────────── base: black glass on a faint red grid ───────────── */
+  & body, & .content, & .ov.full {
+    background:
+      linear-gradient(color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+      radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--text) 7%, transparent), transparent 70%),
+      var(--bg);
+  }
+  & h1, & h2, & h3, & h4 { font-family: var(--font-hud); font-weight: 600; letter-spacing: .02em; }
+  & a, & .linkish { color: var(--acc2); }
+  & .screen :is(input, select, textarea) { border-radius: 0; background: var(--bg2); border-color: var(--line); color: var(--text-2); }
+  & .screen :is(input, select, textarea):focus { outline: 1px solid var(--acc2); outline-offset: 0; border-color: var(--acc2); }
+  & .screen ::-webkit-scrollbar-thumb { border-radius: 0; background: color-mix(in srgb, var(--text) 30%, transparent); background-clip: padding-box; }
+  & .screen code { border-radius: 0; background: color-mix(in srgb, var(--acc2) 10%, transparent); color: var(--acc2); }
+  & :is(.sub-h, .grp, .fgrid > label:not(.sw), .fgrid > .lab, .onb-dot, .crumb .v, .brandmark) { font-family: var(--font-hud); text-transform: uppercase; letter-spacing: .12em; }
+  & .sub-h, & .grp { font-size: .74em; color: var(--text-3); }
+  & .grp::after { border-bottom-color: color-mix(in srgb, var(--text) 25%, transparent); }
+  & .fgrid > :is(label:not(.sw), .lab) { font-size: .78em; color: var(--text-3); }
+  & .i.big, & .m-empty .i.big, & .thumb.ph-img, & .mcard-img, & .lcard-img { color: color-mix(in srgb, var(--text) 40%, transparent); }
+  & .m-empty b { font-family: var(--font-hud); text-transform: uppercase; letter-spacing: .1em; }
+
+  /* ───────────── keys: cut, outlined, uppercase ───────────── */
+  & .btn {
+    --cut: 7px; --travel: 1px;
+    clip-path: var(--shape-br); margin-bottom: 1px; padding: .5em 1em .46em;
+    font: 600 .88em/1.2 var(--font-hud); text-transform: uppercase; letter-spacing: .08em; color: var(--text);
+    background: var(--corners-br), color-mix(in srgb, var(--text) 6%, var(--bg2));
+    box-shadow: inset 0 0 0 1px var(--ring);
+    transition: --press calc(var(--m) * 60ms) ease-out, background calc(var(--m) * 90ms), color calc(var(--m) * 90ms);
+  }
+  & .btn.sm { font-size: .76em; padding: .34em .7em .3em; }
+  & .btn.lg { font-size: .98em; padding: .7em 1.2em .66em; }
+  & .btn.icon { padding-inline: .6em; }
+  & .btn.sm.icon { padding-inline: .45em; }
+  & .btn .i { margin-inline: -.05em; }
+  & .btn.primary { --ring: var(--accent); color: var(--on-accent); background: var(--corners-br), var(--accent); }
+  & .btn.dark { --ring: color-mix(in srgb, var(--text) 45%, transparent); color: var(--text); background: var(--corners-br), var(--chrome-bg); }
+  & .btn.dark .i { color: inherit; }
+  & .btn:is(.on, [aria-pressed="true"]) { --press: .5; --ring: var(--text); color: var(--bg); background: var(--corners-br), var(--text); }
+  & .btn:is(.on, [aria-pressed="true"]) .i { color: inherit; }
+  & .btn.ghost { --travel: 0px; color: var(--text); background: transparent; box-shadow: none; font: 600 .88em/1.2 var(--font-hud); text-transform: uppercase; letter-spacing: .08em; }
+  & .btn.ghost.sm { font-size: .76em; }
+  & .btn:focus-visible { outline: none; --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
+  & .btn.ghost:focus-visible { box-shadow: inset 0 0 0 1px var(--focus); }
+  & .btn kbd { border-radius: 0; }
+  & .ph .btn { margin-block: 0 1px; }
+  & .actions .btn, & .browse-top .btn { margin-bottom: 1px; }
+
+  /* ───────────── program keys: a HUD menu; the current view is a filled bar ───────────── */
+  & .nv {
+    --cut: 8px; clip-path: var(--shape-br); background: transparent; box-shadow: none; transform: none; margin-bottom: 0;
+    padding: .55em .75em .5em; font: 600 .9em/1.2 var(--font-hud); text-transform: uppercase; letter-spacing: .1em; color: var(--text);
+  }
+  & .nv .i { color: color-mix(in srgb, var(--text) 75%, transparent); }
+  & .nv:active { background: color-mix(in srgb, var(--text) 18%, transparent); }
+  & .nv.on { background: var(--text); color: var(--bg); }
+  & .nv.on .i { color: var(--bg); }
+  & .nv .ct { border-radius: 0; font-family: var(--font-hud); background: color-mix(in srgb, var(--text) 16%, transparent); color: var(--text); }
+  & .nv.on .ct { background: var(--bg); color: var(--text); }
+  & .nv .ct.hot, & .nv.on .ct.hot { background: var(--accent); color: var(--on-accent); }
+  & .nv .prog { left: 0; right: 0; bottom: 0; border-radius: 0; height: 2px; }
+  & .nv .prog::after { background: var(--acc2); }
+  & .nv:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--focus); }
+  & .led { border-radius: 0; box-shadow: none; }
+
+  /* ───────────── the window ───────────── */
+  & .shell > .mtop { background: color-mix(in srgb, #000 55%, var(--bg)); box-shadow: inset 0 -1px 0 var(--line); padding: .3em .5em .3em .95em; min-height: 3em; }
+  & .shell > .side { box-shadow: inset -1px 0 0 color-mix(in srgb, var(--text) 22%, transparent); padding: .8em .7em 1em 1em; gap: .8em; }
+  & .shell > .view { padding: 1em 1.2em 1.2em; }
+  & .nkeys.rail { gap: 3px; }
+  & .brandmark { color: var(--text); font-size: .9em; font-weight: 700; letter-spacing: .18em; }
+  & .crumb .v { color: var(--text-2); font-size: .9em; font-weight: 600; }
+  & .crumb .ctx { color: var(--text-3); }
+  & .logo {
+    --cut: 6px; --ring: var(--text); clip-path: var(--shape); width: 1.75em; height: 1.75em; padding: 0;
+    background: var(--corners), color-mix(in srgb, var(--text) 10%, transparent); box-shadow: inset 0 0 0 1px var(--ring);
+    color: var(--text); font: 700 1em/1 var(--font-hud);
+  }
+  & .winkeys { background: transparent; box-shadow: none; padding: 0; gap: 2px; }
+  & .wk { width: 2.5em; height: 2em; margin: 0; border-radius: 0; background: transparent; box-shadow: none; transform: none; color: var(--text); }
+  & .wk:active { background: color-mix(in srgb, var(--text) 20%, transparent); }
+  & .win { border-radius: 0; box-shadow: inset 0 0 0 1px var(--line); }
+  & .win > .mtop { background: color-mix(in srgb, #000 50%, var(--bg)); box-shadow: inset 0 -1px 0 var(--line); }
+  & .deck { border-radius: 0; background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line); }
+  & .deck .deck-sp::after { font-family: var(--font-hud); color: var(--text-3); }
+  & .pswitch-k { --cut: 6px; clip-path: var(--shape-br); background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); color: var(--text-2); }
+
+  /* ───────────── modules: a cut panel with bracket marks and a red band ───────────── */
+  & .panel {
+    --cut: 12px; clip-path: var(--shape); background: var(--corners), var(--surface);
+    box-shadow: inset 0 0 0 1px var(--ring);
+  }
+  & .panel::after {
+    content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    --br: var(--text);
+    background:
+      linear-gradient(var(--br), var(--br)) 100% 0 / 12px 2px no-repeat, linear-gradient(var(--br), var(--br)) 100% 0 / 2px 12px no-repeat,
+      linear-gradient(var(--br), var(--br)) 0 100% / 12px 2px no-repeat, linear-gradient(var(--br), var(--br)) 0 100% / 2px 12px no-repeat;
+  }
+  & .ph {
+    --band: transparent; --band-fg: var(--text);
+    min-height: 2.5em; padding: .25em .45em .25em 1.1em;
+    background: var(--cutline) 0 0 / var(--cut) var(--cut) no-repeat,
+      linear-gradient(90deg, color-mix(in srgb, var(--text) 20%, transparent), color-mix(in srgb, var(--text) 5%, transparent) 65%, transparent);
+    box-shadow: inset 1px 1px 0 var(--ring), inset -1px 0 0 var(--ring), inset 0 -1px 0 color-mix(in srgb, var(--text) 45%, transparent);
+  }
+  & .ph .pt { font: 600 .8em/1.2 var(--font-hud); letter-spacing: .12em; }
+  & .ph .pt .i { color: var(--text); }
+  & .ph .cnt { font-family: var(--font-hud); letter-spacing: .06em; color: var(--text-3); opacity: 1; }
+  & .ph::after { opacity: .45; width: 1.8em; }
+  & .ph:has(.btn)::after { display: none; }
+  & .panel.hot { --ring: color-mix(in srgb, var(--accent) 55%, transparent); }
+  & .panel.hot::after { --br: var(--accent); }
+  & .panel.hot > .ph { --band-fg: var(--accent); background: var(--cutline) 0 0 / var(--cut) var(--cut) no-repeat, linear-gradient(90deg, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%); box-shadow: inset 1px 1px 0 var(--ring), inset -1px 0 0 var(--ring), inset 0 -1px 0 color-mix(in srgb, var(--accent) 50%, transparent); }
+  & .panel.hot > .ph .pt .i { color: var(--accent); }
+  & .panel.bad { --ring: color-mix(in srgb, var(--bad) 70%, transparent); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .panel.bad::after { --br: var(--bad); }
+  & .panel.bad > .ph { --band-fg: var(--bad); background: var(--cutline) 0 0 / var(--cut) var(--cut) no-repeat, linear-gradient(90deg, color-mix(in srgb, var(--bad) 22%, transparent), transparent 70%); }
+  & .panel.bad > .ph .pt .i { color: var(--bad); }
+  & .pb { padding: .9em 1.05em 1.05em; }
+  & .pb.flush { padding: 0; }
+  & .pb.list { padding: .3em .5em .8em; }
+
+  /* ───────────── LCDs: cyan readouts with phosphor rows ───────────── */
+  & .display {
+    --cut: 8px; --ring: color-mix(in srgb, var(--disp-fg) 45%, transparent);
+    --lcd-tex: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--disp-fg) 5%, transparent) 0 1px, transparent 1px 3px);
+    clip-path: var(--shape); margin: 2px; padding: .6em .9em .68em;
+    background: var(--corners), var(--disp-bg); color: var(--disp-fg); box-shadow: inset 0 0 0 1px var(--ring);
+  }
+  & .display.sm { padding: .38em .62em .42em; }
+  & .display.big { padding: 1em 1.6em 1.1em; }
+  & .display::after { border-radius: 0; }
+  & .display .d-lbl { font: 600 .68em/1.25 var(--font-hud); letter-spacing: .16em; color: color-mix(in srgb, var(--disp-fg) 70%, var(--disp-bg)); }
+  & .display .d-num { font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; text-shadow: none; }
+  & .display .d-num small { font: 600 .42em var(--font-hud); letter-spacing: .1em; }
+  & .display .d-sub { font-size: .8em; color: color-mix(in srgb, var(--text-2) 80%, var(--disp-bg)); }
+  & .display .d-bar { height: 3px; border-radius: 0; background: color-mix(in srgb, var(--disp-fg) 16%, transparent); }
+  & .d-lvl { gap: 2px; }
+  & .d-lvl i { border-radius: 0; background: color-mix(in srgb, var(--disp-fg) 14%, transparent); }
+  & .display :is(.d-lvl i.on, .d-bar i) { background: var(--disp-fg); }
+  & .display.hot { --disp-bg: color-mix(in srgb, var(--disp-hot) 9%, #060604); --disp-fg: var(--disp-hot); }
+  & .display:is(.bad, .nope) { --disp-bg: color-mix(in srgb, var(--disp-bad) 10%, #070305); --disp-fg: var(--disp-bad); }
+  & .display.boot::before { border-radius: 0; background: color-mix(in srgb, var(--disp-fg) 25%, transparent); }
+  & .lcd-chip { --cut: 4px; clip-path: var(--shape-br); background: var(--disp-bg); color: var(--disp-fg); box-shadow: inset 0 0 0 1px var(--ring); font-family: var(--font-hud); }
+  & .log { --cut: 8px; --ring: color-mix(in srgb, var(--disp-fg) 35%, transparent); clip-path: var(--shape); margin: 0; background: var(--corners), var(--disp-bg); color: color-mix(in srgb, var(--disp-fg) 80%, #fff); box-shadow: inset 0 0 0 1px var(--ring); }
+
+  /* ───────────── fields, chips, segments ───────────── */
+  & .fbox { --cut: 6px; clip-path: var(--shape-br); background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .fbox:focus-within { --ring: var(--focus); box-shadow: inset 0 0 0 1px var(--focus); }
+  & .fbox > .i { color: var(--text); }
+  & .fbox kbd { border-radius: 0; border-color: var(--line); color: var(--text-3); }
+  & .chip {
+    --cut: 5px; clip-path: var(--shape-br); border-color: transparent; font-family: var(--font-hud); font-weight: 500; letter-spacing: .03em;
+    color: var(--text-2); background: var(--corners-br), color-mix(in srgb, var(--text) 4%, transparent); box-shadow: inset 0 0 0 1px var(--ring);
+  }
+  & .chip .n { font-family: var(--font-hud); color: var(--text-3); }
+  & .chip.on { --ring: var(--acc2); color: var(--acc2); background: var(--corners-br), var(--sel-soft); }
+  & .chip.on .n { color: var(--acc2); }
+  & .chip:focus-visible { outline: none; --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
+  & .seg { --cut: 6px; clip-path: var(--shape-br); background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); padding: 2px; }
+  & .seg .chip { --ring: transparent; clip-path: none; background: transparent; box-shadow: none; text-transform: uppercase; letter-spacing: .08em; font-size: .78em; font-weight: 600; }
+  & .seg .chip.on { background: var(--text); color: var(--bg); box-shadow: none; }
+  & .seg .chip[disabled] { opacity: .35; }
+  & .vtabs .chip { text-transform: uppercase; letter-spacing: .1em; font-weight: 600; font-size: .84em; }
+  & .fbox .chip { clip-path: none; }
+
+  /* ───────────── switches, pills, tags ───────────── */
+  & .sw-t { border-radius: 0; background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line); }
+  & .sw-t::after { border-radius: 0; background: var(--text-3); box-shadow: none; top: .2em; left: .2em; width: 1em; height: 1em; }
+  & .sw input:checked + .sw-t { background: color-mix(in srgb, var(--acc2) 18%, var(--bg2)); box-shadow: inset 0 0 0 1px var(--acc2); }
+  & .sw input:checked + .sw-t::after { background: var(--acc2); }
+  & .sw input:focus-visible + .sw-t { outline: 1px solid var(--focus); }
+  & :is(.duepill, .pill) {
+    --cut: 5px; clip-path: var(--shape-br); border-radius: 0; font: 600 .72em/1.3 var(--font-hud); text-transform: uppercase; letter-spacing: .1em;
+    padding: .22em .7em .18em; background: color-mix(in srgb, var(--text) 12%, transparent); color: var(--text);
+  }
+  & :is(.duepill, .pill).ok { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+  & :is(.duepill, .pill).soon { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+  & :is(.duepill, .pill).hot { background: var(--warn); color: var(--bg); }
+  & :is(.duepill, .pill).over { background: var(--bad); color: var(--on-bad); }
+  & :is(.duepill, .pill).live { background: var(--accent); color: var(--on-accent); }
+  & .cchip { --cut: 4px; clip-path: var(--shape-br); background: color-mix(in srgb, var(--kc, var(--text-3)) 16%, transparent); color: var(--text-2); font-family: var(--font-hud); font-weight: 600; letter-spacing: .03em; }
+  & .cchip::before { border-radius: 0; width: .5em; height: .5em; }
+
+  /* ───────────── rows and cards ───────────── */
+  & .row { border-radius: 0; }
+  & .row.sel { background: color-mix(in srgb, var(--text) 13%, transparent); box-shadow: inset 3px 0 0 var(--text); }
+  & .row:focus-visible { outline: 1px solid var(--focus); outline-offset: -1px; }
+  & .detail-mod .row.sel { background: color-mix(in srgb, var(--acc2) 8%, transparent); box-shadow: inset 3px 0 0 var(--acc2); }
+  & .m-t { color: var(--text); }
+  & .thumb { border-radius: 0; box-shadow: inset 0 0 0 1px var(--line); }
+  & .mcard { --cut: 10px; position: relative; }
+  & .mcard .ph .pt { font-size: .66em; }
+  & .mcard:focus-visible, & .hero:focus-visible, & .cat:focus-visible, & .mtile:focus-visible, & .gthumb:focus-visible, & .fplugin:focus-visible, & .pswitch-k:focus-visible { outline: none; --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
+  & .mcard-img, & .lcard-img, & .hero-pic img { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 20%, transparent); }
+  & .mcard-t { color: var(--text); }
+  & .lcard { --cut: 9px; clip-path: var(--shape); background: var(--corners), var(--surface); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .lcard:focus-visible { --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
+  & .lcard.sel { --ring: var(--acc2); background: var(--corners), color-mix(in srgb, var(--acc2) 9%, var(--surface)); box-shadow: inset 0 0 0 2px var(--acc2); }
+  & .hero { --cut: 14px; clip-path: var(--shape); background: var(--corners), var(--surface); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .hero-txt { background: linear-gradient(90deg, color-mix(in srgb, var(--text) 14%, var(--bg)), var(--bg)); color: var(--text-2); }
+  & .hero-txt b { color: var(--text); font-family: var(--font-hud); text-transform: uppercase; letter-spacing: .04em; }
+  & .cat { --cut: 8px; clip-path: var(--shape-br); background: var(--corners-br), color-mix(in srgb, var(--text) 4%, var(--bg2)); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .cat b { color: var(--text); font-family: var(--font-hud); letter-spacing: .04em; }
+  & .fplugin { --cut: 8px; clip-path: var(--shape-br); background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .fplugin.on { --ring: var(--text); background: var(--corners-br), color-mix(in srgb, var(--text) 16%, var(--bg2)); color: var(--text-2); }
+  & .fplugin.on b { color: var(--text); }
+  & .mtile, & .gthumb { --cut: 8px; clip-path: var(--shape-br); }
+  & .gplay .i { border-radius: 0; background: var(--bg); color: var(--acc2); box-shadow: inset 0 0 0 1px var(--acc2); }
+  & .cmds { --cut: 8px; clip-path: var(--shape-br); background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .cmds-h .n { border-radius: 0; background: var(--text); color: var(--bg); }
+  & .cmd { border-radius: 0; background: color-mix(in srgb, var(--acc2) 5%, transparent); }
+  & .cmd code { color: var(--acc2); }
+  & .bulkbar { --cut: 10px; clip-path: var(--shape); background: var(--corners), color-mix(in srgb, var(--text) 14%, var(--bg)); box-shadow: inset 0 0 0 1px var(--ring); color: var(--text-2); }
+  & .bulkbar .btn.ghost { color: var(--text); }
+  & .patchsel { --cut: 6px; clip-path: var(--shape-br); border-radius: 0; background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .onb-dot { --cut: 5px; clip-path: var(--shape-br); background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .onb-dot.on { background: var(--text); color: var(--bg); }
+  & .onb-dot.done { color: var(--ok); }
+  & .drawer > .panel { --cut: 16px; }
+  & .tcard { --cut: 10px; clip-path: var(--shape-br); padding: 2px; background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .tcard.on { --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
+  & .tcard-h b { font-family: var(--font-hud); text-transform: uppercase; letter-spacing: .08em; }
+
+  /* ───────────── overlays ───────────── */
+  & .dialog { --cut: 16px; }
+  & .toast { --cut: 9px; clip-path: var(--shape-br); background: var(--corners-br), var(--surface-2); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--ring); }
+  & .toast .i { color: var(--acc2); }
+  & .toast.bad .i { color: var(--bad); }
+  & .toast.bad { --ring: color-mix(in srgb, var(--bad) 70%, transparent); }
+  & .toast .t-life { left: 0; right: 0; bottom: 0; border-radius: 0; background: var(--acc2); }
+  & .note { border-radius: 0; background: color-mix(in srgb, var(--text) 6%, transparent); box-shadow: inset 2px 0 0 var(--text); }
+  & .note.warn { background: color-mix(in srgb, var(--warn) 8%, transparent); box-shadow: inset 2px 0 0 var(--warn); }
+  & .note.bad { background: color-mix(in srgb, var(--bad) 9%, transparent); box-shadow: inset 2px 0 0 var(--bad); }
+  & .lightbox, & .lb-bar { background: #040405; }
+
+  /* ───────────── glitch: hover and press shift the picture for a few frames ───────────── */
+  @media (hover: hover) {
+    & .btn:not([disabled]):hover { --ring: var(--acc2); color: var(--acc2); background: var(--corners-br), color-mix(in srgb, var(--acc2) 10%, var(--bg2)); animation: rlGlitch calc(var(--m) * 200ms + 1ms) steps(1, end); }
+    & .btn.primary:not([disabled]):hover { --ring: var(--accent); color: var(--on-accent); background: var(--corners-br), color-mix(in srgb, #fff 25%, var(--accent)); }
+    & .btn:is(.on, [aria-pressed="true"]):not([disabled]):hover { --ring: var(--text); color: var(--bg); background: var(--corners-br), color-mix(in srgb, #fff 15%, var(--text)); }
+    & .btn.ghost:not([disabled]):hover { background: color-mix(in srgb, var(--acc2) 10%, transparent); color: var(--acc2); }
+    & .btn[disabled]:hover { animation: none; }
+    & .nv:not(.on):hover { background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--acc2); animation: rlGlitch calc(var(--m) * 200ms + 1ms) steps(1, end); }
+    & .nv:not(.on):hover .i { color: var(--acc2); }
+    & .chip:not([disabled]):not(.on):hover { --ring: color-mix(in srgb, var(--text) 75%, transparent); color: var(--text); }
+    & .seg .chip:not(.on):hover { color: var(--acc2); }
+    & .row:not(.sel):hover { background: color-mix(in srgb, var(--acc2) 7%, transparent); box-shadow: inset 2px 0 0 var(--acc2); }
+    & .wk:hover { background: color-mix(in srgb, var(--text) 14%, transparent); color: var(--acc2); }
+    & .wk-x:hover { background: var(--bad); color: var(--on-bad); }
+    & .mcard:hover { --ring: var(--acc2); translate: 0 -2px; box-shadow: inset 0 0 0 1px var(--acc2); }
+    & .mcard:hover::after { --br: var(--acc2); }
+    & .hero:hover, & .cat:hover, & .lcard:not(.sel):hover, & .fplugin:not(.on):not([disabled]):hover, & .pswitch-k:hover { --ring: var(--acc2); box-shadow: inset 0 0 0 1px var(--acc2); }
+    & .mtile:hover, & .gthumb:hover { filter: brightness(1.12) saturate(1.1); }
+  }
+  & .btn.ack:not([disabled]), & .btn.ack:not([disabled]):hover { animation: keyUp calc(var(--m) * 240ms + 1ms) var(--ease), rlGlitch calc(var(--m) * 160ms + 1ms) steps(1, end); }
+  & .nv.ack, & .nv.ack:hover { animation: rlGlitch calc(var(--m) * 160ms + 1ms) steps(1, end); }
+  & .btn.hov { --ring: var(--acc2); color: var(--acc2); background: var(--corners-br), color-mix(in srgb, var(--acc2) 10%, var(--bg2)); }
+  & .btn.primary.hov { --ring: var(--accent); color: var(--on-accent); background: var(--corners-br), color-mix(in srgb, #fff 25%, var(--accent)); }
+  & .btn.focus { outline: none; --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
+}
+
+@keyframes rlGlitch {
+  0% { translate: 2px 0; text-shadow: -2px 0 rgba(94, 246, 255, .75), 2px 0 rgba(255, 51, 85, .75); }
+  25% { translate: -2px 0; text-shadow: 2px 0 rgba(94, 246, 255, .75), -2px 0 rgba(255, 51, 85, .75); }
+  50% { translate: 1px 0; text-shadow: -1px 0 rgba(94, 246, 255, .6), 1px 0 rgba(255, 51, 85, .6); }
+  75%, 100% { translate: 0; text-shadow: none; }
+}
