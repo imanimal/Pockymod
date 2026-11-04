@@ -36,3 +36,37 @@ export function watchSystemTheme(onChange: () => void): () => void {
 export function setMotion(on: boolean) {
   document.documentElement.dataset.motion = on ? "1" : "0";
 }
+
+// ── installed themes (shared contract; the theme engine fills these in) ──
+
+/** A theme package as a user writes, imports or gets from the marketplace. See docs/themes.md. */
+export interface ThemePackage {
+  format: "pocket-mods.theme";
+  version: 1;
+  id: string;
+  name: string;
+  author?: string;
+  description?: string;
+  /** The scheme it starts in; a theme with both `dark` and `light` follows the Light/Dark choice. */
+  scheme: "dark" | "light";
+  /** CSS custom properties, for example { "--bg": "#101014" }, used in both schemes. */
+  tokens?: Record<string, string>;
+  dark?: Record<string, string>;
+  light?: Record<string, string>;
+  /** Extra CSS, scoped by the app to html[data-theme="<id>"]. */
+  css?: string;
+}
+
+/** Validate and save a theme package (JSON text). Returns its id and name. */
+export async function installThemePackage(text: string): Promise<{ id: string; name: string }> {
+  const pkg = JSON.parse(text) as ThemePackage;
+  if (pkg.format !== "pocket-mods.theme" || !pkg.id || !pkg.name) throw new Error("That is not a Pocket Mods theme.");
+  const { addons } = await import("./api");
+  await addons.save("theme", pkg.id, text);
+  return { id: pkg.id, name: pkg.name };
+}
+
+export async function uninstallTheme(id: string): Promise<void> {
+  const { addons } = await import("./api");
+  await addons.remove("theme", id);
+}

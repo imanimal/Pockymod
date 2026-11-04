@@ -9,6 +9,9 @@ import collectionsFixture from "./demo/collections.json";
 import checkFixture from "./demo/collection-check.json";
 import mediaFixture from "./demo/media.json";
 
+// the marketplace folder in this repository, so the demo shows what the app would fetch
+const marketFiles = import.meta.glob("../../marketplace/**/*.json", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+
 const rate: RateDisplay = { level: "unknown", remaining: null, limit: null, window: "hour", resetsAt: null, throttledUntil: null };
 let status: NexusStatus = { hasKey: false, user: null, rateLimit: rate };
 const flags = new Map<number, { hidden: boolean; ignored: boolean }>();
@@ -252,6 +255,25 @@ export function installDemo() {
     },
     nxm_handler_status: () => ({ supported: true, ours: false, owner: "Vortex", command: null }),
     nxm_handler_register: () => ({ supported: true, ours: true, owner: "Pocket Mods", command: null }),
+    addon_list: ({ kind }) => { try { return Object.values(JSON.parse(localStorage.getItem(`pm.demo.addons.${String(kind)}`) ?? "{}")); } catch { return []; } },
+    addon_save: ({ kind, id, json }) => {
+      const k = `pm.demo.addons.${String(kind)}`;
+      let all: Record<string, string> = {};
+      try { all = JSON.parse(localStorage.getItem(k) ?? "{}"); } catch { /* start over */ }
+      all[String(id)] = String(json);
+      try { localStorage.setItem(k, JSON.stringify(all)); } catch { /* storage unavailable */ }
+    },
+    addon_remove: ({ kind, id }) => {
+      const k = `pm.demo.addons.${String(kind)}`;
+      try { const all = JSON.parse(localStorage.getItem(k) ?? "{}"); delete all[String(id)]; localStorage.setItem(k, JSON.stringify(all)); } catch { /* storage unavailable */ }
+    },
+    market_get: ({ path }) => {
+      const hit = marketFiles[`../../marketplace/${String(path)}`];
+      if (hit === undefined) throw { kind: "http", message: `The marketplace has no ${String(path)} yet.` };
+      return hit;
+    },
+    text_file_read: () => { throw { kind: "demo", message: "Reading files needs the desktop app." }; },
+    text_file_save: () => {},
     patches: () => [["2.0", "2023-09-21"], ["2.1", "2023-12-05"], ["2.12", "2024-03-01"], ["2.2", "2024-12-10"], ["2.3", "2025-07-17"], ["2.5", "2026-10-22"]]
       .map(([version, released]) => [{ version, released }, Date.parse(`${released}T00:00:00Z`) / 1000]),
   });

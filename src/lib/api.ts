@@ -395,3 +395,15 @@ export async function saveTextAs(defaultName: string, text: string, extensions: 
   await saveTextFile(p, text);
   return true;
 }
+
+// ── add-ons: installed themes and extensions, and the marketplace ──
+
+export type AddonKind = "theme" | "extension";
+export const addons = {
+  /** Each installed add-on's JSON text. */
+  list: (kind: AddonKind) => call<string[]>("addon_list", { kind }),
+  save: (kind: AddonKind, id: string, json: string) => call<void>("addon_save", { kind, id, json }),
+  remove: (kind: AddonKind, id: string) => call<void>("addon_remove", { kind, id }),
+};
+/** A JSON file from the marketplace folder (`index.json`, `themes/x.json` …), cached for an hour. */
+export const marketGet = (path: string, fresh = false) => call<string>("market_get", { path, fresh });

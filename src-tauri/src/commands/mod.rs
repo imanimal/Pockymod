@@ -1,3 +1,4 @@
+pub mod addons;
 pub mod browse;
 pub mod collections;
 pub mod existing;
