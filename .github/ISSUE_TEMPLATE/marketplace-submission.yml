@@ -1,0 +1,64 @@
+name: Marketplace submission
+description: Share a theme or an extension in the Pocket Mods marketplace.
+title: "[Marketplace] "
+labels: ["marketplace"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing. A maintainer checks the package, adds it to `marketplace/`, and it shows in the app's Add-ons screen within an hour of the merge.
+        The rules are in [docs/marketplace.md](https://github.com/imanimal/pocket-mods/blob/main/docs/marketplace.md). In the app, Add-ons, Installed, Share fills this form in for you.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Theme
+        - Extension
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: As it shows in the marketplace.
+      placeholder: Neon
+    validations:
+      required: true
+  - type: dropdown
+    id: change
+    attributes:
+      label: New or update
+      options:
+        - New
+        - Update to one already in the marketplace
+    validations:
+      required: true
+  - type: textarea
+    id: package
+    attributes:
+      label: Package
+      description: Paste the package JSON, or drag the saved `.json` file into this box to attach it.
+      render: json
+    validations:
+      required: true
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Up to eight, separated by commas.
+      placeholder: dark, colourful
+  - type: textarea
+    id: notes
+    attributes:
+      label: What it is for
+      description: A line or two for the card and for the review. For an extension, say why it needs each permission and tool.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Before you send it
+      options:
+        - label: I made this (or have the author's permission to share it), and it may be shared under this project's licence.
+          required: true
+        - label: It holds no API keys, passwords, personal details or links to paid content.
+          required: true

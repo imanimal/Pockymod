@@ -1,1 +1,227 @@
-{ "format": "pocket-mods.marketplace", "version": 1, "themes": [], "extensions": [] }
+{
+  "format": "pocket-mods.marketplace",
+  "version": 1,
+  "updated": "2026-11-04",
+  "themes": [
+    {
+      "id": "neon",
+      "kind": "theme",
+      "name": "Neon",
+      "author": "Pocket Mods",
+      "version": "1.0.0",
+      "description": "Blue-black with hot pink keys and a cyan display. For late nights.",
+      "tags": [
+        "dark",
+        "colourful"
+      ],
+      "path": "themes/neon.json",
+      "updated": "2026-11-04",
+      "preview": {
+        "bg": "#0e0f1a",
+        "surface": "#161827",
+        "accent": "#ff3d8b",
+        "text": "#f1f0ff",
+        "chrome": "#07070e",
+        "display": "#38d3e4"
+      }
+    },
+    {
+      "id": "ember",
+      "kind": "theme",
+      "name": "Ember",
+      "author": "Pocket Mods",
+      "version": "1.0.0",
+      "description": "Warm charcoal, amber keys and an amber display, easy on the eyes.",
+      "tags": [
+        "dark",
+        "warm"
+      ],
+      "path": "themes/ember.json",
+      "updated": "2026-11-04",
+      "preview": {
+        "bg": "#171412",
+        "surface": "#211d19",
+        "accent": "#ffab2e",
+        "text": "#f7ecdf",
+        "chrome": "#0d0b09",
+        "display": "#d9a441"
+      }
+    },
+    {
+      "id": "ink",
+      "kind": "theme",
+      "name": "Ink",
+      "author": "Pocket Mods",
+      "version": "1.0.0",
+      "description": "Black on white with red keys. High contrast, for bright rooms and tired eyes.",
+      "tags": [
+        "light",
+        "high contrast"
+      ],
+      "path": "themes/ink.json",
+      "updated": "2026-11-04",
+      "preview": {
+        "bg": "#f0f0ee",
+        "surface": "#ffffff",
+        "accent": "#d7261e",
+        "text": "#000000",
+        "chrome": "#000000",
+        "display": "#d6dacb"
+      }
+    },
+    {
+      "id": "moss",
+      "kind": "theme",
+      "name": "Moss",
+      "author": "Pocket Mods",
+      "version": "1.0.0",
+      "description": "Soft greens in a light and a dark version. Follows the Light/Dark choice.",
+      "tags": [
+        "light",
+        "dark",
+        "calm"
+      ],
+      "path": "themes/moss.json",
+      "updated": "2026-11-04",
+      "preview": {
+        "bg": "#e2e6db",
+        "surface": "#f2f5ec",
+        "accent": "#2f7d3f",
+        "text": "#18201a",
+        "chrome": "#223026",
+        "display": "#a9c4a0"
+      }
+    }
+  ],
+  "extensions": [
+    {
+      "id": "photo-mode-and-looks",
+      "kind": "extension",
+      "name": "Photo mode and looks",
+      "author": "Pocket Mods",
+      "version": "1.0.0",
+      "description": "Browse shelves for poses, cameras, lighting, weather and ReShade, and Library rules that sort photo mode mods and Atelier stores into their own groups.",
+      "tags": [
+        "photo mode",
+        "shelves",
+        "groups"
+      ],
+      "path": "extensions/photo-mode-and-looks.json",
+      "updated": "2026-11-04",
+      "icon": [
+        ".........",
+        "...###...",
+        "#########",
+        "#.......#",
+        "#..###..#",
+        "#..#.#..#",
+        "#..###..#",
+        "#.......#",
+        "#########"
+      ],
+      "permissions": [],
+      "adds": [
+        "5 Browse shelves",
+        "3 group rules"
+      ]
+    },
+    {
+      "id": "modding-tools",
+      "kind": "extension",
+      "name": "Modding tools",
+      "author": "Pocket Mods",
+      "version": "1.0.0",
+      "description": "Start WolvenKit and the game's own launcher from the Play menu, start the game past its start screen, and open the modding wikis.",
+      "tags": [
+        "tools",
+        "launch options",
+        "WolvenKit"
+      ],
+      "path": "extensions/modding-tools.json",
+      "updated": "2026-11-04",
+      "icon": [
+        "...###...",
+        "...#.#...",
+        "#########",
+        "#.......#",
+        "####.####",
+        "#...#...#",
+        "#.......#",
+        "#########",
+        "........."
+      ],
+      "permissions": [],
+      "adds": [
+        "2 tools",
+        "1 launch option",
+        "3 links"
+      ]
+    },
+    {
+      "id": "console-commands",
+      "kind": "extension",
+      "name": "Console commands",
+      "author": "Pocket Mods",
+      "version": "1.0.0",
+      "description": "Popular Cyber Engine Tweaks console commands to copy: money, levels and points, iconic gear, cars and bikes, and the time of day. Shown in the Play menu and on Cyber Engine Tweaks' page.",
+      "tags": [
+        "console",
+        "Cyber Engine Tweaks",
+        "vehicles"
+      ],
+      "path": "extensions/console-commands.json",
+      "updated": "2026-11-04",
+      "icon": [
+        ".........",
+        "#########",
+        "#.......#",
+        "#.#.....#",
+        "#..#....#",
+        "#.#.###.#",
+        "#.......#",
+        "#########",
+        "........."
+      ],
+      "permissions": [],
+      "adds": [
+        "4 command packs"
+      ]
+    },
+    {
+      "id": "library-report",
+      "kind": "extension",
+      "name": "Library report",
+      "author": "Pocket Mods",
+      "version": "1.0.0",
+      "description": "Two panels: your mods by size, with a switch for each, and a checklist of things to do before you play. A worked example of panels.",
+      "tags": [
+        "panel",
+        "library",
+        "example"
+      ],
+      "path": "extensions/library-report.json",
+      "updated": "2026-11-04",
+      "icon": [
+        ".........",
+        ".......#.",
+        ".....#.#.",
+        ".....#.#.",
+        "...#.#.#.",
+        "...#.#.#.",
+        ".#.#.#.#.",
+        ".#.#.#.#.",
+        "#########"
+      ],
+      "permissions": [
+        "library.read",
+        "library.toggle",
+        "nexus.open",
+        "toast",
+        "storage"
+      ],
+      "adds": [
+        "2 panels"
+      ]
+    }
+  ]
+}
