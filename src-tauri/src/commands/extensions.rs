@@ -234,6 +234,11 @@ pub const BROWSER_PREFIXES: [&str; 2] = ["https://github.com/imanimal/pocket-mod
 pub fn browser_url_allowed(url: &str) -> Option<String> {
     let u = url::Url::parse(url).ok()?;
     let s = u.as_str().to_string();
+    // a YouTube video from a mod's or collection's media, watched where the user is signed in (embedded players
+    // can ask to sign in "to confirm you're not a bot", and Google refuses sign-ins inside apps)
+    if let Some(id) = s.strip_prefix("https://www.youtube.com/watch?v=") {
+        return (id.len() == 11 && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')).then_some(s);
+    }
     (u.scheme() == "https" && u.username().is_empty() && u.password().is_none() && BROWSER_PREFIXES.iter().any(|p| s.starts_with(p))).then_some(s)
 }
 
@@ -353,6 +358,9 @@ mod tests {
     #[test]
     fn browser_prefixes() {
         assert!(browser_url_allowed("https://github.com/imanimal/pocket-mods/issues/new?template=marketplace-submission.yml&title=a b").is_some());
+        assert!(browser_url_allowed("https://www.youtube.com/watch?v=dQw4w9WgXcQ").is_some());
+        assert!(browser_url_allowed("https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=x").is_none());
+        assert!(browser_url_allowed("https://www.youtube.com/redirect?q=evil").is_none());
         assert!(browser_url_allowed("https://www.nexusmods.com/cyberpunk2077/mods/107").is_some());
         for bad in ["http://www.nexusmods.com/x", "https://github.com/imanimal/other", "https://github.com/imanimal/pocket-mods/../x/",
             "https://www.nexusmods.com.evil.example/", "https://user@www.nexusmods.com/", "file:///c:/x", "javascript:alert(1)"] {

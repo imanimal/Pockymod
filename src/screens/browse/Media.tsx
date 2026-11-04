@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "../../ui/Icon";
 import { Empty, Key, Seg, formatCount } from "../../ui/pocket";
-import { errorText, media, type MediaItem } from "../../lib/api";
+import { errorText, media, openExternal, type MediaItem } from "../../lib/api";
+import { toast } from "../../ui/toast";
 
 export type Shot = { kind: "image" | "video"; url: string; thumb: string; caption?: string };
 
@@ -11,8 +12,19 @@ export type Shot = { kind: "image" | "video"; url: string; thumb: string; captio
  *  fits the window until you zoom: the wheel zooms where the pointer is, drag moves a zoomed picture, double-click
  *  goes between fit and close up, and + - 0 1 do the same from the keyboard. Arrow keys or the keys at the sides
  *  move between items, Escape closes. Videos play embedded. */
+/** A YouTube video's own page, for the user's browser. */
+export const watchUrl = (embed: string) => { const id = embed.match(/embed\/([A-Za-z0-9_-]{11})/)?.[1]; return id ? `https://www.youtube.com/watch?v=${id}` : null; };
+const watch = (it: Shot) => { const u = watchUrl(it.url); if (u) void openExternal(u).catch((e) => toast(errorText(e), true)); };
+const VIDEOS = "pm.videos.here";
+
 export function Lightbox({ items, start, onClose }: { items: Shot[]; start: number; onClose: () => void }) {
   const [i, setI] = useState(start);
+  // videos open in the user's browser by default: an embedded YouTube player can ask to sign in to prove you are
+  // not a bot, and Google refuses sign-ins inside apps. "Always play videos here" keeps them in the app.
+  const [here, setHereState] = useState(() => { try { return localStorage.getItem(VIDEOS) === "1"; } catch { return false; } });
+  const setHere = (v: boolean) => { setHereState(v); try { localStorage.setItem(VIDEOS, v ? "1" : "0"); } catch { /* storage unavailable */ } };
+  const [playHere, setPlayHere] = useState(false);
+  useEffect(() => setPlayHere(false), [i]);
   const zoom = useRef<ZoomControls | null>(null);
   const [z, setZ] = useState<{ pct: number; fit: boolean }>({ pct: 100, fit: true });
   useEffect(() => {
@@ -36,7 +48,17 @@ export function Lightbox({ items, start, onClose }: { items: Shot[]; start: numb
   return createPortal(
     <div className="lightbox" role="dialog" aria-modal="true" aria-label={it.caption ?? "Media"}>
       {it.kind === "video"
-        ? <div className="lb-stage video" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}><iframe src={it.url} title={it.caption ?? "Video"} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /></div>
+        ? <div className="lb-stage video" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            {here || playHere ? <iframe src={it.url} title={it.caption ?? "Video"} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+              : <div className="lb-video">
+                  <img src={it.thumb.replace("/mqdefault.", "/hqdefault.")} alt="" />
+                  <div className="lb-video-keys">
+                    <Key variant="primary" size="lg" icon="play" onClick={() => watch(it)} title="Opens in your own browser, where you are signed in to YouTube">Watch on YouTube</Key>
+                    <Key variant="dark" onClick={() => setPlayHere(true)} title="Some videos play here; YouTube may ask to sign in to prove you are not a bot, which it refuses inside apps">Play here</Key>
+                  </div>
+                  <label className="lb-video-pref"><input type="checkbox" checked={here} onChange={(e) => setHere(e.target.checked)} /> Always play videos here</label>
+                </div>}
+          </div>
         : <ZoomImage key={it.url} src={it.url} alt={it.caption ?? ""} controls={zoom} onChange={setZ} onBackdrop={onClose} />}
       <div className="lb-bar">
         {items.length > 1 && <Key size="sm" variant="dark" icon="chevron" className="flip" onClick={() => setI((i - 1 + items.length) % items.length)} aria-label="Previous" />}
@@ -50,6 +72,7 @@ export function Lightbox({ items, start, onClose }: { items: Shot[]; start: numb
           <Key size="sm" variant="dark" onClick={() => zoom.current?.fit()} disabled={z.fit} title="Fit the window (0)">Fit</Key>
           <Key size="sm" variant="dark" onClick={() => zoom.current?.actual()} title="The picture's own size (1)">1:1</Key>
         </span>}
+        {it.kind === "video" && <Key size="sm" variant="dark" icon="link" onClick={() => watch(it)} title="Watch it in your own browser">YouTube</Key>}
         <Key size="sm" variant="dark" icon="x" onClick={onClose} aria-label="Close" />
       </div>
     </div>, host);
