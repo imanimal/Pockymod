@@ -6,7 +6,7 @@ import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
 import { Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Tag, bytesText } from "../ui/pocket";
 import {
-  FRAMEWORKS, errorText, groups as groupsApi, library, pickArchive, profiles, queue, queueMod, updates as updatesApi, vortexProfiles,
+  FRAMEWORKS, errorText, groups as groupsApi, library, pickArchive, profiles, queue, queueMod, unmanagedList, updates as updatesApi, vortexProfiles, type Unmanaged,
   type Conflict, type DeployOutcome, type DownloadRow, type InstallOutcome, type InstallPlan, type InstallRow, type Update,
 } from "../lib/api";
 import { toast } from "../ui/toast";
@@ -26,7 +26,8 @@ type Pending =
   | { kind: "review"; download: { modId: number; fileId: number; name: string; version: string; archive: string }; plan: InstallPlan };
 
 type Show = "all" | "on" | "off" | "updates";
-const SOURCE: Record<InstallRow["source"], string> = { pocket: "", vortex: "Vortex", found: "Found in game" };
+const SOURCE: Record<InstallRow["source"], string> = { pocket: "", vortex: "Vortex", found: "Unmanaged" };
+type From = "all" | "vortex" | "pocket" | "found";
 
 export function Library({ updates, onExisting }: { updates?: Update[]; onExisting?: () => void }) {
   const [rows, setRows] = useState<InstallRow[] | null>(null);
@@ -37,6 +38,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState("");
   const [show, setShow] = useState<Show>("all");
+  const [from, setFrom] = useState<From>("all");
+  const [unm, setUnm] = useState<Unmanaged | null>(null);
   const [sel, setSel] = useState<Set<number>>(new Set());
   const [folded, setFolded] = useState<Set<string>>(new Set());
   const [moveOpen, setMoveOpen] = useState(false);
@@ -76,6 +79,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     profiles.list().then((p) => setProfileName(p.find((x) => x.active)?.name ?? "")).catch(() => {});
     library.duplicates().then(setDupes).catch(() => setDupes([]));
     library.trash().then(setTrash).catch(() => setTrash([]));
+    unmanagedList().then(setUnm).catch(() => setUnm(null));
     vortexProfiles.scan().then((v) => {
       let later = false;
       try { later = localStorage.getItem("pm.vortexProfiles.later") === "1"; } catch { /* storage unavailable */ }
@@ -102,6 +106,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     if (show === "on" && !r.enabled) return false;
     if (show === "off" && r.enabled) return false;
     if (show === "updates" && !!!updOf(r)) return false;
+    if (from !== "all" && r.source !== from) return false;
     return true;
   });
   const order = [...customGroups, ...presets];
@@ -187,7 +192,9 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   return (
     <div className="stack lib">
       <div className="lcds">
-        <Lcd size="sm" label="Mods" value={String(rows?.length ?? 0).padStart(2, "0")} sub={profileName ? `profile ${profileName}` : undefined} />
+        <Lcd size="sm" label="Mods" value={String(rows?.length ?? 0).padStart(2, "0")}
+          sub={[profileName && `profile ${profileName}`, (rows ?? []).some((r) => r.source === "vortex") && `${(rows ?? []).filter((r) => r.source === "vortex").length} Vortex`,
+            (rows ?? []).some((r) => r.source === "found") && `${(rows ?? []).filter((r) => r.source === "found").length} unmanaged`].filter(Boolean).join(" · ") || undefined} />
         <Lcd size="sm" label="Turned on" value={String(on).padStart(2, "0")} />
         <Lcd size="sm" label="Updates" value={String(withUpdates.length).padStart(2, "0")} tone={withUpdates.length ? "hot" : "ok"} />
       </div>
@@ -195,6 +202,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       <div className="browse-top">
         <SearchField value={text} onChange={setText} placeholder="Find in your mods" />
         <Seg label="Layout" value={layout} onChange={setLayout} options={[{ value: "grid", label: "Grid" }, { value: "list", label: "List" }]} />
+        <Seg label="From" value={from} onChange={setFrom} options={[{ value: "all", label: "All" }, { value: "vortex", label: "Vortex", title: "Mods Vortex installed" },
+          { value: "pocket", label: "Pockymod", title: "Mods installed here" }, { value: "found", label: "Unmanaged", title: "Mods that were already in the game folder, put there by neither manager" }]} />
         <Seg label="Show" value={show} onChange={setShow} options={[{ value: "all", label: "All" }, { value: "on", label: "On" }, { value: "off", label: "Off" }, { value: "updates", label: `Updates${withUpdates.length ? ` ${withUpdates.length}` : ""}` }]} />
         {withUpdates.length > 0 && <Key icon="downloads" variant="primary" disabled={busy} onClick={() => updateMany(withUpdates)}>Update all ({withUpdates.length})</Key>}
         <Key size="sm" icon="file" onClick={installFromFile} disabled={busy}>Install from file</Key>
@@ -220,6 +229,44 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
 
       {manage && <GroupManager custom={customGroups} onChange={load} />}
       <EndorseStrip />
+      {unm && unm.copies.length + unm.other.length + unm.frameworks.length > 0 && (() => {
+        const rowsOf = (ids: number[]) => (rows ?? []).filter((r) => ids.includes(r.id));
+        const copies = unm.copies.map((c) => c[0]), other = unm.other.map((c) => c[0]);
+        const otherOn = rowsOf(other).filter((r) => r.enabled);
+        return (
+          <Module icon="warn" title="Unmanaged mods" count={unm.copies.length + unm.other.length + unm.frameworks.length}
+            tools={<Key size="sm" variant="ghost" icon="eye" latched={from === "found"} onClick={() => setFrom(from === "found" ? "all" : "found")} title="List only unmanaged mods below">Show them</Key>}>
+            <p className="dim" style={{ fontSize: ".9em" }}>These were already in the game folder: put there by hand, or left behind by an earlier install, a game reinstall or another manager. Neither Vortex nor Pockymod installed them. Cleaning up only ever touches these; your Vortex mods stay exactly as they are. Everything can be put back (Recently removed, Ctrl+Z).</p>
+            <div className="rows" style={{ marginTop: ".5em" }}>
+              {unm.copies.length > 0 && (
+                <div className="row" style={{ cursor: "default" }}>
+                  <span className="m-main"><span className="m-t">{plural(unm.copies.length, "leftover copy", "leftover copies")} of Vortex mods</span>
+                    <span className="m-meta"><span title={unm.copies.slice(0, 12).map((c) => `${c[1]} (copy of ${c[2]})`).join("\n")}>for example {unm.copies.slice(0, 3).map((c) => c[2]).join(", ")}</span><span>safe to remove: Vortex has its own</span></span></span>
+                  <span className="m-side"><Key size="sm" icon="trash" disabled={busy} onClick={() => run(async () => { await ops.remove(rowsOf(copies)); toast(`Removed ${plural(copies.length, "leftover copy", "leftover copies")}. They are in Recently removed for 14 days.`); })}
+                    title="Takes these copies out of the game; the Vortex mods they copy are not touched">Remove {unm.copies.length}</Key></span>
+                </div>
+              )}
+              {unm.frameworks.length > 0 && (
+                <div className="row" style={{ cursor: "default" }}>
+                  <span className="m-main"><span className="m-t">{plural(unm.frameworks.length, "framework")} put in by hand</span>
+                    <span className="m-meta"><span>{unm.frameworks.map((f) => f[1]).join(", ")}</span><span className="okc">usually wanted: kept</span></span></span>
+                </div>
+              )}
+              {unm.other.length > 0 && (
+                <div className="row" style={{ cursor: "default" }}>
+                  <span className="m-main"><span className="m-t">{plural(unm.other.length, "other mod")}</span>
+                    <span className="m-meta"><span>{otherOn.length} on now</span><span>not in any Vortex profile</span></span></span>
+                  <span className="m-side" style={{ flexDirection: "row", gap: ".3em" }}>
+                    <Key size="sm" variant="ghost" icon="eye" onClick={() => { setFrom("found"); }} title="List them below to keep the ones you want">Review</Key>
+                    {otherOn.length > 0 && <Key size="sm" icon="minus" disabled={busy} onClick={() => run(async () => { await ops.setEnabled(otherOn, false); toast(`Turned off ${plural(otherOn.length, "unmanaged mod")}. They wait in the library; Ctrl+Z turns them back on.`); })}
+                      title="They leave the game and wait in the library: nothing is deleted, and Ctrl+Z turns them back on">Turn off {otherOn.length}</Key>}
+                  </span>
+                </div>
+              )}
+            </div>
+          </Module>
+        );
+      })()}
 
       {vxp && (
         <Module icon="user" title="Your Vortex profiles" count={vxp.names.length}>

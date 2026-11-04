@@ -285,7 +285,10 @@ export interface FrameworkRow extends FrameworkState { latest: string | null; up
 export interface HealthReport { game: GameInfo | null; patch: string | null; patchSource: "detected" | "settings" | "assumed"; frameworks: FrameworkRow[]; issues: Issue[]; problems: number; warnings: number }
 export interface RedmodResult { ok: boolean; mods: string[]; problems: string[]; log: string }
 export interface RedmodEntry { installId: number; name: string; folders: string[]; enabled: boolean; loadOrder: number }
-export interface Profile { id: number; name: string; active: boolean; enabled: number }
+export interface Profile { id: number; name: string; active: boolean; enabled: number; vortex?: number; unmanaged?: number }
+/** Unmanaged mods sorted for cleaning up: [install, name, the Vortex mod it copies] and [install, name]. */
+export interface Unmanaged { copies: Array<[number, string, string]>; frameworks: Array<[number, string]>; other: Array<[number, string]> }
+export const unmanagedList = () => call<Unmanaged>("unmanaged_list");
 export interface SwitchReport { removed: number[]; deployed: number[]; notDeployed: Array<[number, string]> }
 export interface Update { modId: number; name: string; installed: string; latest: string; updatedAt: string; installId?: number; fileId?: number }
 

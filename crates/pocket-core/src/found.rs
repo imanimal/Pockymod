@@ -104,6 +104,39 @@ pub fn track(db: &Db, game: &Path, library: &Path, mods: &[FoundMod]) -> Result<
     Ok(ids)
 }
 
+/// Unmanaged mods (tracked from the game folder), sorted for cleaning up: copies of a Vortex mod's files (left
+/// behind by an earlier deploy, a reinstall, or a copy by hand), frameworks put in by hand (usually wanted), and the
+/// rest. Only unmanaged mods are ever listed, so a cleanup never touches Vortex's or the app's own.
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Unmanaged {
+    /// (install, its name, the Vortex mod it copies)
+    pub copies: Vec<(i64, String, String)>,
+    pub frameworks: Vec<(i64, String)>,
+    pub other: Vec<(i64, String)>,
+}
+
+pub fn unmanaged(db: &Db) -> Result<Unmanaged> {
+    let base = |p: &str| p.rsplit(['/', '\\']).next().unwrap_or(p).to_lowercase();
+    // every file name each Vortex mod has, from its folder in Vortex's staging folder
+    let vortex: Vec<(String, BTreeSet<String>)> = {
+        let mut st = db.conn.prepare("SELECT name, staging FROM installs WHERE source = 'vortex'")?;
+        let rows: Vec<(String, String)> = st.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?.collect::<std::result::Result<_, _>>()?;
+        rows.into_iter().map(|(n, s)| (n, walkdir::WalkDir::new(s).into_iter().flatten().filter(|e| e.file_type().is_file())
+            .map(|e| e.file_name().to_string_lossy().to_lowercase()).filter(|f| !f.starts_with("vortex.")).collect())).collect()
+    };
+    let mut st = db.conn.prepare("SELECT i.id, i.name, i.mod_id, (SELECT group_concat(d.target, '|') FROM deployed_files d WHERE d.install_id = i.id) FROM installs i WHERE i.source = 'found' ORDER BY i.name")?;
+    let rows: Vec<(i64, String, u32, Option<String>)> = st.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?.collect::<std::result::Result<_, _>>()?;
+    let mut out = Unmanaged::default();
+    for (id, name, mod_id, files) in rows {
+        let names: Vec<String> = files.unwrap_or_default().split('|').filter(|f| !f.is_empty()).map(base).collect();
+        if mod_id < 900_000_000 && FRAMEWORKS.iter().any(|f| f.nexus_mod_id == mod_id) { out.frameworks.push((id, name)); continue; }
+        let copy = (!names.is_empty()).then(|| vortex.iter().find(|(_, set)| names.iter().all(|n| set.contains(n)))).flatten();
+        match copy { Some((v, _)) => out.copies.push((id, name, v.clone())), None => out.other.push((id, name)) }
+    }
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -135,5 +168,15 @@ mod tests {
         assert!(!game.join("archive/pc/mod/Hat.archive").exists());
         crate::install::redeploy(&db, &game, &lib, ids[3], &Default::default()).unwrap();
         assert_eq!(fs::read_to_string(game.join("archive/pc/mod/Hat.archive")).unwrap(), "archive/pc/mod/Hat.archive");
+
+        // a Vortex mod that has Hat's files: Hat is a leftover copy; ArchiveXL is a framework; the rest are other
+        let vx = dir.path().join("vortex/HatMod-1-1-0-1700000000");
+        fs::create_dir_all(vx.join("archive/pc/mod")).unwrap();
+        for f in ["Hat.archive", "Hat.archive.xl"] { fs::write(vx.join("archive/pc/mod").join(f), "x").unwrap(); }
+        db.conn.execute("INSERT INTO installs (mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, source, external) VALUES (5, 5, 'Hat Mod', '1', 'archive', '[]', ?1, 0, 'vortex', 'HatMod')", params![vx.to_string_lossy()]).unwrap();
+        let u = unmanaged(&db).unwrap();
+        assert_eq!(u.copies.iter().map(|c| (c.1.as_str(), c.2.as_str())).collect::<Vec<_>>(), [("Hat", "Hat Mod")]);
+        assert_eq!(u.frameworks.iter().map(|c| c.1.as_str()).collect::<Vec<_>>(), ["ArchiveXL"]);
+        assert_eq!(u.other.len(), 2);
     }
 }

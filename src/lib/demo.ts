@@ -264,7 +264,14 @@ export function installDemo() {
     health_check: () => health(),
     redmod_deploy: () => ({ ok: true, mods: [], problems: [], log: "Deploying 0 mods\nDone" }),
     redmod_order: () => [],
-    profiles_list: () => profilesList.map((p) => ({ ...p, enabled: p.active ? installs.length : 0 })),
+    profiles_list: () => profilesList.map((p) => {
+      const on = installs.filter((i) => (p.active ? i.enabled : demoMember.get(`${p.id}:${i.id}`)));
+      return { ...p, enabled: on.length, vortex: on.filter((i) => i.source === "vortex").length, unmanaged: on.filter((i) => i.source === "found").length };
+    }),
+    unmanaged_list: () => {
+      const f = installs.filter((i) => i.source === "found");
+      return { copies: f.slice(0, 1).map((i) => [i.id, i.name, installs.find((x) => x.source === "vortex")?.name ?? "a Vortex mod"]), frameworks: [], other: f.slice(1).map((i) => [i.id, i.name]) };
+    },
     profile_create: ({ name }) => { const id = profilesList.length + 1; profilesList.push({ id, name: String(name), active: false, enabled: 0 }); return id; },
     profile_rename: () => {},
     profile_delete: ({ id }) => { profilesList = profilesList.filter((p) => p.id !== id || p.active); },

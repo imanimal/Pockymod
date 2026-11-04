@@ -11,11 +11,17 @@ use std::path::Path;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Profile { pub id: i64, pub name: String, pub active: bool, pub enabled: i64 }
+pub struct Profile {
+    pub id: i64, pub name: String, pub active: bool, pub enabled: i64,
+    /// Of those on: Vortex's mods, and unmanaged ones (already in the game folder, put there by neither manager).
+    pub vortex: i64, pub unmanaged: i64,
+}
 
 pub fn list(db: &Db) -> Result<Vec<Profile>> {
-    let mut st = db.conn.prepare("SELECT p.id, p.name, p.active, (SELECT COUNT(*) FROM profile_mods m WHERE m.profile_id = p.id AND m.enabled = 1) FROM profiles p ORDER BY p.id")?;
-    let rows = st.query_map([], |r| Ok(Profile { id: r.get(0)?, name: r.get(1)?, active: r.get(2)?, enabled: r.get(3)? }))?;
+    let on = |src: &str| format!("(SELECT COUNT(*) FROM profile_mods m JOIN installs i ON i.id = m.install_id WHERE m.profile_id = p.id AND m.enabled = 1{src})");
+    let q = format!("SELECT p.id, p.name, p.active, {}, {}, {} FROM profiles p ORDER BY p.id", on(""), on(" AND i.source = 'vortex'"), on(" AND i.source = 'found'"));
+    let mut st = db.conn.prepare(&q)?;
+    let rows = st.query_map([], |r| Ok(Profile { id: r.get(0)?, name: r.get(1)?, active: r.get(2)?, enabled: r.get(3)?, vortex: r.get(4)?, unmanaged: r.get(5)? }))?;
     Ok(rows.collect::<std::result::Result<_, _>>()?)
 }
 

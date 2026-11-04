@@ -168,6 +168,11 @@ pub fn import(db: &Db, game: &Path, library: &Path, opts: &DeployOptions, list: 
             db.conn.execute("INSERT INTO profile_mods (profile_id, install_id, enabled, load_order) VALUES (?1, ?2, ?3, (SELECT COALESCE(MAX(load_order), -1) + 1 FROM profile_mods WHERE profile_id = ?1))
                              ON CONFLICT(profile_id, install_id) DO UPDATE SET enabled = ?3", params![target, iid, want as i32])?;
         }
+        // Vortex's profiles hold only Vortex's mods: an unmanaged mod (already in the game folder) stays as it is in
+        // the profile that is live, and is off in the others, so each has exactly what Vortex lists
+        if !vp.active && !is_live {
+            db.conn.execute("UPDATE profile_mods SET enabled = 0 WHERE profile_id = ?1 AND install_id IN (SELECT id FROM installs WHERE source = 'found')", params![target])?;
+        }
         // the active profile changed in place: the game follows, off first so nothing clashes on the way
         flips.sort_by_key(|(_, on)| *on);
         for (iid, on) in flips {
@@ -264,6 +269,23 @@ mod tests {
         let again = import(&db, dir.path(), dir.path(), &Default::default(), &from_entries(sample(), "cyberpunk2077")).unwrap();
         assert!(again.profiles.iter().all(|p| !p.created));
         assert_eq!(profiles::list(&db).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn unmanaged_mods_are_off_in_the_profiles_vortex_has_not_deployed() {
+        let db = Db::memory().unwrap();
+        tracked(&db);
+        db.conn.execute("INSERT INTO installs (mod_id, file_id, name, version, mod_type, frameworks, staging, installed_at, source) VALUES (900000001, 1, 'Loose', '', 'archive', '[]', '', 0, 'found')", []).unwrap();
+        let loose = db.conn.last_insert_rowid();
+        let p = install::active_profile(&db).unwrap();
+        db.conn.execute("INSERT INTO profile_mods (profile_id, install_id, enabled, load_order) VALUES (?1, ?2, 1, 2)", params![p, loose]).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        import(&db, dir.path(), dir.path(), &Default::default(), &from_entries(sample(), "cyberpunk2077")).unwrap();
+        assert!(on(&db, "Default", loose), "the live profile keeps what is in the game");
+        assert!(!on(&db, "Hardcore", loose), "Vortex's Hardcore never had it");
+        let list = profiles::list(&db).unwrap();
+        let hard = list.iter().find(|x| x.name == "Hardcore").unwrap();
+        assert_eq!((hard.enabled, hard.vortex, hard.unmanaged), (1, 1, 0));
     }
 
     #[test]

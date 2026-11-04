@@ -66,7 +66,7 @@ export function LoadOrder() {
           <div className="rows">
             {list.map((p) => (
               <div key={p.id} className={`row${p.active ? " sel" : ""}`} style={{ cursor: "default" }}>
-                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{plural(p.enabled, "mod")} on</span></span></span>
+                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{plural(p.enabled, "mod")} on</span>{!!p.vortex && <span title="Mods Vortex installed, as Vortex lists them in this profile">{p.vortex} from Vortex</span>}{!!p.unmanaged && <span className="warnc" title="Mods that were already in the game folder, put there by neither Vortex nor Pockymod (by hand, or left behind). Library, Unmanaged mods, cleans them up.">{p.unmanaged} unmanaged</span>}</span></span>
                 <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                   {p.active ? <span className="led run" aria-label="Active" /> : <>
                     <Key size="sm" onClick={() => run(async () => { const r = await ops.switchProfile(active, p); if (r.notDeployed.length) toast(`${plural(r.notDeployed.length, "mod")} need${r.notDeployed.length === 1 ? "s" : ""} a decision in Library.`); })} disabled={busy}>Switch</Key>
@@ -83,7 +83,7 @@ export function LoadOrder() {
           {vx && vx.tracked > 0 && vx.profiles.length > 0 && (
             <div className="actions" style={{ marginTop: ".5em" }}>
               <Key size="sm" variant="ghost" icon="user" disabled={busy} onClick={() => run(async () => { const r = await vortexProfiles.import(); toast(profilesText(r)); })}
-                title={`Vortex's profiles (${vx.profiles.map((p) => p.name).join(", ")}) as profiles here, its mods on or off as in each`}>
+                title={`Vortex's profiles (${vx.profiles.map((p) => p.name).join(", ")}) as profiles here, with exactly the mods Vortex has on in each; unmanaged mods stay only in the profile that is live`}>
                 {vx.imported ? "Sync with Vortex's profiles again" : `Bring in Vortex's ${vx.profiles.length} profiles`}</Key>
             </div>
           )}

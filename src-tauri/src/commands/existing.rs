@@ -122,6 +122,10 @@ pub async fn existing_track(app: AppHandle, state: State<'_, AppState>, vortex_m
 #[serde(rename_all = "camelCase")]
 pub struct VortexProfilesView { pub profiles: Vec<ProfileBrief>, pub imported: bool, pub tracked: usize }
 
+/// Unmanaged mods sorted for cleaning up: copies of Vortex mods, frameworks put in by hand, and the rest.
+#[tauri::command]
+pub async fn unmanaged_list(state: State<'_, AppState>) -> Result<pocket_core::found::Unmanaged> { pocket_core::found::unmanaged(&state.db.lock().unwrap()) }
+
 /// Vortex's profiles, whether they were brought in already, and how many Vortex mods are tracked here.
 #[tauri::command]
 pub async fn vortex_profiles_scan(state: State<'_, AppState>) -> Result<VortexProfilesView> {
