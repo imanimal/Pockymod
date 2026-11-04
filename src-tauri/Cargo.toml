@@ -1,0 +1,19 @@
+[package]
+name = "pocket-mods"
+description = "Pocket Mods, a Cyberpunk 2077 mod manager"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "pocket_mods_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+pocket-core = { path = "../crates/pocket-core" }
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

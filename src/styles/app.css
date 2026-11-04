@@ -1,0 +1,3 @@
+/* App-level layout that is not part of the Pocket kit. */
+#root { height: 100%; }
+.gallery .grid3 > .panel, .gallery .grid2 > .panel { min-height: 0; }

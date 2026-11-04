@@ -1,0 +1,473 @@
+/* pocket-os.css — Pocket for Windows (CAPP1 L6 P9 B8 F3 T6 G2 M0 D3 C2), standalone.
+   Built from design/reference/pocket.css (the Collegiapp stylesheet) with that app's theme and core values filled in
+   from the build spec, so nothing here depends on themes.js or core.css. Class names follow the reference:
+     .btn key · .nv program key · .panel/.ph/.pb module and band · .display LCD inlay · .fbox search field ·
+     .chip filter chip · .seg segmented control · .cchip coloured tag · .row/.grp list rows · .deck key deck ·
+     .mtop/.winkeys window title bar. Parts the reference does not have are added in its style and marked "added".
+   Rules: one orange key or band per screen; numbers live on LCDs (Doto only inside .display); every module wears a
+   band; keys travel 3 px; sentence case and solid surfaces, nothing blurred or glowing over text; the desk is a dot grid.
+   Section order: fonts · tokens · base · icons · keys · program keys · modules · LCDs · fields and chips ·
+   switches, pills, tags · rows · window frame and deck · overlays · motion · hover · sizes. */
+
+/* ───────────── fonts (bundled, OFL; see fonts/OFL-*.txt) ───────────── */
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 400; src: url(./fonts/space-grotesk-latin-400-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 500; src: url(./fonts/space-grotesk-latin-500-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 600; src: url(./fonts/space-grotesk-latin-600-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 700; src: url(./fonts/space-grotesk-latin-700-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 400; src: url(./fonts/space-grotesk-latin-ext-400-normal.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 500; src: url(./fonts/space-grotesk-latin-ext-500-normal.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 600; src: url(./fonts/space-grotesk-latin-ext-600-normal.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 700; src: url(./fonts/space-grotesk-latin-ext-700-normal.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Space Mono"; font-style: normal; font-display: swap; font-weight: 400; src: url(./fonts/space-mono-latin-400-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Mono"; font-style: normal; font-display: swap; font-weight: 700; src: url(./fonts/space-mono-latin-700-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Mono"; font-style: normal; font-display: swap; font-weight: 400; src: url(./fonts/space-mono-latin-ext-400-normal.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Space Mono"; font-style: normal; font-display: swap; font-weight: 700; src: url(./fonts/space-mono-latin-ext-700-normal.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Doto"; font-style: normal; font-display: block; font-weight: 700; src: url(./fonts/doto-latin-700-normal.woff2) format("woff2"); }
+@font-face { font-family: "Doto"; font-style: normal; font-display: block; font-weight: 800; src: url(./fonts/doto-latin-800-normal.woff2) format("woff2"); }
+@font-face { font-family: "Doto"; font-style: normal; font-display: block; font-weight: 900; src: url(./fonts/doto-latin-900-normal.woff2) format("woff2"); }
+
+/* ───────────── tokens ─────────────
+   Cream (P9) is the default; Night (P11) is html.night (and data-scheme="dark", the reference's switch). theme.ts sets
+   both from the saved choice or, by default, the system setting. */
+:root {
+  /* Cream (P9) */
+  --bg: #e6e2d8; --bg2: #fbf9f4; --surface: #f6f3ec; --surface-2: #ebe7dd; --line: #d3ccbd;
+  --text: #1b1915; --text-2: #4a453c; --text-3: #6a645a;
+  --accent: #ff5b1f; --on-accent: #1b1915;
+  --chrome-bg: #2a2722; --chrome-fg: #f6f3ec;
+  --disp-bg: #b1bd93; --disp-fg: #1f2a17; --disp-hot: #e9b45a; --disp-bad: #ee8f6e;
+  --ok: #2e7d32; --warn: #9a5b00; --bad: #c8341b; --acc2: #2f6fde;
+
+  /* derived, as in the reference */
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --radius: 14px; --btn-r: 10px; --win-r: 16px;
+  --font-body: "Space Grotesk", "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --font-ui: var(--font-body);
+  --font-mono: "Space Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --font-num: "Doto", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --num-scale: .74;
+  --fs: 14px; --gap: .9em; --rowpad: .18em;
+  --m: 1;                                   /* motion multiplier: 0 is instant (M0 setting or reduced motion) */
+  --hl: rgba(255, 255, 255, .5);
+  --card-shadow: 0 0 0 1px var(--line), 0 2px 0 var(--line), 0 10px 24px rgba(40, 30, 10, .07);
+  --drop: 0 24px 60px rgba(30, 22, 8, .28), 0 0 0 1px var(--line);
+  --scrim: rgba(28, 22, 12, .34);
+  --on-bad: #fff;
+  --warn-ink: color-mix(in srgb, var(--warn) 75%, var(--text));
+  --ease: cubic-bezier(.2, .9, .3, 1);
+  --ease-back: cubic-bezier(.3, 1.45, .5, 1);
+  --ease-in: cubic-bezier(.5, 0, .9, .4);
+  color-scheme: light;
+}
+:root.night, :root[data-scheme="dark"] {
+  /* Night (P11) */
+  --bg: #1a1917; --bg2: #2a2926; --surface: #262522; --surface-2: #302e2a; --line: #3f3c36;
+  --text: #f4efe5; --text-2: #d0c9ba; --text-3: #a39c8d;
+  --accent: #ff6a2b; --chrome-bg: #0f0e0d; --chrome-fg: #ece6da;
+  --disp-bg: #45b3a1; --disp-fg: #04211c; --disp-hot: #e2b04f; --disp-bad: #ef8b6c;
+  --ok: #62c470; --warn: #f0b54a; --bad: #ff7a5c; --acc2: #7aa5ff;
+
+  --hl: rgba(255, 255, 255, .06);
+  --card-shadow: 0 0 0 1px var(--line), 0 2px 0 #0b0a09, 0 10px 24px rgba(0, 0, 0, .3);
+  --drop: 0 24px 60px rgba(0, 0, 0, .55), 0 0 0 1px var(--line);
+  --scrim: rgba(0, 0, 0, .5);
+  --on-bad: #1b1915;
+  color-scheme: dark;
+}
+html[data-motion="0"] { --m: 0; }
+@media (prefers-reduced-motion: reduce) { :root:not([data-motion="1"]) { --m: 0; } }
+/* a key's travel, 0 up to 1 bottomed out (negative is the rebound) */
+@property --press { syntax: "<number>"; inherits: false; initial-value: 0; }
+
+/* ───────────── base: the desk is a dot grid ───────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font: var(--fs)/1.45 var(--font-ui); color: var(--text-2); -webkit-font-smoothing: antialiased;
+  background: radial-gradient(color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1.5px) 0 0 / 16px 16px, var(--bg);
+}
+.content { color: var(--text-2); background: radial-gradient(color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1.5px) 0 0 / 16px 16px, var(--bg); }
+.dim { color: var(--text-3); }
+.hi { color: var(--text); }
+.okc { color: var(--ok); }
+.warnc { color: var(--warn-ink); }
+.badc { color: var(--bad); }
+h1, h2, h3, h4 { color: var(--text); margin: 0; letter-spacing: -.01em; }
+p { margin: 0; }
+a { color: var(--acc2); }
+.screen * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.screen ::-webkit-scrollbar { width: 10px; height: 10px; }
+.screen ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 9px; border: 2px solid transparent; background-clip: padding-box; }
+.screen ::-webkit-scrollbar-track { background: transparent; }
+.screen :is(input, select, textarea) {
+  font-family: var(--font-ui); font-size: .92em; color: var(--text); background: var(--bg2); caret-color: var(--accent);
+  border: 1px solid var(--line); border-radius: 8px; padding: .4em .6em;
+}
+.screen :is(input, select, textarea):focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.screen :is(input, textarea)::placeholder { color: var(--text-3); opacity: 1; }
+.screen kbd { font-family: var(--font-mono); }
+.screen code { font: .92em var(--font-mono); background: var(--surface-2); padding: .05em .35em; border-radius: 4px; }
+.screen :is(.btn, .nv, .chip, .ph, .deck, .fbox > .i, .display, .sw, .wk, .mtop) { -webkit-user-select: none; user-select: none; }
+.mono { font-family: var(--font-mono); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ───────────── pixel icons ─────────────
+   9×9 bitmaps (ui/icons.ts) drawn as crisp rects and sized in whole 9 px steps: 9, 18, 27, 36, 54. */
+.i { width: 18px; height: 18px; flex: none; fill: currentColor; shape-rendering: crispEdges; vertical-align: -.25em; }
+.i.s9 { width: 9px; height: 9px; vertical-align: 0; }
+.i.s27 { width: 27px; height: 27px; }
+.i.big, .i.s36 { width: 36px; height: 36px; }
+.i.s54 { width: 54px; height: 54px; }
+
+/* ───────────── B8 keys: raised hardware keys that travel ─────────────
+   A key sits on a 3 px lip. Pressing (--press → 1) sinks it onto the lip and pulls its shadow in; letting go springs
+   back past the top (.ack). A latched key (.on, aria-pressed) goes graphite with an orange icon. */
+.btn {
+  --travel: 3px; --ring: color-mix(in srgb, var(--line) 75%, #000); --lip: color-mix(in srgb, var(--line) 55%, #000); --shade: rgba(0, 0, 0, .14);
+  font: inherit; font-family: var(--font-ui); font-size: .92em; font-weight: 600; line-height: 1.2; color: var(--text);
+  border: 0; cursor: pointer; position: relative; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em; border-radius: var(--btn-r);
+  padding: .52em .9em .5em; margin-bottom: 3px;
+  background: linear-gradient(to bottom, color-mix(in srgb, #fff 14%, var(--surface-2)), var(--surface-2));
+  transform: translateY(calc(var(--press, 0) * var(--travel)));
+  box-shadow: 0 0 0 1px var(--ring), 0 calc((1 - var(--press, 0)) * var(--travel)) 0 var(--lip), 0 calc(5px - var(--press, 0) * 4px) calc(10px - var(--press, 0) * 7px) var(--shade);
+  transition: --press calc(var(--m) * 60ms) ease-out, background calc(var(--m) * 120ms);
+}
+.btn:active, .btn.down { --press: 1; }
+.btn.ack { animation: keyUp calc(var(--m) * 240ms + 1ms) var(--ease); }
+.btn[disabled] { --press: 0; animation: none; opacity: .45; cursor: default; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn .i { margin-inline: -.1em; }
+.btn kbd { font: 500 .76em/1 var(--font-mono); border-radius: 4px; padding: .24em .42em; opacity: .85; background: color-mix(in srgb, currentColor 15%, transparent); }
+.btn.primary { --ring: color-mix(in srgb, var(--accent) 62%, #000); --lip: color-mix(in srgb, var(--accent) 52%, #000); --shade: rgba(0, 0, 0, .16); color: var(--on-accent); background: linear-gradient(to bottom, color-mix(in srgb, #fff 16%, var(--accent)), var(--accent)); }
+.btn.dark, .btn.on, .btn[aria-pressed="true"] { --ring: #000; --lip: #000; --shade: rgba(0, 0, 0, .2); color: var(--chrome-fg); background: linear-gradient(to bottom, color-mix(in srgb, #fff 12%, var(--chrome-bg)), var(--chrome-bg)); }
+.btn:is(.dark, .on, [aria-pressed="true"]) .i { color: var(--accent); }
+/* latched keys stay down a step, like a locked hardware key */
+.btn:is(.on, [aria-pressed="true"]) { --press: .55; }
+:root.night .btn:is(.on, [aria-pressed="true"]) { --ring: color-mix(in srgb, var(--accent) 70%, #000); }
+.btn.ghost { --travel: 1px; background: transparent; box-shadow: none; margin-bottom: 0; color: var(--text-2); }
+.btn.lg { font-size: 1em; padding: .72em 1.1em .7em; }
+.btn.sm { font-size: .82em; padding: .32em .62em; }
+.btn.icon { padding-inline: .55em; }
+.btn.sm.icon { padding-inline: .4em; }
+.actions { display: flex; flex-wrap: wrap; gap: .5em; align-items: center; }
+
+/* ───────────── program keys (views) ─────────────
+   The navigation keys. .on is the latched view: graphite, orange icon. Added: .led for a running task, .prog for a
+   progress bar along the key's foot; .ct is the reference's count badge. A .rail stacks them down the window's side. */
+.nkeys { display: flex; gap: .45em; min-width: 0; }
+.nkeys.rail { flex-direction: column; align-items: stretch; }
+.nv {
+  all: unset; box-sizing: border-box; cursor: pointer; flex: none; position: relative; display: inline-flex; align-items: center; gap: .55em;
+  padding: .55em .78em; border-radius: 9px; font-size: .9em; font-weight: 600; white-space: nowrap; color: var(--text-2);
+  --ring: var(--line); --lip: color-mix(in srgb, var(--line) 80%, #000);
+  background: var(--surface); transform: translateY(calc(var(--press, 0) * 2px)); margin-bottom: 2px; overflow: hidden;
+  box-shadow: 0 0 0 1px var(--ring), 0 calc((1 - var(--press, 0)) * 2px) 0 var(--lip);
+  transition: --press calc(var(--m) * 60ms) ease-out, background calc(var(--m) * 120ms), color calc(var(--m) * 120ms);
+}
+.nv:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nv:active, .nv.down { --press: 1; }
+.nv.ack { animation: keyUp calc(var(--m) * 220ms + 1ms) var(--ease); }
+.nv .i { color: var(--text-3); }
+.nv .lb { flex: 1; }
+.nv.on { --ring: #000; --lip: #000; background: var(--chrome-bg); color: var(--chrome-fg); }
+:root.night .nv.on { --ring: color-mix(in srgb, var(--accent) 70%, #000); }
+.nv.on .i { color: var(--accent); }
+.nv.on.ack .i { animation: ledOn calc(var(--m) * 260ms + 1ms) steps(1, end); }
+.nv .ct { font: 700 .78em/1 var(--font-mono); padding: .26em .45em; border-radius: 5px; background: var(--surface-2); color: var(--text-2); }
+.nv .ct.hot { background: var(--accent); color: var(--on-accent); }
+.nv.on .ct { background: var(--accent); color: var(--on-accent); }
+/* added: the LED, off (a dark lens), .run green and blinking in steps, .wait amber, .bad red */
+.led { flex: none; width: 7px; height: 7px; border-radius: 2px; background: color-mix(in srgb, var(--text) 22%, var(--surface-2)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); }
+.led.run { background: var(--ok); animation: blink calc(var(--m) * 1000ms + 1ms) steps(1, end) infinite; }
+.led.wait { background: var(--warn); }
+.led.bad { background: var(--bad); }
+.led.on { background: var(--accent); }
+/* added: progress along the key's foot, set with --p (0–1) */
+.nv .prog { position: absolute; left: 6px; right: 6px; bottom: 2px; height: 3px; border-radius: 2px; background: color-mix(in srgb, currentColor 14%, transparent); overflow: hidden; }
+.nv .prog::after { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--p, 0) * 100%); background: var(--accent); }
+
+/* ───────────── F3 modules: a card with a printed label band ─────────────
+   Every module is graphite-banded; .hot is the screen's one orange band (do this first), .bad turns it red. */
+.panel { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--surface); border-radius: var(--radius); box-shadow: var(--card-shadow); overflow: hidden; }
+.panel.fill { height: 100%; }
+.ph {
+  --band: var(--chrome-bg); --band-fg: var(--chrome-fg);
+  display: flex; align-items: center; gap: .55em; flex: none; white-space: nowrap;
+  background: var(--band); color: var(--band-fg); min-height: 2.55em; padding: .3em .45em .3em .9em;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
+}
+.ph .pt { display: inline-flex; align-items: center; gap: .6em; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: .78em; font-weight: 700; text-transform: uppercase; letter-spacing: .11em; }
+.ph .pt .i { color: var(--accent); }
+.ph .cnt { min-width: 0; overflow: hidden; text-overflow: ellipsis; font: .78em var(--font-mono); opacity: .78; }
+.ph .sp { flex: 1; }
+.ph::after { content: ""; flex: none; width: 1.5em; height: .62em; margin: 0 .35em 0 .2em; opacity: .3; background: repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 5px); }
+.ph .btn.ghost { color: inherit; }
+.ph .btn { margin-block: 0 3px; }
+.panel.hot > .ph { --band: var(--accent); --band-fg: var(--on-accent); }
+.panel.hot > .ph .pt .i { color: inherit; }
+.panel.bad { box-shadow: 0 0 0 2px var(--bad), var(--card-shadow); }
+.panel.bad > .ph { --band: var(--bad); --band-fg: var(--on-bad); }
+.panel.bad > .ph .pt .i { color: inherit; }
+.pb { flex: 1; min-height: 0; overflow: auto; position: relative; padding: .85em 1em 1em; }
+.pb.flush { padding: 0; }
+.pb.list { padding: .1em .5em .8em; }
+
+/* ───────────── LCD inlays: reflective panel, dark dot-matrix digits, amber/red backlight for status ─────────────
+   Green (the panel's own colour) is normal, .hot amber is soon or waiting, .bad red is late or a problem.
+   Added: .d-lvl, a level drawn as LCD blocks (set data-on on the element or .on on each block). */
+.display {
+  position: relative; display: flex; flex-direction: column; justify-content: center; gap: .2em; padding: .75em .95em .8em; min-width: 0;
+  background: linear-gradient(170deg, color-mix(in srgb, #fff 18%, var(--disp-bg)), var(--disp-bg) 60%); color: var(--disp-fg);
+  border-radius: 6px; overflow: hidden; isolation: isolate; margin: 5px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .28), inset 0 0 0 1px rgba(0, 0, 0, .3), 0 0 0 4px var(--chrome-bg), 0 0 0 5px #000;
+}
+.display::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .045) 0 1px, transparent 1px 3px), repeating-linear-gradient(0deg, rgba(0, 0, 0, .045) 0 1px, transparent 1px 3px);
+}
+.display .d-lbl { font: 700 .74em/1.2 var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: color-mix(in srgb, var(--disp-fg) 74%, var(--disp-bg)); }
+.display .d-num { font-family: var(--font-num); font-weight: 800; font-size: calc(2.7em * var(--num-scale)); line-height: 1; white-space: nowrap; color: var(--disp-fg); text-shadow: 2px 2px 0 rgba(0, 0, 0, .12); }
+.display .d-num small { font: 700 .45em var(--font-mono); margin-left: .25em; text-shadow: none; }
+.display .d-sub { font: .84em/1.3 var(--font-ui); color: color-mix(in srgb, var(--disp-fg) 82%, var(--disp-bg)); }
+.display .d-bar { height: 4px; border-radius: 2px; background: rgba(0, 0, 0, .12); margin-top: .5em; overflow: hidden; }
+.display .d-bar i { display: block; height: 100%; background: var(--disp-fg); }
+.display.hot { --disp-bg: var(--disp-hot); --disp-fg: #2a1a00; }
+.display.bad { --disp-bg: var(--disp-bad); --disp-fg: #2b0b02; }
+.display.big { padding: 1em 1.6em 1.1em; align-items: center; }
+.display.big .d-num { font-size: calc(6.4em * var(--num-scale)); }
+.display.sm { padding: .4em .65em .45em; gap: .1em; }
+.display.sm .d-num { font-size: calc(1.7em * var(--num-scale)); }
+.display.sm .d-lbl { font-size: .64em; }
+.display.inline { flex-direction: row; align-items: baseline; gap: .6em; }
+.d-lvl { display: flex; gap: 3px; height: .7em; margin-top: .45em; }
+.d-lvl i { flex: 1; border-radius: 1px; background: rgba(0, 0, 0, .1); }
+.d-lvl i.on { background: var(--disp-fg); }
+.lcds { display: flex; flex-wrap: wrap; gap: .6em; }
+.lcds > .display { flex: 1 1 9em; }
+/* a small LCD chip (the reference's .cal-t) for a size or date inside text */
+.lcd-chip { display: inline-block; font: 700 .82em/1.3 var(--font-mono); letter-spacing: .04em; padding: .1em .45em; border-radius: 4px; background: var(--disp-bg); color: var(--disp-fg); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25); white-space: nowrap; }
+
+/* ───────────── fields and chips ─────────────
+   .fbox is the search field (an input inside a recessed box); .chip a filter chip, .on when applied, with an
+   optional mono count (.n, added); .seg a segmented control built from chips. */
+.fbox { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: .4em; padding: .34em .6em; border-radius: 9px; background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line), inset 0 2px 0 rgba(0, 0, 0, .03); cursor: text; }
+.fbox:focus-within { box-shadow: inset 0 0 0 2px var(--accent); }
+.fbox > .i { color: var(--text-3); }
+.screen .fbox .finput, .fbox .finput { border: 0; background: transparent; outline: none; padding: .25em .2em; flex: 1 0 7em; min-width: min(7em, 100%); font-size: .95em; border-radius: 0; }
+.fbox .finput:focus { outline: none; }
+.fbox kbd { font: .78em/1 var(--font-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: .2em .4em; color: var(--text-3); }
+.chip {
+  font: inherit; font-family: var(--font-ui); font-size: .84em; cursor: pointer; display: inline-flex; align-items: center; gap: .38em; white-space: nowrap;
+  padding: .26em .75em; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--text-2); touch-action: manipulation;
+}
+.chip.on { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--text); }
+.chip .n { font: .86em var(--font-mono); color: var(--text-3); }
+.chip.on .n { color: var(--text-2); }
+.chip .x { opacity: .7; }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.chip[disabled] { opacity: .5; cursor: default; }
+.chip.zero { opacity: .55; }
+.chips { display: flex; flex-wrap: wrap; gap: .35em; }
+.fbox .chip { flex: none; max-width: 100%; font-family: var(--font-mono); font-size: .78em; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; }
+.seg { display: inline-flex; flex-wrap: wrap; width: fit-content; max-width: 100%; gap: 0; background: var(--surface-2); border-radius: 8px; padding: 2px; box-shadow: inset 0 0 0 1px var(--line); }
+.seg .chip { border: 0; border-radius: 6px; background: transparent; padding: .3em .68em; }
+.seg .chip.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, .2), 0 0 0 1px var(--line); }
+.fgrid { display: grid; grid-template-columns: 9em minmax(0, 1fr); gap: .6em .8em; align-items: center; }
+.fgrid > label, .fgrid > .lab { font-size: .86em; color: var(--text-3); }
+.sub-h { font-size: .8em; font-weight: 600; color: var(--text-3); margin: 1.1em 0 .4em; }
+.sub-h:first-child { margin-top: 0; }
+
+/* ───────────── switches, pills, tags ───────────── */
+/* added: .sw, a slide switch. A hardware slider in a recessed track; on, the cap slides right over an orange-lit track.
+   Markup: <label class="sw"><input type="checkbox"><span class="sw-t"></span> Label</label> */
+.sw { display: inline-flex; align-items: center; gap: .6em; cursor: pointer; color: var(--text-2); font-size: .92em; }
+.sw input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.sw-t {
+  position: relative; flex: none; width: 2.6em; height: 1.4em; border-radius: 6px;
+  background: color-mix(in srgb, var(--text) 9%, var(--bg)); box-shadow: inset 0 1px 3px rgba(0, 0, 0, .3), inset 0 0 0 1px color-mix(in srgb, var(--text) 22%, var(--line));
+  transition: background calc(var(--m) * 120ms);
+}
+.sw-t::after {
+  content: ""; position: absolute; top: .16em; left: .16em; width: 1.1em; height: 1.08em; border-radius: 4px;
+  background: linear-gradient(to bottom, color-mix(in srgb, #fff 18%, var(--surface-2)), var(--surface-2));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 70%, #000), 0 2px 0 color-mix(in srgb, var(--line) 55%, #000);
+  transition: translate calc(var(--m) * 140ms) var(--ease-back);
+}
+.sw input:checked + .sw-t { background: color-mix(in srgb, var(--accent) 55%, var(--bg)); }
+.sw input:checked + .sw-t::after { translate: 1.2em 0; }
+.sw input:focus-visible + .sw-t { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw input:disabled + .sw-t { opacity: .5; }
+/* the reference's .duepill, also as .pill: a status in words. .ok normal (added), .soon amber wash, .hot amber, .over red,
+   .live orange (the screen's do-first, so use it once) */
+:is(.duepill, .pill) { display: inline-flex; align-items: center; gap: .35em; font-size: .8em; font-weight: 600; padding: .16em .6em; border-radius: 99px; background: var(--surface-2); color: var(--text-2); white-space: nowrap; }
+:is(.duepill, .pill).ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: color-mix(in srgb, var(--ok) 75%, var(--text)); }
+:is(.duepill, .pill).soon { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn-ink); }
+:is(.duepill, .pill).hot { background: var(--warn); color: var(--bg2); }
+:is(.duepill, .pill).over { background: var(--bad); color: var(--on-bad); }
+:is(.duepill, .pill).live { background: var(--accent); color: var(--on-accent); }
+/* .cchip: a coloured tag; set --kc. Framework chips and mod-type tags use it. */
+.cchip { display: inline-flex; align-items: center; gap: .4em; padding: .14em .52em; border-radius: 6px; background: color-mix(in srgb, var(--kc, var(--text-3)) 16%, transparent); color: var(--text); font-size: .8em; font-weight: 600; white-space: nowrap; }
+.cchip::before { content: ""; width: .58em; height: .58em; border-radius: 50%; background: var(--kc, var(--text-3)); flex: none; }
+.cchip.none { background: var(--surface-2); }
+.cchip.sq::before { border-radius: 1px; }
+/* tag colours: the frameworks and mod types */
+.k-cet { --kc: #2f6fde; } .k-red4ext { --kc: #c8341b; } .k-redscript { --kc: #8a4fd0; } .k-archivexl { --kc: #1f8a70; }
+.k-tweakxl { --kc: #b8860b; } .k-codeware { --kc: #d0457b; } .k-cybercmd { --kc: #5a7a2b; }
+.k-redmod { --kc: #ff5b1f; } .k-archive { --kc: #6a645a; } .k-script { --kc: #8a4fd0; } .k-framework { --kc: #2a2722; } .k-other { --kc: #a39c8d; }
+:root.night .k-framework { --kc: #ece6da; }
+
+/* ───────────── list rows ───────────── */
+.rows { display: flex; flex-direction: column; gap: 1px; }
+.grp { display: flex; align-items: center; gap: .6em; padding: .9em .6em .3em; font-size: .8em; font-weight: 600; color: var(--text-3); }
+.grp span { font-family: var(--font-mono); font-weight: 400; }
+.grp::after { content: ""; flex: 1; border-bottom: 1px solid var(--line); }
+.row {
+  position: relative; display: grid; align-items: center; grid-template-columns: minmax(0, 1fr) auto; column-gap: .75em;
+  padding: calc(var(--rowpad) + .3em) .6em; border-radius: 9px; cursor: pointer; text-align: left;
+  font: inherit; color: inherit; background: none; border: 0; width: 100%;
+  transition: background calc(var(--m) * 120ms);
+}
+.row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.row.sel { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.row.off { opacity: .55; }
+.m-main { display: flex; flex-direction: column; gap: .14em; min-width: 0; }
+.m-t { color: var(--text); font-size: .98em; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .1em .5em; font-size: .82em; color: var(--text-3); }
+.m-meta > span { display: inline-flex; align-items: center; gap: .3em; }
+.m-meta > span + span::before { content: "·"; margin-right: .2em; opacity: .7; }
+.m-meta > span:first-child { color: var(--text-2); font-weight: 600; }
+.m-tags { display: flex; flex-wrap: wrap; gap: .3em; margin-top: .25em; }
+.m-side { display: flex; flex-direction: column; align-items: flex-end; gap: .3em; white-space: nowrap; font: .78em var(--font-mono); color: var(--text-3); }
+/* added: a mod row, thumbnail · name, author, chips · size and date */
+.row.modrow { grid-template-columns: 4.6em minmax(0, 1fr) auto; }
+.thumb { width: 4.6em; aspect-ratio: 16 / 10; border-radius: 6px; object-fit: cover; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); display: block; }
+.thumb.ph-img { display: grid; place-items: center; color: var(--line); }
+.row.new { animation: rowNew calc(var(--m) * 1400ms + 1ms) ease-out; }
+.rows.anim > .row { animation: rowIn calc(var(--m) * 260ms + 1ms) ease-out both; animation-delay: calc(var(--m) * min(var(--i, 0), 12) * 18ms); }
+.m-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .35em; padding: 1.6em .8em; color: var(--text-3); }
+.m-empty .i.big { color: var(--line); margin-bottom: .3em; }
+.m-empty b { color: var(--text); font-size: 1.05em; }
+.m-empty .actions { margin-top: .6em; justify-content: center; }
+
+/* ───────────── window frame and deck ─────────────
+   The app's own title bar (Tauri window without native decorations): brand, title, then the three window keys in
+   a recessed slot. data-tauri-drag-region on .mtop moves the window. .win is the same frame as a component. */
+.win { display: flex; flex-direction: column; border-radius: var(--win-r); background: var(--bg); box-shadow: var(--drop); overflow: hidden; }
+.win > .mtop { padding: .45em .5em .45em .9em; background: color-mix(in srgb, var(--text) 4%, var(--bg)); box-shadow: inset 0 -1px 0 var(--line); }
+.win > .wbody { flex: 1; min-height: 0; padding: 1em; }
+.mtop { display: flex; align-items: center; gap: .7em; min-height: 2.8em; white-space: nowrap; cursor: default; }
+.brandmark { display: flex; align-items: center; gap: .55em; font-weight: 700; font-size: 1.02em; color: var(--text); letter-spacing: -.01em; margin-right: .3em; }
+/* the logo is an LCD; the one place a dot-matrix glyph that is not a number appears */
+.logo {
+  width: 1.8em; height: 1.8em; flex: none; border-radius: 6px; display: grid; place-items: center; padding-top: .06em;
+  background: linear-gradient(170deg, color-mix(in srgb, #fff 18%, var(--disp-bg)), var(--disp-bg) 60%);
+  color: var(--disp-fg); font: 900 1.2em/1 var(--font-num); box-shadow: inset 0 1px 3px rgba(0, 0, 0, .3), 0 0 0 2px var(--chrome-bg);
+}
+.crumb { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.crumb .v { font-size: 1.05em; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+.crumb .ctx { font-size: .8em; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; }
+.mtop .sp { flex: 1; }
+.winkeys {
+  display: flex; gap: .3em; flex: none; padding: .24em; margin-left: .15em; border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 7%, var(--bg)); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .2), inset 0 0 0 1px var(--line);
+}
+.wk {
+  all: unset; box-sizing: border-box; width: 2.15em; height: 1.85em; margin-bottom: 2px; display: grid; place-items: center; border-radius: 7px;
+  color: var(--text-2); cursor: default;
+  background: linear-gradient(to bottom, color-mix(in srgb, #fff 14%, var(--surface-2)), var(--surface-2));
+  transform: translateY(calc(var(--press, 0) * 2px));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 75%, #000), 0 calc((1 - var(--press, 0)) * 2px) 0 color-mix(in srgb, var(--line) 55%, #000);
+  transition: --press calc(var(--m) * 60ms) ease-out, background calc(var(--m) * 120ms), color calc(var(--m) * 120ms);
+}
+.wk .i { width: 9px; height: 9px; vertical-align: 0; }
+.wk:active { --press: 1; }
+.wk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wk-x:active { background: var(--bad); color: var(--on-bad); }
+/* the key deck: a recessed strip of view keys at the window's foot */
+.deck {
+  display: flex; align-items: stretch; gap: .65em; padding: .55em .7em .5em; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--text) 5%, var(--bg)); box-shadow: inset 0 1px 0 var(--hl), inset 0 0 0 1px var(--line);
+}
+.deck .btn { justify-content: flex-start; min-width: 6.6em; padding: .5em .85em .46em; }
+.deck .deck-sp { flex: 1; display: flex; align-items: center; justify-content: flex-end; min-width: 0; }
+.deck .deck-sp::after { content: attr(data-model); font: 700 .6em var(--font-mono); text-transform: uppercase; letter-spacing: .22em; color: var(--text-3); opacity: .75; white-space: nowrap; }
+.deck .speaker { width: 7.5em; flex: none; border-radius: 8px; opacity: .5; background: radial-gradient(circle, color-mix(in srgb, var(--text) 55%, transparent) 1.7px, transparent 2.2px) 0 0 / 9px 9px; }
+
+/* ───────────── app shell ─────────────
+   Title bar across the top, the program-key rail down the left, the view on the dot grid. */
+.shell { display: grid; grid-template: "top top" auto "rail view" minmax(0, 1fr) / auto minmax(0, 1fr); height: 100vh; gap: 0; }
+.shell > .mtop { grid-area: top; padding: .5em .6em .4em 1.1em; }
+.shell > .side { grid-area: rail; display: flex; flex-direction: column; gap: .8em; padding: .4em .6em 1em 1.1em; width: 13.5em; min-height: 0; overflow: auto; }
+.shell > .side .nkeys.rail .nv { width: 100%; }
+.shell > .view { grid-area: view; min-width: 0; min-height: 0; overflow: auto; padding: .4em 1.1em 1.1em .5em; }
+.side .foot { margin-top: auto; display: flex; flex-direction: column; gap: .6em; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--gap); }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(17em, 1fr)); gap: var(--gap); }
+.stack { display: flex; flex-direction: column; gap: var(--gap); }
+.split { display: grid; grid-template-columns: 15em minmax(0, 1fr) minmax(19em, 24em); gap: var(--gap); height: 100%; min-height: 0; }
+.split > * { min-height: 0; }
+
+/* ───────────── overlays ───────────── */
+/* solid scrim, no blur: nothing is blurred under or over text */
+.ov { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 2em; background: var(--scrim); animation: scrimIn calc(var(--m) * 200ms + 1ms) ease-out; }
+.dialog { width: min(34em, 100%); max-height: 90vh; box-shadow: var(--drop); animation: dlgIn calc(var(--m) * 220ms + 1ms) cubic-bezier(.2, .9, .3, 1.2); }
+.dialog .pb { padding: 1em 1.1em 1.1em; display: flex; flex-direction: column; gap: .8em; }
+.toasts { position: fixed; right: 1.2em; bottom: 1.2em; z-index: 60; display: flex; flex-direction: column; gap: .5em; align-items: flex-end; }
+.toast { display: flex; align-items: center; gap: .7em; background: var(--surface); color: var(--text); border-radius: 10px; padding: .55em .6em .55em .8em; box-shadow: var(--drop); font-size: .92em; animation: toastIn calc(var(--m) * 260ms + 1ms) ease-out; }
+.toast .i { color: var(--accent); }
+.toast.bad .i { color: var(--bad); }
+.note { padding: .6em .8em; border-radius: 8px; background: var(--surface-2); font-size: .9em; color: var(--text-2); box-shadow: inset 3px 0 0 var(--line); }
+.note.warn { box-shadow: inset 3px 0 0 var(--warn); background: color-mix(in srgb, var(--warn) 9%, var(--surface)); }
+.note.bad { box-shadow: inset 3px 0 0 var(--bad); background: color-mix(in srgb, var(--bad) 8%, var(--surface)); }
+.log { white-space: pre-wrap; background: var(--disp-bg); color: var(--disp-fg); font: .8em/1.55 var(--font-mono); border-radius: 8px; padding: .8em 1em; margin: 5px; max-height: 18em; overflow: auto; box-shadow: inset 0 2px 6px rgba(0, 0, 0, .3), 0 0 0 4px var(--chrome-bg), 0 0 0 5px #000; }
+
+/* ───────────── motion and feedback ─────────────
+   Keys travel and spring back; LCDs never tween, they switch in steps; anything that loops is stepped. */
+@keyframes keyUp { 0% { --press: 1; } 45% { --press: -.35; } 100% { --press: 0; } }
+@keyframes ledOn { 0% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: .2; } 65%, 100% { opacity: 1; } }
+@keyframes blink { 50% { opacity: .25; } }
+@keyframes rowIn { from { opacity: 0; transform: translateY(4px); } }
+@keyframes rowNew { 0%, 30% { background: color-mix(in srgb, var(--accent) 30%, transparent); } 100% { background: transparent; } }
+@keyframes scrimIn { from { opacity: 0; } }
+@keyframes dlgIn { from { transform: scale(.96) translateY(8px); opacity: 0; } }
+@keyframes toastIn { from { transform: translateY(30%); opacity: 0; } }
+@keyframes focusIn { from { outline-offset: 6px; outline-color: transparent; } }
+@keyframes chipUp { 0% { translate: 0 1px; } 45% { translate: 0 -1px; } }
+@keyframes lcdBoot { 0% { opacity: .2; } 20% { opacity: 1; } 35% { opacity: .5; } 50%, 100% { opacity: 1; } }
+.chip { transition: background calc(var(--m) * 120ms), border-color calc(var(--m) * 120ms), color calc(var(--m) * 120ms), translate calc(var(--m) * 60ms); }
+.chip:active { translate: 0 1px; }
+.chip.ack { animation: chipUp calc(var(--m) * 220ms + 1ms) var(--ease); }
+.display.boot > * { animation: lcdBoot calc(var(--m) * 320ms + 1ms) steps(1, end); }
+:is(.btn, .nv, .wk, .chip):focus-visible { animation: focusIn calc(var(--m) * 160ms + 1ms) var(--ease); }
+html[data-motion="0"] .led.run { animation: none; }
+
+/* ───────────── hover (pointer devices only) ───────────── */
+@media (hover: hover) {
+  .btn:hover { background: linear-gradient(to bottom, color-mix(in srgb, #fff 26%, var(--surface-2)), var(--surface-2)); }
+  .btn.primary:hover { background: linear-gradient(to bottom, color-mix(in srgb, #fff 30%, var(--accent)), var(--accent)); }
+  .btn:is(.dark, .on, [aria-pressed="true"]):hover { background: linear-gradient(to bottom, color-mix(in srgb, #fff 22%, var(--chrome-bg)), var(--chrome-bg)); }
+  .btn.ghost:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+  .btn[disabled]:hover { background: linear-gradient(to bottom, color-mix(in srgb, #fff 14%, var(--surface-2)), var(--surface-2)); }
+  .nv:not(.on):hover { background: var(--surface-2); color: var(--text); }
+  .chip:not([disabled]):hover { border-color: color-mix(in srgb, var(--text) 35%, var(--line)); color: var(--text); }
+  .row:not(.sel):hover { background: var(--surface-2); }
+  .wk:hover { color: var(--text); background: linear-gradient(to bottom, color-mix(in srgb, #fff 26%, var(--surface-2)), var(--surface-2)); }
+  .wk-x:hover { color: var(--on-bad); background: linear-gradient(to bottom, color-mix(in srgb, #fff 14%, var(--bad)), var(--bad)); }
+}
+
+/* gallery only: hover and focus pinned on, to show those states at rest */
+.btn.hov { background: linear-gradient(to bottom, color-mix(in srgb, #fff 26%, var(--surface-2)), var(--surface-2)); }
+.btn.primary.hov { background: linear-gradient(to bottom, color-mix(in srgb, #fff 30%, var(--accent)), var(--accent)); }
+.btn.focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ───────────── sizes ───────────── */
+@media (max-width: 1100px) {
+  .split { grid-template-columns: 13em minmax(0, 1fr); }
+  .split > .detail { grid-column: 1 / -1; }
+}
+@media (max-width: 820px) {
+  .shell > .side { width: auto; }
+  .shell > .side .nv .lb, .shell > .side .foot .display { display: none; }
+  .grid2, .split { grid-template-columns: minmax(0, 1fr); }
+}

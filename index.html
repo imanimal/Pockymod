@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pocket Mods</title>
+    <script>
+      // Apply the theme before first paint: the saved choice, else the system setting.
+      (function () {
+        var t = "system";
+        try { t = localStorage.getItem("pm.theme") || "system"; } catch (e) {}
+        var night = t === "night" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        var r = document.documentElement;
+        r.classList.toggle("night", night);
+        r.dataset.scheme = night ? "dark" : "light";
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
