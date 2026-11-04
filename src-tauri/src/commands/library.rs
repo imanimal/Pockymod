@@ -249,3 +249,13 @@ pub async fn library_identify(state: State<'_, AppState>, path: String) -> Resul
     }
     Ok(Identified { name: plain(), ..Default::default() })
 }
+
+/// Stop a running download (its part is kept for a retry), or take a waiting item out.
+#[tauri::command]
+pub fn queue_cancel(app: AppHandle, state: State<'_, AppState>, id: u64) -> QueueSnapshot {
+    let busy = state.queue.lock().unwrap().get(id).is_some_and(|i| matches!(i.state, pocket_core::queue::ItemState::Downloading { .. }));
+    if busy { state.cancel.lock().unwrap().insert(id); } else { state.queue.lock().unwrap().remove(id); }
+    state.pump.notify_one();
+    runner::emit(&app);
+    runner::snapshot(&app)
+}

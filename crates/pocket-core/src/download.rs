@@ -7,6 +7,8 @@ use md5::{Digest, Md5};
 use std::path::{Path, PathBuf};
 use tokio::io::AsyncWriteExt;
 
+pub const CANCELLED: &str = "Download cancelled. Retry picks it up where it stopped.";
+
 pub struct Downloaded { pub path: PathBuf, pub size: u64, pub md5: String }
 
 /// A file name safe on Windows, from Nexus's `uri` (e.g. `ArchiveXL-4198-1-28-6-1761742782.zip`).
@@ -19,7 +21,7 @@ pub fn safe_file_name(name: &str) -> String {
 /// `progress(received, total)` is called as bytes arrive. A connection that drops is picked up again where it
 /// stopped (a Range request), up to five times with a growing pause, so a long download on a free account survives
 /// a hiccup without a new click on Nexus.
-pub async fn download(http: &reqwest::Client, url: &str, dir: &Path, file_name: &str, mut progress: impl FnMut(u64, Option<u64>)) -> Result<Downloaded> {
+pub async fn download(http: &reqwest::Client, url: &str, dir: &Path, file_name: &str, mut progress: impl FnMut(u64, Option<u64>) -> bool) -> Result<Downloaded> {
     tokio::fs::create_dir_all(dir).await?;
     let path = dir.join(safe_file_name(file_name));
     let part = path.with_extension(format!("{}part", path.extension().map(|e| format!("{}.", e.to_string_lossy())).unwrap_or_default()));
@@ -58,7 +60,7 @@ async fn hash_file(p: &Path) -> Result<(u64, String)> {
 }
 
 /// One request: from the start, or the rest of a `.part` left by an earlier try.
-async fn try_download(http: &reqwest::Client, url: &str, part: &Path, progress: &mut impl FnMut(u64, Option<u64>)) -> Result<()> {
+async fn try_download(http: &reqwest::Client, url: &str, part: &Path, progress: &mut impl FnMut(u64, Option<u64>) -> bool) -> Result<()> {
     let have = tokio::fs::metadata(part).await.map(|m| m.len()).unwrap_or(0);
     let mut req = http.get(url);
     if have > 0 { req = req.header("Range", format!("bytes={have}-")); }
@@ -77,7 +79,8 @@ async fn try_download(http: &reqwest::Client, url: &str, part: &Path, progress: 
         let chunk = chunk.map_err(|e| Error::Network(format!("{}. Retry to resume the download.", e.without_url())))?;
         file.write_all(&chunk).await?;
         received += chunk.len() as u64;
-        progress(received, total);
+        // false: the user cancelled; the part stays, so starting it again resumes
+        if !progress(received, total) { file.flush().await?; return Err(Error::Invalid(CANCELLED.into())); }
     }
     file.flush().await?;
     drop(file);
@@ -124,7 +127,7 @@ mod tests {
         // half of it is already there from an earlier try
         std::fs::write(dir.path().join("m.zip.part"), &body[..10]).unwrap();
         let http = reqwest::Client::builder().no_proxy().build().unwrap();
-        let d = download(&http, &url, dir.path(), "m.zip", |_, _| {}).await.unwrap();
+        let d = download(&http, &url, dir.path(), "m.zip", |_, _| true).await.unwrap();
         assert_eq!(std::fs::read(&d.path).unwrap(), body);
         assert_eq!(d.md5, hex::encode(Md5::digest(body)));
         assert!(!dir.path().join("m.zip.part").exists());

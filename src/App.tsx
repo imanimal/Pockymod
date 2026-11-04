@@ -17,6 +17,7 @@ import { Onboarding } from "./screens/Onboarding";
 import { LaunchDeck } from "./ui/LaunchDeck";
 import { HistoryMenu } from "./ui/HistoryMenu";
 import { installUndoKeys } from "./lib/history";
+import { applyTextSize, installZoomKeys } from "./lib/zoom";
 import { DropZone } from "./ui/DropZone";
 import { FomodDialog } from "./screens/FomodDialog";
 import { Create } from "./screens/Create";
@@ -56,6 +57,7 @@ export function App() {
 
   useEffect(() => watchSystemTheme(() => setScheme(applyTheme())), []);
   useEffect(() => installUndoKeys(), []);
+  useEffect(() => { applyTextSize(); return installZoomKeys((px) => toast(`Text size ${px}px. Ctrl+0 resets it.`)); }, []);
   useEffect(() => {
     const offs: Array<() => void> = [];
     queue.get().then(setSnap).catch(() => {});

@@ -176,6 +176,8 @@ export function installDemo() {
     },
     queue_remove: ({ id }) => { const i = q.findIndex((x) => x.id === id); if (i >= 0) q.splice(i, 1); pump(); return snapshot(); },
     queue_retry: () => snapshot(),
+    updates_skip: () => { demoEmit("updates", []); return []; },
+    queue_cancel: ({ id }) => { const k = q.findIndex((x) => x.id === id); if (k >= 0) q[k].state = { state: "failed", message: "Download cancelled. Retry picks it up where it stopped." }; pump(); return snapshot(); },
     queue_clear_finished: () => { for (let i = q.length - 1; i >= 0; i--) if (["done", "failed"].includes(q[i].state.state)) q.splice(i, 1); demoEmit("queue", snapshot()); return snapshot(); },
     queue_show_page: () => {},
     open_nexus_page: () => { throw { kind: "demo", message: "Nexus pages open in their own window in the desktop app." }; },

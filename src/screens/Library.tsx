@@ -5,7 +5,7 @@ import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
 import { Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Tag, bytesText } from "../ui/pocket";
 import {
-  FRAMEWORKS, errorText, groups as groupsApi, library, pickArchive, profiles, queue, queueMod,
+  FRAMEWORKS, errorText, groups as groupsApi, library, pickArchive, profiles, queue, queueMod, updates as updatesApi,
   type Conflict, type DeployOutcome, type DownloadRow, type InstallOutcome, type InstallPlan, type InstallRow, type Update,
 } from "../lib/api";
 import { toast } from "../ui/toast";
@@ -283,6 +283,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                     </span>
                     <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                       {upd.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
+                      {upd.get(r.modId) && <Key size="sm" variant="ghost" onClick={() => run(async () => { const u = upd.get(r.modId)!; await updatesApi.skip(u.modId, u.latest); toast(`Skipping ${r.name} ${u.latest}. A newer version shows again.`); })} disabled={busy} title="Do not offer this version again">Skip</Key>}
                       {r.enabled && r.deployedFiles === 0 && <Key size="sm" onClick={() => deploy(r)} disabled={busy}>Deploy</Key>}
                       <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}><span className="sr-only">On</span></Switch>
                       <Key size="sm" variant="ghost" icon="trash" onClick={() => doBulk("uninstall", [r.id])} disabled={busy} aria-label={`Remove ${r.name}`} title={r.source === "vortex" ? "Remove from the game; it stays in Vortex" : "Remove"} />

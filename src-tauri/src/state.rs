@@ -17,6 +17,8 @@ pub struct AppState {
     pub queue: Arc<Mutex<Queue>>,
     /// Wakes the queue runner.
     pub pump: Arc<Notify>,
+    /// Queue items whose running download the user cancelled.
+    pub cancel: Arc<Mutex<std::collections::HashSet<u64>>>,
 }
 
 impl AppState {
@@ -31,7 +33,7 @@ impl AppState {
         let _ = pocket_core::install::purge_trash(&db, None);
         Ok(AppState {
             nexus: Arc::new(NexusClient::new(key)?), keys, user: RwLock::new(None), db: Arc::new(Mutex::new(db)),
-            queue: Arc::new(Mutex::new(Queue::default())), pump: Arc::new(Notify::new()),
+            queue: Arc::new(Mutex::new(Queue::default())), pump: Arc::new(Notify::new()), cancel: Arc::new(Mutex::new(Default::default())),
         })
     }
 }

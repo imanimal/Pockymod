@@ -188,6 +188,8 @@ export const queue = {
   plan: (modId: number, fileId: number) => call<QueueItem[]>("queue_plan", { modId, fileId }),
   add: (modId: number, fileId: number, withDependencies = true) => call<QueueSnapshot>("queue_add", { modId, fileId, withDependencies }),
   remove: (id: number) => call<QueueSnapshot>("queue_remove", { id }),
+  /** Stop a running download (it resumes on Retry), or take a waiting one out. */
+  cancel: (id: number) => call<QueueSnapshot>("queue_cancel", { id }),
   retry: (id: number) => call<QueueSnapshot>("queue_retry", { id }),
   clearFinished: () => call<QueueSnapshot>("queue_clear_finished"),
   showPage: (id: number) => call<void>("queue_show_page", { id }),
@@ -262,6 +264,8 @@ export const updates = {
   check: () => call<Update[]>("updates_check"),
   last: () => call<Update[]>("updates_last"),
   onChange: (cb: (u: Update[]) => void) => listen<Update[]>("updates", cb),
+  /** Skip this version (a newer one shows again). */
+  skip: (modId: number, version: string) => call<Update[]>("updates_skip", { modId, version }),
 };
 export const queueMod = (modId: number) => call<QueueSnapshot>("queue_add_mod", { modId });
 

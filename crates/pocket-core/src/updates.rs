@@ -48,6 +48,7 @@ pub async fn check(client: &NexusClient, db: &Mutex<Db>) -> Result<Vec<Update>> 
             }
         }
     }
+    let skipped = skipped(&db.lock().unwrap());
     let mut out = Vec::new();
     for (mod_id, updated_at) in changed {
         let Ok((_, files)) = crate::browse::mod_files(client, db, mod_id, Some(&updated_at)).await else { continue };
@@ -57,7 +58,8 @@ pub async fn check(client: &NexusClient, db: &Mutex<Db>) -> Result<Vec<Update>> 
             let _ = at;
             let newer = next.file_id != *file_id && !ver.is_empty()
                 && crate::health::version_key(&next.version) != crate::health::version_key(ver);
-            if newer {
+            let skip = skipped.get(&mod_id).is_some_and(|v| crate::health::version_key(v) == crate::health::version_key(&next.version));
+            if newer && !skip {
                 out.push(Update { mod_id, name: name.clone(), installed: ver.clone(), latest: next.version.clone(), updated_at: updated_at.clone(), install_id: *install_id, file_id: next.file_id });
             }
         }
@@ -75,4 +77,19 @@ pub fn last(db: &Db) -> Vec<Update> {
             latest: u["latest"].as_str()?.into(), updated_at: u["updatedAt"].as_str()?.into(),
             install_id: u["installId"].as_i64().unwrap_or(0), file_id: u["fileId"].as_u64().unwrap_or(0) as u32,
         })).collect()).unwrap_or_default()
+}
+
+/// Versions the user chose to skip: mod id to the version (a later version shows again).
+pub fn skipped(db: &Db) -> std::collections::BTreeMap<u32, String> {
+    db.setting("updates.skip").ok().flatten().and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_default()
+}
+
+/// Skip one version of a mod's update, and drop it from the last result.
+pub fn skip(db: &Db, mod_id: u32, version: &str) -> Result<Vec<Update>> {
+    let mut m = skipped(db);
+    m.insert(mod_id, version.to_string());
+    db.set_setting("updates.skip", &serde_json::to_string(&m).unwrap_or_default())?;
+    let left: Vec<Update> = last(db).into_iter().filter(|u| !(u.mod_id == mod_id && crate::health::version_key(&u.latest) == crate::health::version_key(version))).collect();
+    db.set_setting("updates.last", &serde_json::to_string(&left).unwrap_or_default())?;
+    Ok(left)
 }

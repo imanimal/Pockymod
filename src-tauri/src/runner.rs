@@ -243,6 +243,7 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
                     drop(q);
                     emit(&app2);
                 }
+                !app2.state::<AppState>().cancel.lock().unwrap().remove(&id)
             }).await?;
             install::record_download(&st.db.lock().unwrap(), item.mod_id, item.file_id, &item.file_name, &item.version, &dl.path, dl.size, &dl.md5)?;
             dl.path

@@ -205,3 +205,11 @@ pub async fn scripts_reset(state: State<'_, AppState>) -> Result<usize> {
     crate::commands::not_while_running()?;
     blocking(move || game::reset_scripts(&game).map_err(Error::from)).await
 }
+
+/// Skip this version of a mod's update (a newer one shows again).
+#[tauri::command]
+pub async fn updates_skip(app: AppHandle, state: State<'_, AppState>, mod_id: u32, version: String) -> Result<Vec<Update>> {
+    let left = updates::skip(&state.db.lock().unwrap(), mod_id, &version)?;
+    let _ = app.emit("updates", &left);
+    Ok(left)
+}

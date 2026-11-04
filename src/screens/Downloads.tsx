@@ -77,7 +77,8 @@ function QueueRow({ i, onRetry, onRemove }: { i: QueueItem; onRetry: () => void;
         <Pill tone={l.tone}>{l.text}</Pill>
         {i.state.state === "failed" && <Key size="sm" icon="refresh" onClick={onRetry} aria-label="Retry" title="Retry" />}
         {!busy && i.state.state !== "done" && <Key size="sm" variant="ghost" icon="x" onClick={onRemove} aria-label="Remove" title="Remove" />}
-        {busy && <Icon name="clock" />}
+        {i.state.state === "downloading" && <Key size="sm" variant="ghost" icon="x" onClick={() => void queue.cancel(i.id).catch(() => {})} aria-label="Stop this download" title="Stop (it resumes from here on Retry)" />}
+        {i.state.state === "installing" && <Icon name="clock" />}
       </span>
     </div>
   );
