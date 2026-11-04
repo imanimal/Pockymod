@@ -1,0 +1,48 @@
+{
+  "format": "pocket-mods.extension",
+  "version": 1,
+  "id": "library-report",
+  "name": "Library report",
+  "release": "1.0.0",
+  "author": "Pocket Mods",
+  "description": "Two panels: your mods by size, with a switch for each, and a checklist of things to do before you play. A worked example of panels.",
+  "icon": [
+    ".........",
+    ".......#.",
+    ".....#.#.",
+    ".....#.#.",
+    "...#.#.#.",
+    "...#.#.#.",
+    ".#.#.#.#.",
+    ".#.#.#.#.",
+    "#########"
+  ],
+  "tags": [
+    "panel",
+    "library",
+    "example"
+  ],
+  "permissions": [
+    "library.read",
+    "library.toggle",
+    "nexus.open",
+    "toast",
+    "storage"
+  ],
+  "contributes": {
+    "panels": [
+      {
+        "id": "by-size",
+        "title": "Mods by size",
+        "icon": "library",
+        "html": "<style>\n  .top { display: flex; align-items: center; gap: .5em; flex-wrap: wrap; margin-bottom: .9em; }\n  .top .sp { flex: 1; }\n  td.size { font-family: var(--font-mono); font-size: .86em; white-space: nowrap; text-align: right; color: var(--text-2); }\n  td.bar { width: 28%; }\n  .bar i { display: block; height: 7px; border-radius: 3px; background: var(--accent); }\n  td.name button { all: unset; cursor: pointer; color: var(--text); font-weight: 600; }\n  td.name button:hover { text-decoration: underline; }\n  td.name .dim { display: block; font-size: .8em; font-weight: 400; }\n  tr.off td { opacity: .55; }\n  tr.off td.on { opacity: 1; }\n  .empty { padding: 2em 0; text-align: center; }\n</style>\n<div class=\"top\">\n  <div class=\"lcd\"><span>Mods</span><b id=\"count\">--</b></div>\n  <div class=\"lcd\"><span>Archives</span><b id=\"total\">--</b></div>\n  <div class=\"lcd\"><span>Turned on</span><b id=\"on\">--</b></div>\n  <span class=\"sp\"></span>\n  <label class=\"row\"><input type=\"checkbox\" id=\"onlyOn\"> Only mods that are on</label>\n  <button id=\"refresh\">Refresh</button>\n</div>\n<table>\n  <thead><tr><th>Mod</th><th>Group</th><th class=\"bar\">Size</th><th></th><th>On</th></tr></thead>\n  <tbody id=\"rows\"></tbody>\n</table>\n<p class=\"dim empty\" id=\"empty\" hidden>No mods yet. Install some, or bring in the ones you have from Library.</p>\n<p class=\"dim\">Sizes are the downloaded archives. Mods brought in from Vortex or found in the game have no archive here.</p>\n<script>\n  const $ = (id) => document.getElementById(id);\n  const fmt = (b) => {\n    if (b == null) return \"–\";\n    const u = [\"B\", \"KB\", \"MB\", \"GB\"];\n    let i = 0;\n    while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }\n    return (b >= 100 || i === 0 ? Math.round(b) : b.toFixed(1)) + \" \" + u[i];\n  };\n  let mods = [];\n\n  function cell(row, text, cls) {\n    const td = document.createElement(\"td\");\n    if (cls) td.className = cls;\n    if (text !== undefined) td.textContent = text;\n    row.appendChild(td);\n    return td;\n  }\n\n  function draw() {\n    const only = $(\"onlyOn\").checked;\n    const list = mods.filter((m) => !only || m.enabled).sort((a, b) => (b.size ?? -1) - (a.size ?? -1));\n    const max = Math.max(1, ...list.map((m) => m.size ?? 0));\n    $(\"count\").textContent = String(mods.length).padStart(2, \"0\");\n    $(\"total\").textContent = fmt(mods.reduce((a, m) => a + (m.size ?? 0), 0));\n    $(\"on\").textContent = String(mods.filter((m) => m.enabled).length).padStart(2, \"0\");\n    $(\"empty\").hidden = mods.length > 0;\n    const body = $(\"rows\");\n    body.replaceChildren();\n    for (const m of list) {\n      const tr = document.createElement(\"tr\");\n      if (!m.enabled) tr.className = \"off\";\n      const name = cell(tr, undefined, \"name\");\n      const b = document.createElement(\"button\");\n      b.textContent = m.name;\n      b.title = m.modId ? \"Open its Nexus page\" : \"Not a Nexus mod\";\n      b.onclick = () => { if (m.modId) pocket.nexus.open(m.modId).catch((e) => pocket.toast(e.message)); };\n      name.appendChild(b);\n      const sub = document.createElement(\"span\");\n      sub.className = \"dim\";\n      sub.textContent = [m.version && \"v\" + m.version, m.modType].filter(Boolean).join(\" · \");\n      name.appendChild(sub);\n      cell(tr, m.group);\n      const bar = cell(tr, undefined, \"bar\");\n      const i = document.createElement(\"i\");\n      i.style.width = Math.max(2, Math.round(((m.size ?? 0) / max) * 100)) + \"%\";\n      if (m.size == null) i.style.opacity = \".2\";\n      bar.appendChild(i);\n      cell(tr, fmt(m.size), \"size\");\n      const on = cell(tr, undefined, \"on\");\n      const box = document.createElement(\"input\");\n      box.type = \"checkbox\";\n      box.checked = m.enabled;\n      box.setAttribute(\"aria-label\", \"Turn \" + m.name + \" on or off\");\n      box.onchange = async () => {\n        box.disabled = true;\n        try {\n          const r = await pocket.library.setEnabled(m.id, box.checked);\n          if (!r.ok) { pocket.toast(r.reason); box.checked = !box.checked; }\n          else m.enabled = box.checked;\n        } catch (e) { pocket.toast(e.message); box.checked = !box.checked; }\n        box.disabled = false;\n        draw();\n      };\n      on.appendChild(box);\n      body.appendChild(tr);\n    }\n  }\n\n  async function load() {\n    try { mods = await pocket.library.list(); draw(); } catch (e) { pocket.toast(e.message); }\n  }\n  $(\"onlyOn\").onchange = draw;\n  $(\"refresh\").onclick = load;\n  pocket.ready.then(load);\n</script>"
+      },
+      {
+        "id": "checklist",
+        "title": "Checklist",
+        "icon": "check",
+        "html": "<h2>Before you play</h2>\n<p class=\"dim\">Your own list of things to check. It is kept by this extension and stays when you close the app.</p>\n<ul id=\"list\" style=\"list-style: none; padding: 0; display: flex; flex-direction: column; gap: .4em;\"></ul>\n<div class=\"row\">\n  <input id=\"text\" placeholder=\"Add a step, like: back up saves\" style=\"flex: 1; min-width: 12em;\">\n  <button class=\"primary\" id=\"add\">Add</button>\n  <button class=\"ghost\" id=\"reset\">Untick all</button>\n</div>\n<script>\n  const $ = (id) => document.getElementById(id);\n  const START = [\n    { text: \"After a game patch, update Cyber Engine Tweaks, RED4ext and redscript\", done: false },\n    { text: \"Check Health for missing requirements\", done: false },\n    { text: \"Back up your saves\", done: false },\n  ];\n  let items = [];\n\n  const save = () => pocket.storage.set(\"items\", items).catch((e) => pocket.toast(e.message));\n\n  function draw() {\n    const list = $(\"list\");\n    list.replaceChildren();\n    items.forEach((item, i) => {\n      const li = document.createElement(\"li\");\n      li.className = \"card row\";\n      const box = document.createElement(\"input\");\n      box.type = \"checkbox\";\n      box.checked = item.done;\n      box.onchange = () => { item.done = box.checked; save(); draw(); };\n      const label = document.createElement(\"span\");\n      label.textContent = item.text;\n      label.style.flex = \"1\";\n      if (item.done) label.style.textDecoration = \"line-through\";\n      const remove = document.createElement(\"button\");\n      remove.className = \"ghost\";\n      remove.textContent = \"Remove\";\n      remove.onclick = () => { items.splice(i, 1); save(); draw(); };\n      li.append(box, label, remove);\n      list.appendChild(li);\n    });\n  }\n\n  $(\"add\").onclick = () => {\n    const text = $(\"text\").value.trim();\n    if (!text) return;\n    items.push({ text, done: false });\n    $(\"text\").value = \"\";\n    save();\n    draw();\n  };\n  $(\"text\").onkeydown = (e) => { if (e.key === \"Enter\") $(\"add\").click(); };\n  $(\"reset\").onclick = () => { items.forEach((i) => { i.done = false; }); save(); draw(); };\n\n  pocket.ready.then(async () => {\n    items = (await pocket.storage.get(\"items\")) ?? START;\n    draw();\n  });\n</script>"
+      }
+    ]
+  }
+}

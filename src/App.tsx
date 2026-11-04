@@ -21,6 +21,7 @@ import { applyTextSize, installZoomKeys } from "./lib/zoom";
 import { DropZone } from "./ui/DropZone";
 import { FomodDialog } from "./screens/FomodDialog";
 import { Create } from "./screens/Create";
+import { Addons } from "./screens/Addons";
 import { Toasts, toast } from "./ui/toast";
 import { installPrefs } from "./lib/prefs";
 import { errorText, game, handler, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
@@ -28,7 +29,7 @@ import { applyTheme, getThemeChoice, setThemeChoice, watchSystemTheme } from "./
 import { windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
 
-export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "create" | "gallery";
+export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "create" | "gallery" | "addons";
 
 const VIEWS: Array<{ id: View; label: string; icon: IconName }> = [
   { id: "browse", label: "Browse", icon: "browse" },
@@ -38,6 +39,7 @@ const VIEWS: Array<{ id: View; label: string; icon: IconName }> = [
   { id: "loadorder", label: "Load order", icon: "loadorder" },
   { id: "health", label: "Health", icon: "health" },
   { id: "create", label: "Create", icon: "share" },
+  { id: "addons", label: "Add-ons", icon: "addons" },
   { id: "settings", label: "Settings", icon: "settings" },
 ];
 
@@ -154,6 +156,7 @@ export function App() {
           : view === "health" ? <Health onNavigate={setView} onIssues={setHealthIssues} />
           : view === "loadorder" ? <LoadOrder />
           : view === "create" ? <Create />
+          : view === "addons" ? <Addons onNavigate={setView} />
           : view === "collections" ? <Collections onQueued={() => setView("downloads")} />
           : view === "browse" ? null
           : <Placeholder view={here.label} icon={here.icon} />}

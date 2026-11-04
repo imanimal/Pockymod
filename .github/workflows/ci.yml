@@ -28,6 +28,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: Marketplace packages
+        run: node scripts/validate-marketplace.mjs
       - run: cargo test -p pocket-core
       - run: cargo build -p pocket-mods
 

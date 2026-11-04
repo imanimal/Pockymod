@@ -1,0 +1,152 @@
+/* Add-ons: the marketplace grid, theme swatches, extension checks, installed rows, panels, and the Play menu.
+   Built from the Pocket kit (modules, keys, LCD inlays, chips); only layout and the swatch drawing are new here. */
+
+.addons.with-panel { height: 100%; min-height: 30em; }
+.addons-hint { font-size: .86em; margin: -.2em 0 0; }
+.addons-inst { max-width: 80em; }
+.vtab-sep { width: 1px; align-self: stretch; margin: .2em .3em; background: var(--line); }
+.vtabs .chip .i { color: var(--accent); }
+
+/* marketplace cards: a small module, the band carries the kind and version */
+.agrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16.5em, 1fr)); gap: .9em; align-items: stretch; }
+.acard { min-width: 0; }
+.acard .ph { min-height: 2.1em; padding: .2em .7em; }
+.acard .ph .pt { font-size: .68em; }
+.acard .ph .cnt { font-size: .7em; }
+.acard .ph::after { display: none; }
+.acard.skel { height: 19em; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.acard-pre { position: relative; aspect-ratio: 16 / 8; background: var(--surface-2); display: grid; place-items: center; overflow: hidden; box-shadow: inset 0 -1px 0 var(--line); }
+.acard-pre img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.acard-pre.ext { background: radial-gradient(color-mix(in srgb, var(--chrome-fg) 14%, transparent) 1px, transparent 1.5px) 0 0 / 12px 12px, var(--chrome-bg); }
+.acard-glyph { color: var(--accent); display: grid; place-items: center; width: 5.4em; height: 5.4em; border-radius: 14px; background: color-mix(in srgb, var(--chrome-fg) 6%, var(--chrome-bg)); box-shadow: 0 0 0 1px #000, 0 3px 0 #000; }
+.acard-badge { position: absolute; top: .55em; right: .55em; }
+.acard-b { flex: 1; display: flex; flex-direction: column; gap: .35em; padding: .7em .85em .75em; min-width: 0; }
+.acard-t { color: var(--text); font-size: 1.02em; line-height: 1.25; }
+.acard-s { font-size: .86em; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.acard-can { display: flex; flex-direction: column; gap: .15em; font-size: .78em; color: var(--text-3); }
+.acard-can .i { color: var(--text-3); }
+.acard-f { display: flex; align-items: center; gap: .4em; margin-top: auto; padding-top: .35em; }
+.acard-f .sp { flex: 1; }
+.acard-f .btn { margin-bottom: 0; }
+.acard-have { font-size: .84em; display: inline-flex; align-items: center; gap: .35em; }
+.acard-have .i { color: var(--ok); }
+
+/* a theme swatch: the app drawn small in the theme's colours */
+.tsw { display: flex; width: 100%; height: 100%; }
+.tsw-win {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
+  background: radial-gradient(color-mix(in srgb, var(--t-text) 14%, transparent) 1px, transparent 1.4px) 0 0 / 9px 9px, var(--t-bg);
+}
+.tsw.two .tsw-win + .tsw-win { box-shadow: inset 1px 0 0 rgba(0, 0, 0, .25); }
+.tsw-top { flex: none; height: 15%; display: flex; align-items: center; gap: 5%; padding: 0 6%; background: color-mix(in srgb, var(--t-text) 5%, var(--t-bg)); box-shadow: inset 0 -1px 0 var(--t-line); }
+.tsw-top .dot { width: 7%; aspect-ratio: 1; border-radius: 22%; background: var(--t-disp); box-shadow: 0 0 0 1px var(--t-chrome); }
+.tsw-top .bar { width: 30%; height: 26%; border-radius: 2px; background: var(--t-text); opacity: .75; }
+.tsw-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 22% 1fr; gap: 5%; padding: 6% 6% 7%; }
+.tsw-rail { display: flex; flex-direction: column; gap: 9%; }
+.tsw-rail i { height: 17%; border-radius: 3px; background: var(--t-surface); box-shadow: 0 0 0 1px var(--t-line); }
+.tsw-rail i.on { background: var(--t-chrome); box-shadow: inset 4px 0 0 var(--t-accent); }
+.tsw-card { min-width: 0; display: flex; flex-direction: column; gap: 9%; border-radius: 6px; overflow: hidden; background: var(--t-surface); box-shadow: 0 0 0 1px var(--t-line), 0 2px 0 var(--t-line); }
+.tsw-band { flex: none; height: 17%; background: var(--t-chrome); box-shadow: inset 6px 0 0 -2px var(--t-accent); }
+.tsw-line { height: 8%; margin: 0 9%; width: 70%; border-radius: 2px; background: var(--t-text); opacity: .8; }
+.tsw-line.s { width: 46%; background: var(--t-text3); }
+.tsw-foot { margin: auto 9% 10%; display: flex; align-items: center; justify-content: space-between; gap: 6%; }
+.tsw-key { width: 34%; aspect-ratio: 3 / 1.1; border-radius: 4px; background: var(--t-accent); box-shadow: 0 2px 0 color-mix(in srgb, var(--t-accent) 55%, #000); }
+.tsw-lcd { font: 800 .72em/1 var(--font-num); padding: .25em .4em .2em; border-radius: 3px; background: var(--t-disp); color: var(--t-dispfg); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .3), 0 0 0 2px var(--t-chrome); }
+.tsw.compact { width: 7.2em; height: auto; aspect-ratio: 16 / 10; flex: none; border-radius: 7px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+.tsw.compact .tsw-lcd { font-size: .4em; }
+
+/* the check before install */
+.ext-head { display: flex; align-items: center; gap: .8em; }
+.ext-name { font-size: 1.1em; }
+.ext-glyph { flex: none; display: grid; place-items: center; width: 3.4em; height: 3.4em; border-radius: 10px; color: var(--accent); background: var(--chrome-bg); box-shadow: 0 0 0 1px #000, 0 2px 0 #000; }
+.ext-glyph.sm { width: 2.6em; height: 2.6em; border-radius: 8px; }
+.ext-sec { display: flex; flex-direction: column; gap: .2em; padding: .6em .75em .7em; border-radius: 10px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.ext-sec-h { display: flex; align-items: center; gap: .45em; font-size: .74em; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); margin-bottom: .15em; }
+.ext-sec-h .i { color: var(--accent); }
+.ext-adds .sub-h { display: flex; align-items: center; gap: .4em; margin: .6em 0 .2em; }
+.ext-adds > div:first-child .sub-h { margin-top: .1em; }
+.ext-adds ul, .ext-list { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: .15em; font-size: .9em; }
+.ext-adds b, .ext-list b, .ext-perms b { color: var(--text); font-weight: 600; }
+.ext-adds .pill, .ext-perms .pill { margin-left: .4em; font-size: .72em; }
+.ext-perms { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3em; font-size: .9em; }
+.ext-perms li { display: flex; gap: .5em; align-items: baseline; }
+.ext-perms li .i { color: var(--accent); flex: none; }
+.ext-none { font-size: .9em; display: flex; align-items: center; gap: .4em; }
+.ext-none .i { color: var(--ok); }
+.ext-fine { font-size: .82em; margin-top: .3em; }
+.ext-pick { display: flex; align-items: center; gap: .6em; padding: .3em 0; }
+.ext-pick .m-main { flex: 1; }
+.ext-pick .btn { margin-bottom: 0; }
+.ext-path { font-size: .78em; overflow-wrap: anywhere; }
+.ext-errs { margin: 0; padding-left: 1.2em; font-size: .8em; color: var(--bad); display: flex; flex-direction: column; gap: .2em; }
+.ext-errs-n { margin: .2em .4em .4em 3.4em; font-size: .8em; }
+
+/* numbered steps, the numbers on LCD chips */
+.ext-steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .75em; }
+.ext-steps > li { counter-increment: step; position: relative; padding-left: 2.5em; }
+.ext-steps > li::before {
+  content: counter(step); position: absolute; left: 0; top: -.05em; width: 1.75em; height: 1.65em; display: grid; place-items: center; border-radius: 5px;
+  font: 800 .92em/1 var(--font-num); background: var(--disp-bg); color: var(--disp-fg); box-shadow: inset 0 1px 3px rgba(0, 0, 0, .3), 0 0 0 2px var(--chrome-bg);
+}
+.ext-steps > li.done::before { background: color-mix(in srgb, var(--ok) 45%, var(--disp-bg)); }
+.ext-steps > li b { color: var(--text); }
+.ext-steps > li .actions { margin-top: .4em; }
+.ext-steps.compact { gap: .4em; font-size: .9em; margin: .3em 0 .6em; }
+.ext-steps.compact > li { padding-left: 2.1em; }
+.ext-steps.compact > li::before { width: 1.5em; height: 1.45em; font-size: .8em; }
+.ext-make { gap: .8em; align-items: start; }
+.ext-make-k { padding: .7em .8em .8em; border-radius: 10px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.ext-make-k .btn { margin-bottom: 3px; }
+.dialog:has(.ext-steps), .dialog:has(.ext-sec) { width: min(40em, 100%); }
+.dialog:has(.ext-make) { width: min(52em, 100%); }
+
+/* installed */
+.ext-row { display: flex; flex-direction: column; gap: .3em; padding: .55em .6em .45em; border-radius: 10px; }
+.ext-row + .ext-row { box-shadow: 0 -1px 0 var(--line); border-radius: 0; }
+.ext-row.off .ext-glyph { color: var(--text-3); }
+.ext-row-h { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .8em; align-items: center; }
+.ext-row-k { display: flex; align-items: center; gap: .5em; }
+.ext-row-k .btn { margin-bottom: 0; }
+.ext-sum { font-size: .82em; color: var(--text-3); }
+.ext-more { margin: .2em 0 0 3.4em; padding: .6em .8em; border-radius: 9px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: .35em; font-size: .92em; }
+.ext-more .sub-h { margin: .5em 0 .1em; }
+.ext-row-f { margin-left: 3.4em; gap: .25em; }
+.ext-row-f .btn { margin-bottom: 0; }
+.row.ext-theme { grid-template-columns: auto minmax(0, 1fr) auto; }
+.row.ext-theme .actions { gap: .25em; }
+.row.ext-theme .btn { margin-bottom: 0; }
+.ext-cmds { max-height: 22em; }
+.cmd-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .05em; padding: .2em 0; }
+.cmd-l .dim { font-size: .76em; }
+.cmd-l code { background: none; font-size: .82em; color: var(--text); overflow-wrap: anywhere; padding: 0; }
+.cmd .from { font-size: .72em; white-space: nowrap; }
+
+/* a panel: the module's body is the sandboxed frame */
+.ext-panel { flex: 1; min-height: 26em; }
+.ext-panel .pb.flush { display: flex; flex-direction: column; }
+.ext-frame { flex: 1; width: 100%; min-height: 0; border: 0; display: block; background: var(--surface); }
+.ext-panel-perms { display: flex; flex-wrap: wrap; align-items: center; gap: .4em .6em; padding: .55em .9em; font-size: .86em; background: var(--surface-2); box-shadow: inset 0 -1px 0 var(--line); }
+.ext-panel-perms .pill .i { color: var(--accent); }
+.ext-ask { display: flex; align-items: center; gap: .7em; padding: .6em .7em; border-radius: 9px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.ext-ask .i { color: var(--accent); }
+
+/* the Play menu: launch options, tools, console commands from extensions */
+.playkey { position: relative; display: inline-flex; align-items: center; gap: 3px; }
+.playkey > .btn.icon { padding-inline: .3em; }
+.playmenu { position: absolute; right: 0; top: calc(100% + .5em); width: 22em; z-index: 60; box-shadow: var(--drop); }
+.playmenu .pb { display: flex; flex-direction: column; gap: 2px; max-height: 70vh; }
+.playmenu .grp { padding: .5em .4em .2em; }
+.playmenu .grp:first-child { padding-top: .1em; }
+.playmenu .row .m-meta code { font-size: .92em; background: none; padding: 0; }
+.playmenu .row .i { color: var(--accent); }
+
+/* Library: where Sort into groups would move mods */
+.sortplan { max-height: 18em; overflow: auto; }
+.sortplan .row { cursor: default; }
+
+@media (max-width: 820px) {
+  .ext-more, .ext-row-f { margin-left: 0; }
+  .ext-make { grid-template-columns: minmax(0, 1fr); }
+  .ext-row-h { grid-template-columns: auto minmax(0, 1fr); }
+  .ext-row-k { grid-column: 1 / -1; justify-content: flex-end; }
+}

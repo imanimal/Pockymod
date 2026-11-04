@@ -1,0 +1,72 @@
+{
+  "format": "pocket-mods.extension",
+  "version": 1,
+  "id": "modding-tools",
+  "name": "Modding tools",
+  "release": "1.0.0",
+  "author": "Pocket Mods",
+  "description": "Start WolvenKit and the game's own launcher from the Play menu, start the game past its start screen, and open the modding wikis.",
+  "icon": [
+    "...###...",
+    "...#.#...",
+    "#########",
+    "#.......#",
+    "####.####",
+    "#...#...#",
+    "#.......#",
+    "#########",
+    "........."
+  ],
+  "tags": [
+    "tools",
+    "launch options",
+    "WolvenKit"
+  ],
+  "contributes": {
+    "tools": [
+      {
+        "id": "wolvenkit",
+        "name": "WolvenKit",
+        "description": "The modding toolkit: look inside archives, edit and pack mods.",
+        "pick": {
+          "title": "Find WolvenKit.exe",
+          "file": "WolvenKit.exe"
+        },
+        "download": "https://github.com/WolvenKit/WolvenKit/releases"
+      },
+      {
+        "id": "redlauncher",
+        "name": "REDlauncher",
+        "description": "The game's own launcher, from the game folder.",
+        "path": "REDprelauncher.exe"
+      }
+    ],
+    "launchOptions": [
+      {
+        "id": "skip-start",
+        "name": "Skip the start screen",
+        "description": "Goes straight to the main menu.",
+        "args": [
+          "-skipStartScreen"
+        ]
+      }
+    ],
+    "links": [
+      {
+        "id": "wiki",
+        "title": "Cyberpunk 2077 modding wiki",
+        "url": "https://wiki.redmodding.org/cyberpunk-2077-modding"
+      },
+      {
+        "id": "wolvenkit-wiki",
+        "title": "WolvenKit guide",
+        "url": "https://wiki.redmodding.org/wolvenkit"
+      },
+      {
+        "id": "cet",
+        "title": "Cyber Engine Tweaks on Nexus Mods",
+        "url": "https://www.nexusmods.com/cyberpunk2077/mods/107"
+      }
+    ]
+  }
+}

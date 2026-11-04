@@ -6,6 +6,7 @@ import { Empty, Key, Lcd, Module, Tag, bytesText, formatCount } from "../../ui/p
 import { FRAMEWORKS, browse, descriptionMedia, endorseMod, errorText, fileBytes, trackMod, type CardView, type Classification, type DetailView } from "../../lib/api";
 import { descriptionText, shortDate } from "../../lib/text";
 import { extractCommands } from "../../lib/commands";
+import { packCommandsFor, useExtensions } from "../../lib/extensions";
 import { toast } from "../../ui/toast";
 import { Gallery } from "./Media";
 
@@ -27,6 +28,7 @@ export function Detail({ card, onFlag, onInstall, onOpenPage, onOpen, onClose }:
   const [fileId, setFileId] = useState<number | null>(null);
   const [full, setFull] = useState(false);
   const [showList, setShowList] = useState(false);
+  const packs = useExtensions().active.commandPacks;
 
   useEffect(() => {
     let live = true;
@@ -46,7 +48,10 @@ export function Detail({ card, onFlag, onInstall, onOpenPage, onOpen, onClose }:
   const current = d.files.filter((f) => ["MAIN", "OPTIONAL", "UPDATE", "MISCELLANEOUS"].includes(f.category)).sort((a, b) => b.date - a.date);
   const file = d.files.find((f) => f.fileId === fileId);
   const desc = descriptionText(m.description);
-  const commands = extractCommands(desc);
+  // the description's own commands, then any from extension command packs that list this mod
+  const fromPacks = packCommandsFor(packs, m.modId);
+  const own = extractCommands(desc);
+  const commands = [...own, ...fromPacks.filter((p) => !own.some((c) => c.command === p.command))];
   const shots = descriptionMedia(m.description, m.pictureUrl);
   const view: CardView = { ...card, hidden: d.hidden, ignored: d.ignored };
 
@@ -117,7 +122,7 @@ export function Detail({ card, onFlag, onInstall, onOpenPage, onOpen, onClose }:
 }
 
 /** Console commands from the description, at the top of the detail in a dropdown that opens. */
-export function Commands({ list }: { list: Array<{ command: string; generated: boolean }> }) {
+export function Commands({ list }: { list: Array<{ command: string; generated: boolean; from?: string; label?: string }> }) {
   const [open, setOpen] = useState(list.length <= 3);
   const copy = (t: string) => navigator.clipboard.writeText(t).then(() => toast("Copied. Paste it in the Cyber Engine Tweaks console in game.")).catch(() => toast("Could not copy.", true));
   return (
@@ -134,6 +139,7 @@ export function Commands({ list }: { list: Array<{ command: string; generated: b
             <div key={c.command} className="cmd">
               <code>{c.command}</code>
               {c.generated && <span className="dim" title="Made from an item ID in the description">from item ID</span>}
+              {c.from && <span className="dim from" title={`From ${c.from}, an extension's command pack`}>{c.label ?? c.from}</span>}
               <Key size="sm" variant="ghost" icon="file" aria-label={`Copy ${c.command}`} title="Copy" onClick={() => copy(c.command)} />
             </div>
           ))}

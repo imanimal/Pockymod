@@ -16,6 +16,13 @@ Built milestone by milestone from [docs/build-prompt.md](docs/build-prompt.md). 
 - **Health**: missing or outdated frameworks after a game patch, broken deploys, REDmod state, each with one fix key. **Profiles** and the **REDmod load order**, with the REDmod deploy step.
 - **Collections**: browse Nexus collections with pre-install checks, and share your own as a file that pins mod IDs, file IDs, hashes and dependencies.
 
+## Add-ons
+
+Themes and extensions from the [marketplace](marketplace) (a folder in this repository) or from a file, in the app's **Add-ons** screen. Extensions add Browse shelves, Library group rules, tools and launch options in the Play menu, console commands, links and sandboxed panels, and each shows what it can do before it is installed.
+
+- [docs/marketplace.md](docs/marketplace.md): install, update, remove, and share your own.
+- [docs/extensions.md](docs/extensions.md): write an extension, step by step.
+
 ## Run
 
 ```

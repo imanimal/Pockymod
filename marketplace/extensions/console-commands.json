@@ -1,0 +1,131 @@
+{
+  "format": "pocket-mods.extension",
+  "version": 1,
+  "id": "console-commands",
+  "name": "Console commands",
+  "release": "1.0.0",
+  "author": "Pocket Mods",
+  "description": "Popular Cyber Engine Tweaks console commands to copy: money, levels and points, iconic gear, cars and bikes, and the time of day. Shown in the Play menu and on Cyber Engine Tweaks' page.",
+  "icon": [
+    ".........",
+    "#########",
+    "#.......#",
+    "#.#.....#",
+    "#..#....#",
+    "#.#.###.#",
+    "#.......#",
+    "#########",
+    "........."
+  ],
+  "tags": [
+    "console",
+    "Cyber Engine Tweaks",
+    "vehicles"
+  ],
+  "contributes": {
+    "commandPacks": [
+      {
+        "id": "money-levels",
+        "title": "Money, levels and points",
+        "mods": [
+          107
+        ],
+        "description": "Item and stat names can change with game patches. If one does nothing, check the mod or wiki you got it from.",
+        "commands": [
+          {
+            "label": "100,000 eddies",
+            "command": "Game.AddToInventory(\"Items.money\", 100000)"
+          },
+          {
+            "label": "Level 60",
+            "command": "Game.SetLevel(\"Level\", 60, 1)"
+          },
+          {
+            "label": "Street Cred 50",
+            "command": "Game.SetLevel(\"StreetCred\", 50, 1)"
+          },
+          {
+            "label": "One perk point",
+            "command": "Game.GiveDevPoints(\"Primary\", 1)"
+          },
+          {
+            "label": "One attribute point",
+            "command": "Game.GiveDevPoints(\"Attribute\", 1)"
+          }
+        ]
+      },
+      {
+        "id": "iconic",
+        "title": "Iconic gear",
+        "mods": [
+          107
+        ],
+        "commands": [
+          {
+            "label": "Johnny's Malorian Arms 3516",
+            "command": "Game.AddToInventory(\"Items.Preset_Silverhand_3516\", 1)"
+          },
+          {
+            "label": "Johnny's Samurai jacket",
+            "command": "Game.AddToInventory(\"Items.SQ031_Samurai_Jacket\", 1)"
+          }
+        ]
+      },
+      {
+        "id": "vehicles",
+        "title": "Cars and bikes",
+        "mods": [
+          107
+        ],
+        "description": "Adds the vehicle to the ones you can call.",
+        "commands": [
+          {
+            "label": "Porsche 911 (Johnny's)",
+            "command": "Game.GetVehicleSystem():EnablePlayerVehicle(\"Vehicle.v_sport2_porsche_911turbo_player\", true, false)"
+          },
+          {
+            "label": "Rayfield Caliburn",
+            "command": "Game.GetVehicleSystem():EnablePlayerVehicle(\"Vehicle.v_sport1_rayfield_caliburn_player\", true, false)"
+          },
+          {
+            "label": "Rayfield Aerondight",
+            "command": "Game.GetVehicleSystem():EnablePlayerVehicle(\"Vehicle.v_sport1_rayfield_aerondight_player\", true, false)"
+          },
+          {
+            "label": "Herrera Outlaw GTS",
+            "command": "Game.GetVehicleSystem():EnablePlayerVehicle(\"Vehicle.v_sport1_herrera_outlaw_player\", true, false)"
+          },
+          {
+            "label": "Quadra Type-66 Avenger",
+            "command": "Game.GetVehicleSystem():EnablePlayerVehicle(\"Vehicle.v_sport2_quadra_type66_avenger_player\", true, false)"
+          },
+          {
+            "label": "ARCH Nazaré",
+            "command": "Game.GetVehicleSystem():EnablePlayerVehicle(\"Vehicle.v_sportbike2_arch_player\", true, false)"
+          }
+        ]
+      },
+      {
+        "id": "time",
+        "title": "Time of day",
+        "mods": [
+          107
+        ],
+        "commands": [
+          {
+            "label": "Noon",
+            "command": "Game.GetTimeSystem():SetGameTimeByHMS(12, 0, 0)"
+          },
+          {
+            "label": "Sunset",
+            "command": "Game.GetTimeSystem():SetGameTimeByHMS(19, 30, 0)"
+          },
+          {
+            "label": "Midnight",
+            "command": "Game.GetTimeSystem():SetGameTimeByHMS(0, 0, 0)"
+          }
+        ]
+      }
+    ]
+  }
+}

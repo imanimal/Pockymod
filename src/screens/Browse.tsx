@@ -3,7 +3,7 @@
 // drawer whose Install key is the screen's one orange key.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
-import type { IconName } from "../ui/icons";
+import { ICONS, type IconName } from "../ui/icons";
 import { Chip, Empty, Key, Module, Pill, SearchField, Seg, Switch, formatCount } from "../ui/pocket";
 import {
   FRAMEWORKS, MOD_TYPES, browse, errorText, game, settings,
@@ -11,6 +11,7 @@ import {
 } from "../lib/api";
 import { daysAgo, shortDate } from "../lib/text";
 import { Detail, FrameworkTags, TypeTag } from "./browse/Detail";
+import { shelfQuery, useExtensions } from "../lib/extensions";
 import { Modio } from "./Modio";
 import { MediaWall } from "./browse/Media";
 
@@ -158,6 +159,7 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
     ...(size !== "any" ? [{ label: `Under ${size === "1024" ? "1 GB" : `${size} MB`}`, off: () => setSize("any") }] : []),
     ...(local.downloaded !== null ? [{ label: local.downloaded ? "Downloaded" : "Not downloaded", off: () => setLocal({ ...local, downloaded: null }) }] : []),
     ...(local.showHidden ? [{ label: "Showing hidden", off: () => setLocal({ ...local, showHidden: false }) }] : []),
+    ...(q.text && !text ? [{ label: `"${q.text}"`, off: () => set({ text: "" }) }] : []),
   ];
 
   if (modioOn && source === "modio") return (
@@ -298,7 +300,11 @@ function FrontPage({ patch, seed, onReshuffle, onOpen, onSeeAll, categories, onC
   patch: PatchOpt | null; seed: number; onReshuffle: () => void; onOpen: (c: CardView) => void; onSeeAll: (q: Partial<BrowseQuery>) => void;
   categories: Array<[string, number]>; onCategory: (c: string) => void; includeAdult: boolean;
 }) {
-  const list = shelves(patch, seed);
+  // shelves from extensions come after the first two of the app's own
+  const fromAddons = useExtensions().active.shelves.map((s) => ({ id: `ext:${s.extId}:${s.id}`, title: s.title, icon: (s.icon && s.icon in ICONS ? s.icon : "addons") as IconName,
+    hint: s.hint ? `${s.hint} · ${s.extName}` : `From ${s.extName}`, q: shelfQuery(s.query) }));
+  const base = shelves(patch, seed);
+  const list = [...base.slice(0, 2), ...fromAddons, ...base.slice(2)];
   return (
     <div className="stack">
       {categories.length > 0 && (

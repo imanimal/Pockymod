@@ -1,0 +1,128 @@
+{
+  "format": "pocket-mods.extension",
+  "version": 1,
+  "id": "photo-mode-and-looks",
+  "name": "Photo mode and looks",
+  "release": "1.0.0",
+  "author": "Pocket Mods",
+  "description": "Browse shelves for poses, cameras, lighting, weather and ReShade, and Library rules that sort photo mode mods and Atelier stores into their own groups.",
+  "icon": [
+    ".........",
+    "...###...",
+    "#########",
+    "#.......#",
+    "#..###..#",
+    "#..#.#..#",
+    "#..###..#",
+    "#.......#",
+    "#########"
+  ],
+  "tags": [
+    "photo mode",
+    "shelves",
+    "groups"
+  ],
+  "contributes": {
+    "shelves": [
+      {
+        "id": "poses",
+        "title": "Poses",
+        "hint": "Pose packs for photo mode",
+        "icon": "user",
+        "query": {
+          "tags": [
+            "Poses"
+          ],
+          "sort": "endorsements"
+        }
+      },
+      {
+        "id": "camera",
+        "title": "Cameras and photo mode",
+        "hint": "Framing, cameras and photo mode tools",
+        "icon": "eye",
+        "query": {
+          "tags": [
+            "Camera"
+          ],
+          "sort": "endorsements"
+        }
+      },
+      {
+        "id": "lighting",
+        "title": "Lighting",
+        "hint": "Light that makes the shot",
+        "icon": "sun",
+        "query": {
+          "tags": [
+            "Lighting"
+          ],
+          "sort": "endorsements"
+        }
+      },
+      {
+        "id": "weather",
+        "title": "Weather and sky",
+        "hint": "Rain, fog, clouds and sunsets",
+        "icon": "star",
+        "query": {
+          "tags": [
+            "Weather"
+          ],
+          "sort": "endorsements"
+        }
+      },
+      {
+        "id": "reshade",
+        "title": "ReShade presets",
+        "hint": "Colour and film looks",
+        "icon": "filter",
+        "query": {
+          "tags": [
+            "ReShade"
+          ],
+          "sort": "endorsements"
+        }
+      }
+    ],
+    "groupRules": [
+      {
+        "group": "Photo mode",
+        "match": {
+          "name": [
+            "photo mode",
+            "photomode",
+            "poses",
+            "pose pack"
+          ],
+          "category": [
+            "Animations"
+          ]
+        }
+      },
+      {
+        "group": "Lighting and ReShade",
+        "match": {
+          "name": [
+            "reshade",
+            "lighting",
+            "lut switcher"
+          ]
+        }
+      },
+      {
+        "group": "Atelier stores",
+        "match": {
+          "name": [
+            "virtual atelier",
+            "atelier store",
+            "atelier shop"
+          ],
+          "category": [
+            "Atelier Shop"
+          ]
+        }
+      }
+    ]
+  }
+}

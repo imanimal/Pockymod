@@ -464,6 +464,18 @@ export const ICONS = {
     ".#.#.#.#.",
     ".#######.",
   ],
+  // a cartridge: add-ons (themes and extensions)
+  addons: [
+    ".######..",
+    ".#....##.",
+    ".#.###.#.",
+    ".#.###.#.",
+    ".#.....#.",
+    ".#.....#.",
+    ".#######.",
+    ".#.#.#.#.",
+    ".........",
+  ],
 } as const;
 
 export type IconName = keyof typeof ICONS;
