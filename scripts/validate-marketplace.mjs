@@ -83,4 +83,4 @@ if (args[0] === "--file") {
 for (const n of notes) console.log(`note  ${n}`);
 for (const p of problems) console.log(`error ${p}`);
 if (problems.length) { console.log(`\n${problems.length} ${problems.length === 1 ? "problem" : "problems"}. See docs/marketplace.md for the rules.`); process.exit(1); }
-console.log("The marketplace checks out.");
+console.log(args[0] === "--file" ? "The file checks out." : "The marketplace checks out.");

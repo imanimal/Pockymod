@@ -45,6 +45,7 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
   const [make, setMake] = useState(false);
   const [removing, setRemoving] = useState<InstalledExtension | null>(null);
   const [cmds, setCmds] = useState<InstalledExtension | null>(null);
+  const [fileErrors, setFileErrors] = useState<{ kind: "theme" | "extension"; errors: string[] } | null>(null);
 
   const loadMarket = useCallback((fresh = false) => {
     setIxErr(null);
@@ -94,13 +95,13 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
     try { format = (JSON.parse(f.text) as { format?: unknown }).format; } catch { throw new Error("That file is not valid JSON."); }
     if (format === "pocket-mods.theme") {
       const c = checkThemeText(f.text);
-      if (!c.pkg) throw new Error(`That theme needs fixing: ${c.errors.slice(0, 2).join(" ")}`);
+      if (!c.pkg) { setFileErrors({ kind: "theme", errors: c.errors }); return; }
       const r = await installTheme(f.text);
       toast(`${r.name} is installed. Pick it in Settings, under Look.`);
       setTab("installed");
     } else if (format === "pocket-mods.extension") {
       const c = checkExtensionText(f.text);
-      if (!c.manifest) throw new Error(`That extension needs fixing: ${c.errors.slice(0, 2).join(" ")}`);
+      if (!c.manifest) { setFileErrors({ kind: "extension", errors: c.errors }); return; }
       setReview({ manifest: c.manifest, text: f.text, mode: extOf(c.manifest.id) ? "update" : "install", fromMarket: false, warnings: c.warnings });
     } else throw new Error("That is not a Pocket Mods theme or extension (its format field says what it is).");
   });
@@ -159,6 +160,15 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
         state={extOf(review.manifest.id)?.state} onClose={() => setReview(null)} onDone={() => { loadLocal(); setTab("installed"); }} />}
       {share && <ShareDialog kind={share.kind} text={share.text} onClose={() => setShare(null)} />}
       {make && <MakeDialog onClose={() => setMake(false)} />}
+      {fileErrors && (
+        <Dialog icon="warn" title="This file needs fixing" count={`${fileErrors.errors.length} ${fileErrors.errors.length === 1 ? "problem" : "problems"}`} band="bad" onClose={() => setFileErrors(null)}>
+          <p>Nothing was installed. Each line names the field to fix in the {fileErrors.kind} file:</p>
+          <ul className="ext-errs">{fileErrors.errors.slice(0, 20).map((e) => <li key={e} className="mono">{e}</li>)}</ul>
+          <p className="dim" style={{ fontSize: ".86em" }}>Fix them in a text editor, save, and use Install from file again.{" "}
+            <button type="button" className="linkish" onClick={() => openDocs(fileErrors.kind === "theme" ? "themes" : "extensions")}>The {fileErrors.kind} format</button></p>
+          <div className="actions" style={{ justifyContent: "flex-end" }}><Key variant="ghost" onClick={() => setFileErrors(null)}>Close</Key></div>
+        </Dialog>
+      )}
       {removing && (
         <Dialog icon="trash" title="Remove this extension?" count={removing.manifest?.name ?? removing.id} onClose={() => setRemoving(null)}>
           <p>{removing.manifest?.name ?? removing.id} and what it adds go away. Notes it kept are deleted too. Mods it sorted into groups stay where they are.</p>
