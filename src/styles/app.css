@@ -387,3 +387,24 @@
 .ccard:active > .panel { translate: 0 1px; }
 .mpage-side .lcds + .actions, .mpage-side > .actions { margin-top: .2em; }
 .grid3 > .ccard { animation: modIn calc(var(--m) * 320ms + 1ms) var(--ease) backwards; animation-delay: calc(var(--m) * var(--i, 0) * 45ms); }
+
+/* the browser pane (ui/BrowserPane.tsx): beside the app (.with-pane), over the whole view (.pane-full), or a tab */
+.shell.with-pane { grid-template: "top top top" auto "rail view pane" minmax(0, 1fr) / auto minmax(0, 1fr) var(--pane-w, 620px); }
+.shell.pane-full { grid-template: "top top" auto "rail pane" minmax(0, 1fr) / auto minmax(0, 1fr); }
+.shell.pane-full > .view { display: none; }
+.shell.with-pane .toasts { right: calc(var(--pane-w, 620px) + 1.2em); }
+.bpane { grid-area: pane; position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; margin: .4em 1.1em 1.1em .2em; border-radius: var(--radius); overflow: hidden; background: var(--surface); box-shadow: var(--card-shadow), 0 0 0 1px var(--line); }
+.bpane-bar { flex: none; display: flex; align-items: center; gap: .25em; padding: .3em .4em; background: var(--chrome-bg); color: var(--chrome-fg); }
+.bpane-bar .btn.ghost { color: inherit; }
+.bpane-url { all: unset; cursor: copy; flex: 1; min-width: 0; display: flex; align-items: baseline; gap: .5em; padding: .25em .55em; border-radius: 6px; background: color-mix(in srgb, var(--chrome-fg) 8%, transparent); overflow: hidden; white-space: nowrap; }
+.bpane-url b { overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: .88em; min-width: 0; }
+.bpane-url .dim { font: .74em var(--font-mono); color: color-mix(in srgb, var(--chrome-fg) 55%, transparent); flex: none; }
+.bpane-url .led { align-self: center; }
+.bpane-view { position: relative; flex: 1; min-height: 0; background: #1d1d21; }
+.bpane-stub { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5em; padding: 1em; text-align: center; color: #c9c9d0; overflow-wrap: anywhere; }
+.bpane-split { position: absolute; left: 0; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 2; touch-action: none; }
+.bpane-split:hover, .bpane-split:active { background: color-mix(in srgb, var(--acc2) 40%, transparent); }
+.bpane-tab { all: unset; position: fixed; right: 0; top: 42%; z-index: 55; cursor: pointer; display: flex; align-items: center; gap: .4em; padding: .55em .5em .55em .65em; border-radius: 9px 0 0 9px; background: var(--chrome-bg); color: var(--chrome-fg); box-shadow: var(--drop); font: 700 .72em var(--font-mono); letter-spacing: .06em; text-transform: uppercase; writing-mode: vertical-rl; }
+.bpane-tab .i { writing-mode: horizontal-tb; }
+.bpane-tab:hover { color: var(--acc2); }
+.bpane-tab:focus-visible { outline: 2px solid var(--focus); }

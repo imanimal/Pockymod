@@ -208,9 +208,30 @@ export const handler = {
   status: () => call<HandlerStatus>("nxm_handler_status"),
   register: () => call<HandlerStatus>("nxm_handler_register"),
 };
+/** Nexus pages, opened where Settings says: the user's own browser (the default) or the app's browser pane. */
 export const nexusPages = {
   mod: (modId: number, fileId?: number) => call<void>("open_nexus_page", { modId, fileId }),
   url: (url: string) => call<void>("open_nexus_url", { url }),
+};
+export type PagesWhere = "browser" | "pane";
+export const pagesWhere = {
+  get: async (): Promise<PagesWhere> => ((await settings.get("nexus.pages").catch(() => null)) === "pane" ? "pane" : "browser"),
+  set: async (w: PagesWhere) => { await settings.set("nexus.pages", w); window.dispatchEvent(new Event("pm-pages")); },
+};
+export interface BrowserState { open: boolean; popped: boolean; url: string | null; title: string | null; loading: boolean; reveal: boolean }
+/** The browser pane in the main window (src-tauri/src/browser.rs; the page lays it out, ui/BrowserPane.tsx). */
+export const browserPane = {
+  state: () => call<BrowserState>("browser_state"),
+  bounds: (x: number, y: number, w: number, h: number, visible: boolean) => call<void>("browser_bounds", { x, y, w, h, visible }),
+  nav: (action: "back" | "forward" | "reload" | "stop") => call<void>("browser_nav", { action }),
+  go: (url: string) => call<void>("browser_go", { url }),
+  close: () => call<void>("browser_close"),
+  pop: (out: boolean) => call<void>("browser_pop", { out }),
+  /** The page the pane shows, in the user's own browser. */
+  external: () => call<void>("browser_external"),
+  extensionsFolder: (open: boolean) => call<[string, number]>("browser_extensions_folder", { open }),
+  onChange: (cb: (s: BrowserState) => void) => listen<BrowserState>("browser", cb),
+  onTitle: (cb: (t: { label: string; title: string }) => void) => listen<{ label: string; title: string }>("browser-title", cb),
 };
 /** Nexus pages by address, for "Open in browser" (the user's own browser: their sign-in, saved passwords and
  *  extensions). UNVERIFIED: the collection address is the site's current form (www.nexusmods.com/games/…); older

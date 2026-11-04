@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Key, Lcd, Module, Pill } from "../ui/pocket";
-import { errorText, nexus, nexusPages, type NexusStatus } from "../lib/api";
+import { Key, Lcd, Module, Pill, Seg } from "../ui/pocket";
+import { browserPane, errorText, handler, nexus, nexusPages, pagesWhere, type HandlerStatus, type NexusStatus, type PagesWhere } from "../lib/api";
+import { toast } from "../ui/toast";
 import { API_KEY_PAGE } from "./Onboarding";
 import { Appearance } from "./Appearance";
 import { GameFolders } from "./GameFolders";
@@ -11,6 +12,7 @@ export function Settings({ onGallery }: { onGallery?: () => void }) {
   return (
     <div className="cols">
       <NexusAccount />
+      <NexusPagesModule />
       <GameFolders />
       <InstallPrefs />
       <Appearance />
@@ -72,6 +74,47 @@ function NexusAccount() {
             level={rl.limit && rl.remaining !== null ? { on: Math.ceil((rl.remaining / rl.limit) * 10), of: 10 } : undefined} />
         )}
       </div>
+    </Module>
+  );
+}
+
+/** Where Nexus pages open: the user's own browser (the default) or the app's browser pane. */
+function NexusPagesModule() {
+  const [where, setWhere] = useState<PagesWhere | null>(null);
+  const [h, setH] = useState<HandlerStatus | null>(null);
+  const [ext, setExt] = useState<[string, number] | null>(null);
+  useEffect(() => {
+    pagesWhere.get().then(setWhere).catch(() => setWhere("browser"));
+    handler.status().then(setH).catch(() => {});
+    browserPane.extensionsFolder(false).then(setExt).catch(() => {});
+  }, []);
+  if (!where) return null;
+  const pick = (w: PagesWhere) => { setWhere(w); void pagesWhere.set(w).catch((e) => toast(errorText(e), true)); };
+  const takeBack = () => handler.register().then((x) => { setH(x); toast("Mod Manager Download links from your browser open in Pocket Mods again."); }).catch((e) => toast(errorText(e), true));
+  return (
+    <Module icon="web" title="Nexus pages" count={where === "browser" ? "in your browser" : "in the app"}>
+      <Seg<PagesWhere> label="Open Nexus pages" value={where} onChange={pick}
+        options={[{ value: "browser", label: "In your browser" }, { value: "pane", label: "In the app" }]} />
+      {where === "browser" ? (
+        <p style={{ marginTop: ".5em" }}>Pages open in your own browser, where you are already signed in to Nexus and your saved passwords and
+          extensions work. Mod Manager Download there comes straight back to the queue here.</p>
+      ) : (
+        <p style={{ marginTop: ".5em" }}>Pages open in a pane beside your mods: drag its edge to resize it, or put it over the whole view, behind
+          a tab or in a window of its own. Sign in to Nexus there once and it stays signed in. Your browser's saved passwords are not
+          in it; the pane's link key opens any page in your browser.</p>
+      )}
+      {h?.supported && (h.ours
+        ? <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}><Pill tone="ok">Linked</Pill> Mod Manager Download links from your browser come to Pocket Mods.</p>
+        : <div className="note warn" style={{ marginTop: ".5em" }}>Mod Manager Download links from your browser go to {h.owner ?? "another program"}, so downloads started there do not reach the queue.
+            <div className="actions" style={{ marginTop: ".4em" }}><Key size="sm" icon="link" onClick={takeBack}>Take them back</Key></div></div>)}
+      {where === "pane" && ext && (
+        <>
+          <div className="sub-h">Extensions in the pane</div>
+          <p className="dim" style={{ fontSize: ".86em" }}>Unpacked Chrome extensions (a folder with a manifest.json each) in the pane's extensions folder load when the
+            pane first opens; restart the app after adding one. {ext[1] ? `${ext[1]} found.` : "None yet."} Not every extension works in the pane.</p>
+          <div className="actions" style={{ marginTop: ".3em" }}><Key size="sm" variant="ghost" icon="folder" onClick={() => browserPane.extensionsFolder(true).then(setExt).catch((e) => toast(errorText(e), true))}>Open the extensions folder</Key></div>
+        </>
+      )}
     </Module>
   );
 }

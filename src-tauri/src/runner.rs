@@ -1,8 +1,8 @@
 //! The download queue runner and the in-app Nexus window.
 //!
-//! Free accounts: the file's Nexus page opens in an app window ("nexus"); the user presses "Mod Manager Download"
-//! there, the window's navigation to the nxm:// link is caught (it never reaches the OS), and the queue goes on.
-//! Links from outside (the browser, via the registered handler) arrive through the single-instance hook.
+//! Free accounts: the file's Nexus page opens where the user wants pages (browser.rs): in their own browser, whose
+//! "Mod Manager Download" link comes back through the registered nxm:// handler and the single-instance hook, or in
+//! the app's browser pane, whose navigation to the link is caught (it never reaches the OS). Then the queue goes on.
 //! Premium accounts: links are fetched directly and nothing waits on the user.
 
 use crate::state::{AppState, Paths};
@@ -12,7 +12,7 @@ use pocket_core::queue::{Action, ItemState, QueueItem, Summary};
 use pocket_core::{browse, download, Error};
 use serde::Serialize;
 use std::time::Instant;
-use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, Manager};
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -39,70 +39,23 @@ pub fn file_page(mod_id: u32, file_id: Option<u32>) -> String {
     }
 }
 
-/// Show a Nexus page in the app's own Nexus window (WebView2). Never the system browser.
-pub fn open_nexus(app: &AppHandle, url: &str) -> tauri::Result<()> {
-    let url: url::Url = url.parse().map_err(|_| tauri::Error::InvalidWebviewUrl("bad Nexus URL"))?;
-    if let Some(w) = app.get_webview_window("nexus") {
-        w.navigate(url)?;
-        let _ = w.unminimize();
-        let _ = w.set_focus();
-        return Ok(());
-    }
-    let handle = app.clone();
-    let loading = app.clone();
-    let _ = app.emit("nexus-window", "loading");
-    WebviewWindowBuilder::new(app, "nexus", WebviewUrl::External(url))
-        .title("Nexus Mods · Pocket Mods")
-        .inner_size(1180.0, 820.0)
-        .min_inner_size(720.0, 520.0)
-        // Nexus's own dark grey while the page loads, not a white flash
-        .background_color(tauri::window::Color(0x1d, 0x1d, 0x21, 0xff))
-        // "Manual download" on a Nexus page: the file goes to the library's downloads folder, and the app offers to
-        // install it when it is done (instead of it landing in Windows' Downloads, forgotten)
-        .on_download({
-            let h = app.clone();
-            move |_, ev| {
-                match ev {
-                    tauri::webview::DownloadEvent::Requested { destination, .. } => {
-                        let paths = { let st = h.state::<AppState>(); let p = Paths::load(&st.db.lock().unwrap()); p };
-                        if let Ok((_, lib)) = paths.require() {
-                            let name = destination.file_name().map(|n| n.to_os_string()).unwrap_or_else(|| "download.zip".into());
-                            let dir = lib.join("downloads");
-                            let _ = std::fs::create_dir_all(&dir);
-                            *destination = dir.join(name);
-                        }
-                    }
-                    tauri::webview::DownloadEvent::Finished { path, success, .. } => {
-                        let _ = h.emit("manual-download", serde_json::json!({ "path": path.map(|p| p.to_string_lossy().into_owned()), "success": success }));
-                    }
-                    _ => {}
-                }
-                true
-            }
-        })
-        .on_page_load(move |_, p| {
-            let state = if matches!(p.event(), tauri::webview::PageLoadEvent::Finished) { "ready" } else { "loading" };
-            let _ = loading.emit("nexus-window", state);
-        })
-        .on_navigation(move |u| {
-            if u.scheme() == "nxm" {
-                let s = u.to_string();
-                let h = handle.clone();
-                tauri::async_runtime::spawn(async move { handle_nxm(&h, &s).await });
-                return false;
-            }
-            nexus_window_may_open(u)
-        })
-        .build()?;
-    Ok(())
-}
+/// Show a Nexus page where the user wants pages (browser.rs): their own browser, the pane or its window.
+pub fn open_nexus(app: &AppHandle, url: &str) -> pocket_core::Result<()> { crate::browser::open(app, url) }
 
-/// The Nexus window is for the web (Nexus, its sign-in providers, sites mods link to). It never opens the app's own
-/// pages (the app, extension panels, files): those would get the window's access to the app.
-pub fn nexus_window_may_open(u: &url::Url) -> bool {
-    let host = u.host_str().unwrap_or("").to_ascii_lowercase();
-    let local = host == "localhost" || host.ends_with(".localhost") || host == "127.0.0.1" || host == "[::1]" || host == "0.0.0.0";
-    matches!(u.scheme(), "https" | "http") && !local
+/// The page a free account clicks Mod Manager Download on. In the user's own browser that link comes back through
+/// the nxm:// handler, so say when another manager has it.
+fn open_click_page(app: &AppHandle, url: &str) {
+    if !crate::browser::in_app(app) {
+        if let Ok(exe) = std::env::current_exe() {
+            if let Ok(h) = pocket_core::platform::nxm_handler_status(&exe) {
+                if h.supported && !h.ours {
+                    let who = h.owner.unwrap_or_else(|| "another program".into());
+                    let _ = app.emit("toast", format!("Mod Manager Download links from your browser go to {who}, not here. Settings, Nexus pages: Take them back."));
+                }
+            }
+        }
+    }
+    if let Err(e) = open_nexus(app, url) { let _ = app.emit("toast", e.to_string()); }
 }
 
 /// An nxm:// link from the Nexus window or the OS.
@@ -169,7 +122,7 @@ async fn step(app: &AppHandle, action: Action) -> bool {
         Action::OpenPage(_) => {
             if item.state != ItemState::NeedsClick {
                 st.queue.lock().unwrap().set(id, ItemState::NeedsClick);
-                let _ = open_nexus(app, &file_page(item.mod_id, (!item.manual_only).then_some(item.file_id)));
+                open_click_page(app, &file_page(item.mod_id, (!item.manual_only).then_some(item.file_id)));
                 emit(app);
             }
             false
@@ -349,16 +302,4 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
             ItemState::Done { install_id: None, note: Some("This mod has installer options. Choose them in the window that opened (or in Library, Downloaded).".into()) }
         }
     })
-}
-
-#[cfg(test)]
-mod nav_tests {
-    #[test]
-    fn the_nexus_window_never_opens_app_pages() {
-        let ok = |s: &str| super::nexus_window_may_open(&s.parse().unwrap());
-        assert!(ok("https://www.nexusmods.com/cyberpunk2077/mods/107") && ok("https://users.nexusmods.com/auth") && ok("https://accounts.google.com/x"));
-        for bad in ["http://pmext.localhost/evil/panel", "pmext://localhost/evil/panel", "tauri://localhost/", "http://tauri.localhost/", "file:///c:/x", "http://127.0.0.1:1420/", "ipc://localhost/x"] {
-            assert!(!ok(bad), "{bad}");
-        }
-    }
 }

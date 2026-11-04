@@ -30,6 +30,7 @@ import { channel, powerOff, powerOn } from "./ui/fx";
 import { nope } from "./ui/motion";
 import { call, inTauri, listen, windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
+import { BrowserPane } from "./ui/BrowserPane";
 
 export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "create" | "gallery" | "addons";
 
@@ -182,6 +183,7 @@ export function App() {
       {choices && <FomodDialog need={choices} onClose={() => setChoices(null)} />}
       {existingOpen && <ExistingDialog onClose={() => setExistingOpen(false)} />}
       {onboard && <Onboarding onDone={() => { setOnboard(false); game.health().then((h) => setHealthIssues(h.problems)).catch(() => {}); }} />}
+      <BrowserPane waiting={!!s?.waitingOnUser} />
       <DropZone onChoices={setChoices} />
       <Toasts />
     </div>

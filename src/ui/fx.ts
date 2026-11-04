@@ -184,6 +184,8 @@ export function powerOn(done?: () => void) {
 /** Turn the picture off, then run `done` (which closes the window) while the dot is still fading. */
 export function powerOff(done?: () => void) {
   stop();
+  // native layers (the browser pane) do not take part in the animation: they step aside first
+  window.dispatchEvent(new Event("pm-power-off"));
   const r = root(), m = motionM();
   let handed = false;
   const gone = () => { if (!handed) { handed = true; done?.(); } };

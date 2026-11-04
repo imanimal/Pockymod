@@ -86,6 +86,11 @@ function groupOf(c: string | null): string {
   return "Other";
 }
 let profilesList: Profile[] = [{ id: 1, name: "Default", active: true, enabled: 0 }];
+let demoBrowser = { open: false, popped: false, url: null as string | null, title: null, loading: false, reveal: false };
+function demoOpenPage(url: string) {
+  if (store.get("nexus.pages") === "pane") { demoBrowser = { ...demoBrowser, open: true, url, loading: false, reveal: true }; demoEmit("browser", demoBrowser); }
+  else window.open(url, "_blank", "noopener,noreferrer");
+}
 /** Whether a mod is on in a profile that is not active, by "profile:install". */
 const demoMember = new Map<string, boolean>();
 const demoVortexProfiles = [{ name: "Default", on: 5, active: true }, { name: "Hardcore", on: 3, active: false }, { name: "Photo mode", on: 2, active: false }];
@@ -198,8 +203,17 @@ export function installDemo() {
     queue_cancel: ({ id }) => { const k = q.findIndex((x) => x.id === id); if (k >= 0) q[k].state = { state: "failed", message: "Download cancelled. Retry picks it up where it stopped." }; pump(); return snapshot(); },
     queue_clear_finished: () => { for (let i = q.length - 1; i >= 0; i--) if (["done", "failed"].includes(q[i].state.state)) q.splice(i, 1); demoEmit("queue", snapshot()); return snapshot(); },
     queue_show_page: () => {},
-    open_nexus_page: () => { throw { kind: "demo", message: "Nexus pages open in their own window in the desktop app." }; },
-    open_nexus_url: () => { throw { kind: "demo", message: "Nexus pages open in their own window in the desktop app." }; },
+    // pages open in this browser (a new tab), or in the stand-in pane (the desktop app shows the real page there)
+    open_nexus_page: ({ modId, fileId }) => demoOpenPage(`https://www.nexusmods.com/cyberpunk2077/mods/${modId}${fileId ? `?tab=files&file_id=${fileId}&nmm=1` : ""}`),
+    open_nexus_url: ({ url }) => demoOpenPage(String(url)),
+    browser_state: () => demoBrowser,
+    browser_bounds: () => {},
+    browser_nav: () => {},
+    browser_go: ({ url }) => demoOpenPage(String(url)),
+    browser_close: () => { demoBrowser = { ...demoBrowser, open: false, popped: false, url: null, reveal: false }; demoEmit("browser", demoBrowser); },
+    browser_pop: ({ out }) => { demoBrowser = { ...demoBrowser, open: true, popped: Boolean(out), reveal: true }; demoEmit("browser", demoBrowser); },
+    browser_external: () => { if (demoBrowser.url) window.open(demoBrowser.url, "_blank", "noopener,noreferrer"); },
+    browser_extensions_folder: () => ["%APPDATA%\\app.pocketmods.desktop\\browser-extensions", 0],
     library_list: () => installs,
     library_downloads: () => installs.filter((i) => i.source !== "found").map((i) => ({ modId: i.modId, fileId: i.fileId, name: i.name, version: i.version, path: "", installed: true, md5: "",
       size: (fixture.nodes.find((n) => n.modId === i.modId)?.fileSize ?? 900) * 1024 })),

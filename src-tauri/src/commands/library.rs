@@ -145,20 +145,20 @@ pub fn queue_clear_finished(app: AppHandle, state: State<'_, AppState>) -> Queue
 #[tauri::command]
 pub async fn queue_show_page(app: AppHandle, state: State<'_, AppState>, id: u64) -> Result<()> {
     let item = state.queue.lock().unwrap().get(id).cloned().ok_or_else(|| Error::Invalid("That download is no longer queued.".into()))?;
-    runner::open_nexus(&app, &runner::file_page(item.mod_id, (!item.manual_only).then_some(item.file_id))).map_err(|e| Error::Invalid(e.to_string()))
+    runner::open_nexus(&app, &runner::file_page(item.mod_id, (!item.manual_only).then_some(item.file_id)))
 }
 
 #[tauri::command]
 pub async fn open_nexus_page(app: AppHandle, mod_id: u32, file_id: Option<u32>) -> Result<()> {
-    runner::open_nexus(&app, &runner::file_page(mod_id, file_id)).map_err(|e| Error::Invalid(e.to_string()))
+    runner::open_nexus(&app, &runner::file_page(mod_id, file_id))
 }
 
-/// Pages on nexusmods.com the app links to (account settings, API keys), opened in the Nexus window.
+/// Pages on nexusmods.com the app links to (account settings, API keys, collections), opened where pages open.
 #[tauri::command]
 pub async fn open_nexus_url(app: AppHandle, url: String) -> Result<()> {
     let ok = url.starts_with("https://www.nexusmods.com/") || url.starts_with("https://next.nexusmods.com/") || url.starts_with("https://users.nexusmods.com/");
-    if !ok { return Err(Error::Invalid("Only Nexus Mods pages open in the Nexus window.".into())); }
-    runner::open_nexus(&app, &url).map_err(|e| Error::Invalid(e.to_string()))
+    if !ok { return Err(Error::Invalid("Only Nexus Mods pages open from here.".into())); }
+    runner::open_nexus(&app, &url)
 }
 
 fn installed_or_present(state: &State<'_, AppState>) -> Result<std::collections::BTreeSet<u32>> { present_mod_ids(&state.db) }

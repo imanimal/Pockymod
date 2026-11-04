@@ -1,5 +1,6 @@
 //! Tauri shell: window setup and commands. All Nexus and file logic lives in `pocket-core`.
 
+mod browser;
 mod commands;
 mod power;
 mod runner;
@@ -25,6 +26,7 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_dialog::init())
         .manage(power::Power::default())
+        .manage(browser::Browser::default())
         // closing the main window turns the picture off like a tube first (power.rs), then the app quits
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -75,6 +77,14 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             app_info,
             power::power_done,
+            commands::browser::browser_bounds,
+            commands::browser::browser_nav,
+            commands::browser::browser_go,
+            commands::browser::browser_state,
+            commands::browser::browser_close,
+            commands::browser::browser_pop,
+            commands::browser::browser_external,
+            commands::browser::browser_extensions_folder,
             commands::nexus::nexus_status,
             commands::nexus::nexus_set_key,
             commands::nexus::nexus_clear_key,

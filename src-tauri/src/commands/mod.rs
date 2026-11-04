@@ -1,5 +1,6 @@
 pub mod addons;
 pub mod browse;
+pub mod browser;
 pub mod collections;
 pub mod existing;
 pub mod extensions;
