@@ -2,7 +2,7 @@
 // with fixed data recorded from the live Nexus API (src/lib/demo/*.json, made by the demo_fixture example), so
 // screens can be built and checked without Tauri. Nothing here talks to Nexus.
 import { demoEmit, inTauri, registerDemo } from "./tauri";
-import type { BrowseQuery, BrowseResult, CardView, DetailView, InstallRow, LocalFilter, NexusStatus, PathsView, QueueItem, QueueSnapshot, RateDisplay } from "./api";
+import type { HealthReport, Profile, BrowseQuery, BrowseResult, CardView, DetailView, InstallRow, LocalFilter, NexusStatus, PathsView, QueueItem, QueueSnapshot, RateDisplay } from "./api";
 import browseFixture from "./demo/browse.json";
 import detailFixture from "./demo/details.json";
 
@@ -59,6 +59,27 @@ function planFor(modId: number, fileId: number): QueueItem[] {
   const item = (dd: DetailView, ff: DetailView["files"][number], by: string | null): QueueItem => ({ id: 0, modId: dd.detail.modId, fileId: ff.fileId, modName: dd.detail.name,
     fileName: ff.name, version: ff.version, uri: ff.uri, size: ff.sizeInBytes ?? ff.size * 1024, requiredBy: by, manualOnly: false, state: { state: "waiting" } });
   return [...reqs.map((r) => item(r, r.files.find((x) => x.category === "MAIN") ?? r.files[0], d.detail.name)), item(d, f, null)];
+}
+
+let profilesList: Profile[] = [{ id: 1, name: "Default", active: true, enabled: 0 }];
+function health(): HealthReport {
+  const fw = (key: string, name: string, installed: boolean, version: string | null, latest: string, older = false, neededBy: string[] = []) =>
+    ({ framework: key, key: key as never, name, installed, version, modified: null, olderThanGame: older, latest, updateAvailable: !!version && version !== latest, neededBy });
+  return {
+    game: pathsView.gameDir ? { path: pathsView.gameDir, exeFound: true, version: { file: "3.0.80.0", product: "3.0.80.0", productString: null }, detectedPatch: null,
+      exeModified: null, redmodAvailable: true, frameworks: [], writable: true } : null,
+    patch: "2.5", patchSource: "assumed",
+    frameworks: [fw("cet", "Cyber Engine Tweaks", true, "1.37.1", "1.38.1", true, ["Native Settings UI"]), fw("red4ext", "RED4ext", true, "1.31.0", "1.31.0", false, ["ArchiveXL"]),
+      fw("redscript", "redscript", false, null, "0.5.32", false, ["Mod Settings"]), fw("archivexl", "ArchiveXL", true, "1.28.6", "1.28.6"), fw("tweakxl", "TweakXL", false, null, "1.10.9"),
+      fw("codeware", "Codeware", false, null, "1.19.2"), fw("cybercmd", "cybercmd", false, null, "0.0.9")],
+    issues: [
+      { id: "fw.missing.redscript", severity: "problem", area: "frameworks", title: "redscript is missing", detail: "Needed by Mod Settings. Without it those mods do nothing or stop the game from starting.", fix: { kind: "installMod", modId: 1511, name: "redscript" } },
+      { id: "fw.old.cet", severity: "problem", area: "frameworks", title: "Cyber Engine Tweaks predates the game patch", detail: "The game was patched after Cyber Engine Tweaks was installed, and Nexus has a newer version (1.38.1). Update it before you play.", fix: { kind: "updateMod", modId: 107, name: "Cyber Engine Tweaks" } },
+      { id: "redmod.deploy", severity: "warning", area: "redmod", title: "REDmods need deploying", detail: "REDmods were added, removed or reordered since the last REDmod deploy. The game will not see the change until it runs.", fix: { kind: "runRedmodDeploy" } },
+      { id: "game.patch", severity: "info", area: "game", title: "Game patch assumed to be 2.5", detail: "The patch could not be read from the game. Pick it in Settings so compatibility checks are right.", fix: { kind: "openSettings" } },
+    ],
+    problems: 2, warnings: 1,
+  };
 }
 
 function search(q: BrowseQuery, local: LocalFilter): BrowseResult {
@@ -139,6 +160,21 @@ export function installDemo() {
         inProgramFiles: !!g && g.toLowerCase().includes("program files") };
       return pathsView;
     },
+    game_detect: () => [{ store: "Steam", path: "D:\\SteamLibrary\\steamapps\\common\\Cyberpunk 2077", exists: true }],
+    game_inspect: () => health().game,
+    health_check: () => health(),
+    redmod_deploy: () => ({ ok: true, mods: [], problems: [], log: "Deploying 0 mods\nDone" }),
+    redmod_order: () => [],
+    profiles_list: () => profilesList.map((p) => ({ ...p, enabled: p.active ? installs.length : 0 })),
+    profile_create: ({ name }) => { const id = profilesList.length + 1; profilesList.push({ id, name: String(name), active: false, enabled: 0 }); return id; },
+    profile_rename: () => {},
+    profile_delete: ({ id }) => { profilesList = profilesList.filter((p) => p.id !== id || p.active); },
+    profile_activate: ({ id }) => { profilesList = profilesList.map((p) => ({ ...p, active: p.id === id })); return { removed: [], deployed: [], notDeployed: [] }; },
+    mod_set_enabled: ({ installId, on }) => { const i = installs.find((x) => x.id === installId); if (i) i.enabled = Boolean(on); return null; },
+    load_order_set: ({ installIds }) => { (installIds as number[]).forEach((id, n) => { const i = installs.find((x) => x.id === id); if (i) i.loadOrder = n; }); installs.sort((a, b) => a.loadOrder - b.loadOrder); },
+    updates_check: () => [],
+    updates_last: () => [],
+    queue_add_mod: () => snapshot(),
     nxm_handler_status: () => ({ supported: true, ours: false, owner: "Vortex", command: null }),
     nxm_handler_register: () => ({ supported: true, ours: true, owner: "Pocket Mods", command: null }),
     patches: () => [["2.0", "2023-09-21"], ["2.1", "2023-12-05"], ["2.12", "2024-03-01"], ["2.2", "2024-12-10"], ["2.3", "2025-07-17"], ["2.5", "2026-10-22"]]

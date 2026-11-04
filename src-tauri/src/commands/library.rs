@@ -115,6 +115,14 @@ pub async fn queue_add(app: AppHandle, state: State<'_, AppState>, mod_id: u32, 
     Ok(runner::snapshot(&app))
 }
 
+/// Queue a mod's newest main file (with its missing requirements): Health's install and update fixes.
+#[tauri::command]
+pub async fn queue_add_mod(app: AppHandle, state: State<'_, AppState>, mod_id: u32) -> Result<QueueSnapshot> {
+    let d = pocket_core::browse::detail(&state.nexus, &state.db, mod_id, None).await?;
+    let file = pocket_core::browse::main_file(&d.files).ok_or_else(|| Error::Invalid(format!("{} has no current file on Nexus.", d.detail.name)))?.file_id;
+    queue_add(app, state, mod_id, file, true).await
+}
+
 #[tauri::command]
 pub fn queue_remove(app: AppHandle, state: State<'_, AppState>, id: u64) -> QueueSnapshot { state.queue.lock().unwrap().remove(id); state.pump.notify_one(); runner::emit(&app); runner::snapshot(&app) }
 

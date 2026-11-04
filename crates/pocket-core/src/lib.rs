@@ -7,9 +7,12 @@ pub mod cyberpunk;
 pub mod db;
 pub mod deploy;
 pub mod download;
+pub mod health;
 pub mod install;
 pub mod platform;
+pub mod profiles;
 pub mod queue;
+pub mod updates;
 pub mod error;
 pub mod nexus;
 

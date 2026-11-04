@@ -8,8 +8,10 @@ import { Browse } from "./screens/Browse";
 import { Downloads } from "./screens/Downloads";
 import { Library } from "./screens/Library";
 import { InstallDialog } from "./screens/InstallDialog";
+import { Health } from "./screens/Health";
+import { LoadOrder } from "./screens/LoadOrder";
 import { Toasts, toast } from "./ui/toast";
-import { errorText, nexus, nexusPages, onToast, queue, type QueueSnapshot } from "./lib/api";
+import { errorText, game, nexus, nexusPages, onToast, queue, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
 import { applyTheme, getThemeChoice, setThemeChoice, watchSystemTheme } from "./lib/theme";
 import { windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
@@ -32,8 +34,8 @@ export function App() {
   const [snap, setSnap] = useState<QueueSnapshot | null>(null);
   const [premium, setPremium] = useState(false);
   const [installing, setInstalling] = useState<{ modId: number; fileId: number; name: string } | null>(null);
-  const [updates] = useState(0);
-  const [healthIssues] = useState(0);
+  const [updates, setUpdates] = useState<Update[]>([]);
+  const [healthIssues, setHealthIssues] = useState(0);
 
   useEffect(() => watchSystemTheme(() => setScheme(applyTheme())), []);
   useEffect(() => {
@@ -42,7 +44,14 @@ export function App() {
     queue.onChange(setSnap).then((u) => offs.push(u));
     onToast((m) => toast(m)).then((u) => offs.push(u));
     nexus.status().then((s) => setPremium(!!s.user?.isPremium)).catch(() => {});
-    return () => offs.forEach((f) => f());
+    // update badges: the last result now, a fresh check shortly after start and every six hours
+    updatesApi.last().then(setUpdates).catch(() => {});
+    updatesApi.onChange(setUpdates).then((u) => offs.push(u));
+    const check = () => updatesApi.check().catch(() => {});
+    const t1 = setTimeout(check, 4000);
+    const t2 = setInterval(check, 6 * 3600 * 1000);
+    game.health().then((h) => setHealthIssues(h.problems)).catch(() => {});
+    return () => { offs.forEach((f) => f()); clearTimeout(t1); clearInterval(t2); };
   }, []);
 
   const s = snap?.summary;
@@ -80,7 +89,7 @@ export function App() {
           {VIEWS.map((v) => (
             <ProgramKey key={v.id} icon={v.icon} label={v.label} on={view === v.id} onClick={() => setView(v.id)}
               led={led(v.id)}
-              count={v.id === "library" ? updates : v.id === "downloads" ? s?.left : undefined}
+              count={v.id === "library" ? updates.length : v.id === "downloads" ? s?.left : undefined}
               countHot={v.id === "library"}
               progress={v.id === "downloads" && s?.running ? progress ?? 0 : undefined} />
           ))}
@@ -100,7 +109,9 @@ export function App() {
         {view === "gallery" ? <Gallery />
           : view === "settings" ? <Settings scheme={scheme} onScheme={setScheme} />
           : view === "downloads" ? <Downloads snap={snap} />
-          : view === "library" ? <Library />
+          : view === "library" ? <Library updates={new Map(updates.map((u) => [u.modId, u.latest]))} />
+          : view === "health" ? <Health onNavigate={setView} onIssues={setHealthIssues} />
+          : view === "loadorder" ? <LoadOrder />
           : view === "browse" ? null
           : <Placeholder view={here.label} icon={here.icon} />}
       </main>

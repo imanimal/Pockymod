@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Dialog } from "../ui/Dialog";
 import { Empty, Key, Module, Pill, Tag, bytesText } from "../ui/pocket";
-import { FRAMEWORKS, errorText, library, pickArchive, type Conflict, type DeployOutcome, type DownloadRow, type InstallOutcome, type InstallPlan, type InstallRow } from "../lib/api";
+import { FRAMEWORKS, errorText, library, pickArchive, queueMod, type Conflict, type DeployOutcome, type DownloadRow, type InstallOutcome, type InstallPlan, type InstallRow } from "../lib/api";
 import { toast } from "../ui/toast";
 
 type Pending =
@@ -84,6 +84,7 @@ export function Library({ updates }: { updates?: Map<number, string> }) {
                 </span>
               </span>
               <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
+                {updates?.get(r.modId) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueMod(r.modId); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
                 {r.deployedFiles === 0 ? <><Pill tone="soon">Not deployed</Pill><Key size="sm" onClick={() => deploy(r)} disabled={busy}>Deploy</Key></> : <Pill tone="ok">Deployed</Pill>}
                 <Key size="sm" variant="ghost" icon="trash" onClick={() => uninstall(r)} disabled={busy} aria-label={`Uninstall ${r.name}`} title="Uninstall" />
               </span>

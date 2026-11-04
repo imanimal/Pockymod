@@ -192,3 +192,46 @@ export async function pickArchive(): Promise<string | null> {
   const r = await open({ title: "Install a mod archive", filters: [{ name: "Mod archives", extensions: ["zip", "7z", "rar"] }] });
   return typeof r === "string" ? r : null;
 }
+
+// ── game, health, profiles ──
+
+export interface GameInstall { store: string; path: string; exists: boolean }
+export interface FrameworkState { framework: string; key: FrameworkKey; name: string; installed: boolean; version: string | null; modified: number | null; olderThanGame: boolean }
+export interface GameInfo {
+  path: string; exeFound: boolean; version: { file: string; product: string; productString: string | null } | null;
+  detectedPatch: string | null; exeModified: number | null; redmodAvailable: boolean; frameworks: FrameworkState[]; writable: boolean;
+}
+export type Fix =
+  | { kind: "installMod"; modId: number; name: string } | { kind: "updateMod"; modId: number; name: string }
+  | { kind: "runRedmodDeploy" } | { kind: "redeploy"; installId: number } | { kind: "openLibrary" } | { kind: "openSettings" };
+export interface Issue { id: string; severity: "problem" | "warning" | "info"; area: "game" | "frameworks" | "deploy" | "redmod" | "conflicts"; title: string; detail: string; fix: Fix | null }
+export interface FrameworkRow extends FrameworkState { latest: string | null; updateAvailable: boolean; neededBy: string[] }
+export interface HealthReport { game: GameInfo | null; patch: string | null; patchSource: "detected" | "settings" | "assumed"; frameworks: FrameworkRow[]; issues: Issue[]; problems: number; warnings: number }
+export interface RedmodResult { ok: boolean; mods: string[]; problems: string[]; log: string }
+export interface RedmodEntry { installId: number; name: string; folders: string[]; enabled: boolean; loadOrder: number }
+export interface Profile { id: number; name: string; active: boolean; enabled: number }
+export interface SwitchReport { removed: number[]; deployed: number[]; notDeployed: Array<[number, string]> }
+export interface Update { modId: number; name: string; installed: string; latest: string; updatedAt: string }
+
+export const game = {
+  detect: () => call<GameInstall[]>("game_detect"),
+  inspect: () => call<GameInfo | null>("game_inspect"),
+  health: (refresh = false) => call<HealthReport>("health_check", { refresh }),
+  redmodDeploy: () => call<RedmodResult>("redmod_deploy"),
+  redmodOrder: () => call<RedmodEntry[]>("redmod_order"),
+};
+export const profiles = {
+  list: () => call<Profile[]>("profiles_list"),
+  create: (name: string, copyFrom?: number) => call<number>("profile_create", { name, copyFrom }),
+  rename: (id: number, name: string) => call<void>("profile_rename", { id, name }),
+  remove: (id: number) => call<void>("profile_delete", { id }),
+  activate: (id: number) => call<SwitchReport>("profile_activate", { id }),
+  setEnabled: (installId: number, on: boolean) => call<DeployOutcome | null>("mod_set_enabled", { installId, on }),
+  setOrder: (installIds: number[]) => call<void>("load_order_set", { installIds }),
+};
+export const updates = {
+  check: () => call<Update[]>("updates_check"),
+  last: () => call<Update[]>("updates_last"),
+  onChange: (cb: (u: Update[]) => void) => listen<Update[]>("updates", cb),
+};
+export const queueMod = (modId: number) => call<QueueSnapshot>("queue_add_mod", { modId });
