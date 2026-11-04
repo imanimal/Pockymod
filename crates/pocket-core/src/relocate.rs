@@ -341,8 +341,14 @@ mod tests {
         let backup: String = e.db.conn.query_row("SELECT backup FROM deployed_files WHERE backup IS NOT NULL", [], |r| r.get(0)).unwrap();
         assert!(Path::new(&backup).is_file() && Path::new(&backup).starts_with(to));
         assert_eq!(e.db.setting("library.dir").unwrap().unwrap(), to.to_string_lossy());
+        // the staged manifest is JSON (backslashes escaped on Windows): compare its paths, not its text
         let manifest = fs::read_to_string(Path::new(&staging).join(crate::deploy::MANIFEST)).unwrap();
-        assert!(manifest.contains(&*to.to_string_lossy()) && !manifest.contains(&*e.lib.join("staging").to_string_lossy()), "{manifest}");
+        let v: serde_json::Value = serde_json::from_str(&manifest).unwrap();
+        for f in v["files"].as_array().unwrap() {
+            let src = Path::new(f["source"].as_str().unwrap());
+            assert!(src.starts_with(to) && !src.starts_with(&e.lib), "{manifest}");
+            if let Some(b) = f["backup"].as_str() { assert!(Path::new(b).starts_with(to), "{manifest}"); }
+        }
         assert!(verify(&e.db, &e.game).unwrap().is_empty(), "every deployed file is still the mod's");
     }
 
