@@ -41,17 +41,16 @@ export function record(op: Omit<Op, "at">, quiet = false): Entry {
   return e;
 }
 
-function offerUndo(e: Entry, toastId?: number) {
-  const action = { label: "Undo", run: () => void undo(e, id) };
-  const id = toastId ?? toast(`${e.label}.`, false, action);
-  if (toastId) retoast(toastId, `${e.label}.`, action);
+// each entry's toast, so undoing from the keyboard or the title bar turns that same toast into Redo
+const toastOf = new Map<number, number>();
+function show(e: Entry, text: string, label: "Undo" | "Redo", toastId?: number) {
+  let id = toastId ?? toastOf.get(e.id) ?? 0;
+  const action = { label, run: () => void (label === "Undo" ? undo(e, id) : redo(e, id)) };
+  if (!id || !retoast(id, text, action)) id = toast(text, false, action);
+  toastOf.set(e.id, id);
 }
-function offerRedo(e: Entry, toastId?: number) {
-  const action = { label: "Redo", run: () => void redo(e, id) };
-  const text = `Undone: ${e.label.charAt(0).toLowerCase()}${e.label.slice(1)}.`;
-  const id = toastId ?? toast(text, false, action);
-  if (toastId) retoast(toastId, text, action);
-}
+function offerUndo(e: Entry, toastId?: number) { show(e, `${e.label}.`, "Undo", toastId); }
+function offerRedo(e: Entry, toastId?: number) { show(e, `Undone: ${e.label.charAt(0).toLowerCase()}${e.label.slice(1)}.`, "Redo", toastId); }
 
 /** Undo the newest operation, or the one given (it must be the newest still done). */
 export async function undo(target?: Entry, toastId?: number): Promise<boolean> {

@@ -48,13 +48,13 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
   const g = r.game;
 
   return (
-    <div className="stack" style={{ maxWidth: "68em" }}>
+    <div className="cols">
       <div className="lcds">
         <Lcd label="Problems" value={String(r.problems).padStart(2, "0")} tone={r.problems ? "bad" : "ok"} sub={r.problems ? "Fix before you play" : "Nothing broken"} />
         <Lcd label="Warnings" value={String(r.warnings).padStart(2, "0")} tone={r.warnings ? "hot" : "ok"} sub={r.warnings ? "Worth a look" : "All clear"} />
         <Lcd label="Game patch" value={r.patch ?? "?"} sub={r.patchSource === "detected" ? "Read from the game" : r.patchSource === "settings" ? "Set in Settings" : "Assumed: set it in Settings"} tone={r.patchSource === "assumed" ? "hot" : "ok"} />
       </div>
-      <div className="actions">
+      <div className="actions span">
         <Key size="sm" icon="refresh" onClick={() => load(true)} disabled={busy}>Check again</Key>
         {g?.version && <span className="dim mono" style={{ fontSize: ".8em" }}>Cyberpunk2077.exe {g.version.productString ?? g.version.product}</span>}
       </div>

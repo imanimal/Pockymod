@@ -222,13 +222,17 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         </Module>
       )}
 
+      <div className="lib-groups">
       {groupNames.map((g) => {
         const list = byGroup.get(g)!;
         const ids = list.map((r) => r.id);
         const allSel = ids.every((i) => sel.has(i));
         const isFolded = folded.has(g);
+        // small groups sit side by side on wide windows instead of leaving a row mostly empty
+        const basis = layout === "grid" ? `${Math.max(2, Math.min(list.length, 6)) * 13.3 + 1.4}em` : "46em";
         return (
-          <Module key={g} icon={g === "Core" ? "chip" : g === "Character presets" ? "user" : "library"} title={g}
+          <div key={g} className="lib-group" style={{ flexBasis: basis }}>
+          <Module icon={g === "Core" ? "chip" : g === "Character presets" ? "user" : "library"} title={g}
             count={`${list.filter((r) => r.enabled).length} of ${list.length} on`} bodyClass="list"
             tools={<>
               <Key size="sm" variant="ghost" onClick={() => toggleAll(ids)}>{allSel ? "Unselect" : "Select all"}</Key>
@@ -287,8 +291,10 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
               </div>
             )}
           </Module>
+          </div>
         );
       })}
+      </div>
 
       {notInstalled.length > 0 && (
         <Module icon="downloads" title="Downloaded, not installed" count={notInstalled.length} bodyClass="list">
@@ -307,7 +313,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       )}
 
       {trash.length > 0 && (
-        <Module icon="trash" title="Recently removed" count={trash.length} bodyClass="list"
+        <Module id="recently-removed" icon="trash" title="Recently removed" count={trash.length} bodyClass="list"
           tools={<>
             <Key size="sm" variant="ghost" icon="chevron" className={trashOpen ? "rot-key" : ""} aria-label={trashOpen ? "Fold" : "Open"} onClick={() => setTrashOpen(!trashOpen)} />
           </>}>

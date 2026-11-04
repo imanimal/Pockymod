@@ -14,7 +14,7 @@ type Tab = "nexus" | "mine";
 export function Collections({ onQueued }: { onQueued: () => void }) {
   const [tab, setTab] = useState<Tab>("nexus");
   return (
-    <div className="stack" style={{ maxWidth: "80em" }}>
+    <div className="stack">
       <Seg label="Collections" value={tab} onChange={setTab} options={[{ value: "nexus", label: "On Nexus" }, { value: "mine", label: "Mine" }]} />
       {tab === "nexus" ? <NexusCollections onQueued={onQueued} /> : <MyCollections onQueued={onQueued} />}
     </div>

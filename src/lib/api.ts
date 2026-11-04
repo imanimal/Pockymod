@@ -360,6 +360,14 @@ export const groups = {
 export const bulk = (installIds: number[], action: "enable" | "disable" | "uninstall") => call<{ done: number; failed: Array<[number, string]> }>("library_bulk", { installIds, action });
 
 export const launchGame = () => call<{ started: boolean; modded?: boolean; redmod?: RedmodResult | null }>("game_launch");
+/** Start without mods: they come out of the game and go back when it closes. */
+export const launchVanilla = () => call<{ out: number; untracked: number }>("game_launch_vanilla");
+export const vanilla = {
+  pending: () => call<boolean>("game_vanilla_pending"),
+  restore: () => call<number>("game_vanilla_restore"),
+  onChange: (cb: (e: { state: "running" | "restored"; out?: number; back?: number }) => void) => listen<{ state: "running" | "restored"; out?: number; back?: number }>("vanilla", cb),
+};
+export const openGameFolder = (sub?: string) => call<void>("game_open_folder", { sub: sub ?? null });
 
 export const downloadsUsage = () => call<{ files: number; bytes: number; installedFiles: number; installedBytes: number }>("downloads_usage");
 export const downloadsCleanup = () => call<number>("downloads_cleanup");

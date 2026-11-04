@@ -208,3 +208,50 @@
 .scan-bar.sweep i { position: absolute; top: 0; bottom: 0; width: 22%; background: var(--disp-bg); animation: scanSweep calc(var(--m) * 1400ms + 1ms) steps(18, end) infinite alternate; }
 @keyframes scanSweep { from { left: 0; } to { left: 78%; } }
 .scan-sub { font-size: .8em; color: color-mix(in srgb, var(--chrome-fg) 60%, transparent); }
+
+/* ───────────── launch deck (rail foot) and history ───────────── */
+.launch { display: flex; flex-direction: column; gap: .45em; padding: .6em; border-radius: 12px; background: var(--surface); box-shadow: var(--card-shadow); }
+.launch-h { display: flex; align-items: center; gap: .5em; font: 700 .7em/1 var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); }
+.launch .play-key { width: 100%; justify-content: center; padding-block: .55em; font-size: 1.02em; }
+.launch-row { display: flex; gap: .35em; }
+.launch-row .btn:first-child { flex: 1; justify-content: center; }
+.hist { position: relative; display: flex; gap: .15em; }
+.hmenu { right: 0; left: auto; width: 24em; }
+.hmenu .rows { max-height: 22em; overflow: auto; }
+.fold-line { display: block; width: 100%; text-align: left; padding: .7em .9em; color: var(--text-3); font-size: .88em; }
+/* the rail collapses to icons on narrow windows: the deck keeps just its keys */
+@media (max-width: 820px) {
+  .launch { padding: .4em; }
+  .launch-h, .launch .play-key { font-size: 0; }
+  .launch .play-key .i { font-size: var(--fs); }
+  .launch-row { flex-direction: column; }
+  .launch-row .btn { font-size: 0; }
+}
+
+/* ───────────── wide windows ─────────────
+   Screens use the whole width. Lists of settings-like modules flow into columns (.cols) instead of leaving the
+   right half empty; a module never splits across columns. */
+.cols { columns: 2 34em; column-gap: var(--gap); }
+.cols > * { break-inside: avoid; margin: 0 0 var(--gap); }
+.cols > .span, .cols > .lcds { column-span: all; }
+@media (min-width: 2200px) { .cols { columns: 3 34em; } }
+.lib-groups { display: flex; flex-wrap: wrap; gap: var(--gap); align-items: flex-start; }
+.lib-group { flex: 1 1 40em; min-width: min(100%, 15em); max-width: 100%; }
+.lib-group > .panel { width: 100%; }
+.lcds > .display { max-width: 26em; }
+
+/* toasts with an action (Undo/Redo), a dismiss key and a time bar */
+.toast { position: relative; overflow: hidden; }
+.toast .tt { flex: 1; min-width: 0; }
+.toast-act { font: 700 .86em/1 var(--font-ui); color: var(--chrome-fg); background: var(--chrome-bg); border: 0; border-radius: 7px; padding: .45em .7em; cursor: pointer; }
+.toast-act:hover { filter: brightness(1.2); }
+.toast-act:active { translate: 0 1px; }
+.toast-x { background: none; border: 0; color: var(--text-3); padding: .3em; cursor: pointer; display: inline-grid; border-radius: 5px; }
+.toast-x:hover { color: var(--text); background: var(--surface-2); }
+.toast-time { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--accent); opacity: .5; transform-origin: left; animation-name: toastTime; animation-timing-function: linear; animation-fill-mode: forwards; }
+.toast:hover .toast-time { animation-play-state: paused; }
+@keyframes toastTime { to { transform: scaleX(0); } }
+.toast.leaving { animation: toastOut calc(var(--m) * 200ms + 1ms) var(--ease-in) forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translateX(12%); } }
+.toast .tt { animation: print calc(var(--m) * 260ms + 1ms) steps(8, end); }
+@keyframes print { from { clip-path: inset(0 100% 0 0); } }

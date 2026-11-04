@@ -14,7 +14,9 @@ import { Collections } from "./screens/Collections";
 import { ExistingDialog } from "./screens/Existing";
 import { ProfileSwitch } from "./ui/ProfileSwitch";
 import { Onboarding } from "./screens/Onboarding";
-import { PlayKey } from "./ui/PlayKey";
+import { LaunchDeck } from "./ui/LaunchDeck";
+import { HistoryMenu } from "./ui/HistoryMenu";
+import { installUndoKeys } from "./lib/history";
 import { FomodDialog } from "./screens/FomodDialog";
 import { Create } from "./screens/Create";
 import { Toasts, toast } from "./ui/toast";
@@ -52,6 +54,7 @@ export function App() {
   useEffect(() => { settings.get("onboarded").then((v) => setOnboard(v !== "1")).catch(() => {}); }, []);
 
   useEffect(() => watchSystemTheme(() => setScheme(applyTheme())), []);
+  useEffect(() => installUndoKeys(), []);
   useEffect(() => {
     const offs: Array<() => void> = [];
     queue.get().then(setSnap).catch(() => {});
@@ -100,8 +103,8 @@ export function App() {
         <span className="brandmark" data-tauri-drag-region><span className="logo">P</span><span>Pocket Mods</span></span>
         <span className="crumb" data-tauri-drag-region><span className="v">{here.label}</span><span className="ctx">Cyberpunk 2077</span></span>
         <span className="sp" data-tauri-drag-region />
+        <HistoryMenu onRemoved={() => { setView("library"); setTimeout(() => document.getElementById("recently-removed")?.scrollIntoView({ behavior: "smooth" }), 120); }} />
         <ProfileSwitch onManage={() => setView("loadorder")} />
-        <PlayKey onHealth={() => setView("health")} />
         <Key variant="ghost" size="sm" icon={scheme === "night" ? "sun" : "moon"} onClick={toggleScheme}
           aria-label={scheme === "night" ? "Switch to Cream" : "Switch to Night"} title={`Theme: ${getThemeChoice()}`} />
         <span className="winkeys">
@@ -122,6 +125,7 @@ export function App() {
           ))}
         </div>
         <div className="foot">
+          <LaunchDeck onHealth={() => setView("health")} />
           <RateLcd />
           <ProgramKey icon="gallery" label="Gallery" on={view === "gallery"} onClick={() => setView("gallery")} />
         </div>

@@ -36,10 +36,10 @@ export function ProgramKey({ icon, label, on, led, count, countHot, progress, on
 export type Band = "hot" | "bad";
 
 /** A module: graphite label band (icon, uppercase title, count, tools) over a body. */
-export function Module({ icon, title, count, band, tools, children, className = "", bodyClass = "", fill }:
-  { icon: IconName; title: string; count?: ReactNode; band?: Band; tools?: ReactNode; children?: ReactNode; className?: string; bodyClass?: string; fill?: boolean }) {
+export function Module({ icon, title, count, band, tools, children, className = "", bodyClass = "", fill, id }:
+  { icon: IconName; title: string; count?: ReactNode; band?: Band; tools?: ReactNode; children?: ReactNode; className?: string; bodyClass?: string; fill?: boolean; id?: string }) {
   return (
-    <section className={["panel", band, fill ? "fill" : "", className].filter(Boolean).join(" ")}>
+    <section id={id} className={["panel", band, fill ? "fill" : "", className].filter(Boolean).join(" ")}>
       <header className="ph">
         <span className="pt"><Icon name={icon} />{title}</span>
         {count !== undefined && <span className="cnt">{count}</span>}

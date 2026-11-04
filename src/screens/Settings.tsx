@@ -12,7 +12,7 @@ export function Settings({ onScheme }: { scheme: "cream" | "night"; onScheme: (s
   const [motion, setMotionState] = useState(document.documentElement.dataset.motion !== "0");
 
   return (
-    <div className="stack" style={{ maxWidth: "56em" }}>
+    <div className="cols">
       <NexusAccount />
       <GameFolders />
       <InstallPrefs />

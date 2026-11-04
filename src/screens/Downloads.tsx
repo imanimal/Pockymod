@@ -30,7 +30,7 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
   const act = (p: Promise<unknown>) => p.catch((e) => toast(errorText(e), true));
 
   return (
-    <div className="stack" style={{ maxWidth: "64em" }}>
+    <div className="stack">
       <div className="lcds">
         <Lcd label="Mods left" value={String(s?.left ?? 0).padStart(2, "0")} sub={s?.running ? "Working" : s?.left ? "Queued" : "Queue is empty"} />
         <Lcd label="Needs your click" value={String(s?.needsClick ?? 0).padStart(2, "0")} tone={s?.waitingOnUser ? "hot" : "ok"}

@@ -1,4 +1,4 @@
-// Play: checks Health first and says what is broken; runs the REDmod deploy if needed; starts the game modded.
+// Play (in the launch deck): checks Health first and says what is broken; runs the REDmod deploy if needed; starts the game modded.
 import { useState } from "react";
 import { Dialog } from "./Dialog";
 import { Key } from "./pocket";
@@ -28,7 +28,7 @@ export function PlayKey({ onHealth }: { onHealth: () => void }) {
   };
   return (
     <>
-      <Key size="sm" variant="dark" icon="play" onClick={check} disabled={busy} title="Check, then start the game">Play</Key>
+      <Key variant="dark" icon="play" className="play-key" onClick={check} disabled={busy} title="Check for problems, then start the game with your mods">{busy ? "Starting" : "Play"}</Key>
       {problems && (
         <Dialog icon="warn" title="Before you play" count={`${problems.length} problems`} band="bad" onClose={() => setProblems(null)}>
           <div className="rows">{problems.slice(0, 5).map((p) => <div key={p.id} className="row" style={{ cursor: "default" }}><span className="m-main"><span className="m-t" style={{ whiteSpace: "normal" }}>{p.title}</span><span style={{ fontSize: ".86em" }}>{p.detail}</span></span></div>)}</div>
