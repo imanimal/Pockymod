@@ -74,8 +74,8 @@ html[data-look="standard"] {
   & .btn:is(.on, [aria-pressed="true"]) .i { color: var(--sel); }
   & .btn.ghost { --travel: 0px; background: transparent; box-shadow: none; color: var(--text-2); }
   & .ph .btn { margin-block: 0 1px; }
-  & .ph .btn:not(.primary):not(.ghost) { --ring: color-mix(in srgb, #fff 10%, var(--chrome-bg)); --lip: #000; color: var(--chrome-fg); background: color-mix(in srgb, #fff 6%, var(--chrome-bg)); }
-  & .ph .btn.ghost { color: var(--chrome-fg); }
+  & :is(.ph, .bulkbar) .btn:not(.primary):not(.ghost) { --ring: color-mix(in srgb, #fff 10%, var(--chrome-bg)); --lip: #000; color: var(--chrome-fg); background: color-mix(in srgb, #fff 6%, var(--chrome-bg)); }
+  & :is(.ph, .bulkbar) .btn.ghost { color: var(--chrome-fg); }
   & .actions .btn, & .browse-top .btn { margin-bottom: 1px; }
 
   /* ───────────── program keys: a plain sidebar list; the current view has a yellow edge ───────────── */
@@ -184,6 +184,7 @@ html[data-look="standard"] {
   & .thumb { border-radius: 4px; }
   & .lcard { background: var(--surface); border-radius: var(--radius); }
   & .lcard.sel { background: var(--sel-soft); box-shadow: 0 0 0 2px var(--sel); }
+  & .pick { accent-color: var(--sel); }
   & .cat { border-radius: var(--radius); box-shadow: 0 0 0 1px var(--line); }
   & .fplugin { border-radius: var(--radius); box-shadow: 0 0 0 1px var(--line); }
   & .fplugin.on { background: var(--sel-soft); color: var(--text); box-shadow: 0 0 0 1px var(--sel); }
@@ -207,8 +208,8 @@ html[data-look="standard"] {
     & .btn.dark:not([disabled]):hover { background: color-mix(in srgb, #fff 8%, var(--chrome-bg)); }
     & .btn:is(.on, [aria-pressed="true"]):not([disabled]):hover { background: color-mix(in srgb, var(--sel) 22%, var(--surface-2)); }
     & .btn.ghost:not([disabled]):hover { background: color-mix(in srgb, currentColor 10%, transparent); color: var(--text); }
-    & .ph .btn:not(.primary):not(.ghost):not([disabled]):hover { background: color-mix(in srgb, #fff 12%, var(--chrome-bg)); }
-    & .ph .btn.ghost:not([disabled]):hover, & .shell > .mtop > .btn.ghost:hover { color: #fff; }
+    & :is(.ph, .bulkbar) .btn:not(.primary):not(.ghost):not([disabled]):hover { background: color-mix(in srgb, #fff 12%, var(--chrome-bg)); }
+    & :is(.ph, .bulkbar) .btn.ghost:not([disabled]):hover, & .shell > .mtop > .btn.ghost:hover { color: #fff; }
     & .btn[disabled]:hover { background: var(--surface-2); }
     & .btn.primary[disabled]:hover { background: var(--accent); }
     & .nv:not(.on):hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }

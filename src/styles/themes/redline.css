@@ -247,10 +247,18 @@ html[data-look="redline"] {
   & .mcard:focus-visible, & .hero:focus-visible, & .cat:focus-visible, & .mtile:focus-visible, & .gthumb:focus-visible, & .fplugin:focus-visible, & .pswitch-k:focus-visible { outline: none; --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
   & .mcard-img, & .lcard-img, & .hero-pic img { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 20%, transparent); }
   & .mcard-t { color: var(--text); }
-  & .lcard { --cut: 9px; clip-path: var(--shape); background: var(--corners), var(--surface); box-shadow: inset 0 0 0 1px var(--ring); }
-  & .lcard:focus-visible { --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
-  & .lcard.sel { --ring: var(--acc2); background: var(--corners), color-mix(in srgb, var(--acc2) 9%, var(--surface)); box-shadow: inset 0 0 0 2px var(--acc2); }
-  & .hero { --cut: 14px; clip-path: var(--shape); background: var(--corners), var(--surface); box-shadow: inset 0 0 0 1px var(--ring); }
+  /* cards with a picture: the outline is drawn over the picture by ::after, so it shows all the way round */
+  & :is(.lcard, .hero, .tcard)::after {
+    content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: var(--corners); box-shadow: inset 0 0 0 var(--ring-w, 1px) var(--ring);
+  }
+  & .tcard::after { background: var(--corners-br); }
+  & .lcard { --cut: 9px; clip-path: var(--shape); background: var(--surface); box-shadow: none; }
+  & .lcard:focus-visible { --ring: var(--focus); --ring-w: 2px; box-shadow: none; }
+  & .lcard.sel { --ring: var(--acc2); --ring-w: 2px; background: color-mix(in srgb, var(--acc2) 9%, var(--surface)); box-shadow: none; }
+  & .hero { --cut: 14px; position: relative; clip-path: var(--shape); background: var(--surface); box-shadow: none; }
+  & .hero:focus-visible { --ring-w: 2px; box-shadow: none; }
+  & .pick { accent-color: var(--acc2); }
   & .hero-txt { background: linear-gradient(90deg, color-mix(in srgb, var(--text) 14%, var(--bg)), var(--bg)); color: var(--text-2); }
   & .hero-txt b { color: var(--text); font-family: var(--font-hud); text-transform: uppercase; letter-spacing: .04em; }
   & .cat { --cut: 8px; clip-path: var(--shape-br); background: var(--corners-br), color-mix(in srgb, var(--text) 4%, var(--bg2)); box-shadow: inset 0 0 0 1px var(--ring); }
@@ -271,8 +279,8 @@ html[data-look="redline"] {
   & .onb-dot.on { background: var(--text); color: var(--bg); }
   & .onb-dot.done { color: var(--ok); }
   & .drawer > .panel { --cut: 16px; }
-  & .tcard { --cut: 10px; clip-path: var(--shape-br); padding: 2px; background: var(--corners-br), var(--bg2); box-shadow: inset 0 0 0 1px var(--ring); }
-  & .tcard.on { --ring: var(--focus); box-shadow: inset 0 0 0 2px var(--focus); }
+  & .tcard { --cut: 10px; clip-path: var(--shape-br); background: var(--bg2); box-shadow: none; }
+  & .tcard.on { --ring: var(--focus); --ring-w: 2px; box-shadow: none; }
   & .tcard-h b { font-family: var(--font-hud); text-transform: uppercase; letter-spacing: .08em; }
 
   /* ───────────── overlays ───────────── */
@@ -303,7 +311,8 @@ html[data-look="redline"] {
     & .wk-x:hover { background: var(--bad); color: var(--on-bad); }
     & .mcard:hover { --ring: var(--acc2); translate: 0 -2px; box-shadow: inset 0 0 0 1px var(--acc2); }
     & .mcard:hover::after { --br: var(--acc2); }
-    & .hero:hover, & .cat:hover, & .lcard:not(.sel):hover, & .fplugin:not(.on):not([disabled]):hover, & .pswitch-k:hover { --ring: var(--acc2); box-shadow: inset 0 0 0 1px var(--acc2); }
+    & .cat:hover, & .fplugin:not(.on):not([disabled]):hover, & .pswitch-k:hover { --ring: var(--acc2); box-shadow: inset 0 0 0 1px var(--acc2); }
+    & .hero:hover, & .lcard:not(.sel):hover, & .tcard:not(.on):hover { --ring: var(--acc2); box-shadow: none; }
     & .mtile:hover, & .gthumb:hover { filter: brightness(1.12) saturate(1.1); }
   }
   & .btn.ack:not([disabled]), & .btn.ack:not([disabled]):hover { animation: keyUp calc(var(--m) * 240ms + 1ms) var(--ease), rlGlitch calc(var(--m) * 160ms + 1ms) steps(1, end); }
