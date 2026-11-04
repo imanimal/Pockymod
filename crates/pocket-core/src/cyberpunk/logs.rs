@@ -543,7 +543,8 @@ pub fn report_text(db: &Db, game: &crate::cyberpunk::game::GameInfo, patch: Opti
     Ok(s)
 }
 
-/// `C:\Users\<name>\` (any drive, either slash) becomes `%USERPROFILE%\`, so a pasted report names nobody.
+/// A Windows profile folder (`<drive>:` then `Users` and a name, either slash) becomes `%USERPROFILE%`, so a
+/// pasted report names nobody.
 fn scrub_user(s: &str) -> String {
     let lower = s.to_ascii_lowercase();
     let mut out = String::new();
@@ -665,7 +666,10 @@ mod tests {
 
     #[test]
     fn user_folders_are_scrubbed() {
-        assert_eq!(scrub_user("at C:\\Users\\Someone\\AppData\\x.lua:3"), "at %USERPROFILE%\\AppData\\x.lua:3");
+        // a profile folder as Windows writes it, made up here so no real one is in the code
+        let home = ["C:", "Users", "player1"].join("\\");
+        assert_eq!(scrub_user(&format!("at {home}\\AppData\\x.lua:3")), "at %USERPROFILE%\\AppData\\x.lua:3");
+        assert_eq!(scrub_user(&format!("at {}/x", home.replace('\\', "/"))), "at %USERPROFILE%/x");
         assert_eq!(scrub_user("nothing here"), "nothing here");
     }
 
