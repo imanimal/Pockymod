@@ -277,3 +277,19 @@ export async function pickCollectionFile(): Promise<string | null> {
   const r = await open({ title: "Import a collection", filters: [{ name: "Pocket Mods collection", extensions: ["json"] }] });
   return typeof r === "string" ? r : null;
 }
+
+// ── app updates and mod.io (experiment) ──
+
+export interface AppUpdate { current: string; latest: string | null; newer: boolean; notes: string | null; url: string | null; message: string }
+export interface ModioMod {
+  id: number; name: string; summary: string; profile_url: string; date_updated: number; logo: { thumb_320x180?: string | null };
+  submitted_by: { username: string }; stats: { downloads_total: number; subscribers_total: number }; modfile: { filesize: number; version?: string | null } | null;
+}
+export interface ModioBrowse { game: { id: number; name: string } | null; page: { data: ModioMod[]; result_total: number; result_offset: number } | null }
+export const extras = {
+  appUpdate: () => call<AppUpdate>("app_update_check"),
+  modioHasKey: () => call<boolean>("modio_has_key"),
+  modioSetKey: (key: string) => call<{ id: number; name: string } | null>("modio_set_key", { key }),
+  modioClearKey: () => call<void>("modio_clear_key"),
+  modioBrowse: (text: string, offset: number) => call<ModioBrowse>("modio_browse", { text, offset }),
+};

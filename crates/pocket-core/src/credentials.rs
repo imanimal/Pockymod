@@ -30,7 +30,9 @@ pub trait SecretStore: Send + Sync {
 pub struct OsKeyring { service: String, user: String }
 
 impl OsKeyring {
-    pub fn nexus() -> Self { OsKeyring { service: crate::APP_NAME.into(), user: "nexus-api-key".into() } }
+    pub fn nexus() -> Self { Self::named("nexus-api-key") }
+    /// Another secret of this app, e.g. `mod.io-api-key`.
+    pub fn named(user: &str) -> Self { OsKeyring { service: crate::APP_NAME.into(), user: user.into() } }
     fn entry(&self) -> Result<keyring::Entry> {
         keyring::Entry::new(&self.service, &self.user).map_err(|e| Error::Credentials(e.to_string()))
     }

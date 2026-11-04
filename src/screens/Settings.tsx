@@ -3,6 +3,7 @@ import { Key, Lcd, Module, Pill, Seg, Switch } from "../ui/pocket";
 import { applyTheme, getThemeChoice, setMotion, setThemeChoice, type ThemeChoice } from "../lib/theme";
 import { errorText, nexus, type NexusStatus } from "../lib/api";
 import { GameFolders } from "./GameFolders";
+import { About, Experiments } from "./About";
 
 export function Settings({ onScheme }: { scheme: "cream" | "night"; onScheme: (s: "cream" | "night") => void }) {
   const [theme, setTheme] = useState<ThemeChoice>(getThemeChoice());
@@ -21,6 +22,8 @@ export function Settings({ onScheme }: { scheme: "cream" | "night"; onScheme: (s
           <Switch checked={motion} onChange={(v) => { setMotionState(v); setMotion(v); }}>Keys travel and LCDs flicker</Switch>
         </div>
       </Module>
+      <Experiments />
+      <About />
     </div>
   );
 }

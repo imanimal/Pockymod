@@ -8,6 +8,7 @@ import {
   type BrowseQuery, type BrowseResult, type CardView, type Classification, type DetailView, type LocalFilter, type ModTypeFilter, type SortKey,
 } from "../lib/api";
 import { daysAgo, descriptionText, shortDate } from "../lib/text";
+import { Modio } from "./Modio";
 
 const PAGE = 30;
 const SORTS: Array<{ value: SortKey; label: string }> = [
@@ -37,6 +38,14 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
   const [sel, setSel] = useState<CardView | null>(null);
   const [moreCats, setMoreCats] = useState(false);
   const [moreTags, setMoreTags] = useState(false);
+  const [source, setSource] = useState<"nexus" | "modio">("nexus");
+  const [modioOn, setModioOn] = useState(false);
+  useEffect(() => {
+    const read = () => settings.get("flags.modio").then((v) => setModioOn(v === "1")).catch(() => {});
+    read();
+    window.addEventListener("pm-flags", read);
+    return () => window.removeEventListener("pm-flags", read);
+  }, []);
 
   // the installed patch drives the "works with my game" filter
   useEffect(() => {
@@ -87,9 +96,17 @@ export function Browse({ onInstall, onOpenPage }: { onInstall?: (d: DetailView, 
   const activeCount = q.categories.length + q.tags.length + q.excludeTags.length + q.frameworks.length + (q.modType ? 1 : 0)
     + (since !== "any" ? 1 : 0) + (dl !== "any" ? 1 : 0) + (size !== "any" ? 1 : 0) + (compat ? 1 : 0) + (local.downloaded !== null ? 1 : 0);
 
+  if (modioOn && source === "modio") return (
+    <div className="stack">
+      <Seg label="Source" value={source} onChange={setSource} options={[{ value: "nexus", label: "Nexus Mods" }, { value: "modio", label: "mod.io (read-only)" }]} />
+      <Modio />
+    </div>
+  );
+
   return (
     <div className="browse">
       <div className="browse-top">
+        {modioOn && <Seg label="Source" value={source} onChange={setSource} options={[{ value: "nexus", label: "Nexus Mods" }, { value: "modio", label: "mod.io" }]} />}
         <SearchField value={text} onChange={setText} placeholder="Search Cyberpunk 2077 mods by name or description" />
         <Seg label="Sort" value={q.sort} onChange={(s) => set({ sort: s })} options={SORTS.filter((s) => s.value !== "relevance" || text)} />
         <Key size="sm" icon={q.ascending ? "up" : "down"} onClick={() => set({ ascending: !q.ascending })} aria-label={q.ascending ? "Ascending" : "Descending"} title={q.ascending ? "Ascending" : "Descending"} />

@@ -177,6 +177,11 @@ export function installDemo() {
     updates_check: () => [],
     updates_last: () => [],
     queue_add_mod: () => snapshot(),
+    app_update_check: () => ({ current: "0.1.0", latest: null, newer: false, notes: null, url: null, message: "No published release found yet." }),
+    modio_has_key: () => false,
+    modio_set_key: () => { throw { kind: "demo", message: "mod.io needs the desktop app." }; },
+    modio_clear_key: () => {},
+    modio_browse: () => { throw { kind: "invalid", message: "Add a mod.io API key in Settings first." }; },
     collections_browse: () => collectionsFixture,
     collection_check: () => new Promise((ok) => setTimeout(() => ok(checkFixture), 300)),
     collection_install: ({ check }) => {
