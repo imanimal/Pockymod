@@ -407,9 +407,8 @@ export const creator = {
 
 // ── text files the user picks ──
 
-export const readTextFile = (path: string) => call<string>("text_file_read", { path });
-export const saveTextFile = (path: string, text: string) => call<void>("text_file_save", { path, text });
-/** Ask for a file to open. Outside Tauri, a browser file picker reads it and the content comes back as `text`. */
+/** Ask for a file to open (the app shows the dialog and reads only the file picked there). Outside Tauri, a
+ * browser file picker reads it and the path is null. */
 export async function pickTextFile(title: string, extensions: string[]): Promise<{ path: string | null; text: string } | null> {
   if (!("__TAURI_INTERNALS__" in window)) {
     return new Promise((resolve) => {
@@ -420,10 +419,7 @@ export async function pickTextFile(title: string, extensions: string[]): Promise
       input.click();
     });
   }
-  const { open } = await import("@tauri-apps/plugin-dialog");
-  const r = await open({ title, filters: [{ name: title, extensions }] });
-  if (typeof r !== "string") return null;
-  return { path: r, text: await readTextFile(r) };
+  return call<{ path: string; text: string } | null>("text_file_open", { title, extensions });
 }
 /** Save text to a file the user picks. Outside Tauri, the browser downloads it. */
 export async function saveTextAs(defaultName: string, text: string, extensions: string[]): Promise<boolean> {
@@ -434,11 +430,7 @@ export async function saveTextAs(defaultName: string, text: string, extensions: 
     a.click();
     return true;
   }
-  const { save } = await import("@tauri-apps/plugin-dialog");
-  const p = await save({ defaultPath: defaultName, filters: [{ name: defaultName, extensions }] });
-  if (!p) return false;
-  await saveTextFile(p, text);
-  return true;
+  return call<boolean>("text_file_save_as", { defaultName, text, extensions });
 }
 
 // ── add-ons: installed themes and extensions, and the marketplace ──

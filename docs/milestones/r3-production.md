@@ -103,6 +103,22 @@ this code. Fixed this round:
 
 The audit with every source is kept with the session notes, not in the repository.
 
+## Security review
+
+An independent review of what add-ons, mod archives and installers could do found and this round fixed:
+- A FOMOD installer's XML, or a plan file planted in a mod's archive, could place files outside the game folder.
+  Every placement now must stay inside it (no `..`, root, drive or stream), deploy refuses any plan that does not,
+  and the app's own `.pocket-*` files are never taken from an archive.
+- RAR entries are written by the app, so UnRAR never follows symlink or hardlink entries.
+- An extension panel opened as a page of its own (for example by a link in the Nexus window) could have reached the
+  app. The Nexus window never opens the app's own addresses, and a panel refuses to run outside its frame.
+- Theme css could escape its scope and load remote images through CSS line breaks and escapes. Those, and anything
+  that loads (`url()`, `image-set()`, `@import`, `@font-face`), are refused in the app and in the marketplace check.
+- Panels lose WebRTC and frames; a panel cannot trap the user with download questions (a no holds, Block, flooding
+  stops it); a theme cannot hide the way back (Keep or it reverts, Ctrl+Alt+Shift+T, no theme css in the review).
+- Approval items are exact (JSON), the Rust side checks every one, and tool paths cannot leave the game folder.
+- The app reads and writes only files the user picks in its own dialog.
+
 ## Test
 
 1. Start fresh: Standard dark. Onboarding shows what it scans; with Vortex installed, "Bring them in" shows each mod

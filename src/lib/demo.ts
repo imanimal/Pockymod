@@ -356,8 +356,8 @@ export function installDemo() {
       if (!["https://github.com/imanimal/pocket-mods/", "https://www.nexusmods.com/"].some((p) => u.startsWith(p))) throw { kind: "invalid", message: "Only this project's GitHub pages and Nexus Mods pages open from here." };
       window.open(u, "_blank", "noopener,noreferrer");
     },
-    text_file_read: () => { throw { kind: "demo", message: "Reading files needs the desktop app." }; },
-    text_file_save: () => {},
+    text_file_open: () => null,
+    text_file_save_as: () => false,
     patches: () => [["2.0", "2023-09-21"], ["2.1", "2023-12-05"], ["2.12", "2024-03-01"], ["2.2", "2024-12-10"], ["2.3", "2025-07-17"], ["2.5", "2026-10-22"]]
       .map(([version, released]) => [{ version, released }, Date.parse(`${released}T00:00:00Z`) / 1000]),
   });
