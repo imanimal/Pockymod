@@ -127,7 +127,7 @@ export interface QueueSnapshot { items: QueueItem[]; summary: QueueSummary }
 export interface InstallRow {
   id: number; modId: number; fileId: number; name: string; version: string; modType: ModType; frameworks: string[]; staging: string;
   installedAt: number; updatedAt: string | null; deployedFiles: number; enabled: boolean; loadOrder: number;
-  source: "pocket" | "vortex" | "found"; category: string | null; group: string; customGroup: boolean; picture?: string | null;
+  source: "pocket" | "vortex" | "found"; category: string | null; group: string; customGroup: boolean; picture?: string | null; author?: string | null;
 }
 export interface Conflict { target: string; ownerInstall: number; ownerName: string }
 export type DeployOutcome =
@@ -407,3 +407,27 @@ export const addons = {
 };
 /** A JSON file from the marketplace folder (`index.json`, `themes/x.json` …), cached for an hour. */
 export const marketGet = (path: string, fresh = false) => call<string>("market_get", { path, fresh });
+
+// ── extensions: state, tools, launch options, links; pages in the default browser ──
+
+export interface ExtState {
+  enabled: boolean; approvedRelease: string | null; approved: string[]; toolPaths: Record<string, string>; fromMarket: boolean; installedAt: number | null;
+}
+export const extensionsApi = {
+  states: () => call<Record<string, ExtState>>("ext_states"),
+  setState: (id: string, state: ExtState | null) => call<void>("ext_state_set", { id, state }),
+  startTool: (extId: string, toolId: string) => call<void>("ext_tool_start", { extId, toolId }),
+  launch: (extId: string, optionId: string) => call<{ started: boolean; modded?: boolean; redmod?: RedmodResult | null; args?: string[] }>("ext_launch", { extId, optionId }),
+  openLink: (extId: string, linkId: string) => call<void>("ext_open_link", { extId, linkId }),
+};
+/** Open a page in the default browser. Only this project's GitHub pages and Nexus Mods pages. */
+export const openExternal = (url: string) => call<void>("open_external", { url });
+/** A marketplace file and where it came from: the network, the hour's cache, or an old copy when offline. */
+export const marketFetch = (path: string, fresh = false) => call<{ text: string; source: "network" | "cache" | "offline" }>("market_fetch", { path, fresh });
+/** Ask for a program (an extension's tool). Outside Tauri it asks with a prompt. */
+export async function pickProgram(title: string): Promise<string | null> {
+  if (!("__TAURI_INTERNALS__" in window)) return window.prompt(title) || null;
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ title, filters: [{ name: "Programs", extensions: ["exe"] }] });
+  return typeof r === "string" ? r : null;
+}

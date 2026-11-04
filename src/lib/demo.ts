@@ -50,7 +50,7 @@ function pump() {
         next.state = { state: "done", installId: installs.length + 1, note: null };
         installs.push({ id: installs.length + 1, modId: next.modId, fileId: next.fileId, name: next.modName, version: next.version, modType: "archive", frameworks: [],
           staging: "", installedAt: Date.now() / 1000, updatedAt: null, deployedFiles: 3, enabled: true, loadOrder: installs.length,
-          source: "pocket", category: details.find((d) => d.detail.modId === next.modId)?.detail.category ?? null, group: groupOf(details.find((d) => d.detail.modId === next.modId)?.detail.category ?? null), customGroup: false });
+          source: "pocket", category: details.find((d) => d.detail.modId === next.modId)?.detail.category ?? null, group: groupOf(details.find((d) => d.detail.modId === next.modId)?.detail.category ?? null), customGroup: false, author: details.find((d) => d.detail.modId === next.modId)?.detail.author ?? null });
         demoEmit("library-changed", null);
       }
       pump();
@@ -171,7 +171,8 @@ export function installDemo() {
     open_nexus_page: () => { throw { kind: "demo", message: "Nexus pages open in their own window in the desktop app." }; },
     open_nexus_url: () => { throw { kind: "demo", message: "Nexus pages open in their own window in the desktop app." }; },
     library_list: () => installs,
-    library_downloads: () => [],
+    library_downloads: () => installs.filter((i) => i.source !== "found").map((i) => ({ modId: i.modId, fileId: i.fileId, name: i.name, version: i.version, path: "", installed: true, md5: "",
+      size: (fixture.nodes.find((n) => n.modId === i.modId)?.fileSize ?? 900) * 1024 })),
     library_uninstall: ({ installId }) => { const i = installs.findIndex((x) => x.id === installId); if (i >= 0) installs.splice(i, 1); return { removed: 3, restored: [], leftAlone: [] }; },
     library_deploy: () => ({ outcome: "deployed", linked: 3, copied: 0, backedUp: [], tookFrom: [] }),
     library_install_file: () => { throw { kind: "demo", message: "Installing from a file needs the desktop app." }; },
@@ -230,7 +231,7 @@ export function installDemo() {
       let n = 0;
       if (vortexMods) for (const c of fixture.nodes.slice(8, 14)) {
         installs.push({ id: installs.length + 1, modId: c.modId, fileId: 1, name: c.name, version: c.version, modType: c.classification.modType, frameworks: c.classification.frameworks.map((f) => f.key),
-          staging: "", installedAt: 0, updatedAt: null, deployedFiles: 4, enabled: n !== 5, loadOrder: installs.length, source: "vortex", category: c.category, group: groupOf(c.category), customGroup: false, picture: c.thumbnailUrl?.replace("/thumbnails/", "/") });
+          staging: "", installedAt: 0, updatedAt: null, deployedFiles: 4, enabled: n !== 5, loadOrder: installs.length, source: "vortex", category: c.category, group: groupOf(c.category), customGroup: false, picture: c.thumbnailUrl?.replace("/thumbnails/", "/"), author: c.author });
         n++;
       }
       if (foundMods) installs.push({ id: installs.length + 1, modId: 900000001, fileId: 1, name: "Hand-placed hair", version: "", modType: "archive", frameworks: [], staging: "", installedAt: 0, updatedAt: null,
@@ -271,6 +272,27 @@ export function installDemo() {
       const hit = marketFiles[`../../marketplace/${String(path)}`];
       if (hit === undefined) throw { kind: "http", message: `The marketplace has no ${String(path)} yet.` };
       return hit;
+    },
+    // ?market=offline in the address shows the marketplace as an old cached copy
+    market_fetch: ({ path }) => {
+      const hit = marketFiles[`../../marketplace/${String(path)}`];
+      if (hit === undefined) throw { kind: "http", message: `The marketplace has no ${String(path)} yet.` };
+      return { text: hit, source: location.search.includes("market=offline") ? "offline" : "network" };
+    },
+    ext_states: () => { try { return JSON.parse(localStorage.getItem("pm.demo.extState") ?? "{}"); } catch { return {}; } },
+    ext_state_set: ({ id, state }) => {
+      let all: Record<string, unknown> = {};
+      try { all = JSON.parse(localStorage.getItem("pm.demo.extState") ?? "{}"); } catch { /* start over */ }
+      if (state) all[String(id)] = state; else delete all[String(id)];
+      try { localStorage.setItem("pm.demo.extState", JSON.stringify(all)); } catch { /* storage unavailable */ }
+    },
+    ext_tool_start: () => { throw { kind: "demo", message: "Starting programs needs the desktop app." }; },
+    ext_launch: () => { throw { kind: "demo", message: "Starting the game needs the desktop app." }; },
+    ext_open_link: () => { throw { kind: "demo", message: "Links open in your browser from the desktop app." }; },
+    open_external: ({ url }) => {
+      const u = String(url);
+      if (!["https://github.com/imanimal/pocket-mods/", "https://www.nexusmods.com/"].some((p) => u.startsWith(p))) throw { kind: "invalid", message: "Only this project's GitHub pages and Nexus Mods pages open from here." };
+      window.open(u, "_blank", "noopener,noreferrer");
     },
     text_file_read: () => { throw { kind: "demo", message: "Reading files needs the desktop app." }; },
     text_file_save: () => {},
