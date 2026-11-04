@@ -62,7 +62,7 @@ fn open_click_page(app: &AppHandle, url: &str) {
 pub async fn handle_nxm(app: &AppHandle, raw: &str) {
     let st = app.state::<AppState>();
     let link = match NxmLink::parse(raw) {
-        Ok(l) if l.is_for_this_game() && l.mod_id == 0 && l.file_id == 0 => { let _ = app.emit("toast", "The test link reached Pocket Mods: browser downloads will come here."); return; }
+        Ok(l) if l.is_for_this_game() && l.mod_id == 0 && l.file_id == 0 => { let _ = app.emit("toast", "The test link reached Pockymod: browser downloads will come here."); return; }
         Ok(l) if l.is_for_this_game() => l,
         Ok(l) => { let _ = app.emit("toast", format!("That link is for {}, not Cyberpunk 2077.", l.game)); return; }
         Err(e) => { let _ = app.emit("toast", e.to_string()); return; }

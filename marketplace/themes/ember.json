@@ -4,8 +4,8 @@
   "id": "ember",
   "name": "Ember",
   "release": "1.0.0",
-  "author": "Pocket Mods",
-  "description": "Warm charcoal, amber keys and an amber display, easy on the eyes.",
+  "author": "Pockymod",
+  "description": "Charcoal with amber keys and display.",
   "scheme": "dark",
   "tokens": {
     "--bg": "#171412",

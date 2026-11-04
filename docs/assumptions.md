@@ -11,4 +11,4 @@ Decisions made at the start, so the build could go ahead without questions.
 7. **Core logic is a separate Rust crate** (`crates/pocket-core`) with no Tauri dependency, so it can be tested on its own and ported to Linux later.
 8. **Single branch, one PR.** Each milestone is one or more commits on the session's `animal/` branch, and the PR description tracks the milestones.
 9. **Installer: NSIS, per-user**, with the WebView2 bootstrapper embedded (`embedBootstrapper`).
-10. **App identity**: product name "Pocket Mods", identifier `app.pocketmods.desktop`. Sent to Nexus as `Application-Name: Pocket Mods`.
+10. **App identity**: product name "Pockymod", identifier `app.pocketmods.desktop`. Sent to Nexus as `Application-Name: Pockymod`.

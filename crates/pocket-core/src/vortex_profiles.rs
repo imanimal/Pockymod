@@ -1,4 +1,4 @@
-//! Vortex's profiles for Cyberpunk 2077, brought in as Pocket Mods profiles, so mods brought in from Vortex keep
+//! Vortex's profiles for Cyberpunk 2077, brought in as Pockymod profiles, so mods brought in from Vortex keep
 //! the sets they were in.
 //!
 //! From Vortex's source (github.com/Nexus-Mods/vortex: `src/util/LevelPersist.ts`, `src/util/StorePersistor.ts`,
@@ -130,8 +130,8 @@ pub struct ImportReport {
     pub not_deployed: Vec<(i64, String)>,
 }
 
-/// Bring Vortex's profiles in. Each becomes a Pocket Mods profile of the same name (an existing one of that name is
-/// updated): Vortex's mods are on or off as they are in it, and mods from Pocket Mods or the game folder stay as they
+/// Bring Vortex's profiles in. Each becomes a Pockymod profile of the same name (an existing one of that name is
+/// updated): Vortex's mods are on or off as they are in it, and mods from Pockymod or the game folder stay as they
 /// are in the active profile. The profile Vortex has deployed becomes the active one, so the game folder does not
 /// change (or changes only where it no longer matched Vortex). Safe to run again: it only sets the same rows.
 pub fn import(db: &Db, game: &Path, library: &Path, opts: &DeployOptions, list: &[VortexProfile]) -> Result<ImportReport> {
@@ -149,7 +149,7 @@ pub fn import(db: &Db, game: &Path, library: &Path, opts: &DeployOptions, list: 
     order.sort_by_key(|p| !p.active);
     let mut used: BTreeSet<String> = BTreeSet::new();
     for vp in order {
-        // two Vortex profiles can share a name; Pocket Mods' names are unique
+        // two Vortex profiles can share a name; Pockymod' names are unique
         let mut name = vp.name.trim().to_string();
         let mut n = 2;
         while used.contains(&name.to_lowercase()) { name = format!("{} ({n})", vp.name.trim()); n += 1; }

@@ -264,9 +264,9 @@ pub fn overlaps(db: &Db, game: &Path) -> Result<OverlapReport> {
             (None, format!("{} is a REDmod. REDmod archives load after every archive in archive/pc/mod{}, so it cannot win by a new name.",
                 loser.name, if winner.redmod { ", and REDmods load by folder name" } else { "" }))
         } else if loser.install_id.is_none() {
-            (None, format!("{} is not managed by Pocket Mods. To make it win, rename it in archive/pc/mod so its name sorts first, for example with ! in front.", loser.name))
+            (None, format!("{} is not managed by Pockymod. To make it win, rename it in archive/pc/mod so its name sorts first, for example with ! in front.", loser.name))
         } else if source == Some("vortex") {
-            (None, format!("{} is tracked from Vortex, and its files stay as Vortex named them. Install it in Pocket Mods to change its order here.", loser.name))
+            (None, format!("{} is tracked from Vortex, and its files stay as Vortex named them. Install it in Pockymod to change its order here.", loser.name))
         } else {
             let before: Vec<String> = winner.archives.iter().map(|t| t.rsplit('/').next().unwrap_or(t).to_string()).collect();
             let map = loser.install_id.and_then(|id| renames.get(&id));
@@ -278,7 +278,7 @@ pub fn overlaps(db: &Db, game: &Path) -> Result<OverlapReport> {
                 crate::rules::load_first_name(&base, &before).map(|name| RenameTo { target: original.clone(), name })
             }).collect();
             match r {
-                Some(r) => (Some(r), "Archives load in name order and the first one wins. Players put ! in front of a name to load it earlier; Pocket Mods can do that to the link in the game and undo it.".into()),
+                Some(r) => (Some(r), "Archives load in name order and the first one wins. Players put ! in front of a name to load it earlier; Pockymod can do that to the link in the game and undo it.".into()),
                 None => (None, "No name sorts before the winner's. Rename the winner instead.".into()),
             }
         };

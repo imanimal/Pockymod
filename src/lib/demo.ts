@@ -207,6 +207,11 @@ export function installDemo() {
     open_nexus_page: ({ modId, fileId }) => demoOpenPage(`https://www.nexusmods.com/cyberpunk2077/mods/${modId}${fileId ? `?tab=files&file_id=${fileId}&nmm=1` : ""}`),
     open_nexus_url: ({ url }) => demoOpenPage(String(url)),
     browser_state: () => demoBrowser,
+    background_state: () => ({ readyVersion: null, modsReady: 0 }),
+    background_check: () => ({ readyVersion: null, modsReady: 0 }),
+    app_update_install: () => { throw { kind: "demo", message: "Updates install in the desktop app." }; },
+    autostart_get: () => store.get("demo.autostart") === "1",
+    autostart_set: ({ on }) => { store.set("demo.autostart", on ? "1" : "0"); return Boolean(on); },
     browser_bounds: () => {},
     browser_nav: () => {},
     browser_go: ({ url }) => demoOpenPage(String(url)),
@@ -362,7 +367,7 @@ export function installDemo() {
       return { done: ids.length, failed: [] };
     },
     nxm_handler_status: () => ({ supported: true, ours: false, owner: "Vortex", command: null }),
-    nxm_handler_register: () => ({ supported: true, ours: true, owner: "Pocket Mods", command: null }),
+    nxm_handler_register: () => ({ supported: true, ours: true, owner: "Pockymod", command: null }),
     addon_list: ({ kind }) => { try { return Object.values(JSON.parse(localStorage.getItem(`pm.demo.addons.${String(kind)}`) ?? "{}")); } catch { return []; } },
     addon_save: ({ kind, id, json }) => {
       const k = `pm.demo.addons.${String(kind)}`;
@@ -465,7 +470,7 @@ function demoOverlaps() {
   if (b) out.push({ winner: side(b, ["archive/pc/mod/ApartmentLights.archive"]), loser: side(c, ["mods/BetterApartments/archives/apartments.archive"], true), files: 7, loadFirst: null,
     how: `${c?.name ?? "This mod"} is a REDmod. REDmod archives load after every archive in archive/pc/mod, so it cannot win by a new name.` });
   out.push({ winner: side(c ?? a, ["archive/pc/mod/basegame_ui_tweaks.archive"]), loser: side(undefined, ["archive/pc/mod/zz_old_ui.archive"]), files: 3, loadFirst: null,
-    how: "zz_old_ui.archive is not managed by Pocket Mods. To make it win, rename it in archive/pc/mod so its name sorts first, for example with ! in front." });
+    how: "zz_old_ui.archive is not managed by Pockymod. To make it win, rename it in archive/pc/mod so its name sorts first, for example with ! in front." });
   return { archives: 128, overlaps: out, sameContent: 13, unreadable: [], modlist: null, millis: 37 };
 }
 const demoFomod = {
@@ -492,7 +497,7 @@ function installTroubleshootDemo() {
     logs_scan: () => new Promise((ok) => setTimeout(() => ok(demoLogs()), 150)),
     logs_report: () => {
       const l = demoLogs();
-      return [`Pocket Mods 0.1.0 report`, `Game: Cyberpunk 2077 patch 2.5 (exe 3.0.80.0)`, `Frameworks: Cyber Engine Tweaks 1.37.1, RED4ext 1.31.0, ArchiveXL 1.28.6`,
+      return [`Pockymod 0.1.0 report`, `Game: Cyberpunk 2077 patch 2.5 (exe 3.0.80.0)`, `Frameworks: Cyber Engine Tweaks 1.37.1, RED4ext 1.31.0, ArchiveXL 1.28.6`,
         `Mods: ${installs.filter((i) => i.enabled).length} on of ${installs.length} installed`, `Errors: ${l.errors}, warnings: ${l.warnings}`,
         ...l.mods.flatMap((m) => [``, `${m.name} (${m.enabled ? "on" : "off"}): ${m.errors} errors, ${m.warnings} warnings`, ...m.entries.map((e) => `  [${e.tool}] ${e.level}: ${e.text.split("\n").slice(0, 2).join(" / ")}`)])].join("\n");
     },

@@ -213,6 +213,16 @@ export const nexusPages = {
   mod: (modId: number, fileId?: number) => call<void>("open_nexus_page", { modId, fileId }),
   url: (url: string) => call<void>("open_nexus_url", { url }),
 };
+/** Running in the background, and quiet updates (src-tauri/src/background.rs). */
+export interface BackgroundState { readyVersion: string | null; modsReady: number }
+export const background = {
+  state: () => call<BackgroundState>("background_state"),
+  check: () => call<BackgroundState>("background_check"),
+  installUpdate: () => call<void>("app_update_install"),
+  autostart: () => call<boolean>("autostart_get"),
+  setAutostart: (on: boolean) => call<boolean>("autostart_set", { on }),
+  onUpdate: (cb: (u: { version: string; ready: boolean }) => void) => listen<{ version: string; ready: boolean }>("app-update", cb),
+};
 export type PagesWhere = "browser" | "pane";
 export const pagesWhere = {
   get: async (): Promise<PagesWhere> => ((await settings.get("nexus.pages").catch(() => null)) === "pane" ? "pane" : "browser"),
@@ -346,12 +356,12 @@ export const collections = {
 export async function pickSavePath(defaultName: string): Promise<string | null> {
   if (!("__TAURI_INTERNALS__" in window)) return window.prompt("Save as", defaultName) || null;
   const { save } = await import("@tauri-apps/plugin-dialog");
-  return (await save({ title: "Export collection", defaultPath: defaultName, filters: [{ name: "Pocket Mods collection", extensions: ["pmcollection.json", "json"] }] })) ?? null;
+  return (await save({ title: "Export collection", defaultPath: defaultName, filters: [{ name: "Pockymod collection", extensions: ["pmcollection.json", "json"] }] })) ?? null;
 }
 export async function pickCollectionFile(): Promise<string | null> {
   if (!("__TAURI_INTERNALS__" in window)) return window.prompt("Collection file") || null;
   const { open } = await import("@tauri-apps/plugin-dialog");
-  const r = await open({ title: "Import a collection", filters: [{ name: "Pocket Mods collection", extensions: ["json"] }] });
+  const r = await open({ title: "Import a collection", filters: [{ name: "Pockymod collection", extensions: ["json"] }] });
   return typeof r === "string" ? r : null;
 }
 

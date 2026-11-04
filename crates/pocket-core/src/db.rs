@@ -99,7 +99,7 @@ impl Db {
         let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0))?;
         // a newer app made this file: an older one must not guess at a schema it does not know
         if version as usize > MIGRATIONS.len() {
-            return Err(Error::Invalid("Your library was last opened by a newer version of Pocket Mods. Install that version again (a copy of the library from before is kept in the app's data folder, backups).".into()));
+            return Err(Error::Invalid("Your library was last opened by a newer version of Pockymod. Install that version again (a copy of the library from before is kept in the app's data folder, backups).".into()));
         }
         for (i, step) in MIGRATIONS.iter().enumerate().skip(version as usize) {
             let tx = conn.unchecked_transaction()?;

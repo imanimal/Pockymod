@@ -199,7 +199,7 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
     for (install_id, n) in by_install {
         let name = mods.iter().find(|m| m.0 == install_id).map(|m| m.2.clone()).unwrap_or_else(|| format!("Install {install_id}"));
         issues.push(Issue { id: format!("deploy.broken.{install_id}"), severity: Severity::Problem, area: "deploy", title: format!("{name}: {n} files missing or changed"),
-            detail: "Something outside Pocket Mods removed or replaced files this mod put in the game. Deploy it again to restore them.".into(), fix: Some(Fix::Redeploy { install_id }) });
+            detail: "Something outside Pockymod removed or replaced files this mod put in the game. Deploy it again to restore them.".into(), fix: Some(Fix::Redeploy { install_id }) });
     }
     for (install_id, _, name, _, _) in &mods {
         let n: i64 = db.conn.query_row("SELECT COUNT(*) FROM deployed_files WHERE install_id = ?1", params![install_id], |r| r.get(0))?;

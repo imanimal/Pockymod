@@ -3,8 +3,8 @@
   "version": 1,
   "id": "paper-terminal",
   "name": "Paper Terminal",
-  "author": "Pocket Mods examples",
-  "description": "Pocket's raised keys on warm paper, with green phosphor LCDs. Light only.",
+  "author": "Pockymod examples",
+  "description": "Pocket on warm paper with green LCDs. Light only.",
   "scheme": "light",
   "base": "pocket",
   "tokens": {

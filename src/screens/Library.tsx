@@ -1,4 +1,4 @@
-// Library: every mod you have, from Pocket Mods, from Vortex, or found in the game, sorted into groups (the app's
+// Library: every mod you have, from Pockymod, from Vortex, or found in the game, sorted into groups (the app's
 // presets or your own). Select any number and turn them on or off, update, move or remove them in one go.
 import { plural } from "../lib/text";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -248,7 +248,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
               const keep = byId.get(d[0]);
               const others = d.slice(1).map((id) => byId.get(id)).filter((x): x is InstallRow => !!x);
               if (!keep) return null;
-              const tag = (r: InstallRow) => `${r.version ? `v${r.version}` : "version unknown"}, ${r.source === "pocket" ? (r.origin ? `added for ${r.origin}` : "Pocket Mods") : SOURCE[r.source]}${r.enabled ? ", on" : ", off"}`;
+              const tag = (r: InstallRow) => `${r.version ? `v${r.version}` : "version unknown"}, ${r.source === "pocket" ? (r.origin ? `added for ${r.origin}` : "Pockymod") : SOURCE[r.source]}${r.enabled ? ", on" : ", off"}`;
               return (
                 <div key={d[0]} className="row" style={{ cursor: "default" }}>
                   <span className="m-main"><span className="m-t">{keep.name}</span>

@@ -1,0 +1,38 @@
+name: Release
+
+# Push a tag like v0.2.0: the Windows installer is built and published as a GitHub release with its checksum
+# (<installer>.sha256), which the app's quiet updater checks (src-tauri/src/background.rs). Signing the installer is
+# a separate task (see docs/release.md).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+      - run: npx tauri build
+      - name: Checksum
+        shell: pwsh
+        run: |
+          Get-ChildItem target/release/bundle/nsis/*-setup.exe | ForEach-Object {
+            (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower() + "  " + $_.Name | Set-Content -NoNewline "$($_.FullName).sha256"
+          }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/release/bundle/nsis/*-setup.exe
+            target/release/bundle/nsis/*-setup.exe.sha256
+          generate_release_notes: true

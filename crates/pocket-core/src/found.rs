@@ -1,5 +1,5 @@
 //! Mods already in the game folder that no manager owns (copied in by hand, or by a manager that left no record).
-//! Tracking one makes it an ordinary Pocket Mods install without touching the game: each file gets a second hard
+//! Tracking one makes it an ordinary Pockymod install without touching the game: each file gets a second hard
 //! link in the mod library (a copy when the library is on another drive), so turning it off or removing it later is
 //! as reversible as any other mod.
 
@@ -76,7 +76,7 @@ pub fn scan(db: &Db, game: &Path, also_skip: &BTreeSet<String>) -> Result<Vec<Fo
     Ok(out)
 }
 
-/// Track found mods: link their files into the library and record them as installs owned by Pocket Mods.
+/// Track found mods: link their files into the library and record them as installs owned by Pockymod.
 pub fn track(db: &Db, game: &Path, library: &Path, mods: &[FoundMod]) -> Result<Vec<i64>> {
     let profile = install::active_profile(db)?;
     let mut ids = Vec::new();

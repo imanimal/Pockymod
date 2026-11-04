@@ -163,9 +163,9 @@ export function parseThemePackage(text: string): ThemePackage {
 }
 
 export function checkThemePackage(raw: unknown): ThemePackage {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) fail("That is not a Pocket Mods theme.");
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) fail("That is not a Pockymod theme.");
   const p = raw as Record<string, unknown>;
-  if (p.format !== "pocket-mods.theme") fail('That is not a Pocket Mods theme: "format" must be "pocket-mods.theme".');
+  if (p.format !== "pocket-mods.theme") fail('That is not a Pockymod theme: "format" must be "pocket-mods.theme".');
   if (p.version !== 1) fail('This app reads theme version 1: set "version": 1.');
   const id = checkId(p.id);
   const name = optText(p.name, "name", LIMITS.name);
@@ -173,6 +173,7 @@ export function checkThemePackage(raw: unknown): ThemePackage {
   if (p.scheme !== "dark" && p.scheme !== "light") fail('"scheme" must be "dark" or "light".');
   if (p.base !== undefined && !(LOOKS as readonly unknown[]).includes(p.base)) fail(`"base" must be one of ${LOOKS.join(", ")}.`);
   if (p.css !== undefined && typeof p.css !== "string") fail('"css" must be text.');
+  const icon = checkIcon(p.icon);
   const pkg: ThemePackage = {
     format: "pocket-mods.theme", version: 1, id, name: name!,
     author: optText(p.author, "author", LIMITS.author),
@@ -183,10 +184,25 @@ export function checkThemePackage(raw: unknown): ThemePackage {
     dark: checkTokens(p.dark, "dark"),
     light: checkTokens(p.light, "light"),
     css: p.css as string | undefined,
+    icon,
   };
   if (pkg.css) { checkCssText(pkg.css); scopeCss(pkg.css, id); } // throws if it cannot be used
   for (const k of Object.keys(pkg) as Array<keyof ThemePackage>) if (pkg[k] === undefined) delete pkg[k];
   return pkg;
+}
+
+/** A theme's own app icon: a PNG as a data address, at most 256 KB (Rust checks its size in pixels too). */
+function checkIcon(v: unknown): string | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v !== "string" || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(v)) fail('"icon" must be a PNG as a data address (data:image/png;base64,…).');
+  if ((v as string).length > 350_000) fail('"icon" is too large: keep the PNG under 256 KB.');
+  return v as string;
+}
+
+/** The bytes of a theme icon's PNG. */
+export function iconBytes(dataUrl: string): number[] {
+  const b = atob(dataUrl.slice(dataUrl.indexOf(",") + 1));
+  return Array.from(b, (c) => c.charCodeAt(0));
 }
 
 /** The schemes a package has: both when it sets both `dark` and `light`, else the one it names. */

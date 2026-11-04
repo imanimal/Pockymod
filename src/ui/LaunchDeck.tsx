@@ -41,7 +41,7 @@ export function LaunchDeck({ onHealth }: { onHealth: () => void }) {
       </div>
       {ask && (
         <Dialog icon="power" title="Start without mods" onClose={() => setAsk(false)}>
-          <p>Every mod Pocket Mods tracks comes out of the game folder, the game starts, and they all go back when you close it. It takes a moment either way: they are hard links, nothing is copied.</p>
+          <p>Every mod Pockymod tracks comes out of the game folder, the game starts, and they all go back when you close it. It takes a moment either way: they are hard links, nothing is copied.</p>
           <p className="dim" style={{ fontSize: ".86em" }}>Useful to check whether a problem comes from a mod. Mods put in by hand that are not in your library stay in; bring them in from Library first to take them out too.</p>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setAsk(false)}>Cancel</Key>

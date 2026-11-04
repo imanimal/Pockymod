@@ -7,9 +7,9 @@
       "id": "neon",
       "kind": "theme",
       "name": "Neon",
-      "author": "Pocket Mods",
+      "author": "Pockymod",
       "version": "1.0.0",
-      "description": "Blue-black with hot pink keys and a cyan display. For late nights.",
+      "description": "Blue-black with pink keys and a cyan display.",
       "tags": [
         "dark",
         "colourful"
@@ -29,9 +29,9 @@
       "id": "ember",
       "kind": "theme",
       "name": "Ember",
-      "author": "Pocket Mods",
+      "author": "Pockymod",
       "version": "1.0.0",
-      "description": "Warm charcoal, amber keys and an amber display, easy on the eyes.",
+      "description": "Charcoal with amber keys and display.",
       "tags": [
         "dark",
         "warm"
@@ -51,9 +51,9 @@
       "id": "ink",
       "kind": "theme",
       "name": "Ink",
-      "author": "Pocket Mods",
+      "author": "Pockymod",
       "version": "1.0.0",
-      "description": "Black on white with red keys. High contrast, for bright rooms and tired eyes.",
+      "description": "Black on white with red keys. High contrast.",
       "tags": [
         "light",
         "high contrast"
@@ -73,9 +73,9 @@
       "id": "moss",
       "kind": "theme",
       "name": "Moss",
-      "author": "Pocket Mods",
+      "author": "Pockymod",
       "version": "1.0.0",
-      "description": "Soft greens in a light and a dark version. Follows the Light/Dark choice.",
+      "description": "Soft greens. Dark or light.",
       "tags": [
         "light",
         "dark",
@@ -98,7 +98,7 @@
       "id": "photo-mode-and-looks",
       "kind": "extension",
       "name": "Photo mode and looks",
-      "author": "Pocket Mods",
+      "author": "Pockymod",
       "version": "1.0.0",
       "description": "Browse shelves for poses, cameras, lighting, weather and ReShade, and Library rules that sort photo mode mods and Atelier stores into their own groups.",
       "tags": [
@@ -129,7 +129,7 @@
       "id": "modding-tools",
       "kind": "extension",
       "name": "Modding tools",
-      "author": "Pocket Mods",
+      "author": "Pockymod",
       "version": "1.0.0",
       "description": "Start WolvenKit and the game's own launcher from the Play menu, start the game past its start screen, and open the modding wikis.",
       "tags": [
@@ -161,7 +161,7 @@
       "id": "console-commands",
       "kind": "extension",
       "name": "Console commands",
-      "author": "Pocket Mods",
+      "author": "Pockymod",
       "version": "1.0.0",
       "description": "Popular Cyber Engine Tweaks console commands to copy: money, levels and points, iconic gear, cars and bikes, and the time of day. Shown in the Play menu and on Cyber Engine Tweaks' page.",
       "tags": [
@@ -191,7 +191,7 @@
       "id": "library-report",
       "kind": "extension",
       "name": "Library report",
-      "author": "Pocket Mods",
+      "author": "Pockymod",
       "version": "1.0.0",
       "description": "Two panels: your mods by size, with a switch for each, and a checklist of things to do before you play. A worked example of panels.",
       "tags": [

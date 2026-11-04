@@ -129,7 +129,7 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
                 <div className="sub-h">Not tied to one mod</div>
                 {showOther ? <div className="log">{r.other.map(entryText).join("\n\n")}</div>
                   : <button type="button" className="linkish fold-line" onClick={() => setShowOther(true)}>
-                      {otherText(r.other)} {r.other.length === 1 ? "names" : "name"} no installed mod (the tool's own, or a mod Pocket Mods does not manage). Show {r.other.length === 1 ? "it" : "them"}.
+                      {otherText(r.other)} {r.other.length === 1 ? "names" : "name"} no installed mod (the tool's own, or a mod Pockymod does not manage). Show {r.other.length === 1 ? "it" : "them"}.
                     </button>}
               </>
             )}

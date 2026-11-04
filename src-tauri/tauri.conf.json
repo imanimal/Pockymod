@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Pocket Mods",
+  "productName": "Pockymod",
   "version": "0.1.0",
   "identifier": "app.pocketmods.desktop",
   "build": {
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Pocket Mods",
+        "title": "Pockymod",
         "width": 1360,
         "height": 860,
         "minWidth": 900,

@@ -226,12 +226,12 @@ pub fn pop(app: &AppHandle, out: bool) -> pocket_core::Result<()> {
 fn open_window(app: &AppHandle, url: Url) -> pocket_core::Result<()> {
     let closed = app.clone();
     let w = common!(tauri::WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::External("about:blank".parse().unwrap())), app)
-        .title("Nexus Mods · Pocket Mods")
+        .title("Nexus Mods · Pockymod")
         .inner_size(1180.0, 820.0)
         .min_inner_size(720.0, 520.0)
         // Nexus's own dark grey while the page loads, not a white flash
         .background_color(tauri::window::Color(0x1d, 0x1d, 0x21, 0xff))
-        .on_document_title_changed(|w, t| { let _ = w.set_title(&format!("{t} · Pocket Mods")); })
+        .on_document_title_changed(|w, t| { let _ = w.set_title(&format!("{t} · Pockymod")); })
         .build().map_err(err)?;
     // the window closed by its own close key: the pane's tab goes too (unless it went back into the main window)
     w.on_window_event(move |e| { if let tauri::WindowEvent::Destroyed = e { if closed.get_webview(PANE).is_none() { say(&closed, BrowserState::closed()); } } });

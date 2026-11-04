@@ -37,7 +37,7 @@ export function ShareDialog({ kind, text, onClose }: { kind: "theme" | "extensio
         </>
       ) : (
         <>
-          <p>The marketplace is a folder in the Pocket Mods project on GitHub. You send your {kind} as a GitHub issue; a maintainer checks it and adds it. You need a free GitHub account.</p>
+          <p>The marketplace is a folder in the Pockymod project on GitHub. You send your {kind} as a GitHub issue; a maintainer checks it and adds it. You need a free GitHub account.</p>
           <ol className="ext-steps">
             <li className={saved ? "done" : ""}>
               <b>Save the file.</b> <span className="dim">Keep it: you attach it if the form asks, and you change it for updates.</span>

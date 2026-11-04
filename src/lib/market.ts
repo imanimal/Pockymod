@@ -24,7 +24,7 @@ export async function loadIndex(fresh = false): Promise<LoadedIndex> {
   try { raw = JSON.parse(f.text); } catch { throw new Error("The marketplace index is not valid JSON."); }
   const r = validateIndex(raw);
   const ix = raw as MarketIndex;
-  if (!ix || ix.format !== "pocket-mods.marketplace") throw new Error("That is not a Pocket Mods marketplace index.");
+  if (!ix || ix.format !== "pocket-mods.marketplace") throw new Error("That is not a Pockymod marketplace index.");
   // keep good entries even when another one is broken
   const bad = new Set(r.errors.map((e) => e.match(/^(themes|extensions)\[(\d+)\]/)?.slice(1, 3).join(":")).filter(Boolean));
   const keep = (key: "themes" | "extensions") => (Array.isArray(ix[key]) ? ix[key] : []).filter((_, i) => !bad.has(`${key}:${i}`));

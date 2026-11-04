@@ -1,6 +1,6 @@
 # Writing an extension
 
-An extension adds things to Pocket Mods: shelves on the Browse front page, rules that sort mods into Library groups, programs and launch options in the Play menu, console commands, links, and panels (pages of their own). It is one JSON file. Most extensions need no code at all; a panel is the only part that runs any.
+An extension adds things to Pockymod: shelves on the Browse front page, rules that sort mods into Library groups, programs and launch options in the Play menu, console commands, links, and panels (pages of their own). It is one JSON file. Most extensions need no code at all; a panel is the only part that runs any.
 
 Nothing in an extension does anything until the user has seen what it adds and what it can do, and said yes.
 
@@ -18,7 +18,7 @@ Themes are a separate kind of add-on: see [themes.md](themes.md). To share eithe
 
 ## Quick start
 
-1. In Pocket Mods, open **Add-ons**, then **Make your own**, then **Save a starter extension**. You get `my-extension.pmext.json`:
+1. In Pockymod, open **Add-ons**, then **Make your own**, then **Save a starter extension**. You get `my-extension.pmext.json`:
 
    ```json
    {

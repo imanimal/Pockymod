@@ -22,7 +22,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   return (
     <div className="ov full onboard">
       <div className="onb">
-        <div className="brandmark" style={{ fontSize: "1.3em" }}><span className="logo">P</span><span>Pocket Mods</span></div>
+        <div className="brandmark" style={{ fontSize: "1.3em" }}><span className="logo">P</span><span>Pockymod</span></div>
         <div className="onb-steps">{STEPS.map((s, i) => <span key={s.id} className={`onb-dot${s.id === step ? " on" : STEPS.findIndex((x) => x.id === step) > i ? " done" : ""}`}>{s.label}</span>)}</div>
         {step === "game" && <GameStep onNext={next} />}
         {step === "account" && <AccountStep onNext={next} />}
@@ -127,10 +127,10 @@ function LinksStep({ onNext }: { onNext: () => void }) {
     const settle = async (r: HandlerStatus) => { await new Promise((ok) => setTimeout(ok, Math.max(0, 900 - (Date.now() - started)))); setLines((l) => l.map((x) => ({ ...x, done: true }))); setH(r); };
     handler.status().then(async (s) => {
       if (!s.supported) { say("Not on Windows: links are handled by the system"); return settle(s); }
-      if (s.ours) { say("Pocket Mods already opens them"); return settle(s); }
+      if (s.ours) { say("Pockymod already opens them"); return settle(s); }
       // nobody handles nxm:// links: take them without asking; another manager does: ask
       if (!s.owner) {
-        say("No app opens them yet: registering Pocket Mods");
+        say("No app opens them yet: registering Pockymod");
         const r = await handler.register().catch(() => s);
         setTook(r.ours);
         return settle(r);
@@ -144,17 +144,17 @@ function LinksStep({ onNext }: { onNext: () => void }) {
   if (!h) return <Module icon="link" title="Download links"><Scanner title="Checking browser download links" icon="link" lines={lines} /></Module>;
   if (settled) return (
     <Module icon="link" title="Download links" count="done">
-      <p><Icon name="check" size={9} /> {h.supported ? (took ? "Mod Manager Download buttons on nexusmods.com now open in Pocket Mods." : "Mod Manager Download buttons on nexusmods.com open in Pocket Mods.") : "Browser links are handled by your system."}</p>
+      <p><Icon name="check" size={9} /> {h.supported ? (took ? "Mod Manager Download buttons on nexusmods.com now open in Pockymod." : "Mod Manager Download buttons on nexusmods.com open in Pockymod.") : "Browser links are handled by your system."}</p>
       <p className="dim" style={{ fontSize: ".86em", marginTop: ".3em" }}>You can test or change this any time in Settings, Download links.</p>
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}><Key variant="dark" icon="chevron" onClick={onNext}>Next</Key></div>
     </Module>
   );
   return (
     <Module icon="link" title="Download links from your browser" band="hot">
-      <p>{h.owner} opens "Mod Manager Download" links clicked in a web browser. Pages opened inside Pocket Mods always come here, whatever you choose.</p>
+      <p>{h.owner} opens "Mod Manager Download" links clicked in a web browser. Pages opened inside Pockymod always come here, whatever you choose.</p>
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
         <Key variant="ghost" onClick={() => { void settings.set("links.other", "1"); onNext(); }}>Keep {h.owner}</Key>
-        <Key variant="dark" icon="link" onClick={() => handler.register().then(() => { toast("Browser links now open in Pocket Mods."); onNext(); }).catch((e) => toast(errorText(e), true))}>Use Pocket Mods</Key>
+        <Key variant="dark" icon="link" onClick={() => handler.register().then(() => { toast("Browser links now open in Pockymod."); onNext(); }).catch((e) => toast(errorText(e), true))}>Use Pockymod</Key>
       </div>
     </Module>
   );

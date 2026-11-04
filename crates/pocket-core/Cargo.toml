@@ -1,6 +1,6 @@
 [package]
 name = "pocket-core"
-description = "Nexus, file and Cyberpunk 2077 logic for Pocket Mods. No UI code, so it can be ported to Linux."
+description = "Nexus, file and Cyberpunk 2077 logic for Pockymod. No UI code, so it can be ported to Linux."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -26,6 +26,7 @@ walkdir = "2"
 roxmltree = "0.20"
 pelite = { version = "0.10", default-features = false, features = ["std", "mmap"] }
 rusty-leveldb = "4.0.2"
+sha2 = "0.10"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"

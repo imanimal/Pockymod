@@ -24,7 +24,7 @@ import { Create } from "./screens/Create";
 import { Addons } from "./screens/Addons";
 import { Toasts, toast } from "./ui/toast";
 import { installPrefs } from "./lib/prefs";
-import { errorText, game, handler, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
+import { background as backgroundApi, errorText, game, handler, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
 import { resetTheme, toggleScheme, useTheme, watchSystemTheme } from "./lib/theme";
 import { channel, powerOff, powerOn } from "./ui/fx";
 import { nope } from "./ui/motion";
@@ -47,7 +47,9 @@ const VIEWS: Array<{ id: View; label: string; icon: IconName }> = [
 ];
 
 export function App() {
-  const [view, setView] = useState<View>("browse");
+  // the app comes back where it was (a window made again from the tray, a restart after an update)
+  const [view, setView] = useState<View>(() => { try { const v = localStorage.getItem("pm.session.view"); return VIEWS.some((x) => x.id === v) ? v as View : "browse"; } catch { return "browse"; } });
+  useEffect(() => { try { localStorage.setItem("pm.session.view", view); } catch { /* storage unavailable */ } }, [view]);
   const theme = useTheme();
   const [snap, setSnap] = useState<QueueSnapshot | null>(null);
   const [premium, setPremium] = useState(false);
@@ -88,6 +90,8 @@ export function App() {
     queue.get().then(setSnap).catch(() => {});
     queue.onChange(setSnap).then((u) => offs.push(u));
     onToast((m) => toast(m)).then((u) => offs.push(u));
+    // a new version is downloaded: one quiet line, never a dialog
+    backgroundApi.onUpdate((u) => { if (u.ready) toast(`Pockymod ${u.version} is ready. It goes in when you close the window.`, false, { label: "Restart now", run: () => { void backgroundApi.installUpdate().catch((e) => toast(errorText(e), true)); } }); }).then((u) => offs.push(u));
     nexus.status().then((s) => setPremium(!!s.user?.isPremium)).catch(() => {});
     // update badges: the last result now, a fresh check shortly after start and every six hours
     updatesApi.last().then(setUpdates).catch(() => {});
@@ -100,7 +104,7 @@ export function App() {
     const t3 = setTimeout(() => {
       Promise.all([handler.status(), settings.get("onboarded"), settings.get("links.other")]).then(([h, ob, other]) => {
         if (ob !== "1" || other === "1" || !h.supported || h.ours || !h.owner) return;
-        toast(`${h.owner} now opens Mod Manager Download links from your browser.`, false, { label: "Take them back", run: () => { void handler.register().then(() => toast("Browser links open in Pocket Mods again.")).catch((e) => toast(errorText(e), true)); } });
+        toast(`${h.owner} now opens Mod Manager Download links from your browser.`, false, { label: "Take them back", run: () => { void handler.register().then(() => toast("Browser links open in Pockymod again.")).catch((e) => toast(errorText(e), true)); } });
       }).catch(() => {});
     }, 2500);
     return () => { offs.forEach((f) => f()); clearTimeout(t1); clearInterval(t2); clearTimeout(t3); };
@@ -130,7 +134,7 @@ export function App() {
   return (
     <div className="screen shell">
       <header className="mtop" data-tauri-drag-region onDoubleClick={(e) => { if (e.target === e.currentTarget) void windowAction("toggleMaximize"); }}>
-        <span className="brandmark" data-tauri-drag-region><span className="logo">P</span><span>Pocket Mods</span></span>
+        <span className="brandmark" data-tauri-drag-region><span className="logo">P</span><span>Pockymod</span></span>
         <span className="crumb" data-tauri-drag-region><span className="v">{here.label}</span><span className="ctx">Cyberpunk 2077</span></span>
         <span className="sp" data-tauri-drag-region />
         <HistoryMenu onRemoved={() => { setView("library"); setTimeout(() => document.getElementById("recently-removed")?.scrollIntoView({ behavior: "smooth" }), 120); }} />

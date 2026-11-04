@@ -119,7 +119,7 @@ async function applyOptions(r: InstallRow, picks: ChoicesNeeded["defaults"], bef
   if (!d) toast(`${r.name} keeps the new options; they go in when you turn it on.`);
 }
 
-const SOURCE: Record<InstallRow["source"], string> = { pocket: "Pocket Mods", vortex: "Vortex", found: "found in the game" };
+const SOURCE: Record<InstallRow["source"], string> = { pocket: "Pockymod", vortex: "Vortex", found: "found in the game" };
 
 /** Everything the app can do to an installed mod. */
 export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, onFlag, flags, onOptions }: {

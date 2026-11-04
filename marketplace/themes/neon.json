@@ -4,8 +4,8 @@
   "id": "neon",
   "name": "Neon",
   "release": "1.0.0",
-  "author": "Pocket Mods",
-  "description": "Blue-black with hot pink keys and a cyan display. For late nights.",
+  "author": "Pockymod",
+  "description": "Blue-black with pink keys and a cyan display.",
   "scheme": "dark",
   "tokens": {
     "--bg": "#0e0f1a",

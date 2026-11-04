@@ -17,7 +17,7 @@ export function Modio() {
       <Module icon="web" title="mod.io" count={r?.page ? `${formatCount(r.page.result_total)} · read-only` : "read-only"} bodyClass="list">
         {err && <div className="note bad" style={{ margin: ".6em" }}>{err}</div>}
         {r && !r.game && <Empty icon="web" title="Cyberpunk 2077 is not on mod.io for this key" />}
-        <div className="note" style={{ margin: ".6em" }}>Install these from the game: Main menu, Mods. Pocket Mods only lists them.</div>
+        <div className="note" style={{ margin: ".6em" }}>Install these from the game: Main menu, Mods. Pockymod only lists them.</div>
         <div className="rows">
           {r?.page?.data.map((m) => (
             <div key={m.id} className="row modrow" style={{ cursor: "default" }}>

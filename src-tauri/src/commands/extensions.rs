@@ -73,7 +73,7 @@ fn approved(app: &AppHandle, id: &str) -> Result<(Value, ExtState)> {
     let f = addons_dir(app)?.join("extension").join(format!("{id}.json"));
     let text = std::fs::read_to_string(&f).map_err(|_| Error::Invalid("That extension is not installed.".into()))?;
     let m: Value = serde_json::from_str(&text).map_err(|e| Error::Invalid(format!("The extension file is broken: {e}")))?;
-    if m["format"] != "pocket-mods.extension" { return Err(Error::Invalid("That is not a Pocket Mods extension.".into())); }
+    if m["format"] != "pocket-mods.extension" { return Err(Error::Invalid("That is not a Pockymod extension.".into())); }
     let st = load_states(app)?.remove(id).unwrap_or_default();
     let release = m["release"].as_str().unwrap_or_default();
     if !st.enabled { return Err(Error::Invalid("That extension is turned off. Turn it on in Add-ons.".into())); }
@@ -308,7 +308,7 @@ pub fn panel_protocol(app: &AppHandle, request: Request<Vec<u8>>) -> Response<Ve
     let dest = request.headers().get("sec-fetch-dest").and_then(|v| v.to_str().ok()).unwrap_or("iframe").to_ascii_lowercase();
     if dest != "iframe" && dest != "frame" && dest != "empty" {
         return Response::builder().status(StatusCode::FORBIDDEN).header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
-            .body(b"A panel opens only inside Pocket Mods' Add-ons screen.".to_vec()).unwrap_or_else(|_| Response::new(Vec::new()));
+            .body(b"A panel opens only inside Pockymod' Add-ons screen.".to_vec()).unwrap_or_else(|_| Response::new(Vec::new()));
     }
     let page = panel_page(app, request.uri().path());
     let (status, kind, body) = match page {

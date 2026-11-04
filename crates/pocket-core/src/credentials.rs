@@ -26,13 +26,13 @@ pub trait SecretStore: Send + Sync {
 }
 
 /// The OS store. On Windows the entry shows in Credential Manager under Windows Credentials as
-/// `nexus-api-key.Pocket Mods`.
+/// `nexus-api-key.Pocket Mods`: the app's first name, kept so keys saved before the rename still work.
 pub struct OsKeyring { service: String, user: String }
 
 impl OsKeyring {
     pub fn nexus() -> Self { Self::named("nexus-api-key") }
     /// Another secret of this app, e.g. `mod.io-api-key`.
-    pub fn named(user: &str) -> Self { OsKeyring { service: crate::APP_NAME.into(), user: user.into() } }
+    pub fn named(user: &str) -> Self { OsKeyring { service: crate::KEYRING_SERVICE.into(), user: user.into() } }
     fn entry(&self) -> Result<keyring::Entry> {
         keyring::Entry::new(&self.service, &self.user).map_err(|e| Error::Credentials(e.to_string()))
     }

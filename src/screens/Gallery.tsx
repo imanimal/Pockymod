@@ -216,7 +216,7 @@ export function Gallery() {
         <Module icon="gallery" title="Window frame" count=".win .mtop .deck">
           <div className="win">
             <div className="mtop">
-              <span className="brandmark"><span className="logo">P</span><span>Pocket Mods</span></span>
+              <span className="brandmark"><span className="logo">P</span><span>Pockymod</span></span>
               <span className="crumb"><span className="v">Browse</span><span className="ctx">Cyberpunk 2077 · 2.31</span></span>
               <span className="sp" />
               <span className="winkeys">

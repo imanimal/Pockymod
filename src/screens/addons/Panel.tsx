@@ -113,7 +113,7 @@ function QueueAsk({ extName, modId, fileId, onClose }: { extName: string; modId:
       {d && !file && <div className="note warn">This mod has no file to download.</div>}
       <p className="dim" style={{ fontSize: ".86em" }}>Required mods come along as usual. Nothing is downloaded unless you say yes.</p>
       <div className="actions" style={{ justifyContent: "flex-end" }}>
-        <Key variant="ghost" onClick={() => onClose("block")} title="It cannot ask again until Pocket Mods restarts">Block its requests</Key>
+        <Key variant="ghost" onClick={() => onClose("block")} title="It cannot ask again until Pockymod restarts">Block its requests</Key>
         <Key variant="ghost" onClick={() => onClose(false)}>No</Key>
         <Key variant="primary" icon="downloads" disabled={!file || busy} onClick={yes}>Add to downloads</Key>
       </div>

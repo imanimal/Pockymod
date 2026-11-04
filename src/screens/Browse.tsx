@@ -72,7 +72,9 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
   onInstall?: (d: DetailView, fileId: number) => void; onOpenPage?: (modId: number) => void; updates?: Update[]; onLibrary?: () => void;
 }) {
   const [q, setQ] = useState<BrowseQuery>(emptyQuery);
-  const [text, setText] = useState("");
+  // the search and the open mod come back with the window (local storage)
+  const [text, setText] = useState(() => { try { return localStorage.getItem("pm.session.browse.text") ?? ""; } catch { return ""; } });
+  useEffect(() => { try { localStorage.setItem("pm.session.browse.text", text); } catch { /* storage unavailable */ } }, [text]);
   const [local, setLocal] = useState<LocalFilter>({ showHidden: false, downloaded: null });
   const [since, setSince] = useState<Since>("any");
   const [dl, setDl] = useState<Dl>("any");
@@ -83,7 +85,8 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
   const [res, setRes] = useState<BrowseResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [sel, setSel] = useState<CardView | null>(null);
+  const [sel, setSel] = useState<CardView | null>(() => { try { return JSON.parse(localStorage.getItem("pm.session.browse.sel") ?? "null"); } catch { return null; } });
+  useEffect(() => { try { localStorage.setItem("pm.session.browse.sel", JSON.stringify(sel)); } catch { /* storage unavailable */ } }, [sel]);
   const [drawer, setDrawer] = useState(false);
   const [moreTags, setMoreTags] = useState(false);
   const [explore, setExplore] = useState(false);

@@ -1,6 +1,6 @@
 # Making a theme
 
-A theme changes how Pocket Mods looks: its colours, its corners, its fonts and how much of the CRT effects it uses.
+A theme changes how Pockymod looks: its colours, its corners, its fonts and how much of the CRT effects it uses.
 A theme is one small JSON file. You can write it by hand, or make it in the app and export it.
 
 The app comes with three themes:
@@ -49,7 +49,7 @@ Installed themes are kept as `%APPDATA%\app.pocketmods.desktop\addons\theme\<id>
   "id": "my-theme",
   "name": "My theme",
   "author": "Your name or handle",
-  "description": "One or two sentences about it.",
+  "description": "What it is, plainly: colours and schemes.",
   "scheme": "dark",
   "base": "standard",
   "tokens": { "--accent": "#ff4fa3" },
@@ -66,7 +66,8 @@ Installed themes are kept as `%APPDATA%\app.pocketmods.desktop\addons\theme\<id>
 | `id` | yes | Lowercase letters, digits, dots and dashes; starts with a letter or digit; at most 64 long; no `..`. It cannot be `standard`, `redline` or `pocket`. |
 | `name` | yes | What the theme is called in the app, up to 60 characters. |
 | `author` | no | Who made it, up to 80 characters. Shown on its card. |
-| `description` | no | Up to 300 characters. Shown on its card. |
+| `icon` | no | The app's icon in the taskbar and tray while the theme is on: a PNG (16 to 512 pixels square, under 256 KB) as a data address, `data:image/png;base64,…`. Without one, the base look's mark shows. |
+| `description` | no | Up to 300 characters. Shown on its card. Say what it is plainly (for example "Charcoal with amber keys. Dark only."). |
 | `scheme` | yes | `"dark"` or `"light"`: the scheme it starts in. |
 | `base` | no | The built-in look it builds on: `"standard"` (when left out), `"redline"` or `"pocket"`. |
 | `tokens` | no | Tokens used in every scheme. |

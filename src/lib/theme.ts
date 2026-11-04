@@ -5,7 +5,7 @@
 // (dark or light, plus .night when dark), data-fx (the CRT layer: off, subtle or full) and data-icons (pixel or line).
 import { useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
-import { LOOKS, compileTheme, packageSchemes, parseThemePackage, type Look } from "./themePkg";
+import { LOOKS, compileTheme, iconBytes, packageSchemes, parseThemePackage, type Look } from "./themePkg";
 
 export type { Look } from "./themePkg";
 export type Scheme = "dark" | "light";
@@ -38,11 +38,11 @@ export const DEFAULT_THEME = "redline";
 /** The default first: it is also where the app falls back to when a theme is removed. */
 export const BUILTIN_THEMES: ThemeInfo[] = [
   { id: "redline", name: "Redline", builtin: true, look: "redline", schemes: ["dark"],
-    description: "A heads-up display: red lines on black, cut corners, cyan highlights and one yellow key. The default." },
+    description: "Red on black with cyan highlights. Dark only. The default." },
   { id: "standard", name: "Standard", builtin: true, look: "standard", schemes: ["dark", "light"],
-    description: "A plain modern layout: dark blue-grey, a yellow accent, cyan for what is selected, dark bands." },
+    description: "Blue-grey with a yellow accent. Dark or light." },
   { id: "pocket", name: "Pocket", builtin: true, look: "pocket", schemes: ["light", "dark"],
-    description: "The handheld: raised keys, green LCDs and pixel icons, in Cream and Night." },
+    description: "Raised keys, green LCDs, pixel icons. Cream or Night." },
 ];
 
 const K = { id: "pm.theme.id", scheme: "pm.theme.scheme", cache: "pm.theme.css", fx: "pm.fx", motion: "pm.motion", legacy: "pm.theme" };
@@ -167,6 +167,17 @@ function paint(info: ThemeInfo, choice: SchemeChoice) {
 
   state = { id: info.id, name: info.name, look: info.look, choice, scheme, schemes: info.schemes, fx, fxChoice, fxTheme, icons, motion: motionOn() };
   subs.forEach((f) => f());
+  appIcon(info);
+}
+
+/** The taskbar and tray wear the theme: its own icon, else its look's mark (src-tauri/src/icon.rs). */
+let shownIcon = "";
+function appIcon(info: ThemeInfo) {
+  const own = info.pkg?.icon;
+  const key = own ? `${info.id}:own` : info.look;
+  if (key === shownIcon || !("__TAURI_INTERNALS__" in window)) return;
+  shownIcon = key;
+  void import("./tauri").then(({ call }) => call("app_icon", { look: info.look, png: own ? iconBytes(own) : null })).catch(() => { shownIcon = ""; });
 }
 
 /** Paint with a top-down redraw (a view transition) when motion is on, then tell the effects layer. */
@@ -433,6 +444,8 @@ export interface ThemePackage {
   light?: Record<string, string>;
   /** Extra CSS, scoped by the app to html[data-theme="<id>"]. */
   css?: string;
+  /** The app's icon (taskbar, tray) while the theme is on: a PNG as a data address. Else the base look's mark. */
+  icon?: string;
 }
 
 /** Validate and save a theme package (JSON text). Returns its id and name. */

@@ -516,7 +516,7 @@ pub fn scan(db: &Db, game: &Path, launched: Option<i64>) -> Result<LogReport> {
 pub fn report_text(db: &Db, game: &crate::cyberpunk::game::GameInfo, patch: Option<&str>, logs: &LogReport) -> Result<String> {
     use std::fmt::Write;
     let mut s = String::new();
-    let _ = writeln!(s, "Pocket Mods {} report", crate::APP_VERSION);
+    let _ = writeln!(s, "Pockymod {} report", crate::APP_VERSION);
     let exe = game.version.as_ref().map(|v| v.product_string.clone().unwrap_or_else(|| v.product.clone()));
     let _ = writeln!(s, "Game: Cyberpunk 2077{}{}", patch.map(|p| format!(" patch {p}")).unwrap_or_default(), exe.map(|v| format!(" (exe {v})")).unwrap_or_default());
     let fws: Vec<String> = game.frameworks.iter().filter(|f| f.installed).map(|f| format!("{} {}", f.name, f.version.as_deref().unwrap_or("(version unknown)"))).collect();

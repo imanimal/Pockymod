@@ -1,4 +1,4 @@
-# Pocket Mods
+# Pockymod
 
 A Windows mod manager for Cyberpunk 2077 that sources mods from Nexus Mods. Browsing, installing, configuring and sharing mods all happen in one window, and the Nexus website opens only when Nexus requires it.
 

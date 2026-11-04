@@ -4,7 +4,7 @@
   "id": "modding-tools",
   "name": "Modding tools",
   "release": "1.0.0",
-  "author": "Pocket Mods",
+  "author": "Pockymod",
   "description": "Start WolvenKit and the game's own launcher from the Play menu, start the game past its start screen, and open the modding wikis.",
   "icon": [
     "...###...",

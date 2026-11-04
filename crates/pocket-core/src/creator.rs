@@ -64,7 +64,7 @@ pub fn check(path: &Path, name: &str) -> Result<Check> {
     if !plan.unknown.is_empty() { problems.push(format!("{} files have no place in the game folder (for example {}). Managers skip them or stop.", plan.unknown.len(), plan.unknown[0])); }
     if plan.files.is_empty() { problems.push("Nothing here installs into the game folder.".into()); }
     let loose_archives = entries.iter().filter(|e| e.to_lowercase().ends_with(".archive") && !e.to_lowercase().contains("archive/pc/mod/") && !e.to_lowercase().contains("/archives/")).count();
-    if loose_archives > 0 { tips.push(format!("{loose_archives} .archive files are not inside archive/pc/mod. Pocket Mods and Vortex place them, but a manual install by a player may not.")); }
+    if loose_archives > 0 { tips.push(format!("{loose_archives} .archive files are not inside archive/pc/mod. Pockymod and Vortex place them, but a manual install by a player may not.")); }
     let top: std::collections::BTreeSet<&str> = entries.iter().filter_map(|e| e.split('/').next()).collect();
     if top.len() == 1 && !["archive", "bin", "engine", "mods", "r6", "red4ext"].contains(&top.iter().next().map(|s| s.to_lowercase()).unwrap_or_default().as_str()) && entries.iter().all(|e| e.contains('/')) {
         tips.push("Everything sits in one extra top folder. It works here, but packing from inside it (archive, r6 … at the top) suits every manager.".into());

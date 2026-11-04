@@ -1,10 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" shape-rendering="crispEdges">
-  <!-- The Pocket Mods mark: an LCD tile in a graphite bezel with a dot-matrix P. -->
-  <rect x="0" y="0" width="18" height="18" rx="3" fill="#2a2722"/>
-  <rect x="2" y="2" width="14" height="14" rx="1.5" fill="#b1bd93"/>
-  <g fill="#1f2a17">
-    <rect x="5" y="4" width="6" height="1"/><rect x="5" y="5" width="1" height="9"/><rect x="11" y="5" width="2" height="4"/>
-    <rect x="5" y="9" width="6" height="1"/><rect x="6" y="4" width="1" height="10"/>
-  </g>
-  <rect x="13" y="13" width="2" height="2" fill="#ff5b1f"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Pockymod: an angular P on a chamfered plate, a glitch slice through it, a corner bracket -->
+  <path d="M52 12 H204 L244 52 V204 L204 244 H52 L12 204 V52 Z" fill="#0b0b0e"/>
+  <path d="M52 12 H204 L244 52 V204 L204 244 H52 L12 204 V52 Z" fill="none" stroke="#ff4f4f" stroke-width="10" stroke-linejoin="miter"/>
+  <path d="M72 58 H168 L196 86 V128 L168 156 H110 V198 H72 Z M110 92 V122 H156 L164 114 V100 L156 92 Z" fill="#ff4f4f" fill-rule="evenodd"/>
+  <rect x="58" y="136" width="96" height="12" fill="#45f0ff"/>
+  <rect x="160" y="136" width="22" height="12" fill="#45f0ff"/>
+  <path d="M184 222 H222 V184" fill="none" stroke="#45f0ff" stroke-width="10" stroke-linecap="square"/>
 </svg>

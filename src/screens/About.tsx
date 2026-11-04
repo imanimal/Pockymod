@@ -9,7 +9,7 @@ export function About({ onGallery }: { onGallery?: () => void }) {
   const [busy, setBusy] = useState(false);
   return (
     <Module icon="info" title="About" count={u ? `v${u.current}` : undefined}>
-      <p>Pocket Mods, a Cyberpunk 2077 mod manager for Nexus Mods.</p>
+      <p>Pockymod, a Cyberpunk 2077 mod manager for Nexus Mods.</p>
       <div className="actions" style={{ marginTop: ".6em" }}>
         <Key size="sm" icon="refresh" disabled={busy} onClick={async () => { setBusy(true); try { setU(await extras.appUpdate()); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); } }}>Check for a new version</Key>
         {u && <Pill tone={u.newer ? "soon" : "ok"}>{u.message}</Pill>}

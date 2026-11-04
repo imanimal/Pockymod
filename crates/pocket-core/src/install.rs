@@ -185,7 +185,7 @@ pub fn fomod_options(db: &Db, install_id: i64) -> Result<FomodOptions> {
 /// Returns the deploy outcome (None when the mod is off). If deploying fails, the old picks are put back.
 pub fn change_fomod(db: &Db, game: &Path, library: &Path, install_id: i64, choices: &[[usize; 3]], opts: &DeployOptions) -> Result<Option<DeployOutcome>> {
     let (staging, name, source): (String, String, String) = db.conn.query_row("SELECT staging, name, source FROM installs WHERE id = ?1", params![install_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
-    if source != "pocket" { return Err(Error::Invalid(format!("{name} was not installed by Pocket Mods, so its installer is not kept."))); }
+    if source != "pocket" { return Err(Error::Invalid(format!("{name} was not installed by Pockymod, so its installer is not kept."))); }
     let st = Path::new(&staging);
     let entries = staged_files(st);
     let cfg = crate::fomod::find_config(&entries).ok_or_else(|| Error::Invalid(format!("{name} has no installer options to change.")))?;

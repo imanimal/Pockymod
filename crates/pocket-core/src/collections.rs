@@ -265,9 +265,9 @@ pub fn create_local(db: &Db, name: &str, description: &str, game_version: Option
 
 pub fn parse_local(text: &str) -> Result<LocalCollection> {
     if text.len() > 8 * 1024 * 1024 { return Err(Error::Invalid("That file is too large to be a collection.".into())); }
-    let c: LocalCollection = serde_json::from_str(text).map_err(|e| Error::Invalid(format!("Not a Pocket Mods collection: {e}")))?;
-    if c.format != FORMAT { return Err(Error::Invalid("Not a Pocket Mods collection file.".into())); }
-    if c.version > 1 { return Err(Error::Invalid("This collection was made by a newer Pocket Mods. Update the app to open it.".into())); }
+    let c: LocalCollection = serde_json::from_str(text).map_err(|e| Error::Invalid(format!("Not a Pockymod collection: {e}")))?;
+    if c.format != FORMAT { return Err(Error::Invalid("Not a Pockymod collection file.".into())); }
+    if c.version > 1 { return Err(Error::Invalid("This collection was made by a newer Pockymod. Update the app to open it.".into())); }
     if c.game != crate::GAME_DOMAIN { return Err(Error::Invalid(format!("This collection is for {}, not Cyberpunk 2077.", c.game))); }
     Ok(c)
 }

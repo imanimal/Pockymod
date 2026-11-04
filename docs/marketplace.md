@@ -1,6 +1,6 @@
 # The marketplace
 
-The marketplace is where Pocket Mods users get and share **themes** (the app's colours) and **extensions** (shelves, group rules, tools, launch options, console commands, links and panels). There is no server: the marketplace is the [`marketplace/`](../marketplace) folder of this repository on GitHub. The app reads it from there, and anything merged into it shows in every copy of the app within an hour.
+The marketplace is where Pockymod users get and share **themes** (the app's colours) and **extensions** (shelves, group rules, tools, launch options, console commands, links and panels). There is no server: the marketplace is the [`marketplace/`](../marketplace) folder of this repository on GitHub. The app reads it from there, and anything merged into it shows in every copy of the app within an hour.
 
 - [Getting add-ons](#getting-add-ons): install, update, remove
 - [Sharing yours](#sharing-yours): from the app, or with a pull request
@@ -119,7 +119,7 @@ To take something down, open an issue asking for it; the maintainers remove the 
   "updated": "2026-11-04",
   "themes": [
     {
-      "id": "neon", "kind": "theme", "name": "Neon", "author": "Pocket Mods", "version": "1.0.0",
+      "id": "neon", "kind": "theme", "name": "Neon", "author": "Pockymod", "version": "1.0.0",
       "description": "Blue-black with hot pink keys and a cyan display. For late nights.",
       "tags": ["dark", "colourful"], "path": "themes/neon.json", "updated": "2026-11-04",
       "preview": { "bg": "#0e0f1a", "surface": "#161827", "accent": "#ff3d8b", "text": "#f1f0ff", "chrome": "#07070e", "display": "#38d3e4" }
@@ -127,7 +127,7 @@ To take something down, open an issue asking for it; the maintainers remove the 
   ],
   "extensions": [
     {
-      "id": "library-report", "kind": "extension", "name": "Library report", "author": "Pocket Mods", "version": "1.0.0",
+      "id": "library-report", "kind": "extension", "name": "Library report", "author": "Pockymod", "version": "1.0.0",
       "description": "Two panels: your mods by size, with a switch for each, and a checklist of things to do before you play.",
       "tags": ["panel", "library"], "path": "extensions/library-report.json", "updated": "2026-11-04",
       "icon": "library", "permissions": ["library.read", "library.toggle", "nexus.open", "toast", "storage"], "adds": ["2 panels"]

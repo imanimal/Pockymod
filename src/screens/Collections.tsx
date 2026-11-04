@@ -280,7 +280,7 @@ function MyCollections({ onQueued }: { onQueued: () => void }) {
           })}>Open a file</Key>
         </div>
         {imported && <CheckDialog title={imported.c.name} load={() => Promise.resolve(imported.check)} onClose={() => setImported(null)} onQueued={() => { setImported(null); onQueued(); }} />}
-        {!imported && <Empty icon="collections" title="Nothing imported"><Icon name="info" size={9} /> Pocket Mods collection files end in .pmcollection.json.</Empty>}
+        {!imported && <Empty icon="collections" title="Nothing imported"><Icon name="info" size={9} /> Pockymod collection files end in .pmcollection.json.</Empty>}
       </Module>
     </div>
   );

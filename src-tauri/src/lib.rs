@@ -1,8 +1,11 @@
 //! Tauri shell: window setup and commands. All Nexus and file logic lives in `pocket-core`.
 
+mod background;
 mod browser;
 mod commands;
+mod icon;
 mod power;
+mod tray;
 mod runner;
 mod state;
 
@@ -18,7 +21,9 @@ pub fn run() {
     tauri::Builder::default()
         // a second start (for example Windows opening an nxm:// link) hands its arguments to this window and exits
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            if let Some(w) = app.get_webview_window("main") { let _ = w.unminimize(); let _ = w.set_focus(); }
+            // started again (the Start menu, a shortcut): show the window, made again if it was closed to the tray;
+            // a link from the browser does not need the window
+            if !argv.iter().any(|a| a.starts_with("nxm://")) { tray::show_main(app); }
             for a in argv.into_iter().filter(|a| a.starts_with("nxm://")) {
                 let h = app.clone();
                 tauri::async_runtime::spawn(async move { runner::handle_nxm(&h, &a).await });
@@ -27,6 +32,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(power::Power::default())
         .manage(browser::Browser::default())
+        .manage(background::Background::default())
+        .manage(icon::Current::default())
         // closing the main window turns the picture off like a tube first (power.rs), then the app quits
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -46,6 +53,10 @@ pub fn run() {
             state.nexus.set_observer(std::sync::Arc::new(move |rl| { let _ = handle.emit("rate-limit", rl); }));
             app.manage(state);
             runner::start(app.handle().clone());
+            // the tray, the quiet checks, and no window when started in the background (after an update, at sign-in)
+            if let Err(e) = tray::install(app.handle()) { eprintln!("tray: {e}"); }
+            background::start(app.handle().clone());
+            if background::started_hidden() { if let Some(w) = app.get_webview_window("main") { let _ = w.destroy(); } }
             // half-finished extractions from a crash (<library>/staging/*.new) are never used again
             if let Ok((_, lib)) = state::Paths::load(&app.state::<state::AppState>().db.lock().unwrap()).require() {
                 for e in std::fs::read_dir(lib.join("staging")).into_iter().flatten().flatten() {
@@ -77,6 +88,12 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             app_info,
             power::power_done,
+            icon::app_icon,
+            background::background_state,
+            background::background_check,
+            background::app_update_install,
+            background::autostart_get,
+            background::autostart_set,
             commands::browser::browser_bounds,
             commands::browser::browser_nav,
             commands::browser::browser_go,
@@ -211,6 +228,12 @@ pub fn run() {
             commands::troubleshoot::game_folder_set,
             commands::troubleshoot::game_relink,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Pocket Mods");
+        .build(tauri::generate_context!())
+        .expect("error while building Pockymod")
+        .run(|app, event| {
+            // the last window closing (to the tray) does not end the app; Quit does
+            if let tauri::RunEvent::ExitRequested { api, code: None, .. } = event {
+                if background::enabled(app) && !app.state::<background::Background>().quitting.load(std::sync::atomic::Ordering::Relaxed) { api.prevent_exit(); }
+            }
+        });
 }

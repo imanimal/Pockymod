@@ -250,6 +250,7 @@ export function validateTheme(t) {
   if (t.author !== undefined && !oneLine(t.author, 60)) c.err("author", "must be text of up to 60 characters.");
   if (t.description !== undefined && !isText(t.description, 400)) c.err("description", "must be text of up to 400 characters.");
   if (t.scheme !== "dark" && t.scheme !== "light") c.err("scheme", 'must be "dark" or "light".');
+  if (t.icon !== undefined && (typeof t.icon !== "string" || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(t.icon) || t.icon.length > 350000)) c.err("icon", "must be a PNG under 256 KB as a data address (data:image/png;base64,…).");
   let any = 0;
   for (const part of ["tokens", "dark", "light"]) {
     const v = t[part];

@@ -13,7 +13,7 @@ pub struct HandlerStatus {
     pub supported: bool,
     /// This app's executable is the registered handler.
     pub ours: bool,
-    /// Who has it now, by name when recognised: "Pocket Mods", "Vortex", "Mod Organizer 2", "another app", or none.
+    /// Who has it now, by name when recognised: "Pockymod", "Vortex", "Mod Organizer 2", "another app", or none.
     pub owner: Option<String>,
     /// The registered command line, for the curious.
     pub command: Option<String>,
@@ -58,7 +58,27 @@ mod imp {
         cmd.set_value("", &handler_command(exe)).map_err(e)?;
         status(exe)
     }
+
+    const RUN: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+    pub fn set_autostart(exe: &Path, on: bool) -> Result<bool> {
+        let e = |x: std::io::Error| Error::Invalid(format!("Could not change starting with Windows: {x}"));
+        let (k, _) = RegKey::predef(HKEY_CURRENT_USER).create_subkey(RUN).map_err(e)?;
+        if on { k.set_value(super::AUTOSTART_NAME, &format!("\"{}\" --background", exe.display())).map_err(e)?; }
+        else { let _ = k.delete_value(super::AUTOSTART_NAME); }
+        autostart(exe)
+    }
+    pub fn autostart(exe: &Path) -> Result<bool> {
+        let v: Option<String> = RegKey::predef(HKEY_CURRENT_USER).open_subkey(RUN).ok().and_then(|k| k.get_value(super::AUTOSTART_NAME).ok());
+        Ok(v.is_some_and(|v| v.to_ascii_lowercase().contains(&exe.display().to_string().to_ascii_lowercase())))
+    }
 }
+
+/// The Run key's value name for starting with Windows.
+pub const AUTOSTART_NAME: &str = "Pockymod";
+
+/// Start with Windows, in the background (`"<exe>" --background` in the user's Run key).
+pub fn set_autostart(exe: &Path, on: bool) -> Result<bool> { imp::set_autostart(exe, on) }
+pub fn autostart(exe: &Path) -> Result<bool> { imp::autostart(exe) }
 
 #[cfg(not(windows))]
 mod imp {
@@ -67,6 +87,8 @@ mod imp {
     pub fn register(_exe: &Path) -> Result<HandlerStatus> {
         Err(crate::Error::Invalid("Registering the nxm:// handler is only built for Windows so far.".into()))
     }
+    pub fn set_autostart(_exe: &Path, _on: bool) -> Result<bool> { Err(crate::Error::Invalid("Starting with the system is only built for Windows so far.".into())) }
+    pub fn autostart(_exe: &Path) -> Result<bool> { Ok(false) }
 }
 
 pub use imp::{register as register_nxm_handler, status as nxm_handler_status};
@@ -76,10 +98,10 @@ mod tests {
     use super::*;
     #[test]
     fn recognises_other_managers() {
-        let us = Path::new("C:\\Apps\\Pocket Mods\\pocket-mods.exe");
+        let us = Path::new("C:\\Apps\\Pockymod\\pocket-mods.exe");
         assert_eq!(owner_name("\"C:\\Program Files\\Black Tree Gaming Ltd\\Vortex\\Vortex.exe\" -d \"%1\"", us), "Vortex");
         assert_eq!(owner_name("\"D:\\MO2\\nxmhandler.exe\" \"%1\"", us), "Mod Organizer 2");
-        assert_eq!(owner_name(&handler_command(us), us), "Pocket Mods");
+        assert_eq!(owner_name(&handler_command(us), us), "Pockymod");
         assert_eq!(owner_name("foo.exe %1", us), "another app");
     }
 }

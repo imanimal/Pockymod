@@ -89,9 +89,9 @@ export function GameFolders() {
       {h && !h.supported && <p className="dim">The "Mod Manager Download" handler is registered on Windows only.</p>}
       {h?.supported && (
         <div className="actions">
-          {h.ours ? <Pill tone="ok">Pocket Mods opens nxm:// links</Pill> : <Pill tone="soon">{h.owner ? `${h.owner} opens nxm:// links` : "No app opens nxm:// links"}</Pill>}
-          {!h.ours && <Key size="sm" icon="link" onClick={() => handler.register().then((s) => { setH(s); void settings.set("links.other", "0"); toast("Pocket Mods now opens nxm:// links."); }).catch((e) => toast(errorText(e), true))}>Use Pocket Mods</Key>}
-          <Key size="sm" variant="ghost" onClick={() => testHandler().then(() => toast("Test link sent. If Pocket Mods gets it, a note says so in a moment.")).catch((e) => toast(errorText(e), true))}>Test</Key>
+          {h.ours ? <Pill tone="ok">Pockymod opens nxm:// links</Pill> : <Pill tone="soon">{h.owner ? `${h.owner} opens nxm:// links` : "No app opens nxm:// links"}</Pill>}
+          {!h.ours && <Key size="sm" icon="link" onClick={() => handler.register().then((s) => { setH(s); void settings.set("links.other", "0"); toast("Pockymod now opens nxm:// links."); }).catch((e) => toast(errorText(e), true))}>Use Pockymod</Key>}
+          <Key size="sm" variant="ghost" onClick={() => testHandler().then(() => toast("Test link sent. If Pockymod gets it, a note says so in a moment.")).catch((e) => toast(errorText(e), true))}>Test</Key>
         </div>
       )}
       <p className="dim" style={{ fontSize: ".84em", marginTop: ".4em" }}>Needed only for links clicked in a web browser. Pages opened inside the app hand their links over directly. The setting is per user and needs no admin rights.</p>

@@ -4,8 +4,8 @@
   "id": "ink",
   "name": "Ink",
   "release": "1.0.0",
-  "author": "Pocket Mods",
-  "description": "Black on white with red keys. High contrast, for bright rooms and tired eyes.",
+  "author": "Pockymod",
+  "description": "Black on white with red keys. High contrast.",
   "scheme": "light",
   "tokens": {
     "--bg": "#f0f0ee",

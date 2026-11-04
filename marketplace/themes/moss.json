@@ -4,8 +4,8 @@
   "id": "moss",
   "name": "Moss",
   "release": "1.0.0",
-  "author": "Pocket Mods",
-  "description": "Soft greens in a light and a dark version. Follows the Light/Dark choice.",
+  "author": "Pockymod",
+  "description": "Soft greens. Dark or light.",
   "scheme": "light",
   "light": {
     "--bg": "#e2e6db",

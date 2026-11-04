@@ -104,7 +104,7 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
       const c = checkExtensionText(f.text);
       if (!c.manifest) { setFileErrors({ kind: "extension", errors: c.errors }); return; }
       setReview({ manifest: c.manifest, text: f.text, mode: extOf(c.manifest.id) ? "update" : "install", fromMarket: false, warnings: c.warnings });
-    } else throw new Error("That is not a Pocket Mods theme or extension (its format field says what it is).");
+    } else throw new Error("That is not a Pockymod theme or extension (its format field says what it is).");
   });
 
   const match = (e: MarketEntry) => {

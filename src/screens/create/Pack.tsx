@@ -6,7 +6,7 @@ export function CheckModule({ pack, compact }: { pack: Pack; compact?: boolean }
   const c = pack.check;
   return (
     <Module icon="file" title="Check your mod" count={c ? `${c.files} files` : pack.busy ? "checking" : undefined}>
-      <p>Pick your mod's folder, or a packed archive. Pocket Mods shows where every file would land for a player, and what breaks installs.</p>
+      <p>Pick your mod's folder, or a packed archive. Pockymod shows where every file would land for a player, and what breaks installs.</p>
       <div className="actions" style={{ marginTop: ".6em" }}>
         <Key icon="folder" onClick={() => void pack.pick(true)} disabled={pack.busy}>Choose a folder</Key>
         <Key variant="ghost" icon="file" onClick={() => void pack.pick(false)} disabled={pack.busy}>Choose an archive</Key>

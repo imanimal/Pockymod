@@ -4,7 +4,7 @@
   "id": "library-report",
   "name": "Library report",
   "release": "1.0.0",
-  "author": "Pocket Mods",
+  "author": "Pockymod",
   "description": "Two panels: your mods by size, with a switch for each, and a checklist of things to do before you play. A worked example of panels.",
   "icon": [
     ".........",

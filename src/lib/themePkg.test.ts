@@ -20,7 +20,7 @@ describe("theme packages", () => {
 
   it("refuses what is not a theme", () => {
     expect(() => parseThemePackage("nope")).toThrow(/not valid JSON/);
-    expect(() => parseThemePackage(JSON.stringify({ format: "x" }))).toThrow(/not a Pocket Mods theme/);
+    expect(() => parseThemePackage(JSON.stringify({ format: "x" }))).toThrow(/not a Pockymod theme/);
     expect(() => parseThemePackage(pkg({ version: 2 }))).toThrow(/version 1/);
     expect(() => parseThemePackage(pkg({ scheme: "dim" }))).toThrow(/scheme/);
     expect(() => parseThemePackage(pkg({ base: "other" }))).toThrow(/base/);

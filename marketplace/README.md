@@ -1,6 +1,6 @@
 # Marketplace
 
-This folder is the Pocket Mods marketplace. The app's **Add-ons** screen reads it from GitHub, so what is merged here shows in every copy of the app within an hour.
+This folder is the Pockymod marketplace. The app's **Add-ons** screen reads it from GitHub, so what is merged here shows in every copy of the app within an hour.
 
 - `index.json` lists every theme and extension.
 - `themes/<id>.json` are themes, `extensions/<id>.json` are extensions.

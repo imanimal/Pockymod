@@ -400,7 +400,7 @@ mod tests {
         let v: String = db.conn.query_row("SELECT version FROM installs WHERE id = ?1", params![id], |r| r.get(0)).unwrap();
         assert_eq!(v, "1.1");
 
-        // disable from Pocket Mods: out of the game and out of the manifest; Vortex's folder stays
+        // disable from Pockymod: out of the game and out of the manifest; Vortex's folder stays
         remove_from_game(&db, &game, &setup, id, false).unwrap();
         assert!(!game.join("archive/pc/mod/jacket.archive").exists());
         assert!(folder.exists());
@@ -410,7 +410,7 @@ mod tests {
         assert!(game.join("archive/pc/mod/jacket.archive").exists());
         assert!(!folder.join(".pocket-manifest.json").exists(), "nothing of ours in Vortex's folder");
         assert!(!setup.staging.as_ref().unwrap().join("backup").exists());
-        // uninstalling from Pocket Mods leaves the mod in Vortex
+        // uninstalling from Pockymod leaves the mod in Vortex
         crate::install::uninstall(&db, &game, id).unwrap();
         assert!(folder.join("archive/pc/mod/jacket.archive").exists(), "Vortex's folder is never deleted");
         assert!(!game.join("archive/pc/mod/jacket.archive").exists());

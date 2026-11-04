@@ -3,8 +3,8 @@
   "version": 1,
   "id": "neon-harbor",
   "name": "Neon Harbor",
-  "author": "Pocket Mods examples",
-  "description": "Night water and harbour lights: deep navy, a pink accent and teal for what is selected. Dark and light.",
+  "author": "Pockymod examples",
+  "description": "Navy with a pink accent and teal selection. Dark or light.",
   "scheme": "dark",
   "base": "standard",
   "tokens": {
