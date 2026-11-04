@@ -40,7 +40,7 @@ pub fn remember_win(db: &Db, winner: i64, loser: i64, files: usize) -> Result<()
     let (Some((wm, wn)), Some((lm, ln))) = (mod_of(db, winner)?, mod_of(db, loser)?) else { return Ok(()) };
     db.conn.execute(
         "DELETE FROM conflict_rules WHERE (winner_install IN (?1, ?2) AND loser_install IN (?1, ?2))
-            OR (?3 != ?4 AND winner_mod IN (?3, ?4) AND loser_mod IN (?3, ?4))",
+            OR (?3 != ?4 AND winner_mod IN (?3, ?4) AND loser_mod IN (?3, ?4) AND winner_mod != loser_mod)",
         params![winner, loser, wm, lm])?;
     db.conn.execute(
         "INSERT INTO conflict_rules (winner_mod, winner_install, winner_name, loser_mod, loser_install, loser_name, files, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
@@ -171,6 +171,11 @@ mod tests {
         assert_eq!(verdict(&db, 2, 1).unwrap(), Some(Verdict::Wins));
         add(&db, 3, 10, "Other file");
         assert_eq!(verdict(&db, 3, 1).unwrap(), None, "a mod-wide rule would be wrong inside one mod");
+        // a choice against another mod leaves the one inside this mod alone
+        add(&db, 4, 20, "Elsewhere");
+        remember_win(&db, 1, 4, 1).unwrap();
+        assert_eq!(verdict(&db, 2, 1).unwrap(), Some(Verdict::Wins));
+        assert_eq!(verdict(&db, 4, 1).unwrap(), Some(Verdict::Loses));
     }
 
     #[test]

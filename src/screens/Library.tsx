@@ -145,6 +145,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   // a FOMOD mod's installer again, its last picks selected; the new picks go in from the staged files
   const changeOptions = (r: InstallRow) => run(async () => {
     const o = await installerOptions.get(r.id);
+    if (!o.saved) toast(`${r.name} was installed before picks were kept, so the installer's own defaults are selected.`);
     const request = { modId: r.modId, fileId: r.fileId, name: r.name, version: r.version, archive: "" };
     setReopt({ row: r, need: { request, fomod: o.fomod, defaults: o.choices }, before: o.choices });
   });

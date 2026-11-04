@@ -177,7 +177,8 @@ pub async fn game_folder_set(state: State<'_, AppState>, dir: String) -> Result<
     state.db.lock().unwrap().set_setting("game.dir", dir.trim())?;
     let mut relink = None;
     let changed = old.as_ref().is_some_and(|o| o != &new);
-    if changed && new.join("bin/x64").is_dir() {
+    // with the game running its files are locked; Check links in Settings does it later
+    if changed && new.join("bin/x64").is_dir() && !pocket_core::launch::game_running() {
         let allow_copy = Paths::load(&state.db.lock().unwrap()).allow_copy;
         let db = state.db.clone();
         relink = blocking(move || {
