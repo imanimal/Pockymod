@@ -61,13 +61,17 @@ pub fn activate(db: &Db, game: &Path, library: &Path, id: i64, opts: &DeployOpti
     let before = enabled_set(db, old)?;
     let after = enabled_set(db, id)?;
     let mut rep = SwitchReport::default();
-    for i in before.iter().filter(|i| !after.contains(i)) { install::undeploy_any(db, game, *i)?; rep.removed.push(*i); }
+    // one mod that fails must not leave the game half switched: carry on, and report it
+    for i in before.iter().filter(|i| !after.contains(i)) {
+        match install::undeploy_any(db, game, *i) { Ok(_) => rep.removed.push(*i), Err(e) => rep.not_deployed.push((*i, format!("could not be taken out: {e}"))) }
+    }
     db.conn.execute("UPDATE profiles SET active = (id = ?1)", params![id])?;
     for i in after.iter().filter(|i| !before.contains(i)) {
-        match install::redeploy_any(db, game, library, *i, opts)? {
-            DeployOutcome::Deployed { .. } => rep.deployed.push(*i),
-            DeployOutcome::Conflicts { conflicts } => rep.not_deployed.push((*i, format!("{} files clash with other mods", conflicts.len()))),
-            DeployOutcome::NeedsCopy { reason } => rep.not_deployed.push((*i, reason)),
+        match install::redeploy_any(db, game, library, *i, opts) {
+            Ok(DeployOutcome::Deployed { .. }) => rep.deployed.push(*i),
+            Ok(DeployOutcome::Conflicts { conflicts }) => rep.not_deployed.push((*i, format!("{} files clash with other mods", conflicts.len()))),
+            Ok(DeployOutcome::NeedsCopy { reason }) => rep.not_deployed.push((*i, reason)),
+            Err(e) => rep.not_deployed.push((*i, e.to_string())),
         }
     }
     db.set_setting("loadorder.changedAt", &now().to_string())?;
