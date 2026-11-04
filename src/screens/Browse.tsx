@@ -207,6 +207,14 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
       onOpen={(id) => { if (wide) setTrail([...trail, sel]); setSel({ ...sel, modId: id, name: "", updatedAt: "" } as CardView); }} />
   );
   const paged = !!sel && wide;
+  // Back (Alt+Left, a controller's B) leaves a page; Escape closes the drawer
+  useEffect(() => {
+    const back = () => { if (!sel) return; if (wide && trail.length) { setSel(trail[trail.length - 1]); setTrail(trail.slice(0, -1)); } else open(null); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && sel && !document.querySelector(".lightbox, .ov, .pmenu.popover")) back(); };
+    window.addEventListener("pm-back", back);
+    window.addEventListener("keydown", esc);
+    return () => { window.removeEventListener("pm-back", back); window.removeEventListener("keydown", esc); };
+  });
   return (
     <Cards.Provider value={cards}>
     {paged && <div className="mpage-wrap">

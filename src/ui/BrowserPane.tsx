@@ -40,6 +40,10 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
     }).then((u) => offs.push(u));
     browserPane.onTitle((t) => setTitle(t.title)).then((u) => offs.push(u));
     const pw = () => setOff(true);
+    // Ctrl+B: hide or show the pane
+    const toggle = () => setModeState((m) => (m === "hidden" ? ((read(MODE) as Mode | null) === "full" ? "full" : "split") : "hidden"));
+    window.addEventListener("pm-pane-toggle", toggle);
+    offs.push(() => window.removeEventListener("pm-pane-toggle", toggle));
     window.addEventListener("pm-power-off", pw);
     return () => { offs.forEach((f) => f()); window.removeEventListener("pm-power-off", pw); };
   }, []);

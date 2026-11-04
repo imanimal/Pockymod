@@ -32,6 +32,9 @@ import { call, inTauri, listen, windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
 import { BrowserPane } from "./ui/BrowserPane";
 import { useAfterPlayNudge } from "./ui/Endorse";
+import { SHORTCUTS, installKeys } from "./lib/keys";
+import { installGamepad } from "./lib/gamepad";
+import { Dialog } from "./ui/Dialog";
 
 export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "create" | "gallery" | "addons";
 
@@ -80,6 +83,20 @@ export function App() {
   }, []);
   useEffect(() => installUndoKeys(), []);
   useAfterPlayNudge();
+  const [help, setHelp] = useState(false);
+  // shortcuts and the controller (lib/keys.ts, lib/gamepad.ts)
+  useEffect(() => {
+    const ids = VIEWS.map((v) => v.id);
+    const go = (v: string) => setView(v as View);
+    const back = () => window.dispatchEvent(new Event("pm-back"));
+    const offKeys = installKeys({ views: ids, go, help: () => setHelp((h) => !h), back, pane: () => window.dispatchEvent(new Event("pm-pane-toggle")) });
+    const offPad = installGamepad({
+      nextView: (d) => setView((cur) => ids[(ids.indexOf(cur) + d + ids.length) % ids.length] as View),
+      help: () => setHelp((h) => !h), back,
+      play: () => (document.querySelector(".side .foot .btn") as HTMLElement | null)?.focus(),
+    });
+    return () => { offKeys(); offPad(); };
+  }, []);
   // the way out of a theme that hides the app: Ctrl+Alt+Shift+T, wherever the focus is
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); void resetTheme().then(() => toast("Theme reset to Redline.")); } };
@@ -154,7 +171,7 @@ export function App() {
       <nav className="side" aria-label="Views">
         <div className="nkeys rail">
           {VIEWS.map((v) => (
-            <ProgramKey key={v.id} icon={v.icon} label={v.label} on={view === v.id} onClick={() => setView(v.id)}
+            <ProgramKey key={v.id} icon={v.icon} label={v.label} on={view === v.id} onClick={() => setView(v.id)} title={`${v.label} (Ctrl+${VIEWS.indexOf(v) + 1})`}
               led={led(v.id)}
               count={v.id === "library" ? updates.length : v.id === "downloads" ? s?.left : undefined}
               countHot={v.id === "library"}
@@ -190,6 +207,17 @@ export function App() {
       {existingOpen && <ExistingDialog onClose={() => setExistingOpen(false)} />}
       {onboard && <Onboarding onDone={() => { setOnboard(false); game.health().then((h) => setHealthIssues(h.problems)).catch(() => {}); }} />}
       <BrowserPane waiting={!!s?.waitingOnUser} />
+      {help && (
+        <Dialog icon="key" title="Shortcuts" onClose={() => setHelp(false)}>
+          <div className="keys-list">{SHORTCUTS.map(([k, what]) => <div key={k}><kbd>{k}</kbd><span>{what}</span></div>)}</div>
+          <div className="sub-h">Controller</div>
+          <div className="keys-list">
+            {[["D-pad, left stick", "Move between keys"], ["A", "Press"], ["B", "Back, close"], ["X", "The focused mod's key: install, or its menu"], ["Y", "Find"],
+              ["LB, RB", "Previous, next view"], ["LT, RT, right stick", "Scroll"], ["View", "This list"], ["Menu", "Go to Play"]].map(([k, what]) => <div key={k}><kbd>{k}</kbd><span>{what}</span></div>)}
+          </div>
+        </Dialog>
+      )}
+      <div className="padbar" aria-hidden="true"><span><kbd>A</kbd> press</span><span><kbd>B</kbd> back</span><span><kbd>X</kbd> install or menu</span><span><kbd>Y</kbd> find</span><span><kbd>LB</kbd><kbd>RB</kbd> views</span><span><kbd>View</kbd> all buttons</span></div>
       <DropZone onChoices={setChoices} />
       <Toasts />
     </div>

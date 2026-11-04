@@ -45,6 +45,7 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
   useEffect(() => { collections.browse(q).then((p) => { setPage(p); setErr(null); }).catch((e) => setErr(errorText(e))); }, [q]);
   const versions = Object.entries(page?.facetsData?.gameVersion ?? {}).filter(([v]) => v).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
+  useEffect(() => { const b = () => { if (shown) show(null); }; window.addEventListener("pm-back", b); return () => window.removeEventListener("pm-back", b); });
   if (shown) return <CollectionPage c={shown} onBack={() => show(null)} onQueued={() => { show(null); onQueued(); }} />;
   return (
     <>

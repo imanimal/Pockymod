@@ -427,3 +427,15 @@
 .endorse-strip { display: flex; align-items: center; gap: .6em; flex-wrap: wrap; padding: .55em .8em; border-radius: var(--radius); background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
 .endorse-strip .m-main { flex: 1 1 20em; min-width: 0; font-size: .9em; }
 .endorse-star { color: var(--sel, var(--acc2)); font-size: 1.2em; }
+
+/* the app's own hover tips (lib/keys.ts installTips) */
+.apptip { position: fixed; z-index: 95; max-width: 26em; padding: .4em .6em; border-radius: 7px; background: var(--chrome-bg); color: var(--chrome-fg); font-size: .8em; line-height: 1.35; box-shadow: var(--drop); pointer-events: none; animation: scrimIn calc(var(--m) * 120ms + 1ms) ease-out; }
+/* keyboard and controller: a clear ring on what has focus */
+html.kbd :is(button, a, input, select, textarea, [tabindex], [role="button"]):focus-visible { outline: 3px solid var(--focus, var(--acc2)); outline-offset: 2px; }
+/* the shortcuts list, and the controller's hint bar */
+.keys-list { display: grid; grid-template-columns: max-content 1fr; gap: .35em .9em; align-items: baseline; }
+.keys-list > div { display: contents; }
+.keys-list kbd, .padbar kbd { font: .78em var(--font-mono); padding: .15em .45em; border-radius: 5px; background: var(--surface-2); box-shadow: 0 0 0 1px var(--line); color: var(--text); white-space: nowrap; }
+.padbar { display: none; position: fixed; left: 50%; top: 3.4em; translate: -50% 0; z-index: 58; gap: 1em; padding: .45em .9em; border-radius: 999px; background: var(--chrome-bg); color: var(--chrome-fg); font-size: .8em; box-shadow: var(--drop); }
+html.pad .padbar { display: flex; }
+.padbar kbd { background: color-mix(in srgb, var(--chrome-fg) 14%, transparent); color: var(--chrome-fg); box-shadow: none; margin-right: .25em; }
