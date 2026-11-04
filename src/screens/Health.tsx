@@ -1,5 +1,6 @@
 // Health: modules by area; a band turns red when something in it is broken. The most serious fixable issue gets
 // the screen's one orange key; other fixes are dark keys.
+import { plural } from "../lib/text";
 import { useCallback, useEffect, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Tag } from "../ui/pocket";
 import type { IconName } from "../ui/icons";
@@ -31,7 +32,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         case "runRedmodDeploy": {
           setBusy(true);
           const res = await game.redmodDeploy();
-          toast(res.ok ? `REDmod deploy done (${res.mods.length} mods).` : `REDmod deploy reported ${res.problems.length} problems.`, !res.ok);
+          toast(res.ok ? `REDmod deploy done (${plural(res.mods.length, "mod")}).` : `REDmod deploy reported ${plural(res.problems.length, "problem")}.`, !res.ok);
           break;
         }
         case "redeploy": await library.deploy(f.installId, { allowCopy: false, takeConflicts: false }); toast("Deployed again."); break;

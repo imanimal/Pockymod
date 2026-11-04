@@ -1,5 +1,6 @@
 // Play (in the launch deck): checks Health first and says what is broken; runs the REDmod deploy if needed; starts the game modded.
 // Extensions can add launch options, tools and console commands; they are in the menu beside the key (PlayMenu).
+import { plural } from "../lib/text";
 import { useEffect, useRef, useState } from "react";
 import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
@@ -39,7 +40,7 @@ export function PlayKey({ onHealth }: { onHealth: () => void }) {
       <Key variant="dark" icon="play" className="play-key" onClick={() => void check()} disabled={busy} title="Check for problems, then start the game with your mods">{busy ? "Starting" : "Play"}</Key>
       <PlayMenu onLaunch={(o) => void check(o)} disabled={busy} />
       {problems && (
-        <Dialog icon="warn" title="Before you play" count={`${problems.length} problems`} band="bad" onClose={() => setProblems(null)}>
+        <Dialog icon="warn" title="Before you play" count={plural(problems.length, "problem")} band="bad" onClose={() => setProblems(null)}>
           <div className="rows">{problems.slice(0, 5).map((p) => <div key={p.id} className="row" style={{ cursor: "default" }}><span className="m-main"><span className="m-t" style={{ whiteSpace: "normal" }}>{p.title}</span><span style={{ fontSize: ".86em" }}>{p.detail}</span></span></div>)}</div>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" disabled={busy} onClick={() => void start(pending)}>Play anyway</Key>

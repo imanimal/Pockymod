@@ -1,4 +1,5 @@
 // Collections: browse Nexus collections and check one before installing; make, export and import local ones.
+import { plural } from "../lib/text";
 import { useEffect, useState } from "react";
 import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
@@ -48,7 +49,7 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
         {page?.nodes.map((c) => {
           const r = c.latestPublishedRevision;
           return (
-            <Module key={c.id} icon="collections" title={c.name} count={r ? `${r.modCount} mods` : undefined}
+            <Module key={c.id} icon="collections" title={c.name} count={r ? plural(r.modCount, "mod") : undefined}
               tools={<Key size="sm" variant="ghost" onClick={() => setOpen(c)}>Check</Key>}>
               {c.tileImage && <img className="hero-img" src={c.tileImage.thumbnailUrl ?? c.tileImage.url} alt="" loading="lazy" />}
               <b className="hi" style={{ display: "block", marginTop: ".5em" }}>{c.name}</b>
@@ -86,7 +87,7 @@ function CheckDialog({ title, load, onClose, onQueued }: { title: string; load: 
   const install = async () => {
     if (!c) return;
     setBusy(true);
-    try { await collections.install(c, optional); toast(`${c.name} is queued: ${c.missing} mods.`); onQueued(); } catch (e) { toast(errorText(e), true); setBusy(false); }
+    try { await collections.install(c, optional); toast(`${c.name} is queued: ${plural(c.missing, "mod")}.`); onQueued(); } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
   const shown = c?.entries.filter((e) => e.status !== "installed") ?? [];
   return (
@@ -141,7 +142,7 @@ function CheckDialog({ title, load, onClose, onQueued }: { title: string; load: 
         <div className="actions" style={{ justifyContent: "flex-end" }}>
           {c.entries.some((e) => e.optional) && <Switch checked={optional} onChange={setOptional}>Include optional mods</Switch>}
           <Key variant="ghost" onClick={onClose}>Cancel</Key>
-          <Key variant="primary" icon="install" disabled={busy || c.missing === 0} onClick={install}>{c.missing ? `Install ${c.missing} mods` : "All installed"}</Key>
+          <Key variant="primary" icon="install" disabled={busy || c.missing === 0} onClick={install}>{c.missing ? `Install ${plural(c.missing, "mod")}` : "All installed"}</Key>
         </div>
       </>}
     </Dialog>
@@ -170,7 +171,7 @@ function MyCollections({ onQueued }: { onQueued: () => void }) {
           </div>
         </div>
         {made && <>
-          <div className="sub-h">{made.name} · {made.mods.length} mods · game {made.gameVersion ?? "?"}</div>
+          <div className="sub-h">{made.name} · {plural(made.mods.length, "mod")} · game {made.gameVersion ?? "?"}</div>
           <div className="rows" style={{ maxHeight: "14em", overflow: "auto" }}>
             {made.mods.map((m) => (
               <div key={m.modId} className="row">

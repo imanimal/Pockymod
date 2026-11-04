@@ -1,4 +1,5 @@
 // The active profile, always in the title bar: one click to switch, make a copy, or start empty.
+import { plural } from "../lib/text";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { Key } from "./pocket";
@@ -40,7 +41,7 @@ export function ProfileSwitch({ onManage }: { onManage: () => void }) {
             {list.map((p) => (
               <button key={p.id} type="button" role="menuitemradio" aria-checked={p.active} className={`row${p.active ? " sel" : ""}`} disabled={busy}
                 onClick={() => p.active ? setOpen(false) : run(async () => { setOpen(false); await ops.switchProfile(active, p); })}>
-                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{p.enabled} mods on</span></span></span>
+                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{plural(p.enabled, "mod")} on</span></span></span>
                 {p.active && <span className="led run" />}
               </button>
             ))}

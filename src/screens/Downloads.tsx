@@ -1,5 +1,6 @@
 // Downloads: the queue. LCDs for mods left, clicks needed and time left; amber while the queue waits on the user.
 // When it waits for a click, the orange band and key point at the one thing to do next.
+import { plural } from "../lib/text";
 import { Icon } from "../ui/Icon";
 import { Empty, Key, Lcd, Module, Pill, bytesText, type PillTone } from "../ui/pocket";
 import { errorText, queue, type ItemState, type QueueItem, type QueueSnapshot } from "../lib/api";
@@ -50,7 +51,7 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
         </Module>
       )}
 
-      <Module icon="downloads" title="Queue" count={items.length ? `${items.length} items` : undefined} bodyClass="list"
+      <Module icon="downloads" title="Queue" count={items.length ? plural(items.length, "item") : undefined} bodyClass="list"
         tools={items.some((i) => ["done", "failed"].includes(i.state.state)) ? <Key size="sm" variant="ghost" onClick={() => act(queue.clearFinished())}>Clear finished</Key> : undefined}>
         {items.length === 0 && <Empty icon="downloads" title="Nothing queued">Press Install on a mod in Browse. Its requirements come along.</Empty>}
         <div className="rows">

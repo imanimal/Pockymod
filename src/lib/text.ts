@@ -23,3 +23,6 @@ export function shortDate(iso: string): string {
 }
 
 export const daysAgo = (n: number, now = Date.now()) => Math.floor(now / 1000) - n * 86400;
+
+/** "1 mod", "3 mods": a count with its word in the right number. */
+export function plural(n: number, one: string, many = `${one}s`): string { return `${n} ${n === 1 ? one : many}`; }

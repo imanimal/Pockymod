@@ -1,5 +1,6 @@
 // Library: every mod you have, from Pocket Mods, from Vortex, or found in the game, sorted into groups (the app's
 // presets or your own). Select any number and turn them on or off, update, move or remove them in one go.
+import { plural } from "../lib/text";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
@@ -124,7 +125,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
 
   const handleOutcome = (o: InstallOutcome, name: string, download?: Extract<Pending, { kind: "review" }>["download"]) => {
     if (o.status === "installed") {
-      toast(`Installed ${name}${o.deploy.outcome === "deployed" && o.deploy.copied ? ` (${o.deploy.copied} files copied)` : ""}.`);
+      toast(`Installed ${name}${o.deploy.outcome === "deployed" && o.deploy.copied ? ` (${plural(o.deploy.copied, "file")} copied)` : ""}.`);
       if (o.needsRedmodDeploy) toast("This is a REDmod: run the REDmod deploy from Load order.");
     } else if (o.status === "needsReview" && download) setPending({ kind: "review", download, plan: o.plan });
     else if (o.status === "staged") onDeployOutcome(o.installId, name, o.deploy);
@@ -281,7 +282,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       <span className="m-t">{r.name}</span>
                       <span className="m-meta">
                         {r.version && <span>v{r.version}</span>}
-                        <span>{r.deployedFiles} files in the game</span>
+                        <span>{r.deployedFiles} {r.deployedFiles === 1 ? "file" : "files"} in the game</span>
                         {r.category && <span>{r.category}</span>}
                         {SOURCE[r.source] && <span><Pill tone={r.source === "vortex" ? "soon" : undefined}>{SOURCE[r.source]}</Pill></span>}
                         {updOf(r) && <span><Pill tone="soon">Update {updOf(r)!.latest}</Pill></span>}
@@ -364,7 +365,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         toast(`${sortPlan.length} ${sortPlan.length === 1 ? "mod" : "mods"} sorted into ${by.size} ${by.size === 1 ? "group" : "groups"}.`);
       })} />}
       {moveOpen && (
-        <Dialog icon="folder" title="Move to group" count={`${sel.size} mods`} onClose={() => setMoveOpen(false)}>
+        <Dialog icon="folder" title="Move to group" count={plural(sel.size, "mod")} onClose={() => setMoveOpen(false)}>
           <div className="chips">
             {customGroups.map((g) => <button key={g} type="button" className="chip" onClick={() => moveTo(g)}>{g}</button>)}
             <button type="button" className="chip" onClick={() => moveTo(null)}>Back to their own group</button>
@@ -377,7 +378,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         </Dialog>
       )}
       {pending?.kind === "conflicts" && (
-        <Dialog icon="warn" title="Files already in use" count={`${pending.conflicts.length} files`} band="bad" onClose={() => setPending(null)}>
+        <Dialog icon="warn" title="Files already in use" count={plural(pending.conflicts.length, "file")} band="bad" onClose={() => setPending(null)}>
           <p>{pending.name} wants files that other mods have put in the game. Nothing has been changed yet.</p>
           <div className="log" style={{ maxHeight: "10em" }}>{pending.conflicts.slice(0, 50).map((c) => `${c.target}  ·  ${c.ownerName}`).join("\n")}</div>
           <p className="dim" style={{ fontSize: ".86em" }}>Taking them over keeps the other mods' copies. They get their files back if you remove {pending.name} later.</p>
@@ -398,7 +399,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         </Dialog>
       )}
       {pending?.kind === "review" && (
-        <Dialog icon="warn" title="Some files have no known place" count={`${pending.plan.unknown.length} files`} onClose={() => setPending(null)}>
+        <Dialog icon="warn" title="Some files have no known place" count={plural(pending.plan.unknown.length, "file")} onClose={() => setPending(null)}>
           <p>{pending.download.name} has files the installer does not know where to put. They will be left out; the rest goes in as planned.</p>
           <div className="log" style={{ maxHeight: "10em" }}>{pending.plan.unknown.slice(0, 60).join("\n")}</div>
           <div className="actions" style={{ justifyContent: "flex-end" }}>

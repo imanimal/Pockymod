@@ -1,5 +1,6 @@
 // Load order: profiles, which mods are on in the active one, the REDmod order, and the REDmod deploy (the screen's
 // one orange key).
+import { plural } from "../lib/text";
 import { useCallback, useEffect, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Switch, Tag } from "../ui/pocket";
 import { errorText, game, library, profiles, type InstallRow, type Profile, type RedmodEntry, type RedmodResult } from "../lib/api";
@@ -47,11 +48,11 @@ export function LoadOrder() {
             <Key variant="primary" icon="play" disabled={busy || redmods.length === 0} onClick={() => run(async () => {
               const r = await game.redmodDeploy();
               setResult(r);
-              toast(r.ok ? "REDmod deploy done." : `REDmod deploy reported ${r.problems.length} problems.`, !r.ok);
+              toast(r.ok ? "REDmod deploy done." : `REDmod deploy reported ${plural(r.problems.length, "problem")}.`, !r.ok);
             })}>Run REDmod deploy</Key>
           </div>
           {result && <>
-            <Lcd size="sm" label="Last deploy" value={result.ok ? "OK" : String(result.problems.length).padStart(2, "0")} tone={result.ok ? "ok" : "bad"} sub={result.ok ? `${result.mods.length} mods compiled` : "problems"} />
+            <Lcd size="sm" label="Last deploy" value={result.ok ? "OK" : String(result.problems.length).padStart(2, "0")} tone={result.ok ? "ok" : "bad"} sub={result.ok ? `${plural(result.mods.length, "mod")} compiled` : "problems"} />
             {result.problems.map((p) => <div key={p} className="note bad" style={{ marginTop: ".4em" }}>{p}</div>)}
             {result.log && <div className="log">{result.log}</div>}
           </>}
@@ -61,10 +62,10 @@ export function LoadOrder() {
           <div className="rows">
             {list.map((p) => (
               <div key={p.id} className={`row${p.active ? " sel" : ""}`} style={{ cursor: "default" }}>
-                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{p.enabled} mods on</span></span></span>
+                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{plural(p.enabled, "mod")} on</span></span></span>
                 <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                   {p.active ? <span className="led run" aria-label="Active" /> : <>
-                    <Key size="sm" onClick={() => run(async () => { const r = await ops.switchProfile(active, p); if (r.notDeployed.length) toast(`${r.notDeployed.length} mods need a decision in Library.`); })} disabled={busy}>Switch</Key>
+                    <Key size="sm" onClick={() => run(async () => { const r = await ops.switchProfile(active, p); if (r.notDeployed.length) toast(`${plural(r.notDeployed.length, "mod")} need${r.notDeployed.length === 1 ? "s" : ""} a decision in Library.`); })} disabled={busy}>Switch</Key>
                     <Key size="sm" variant="ghost" icon="trash" aria-label={`Delete ${p.name}`} onClick={() => run(() => profiles.remove(p.id))} disabled={busy} />
                   </>}
                 </span>
