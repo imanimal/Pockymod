@@ -26,6 +26,7 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
   const [covered, setCovered] = useState(false);
   const [off, setOff] = useState(false);
   const view = useRef<HTMLDivElement>(null);
+  const sent = useRef("");
   const setMode = (m: Mode) => { setModeState(m); if (m !== "hidden") write(MODE, m); };
 
   useEffect(() => {
@@ -56,18 +57,34 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
   }, [showing, mode, width]);
 
   // where the page goes, whenever the box moves or the app's own layers come and go over it
+  // only a change is sent: the page changes often (downloads tick, toasts come and go), the pane's box rarely
+  const send = (x: number, y: number, w: number, h: number, v: boolean) => {
+    const k = `${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)},${v}`;
+    if (k === sent.current) return;
+    sent.current = k;
+    void browserPane.bounds(x, y, w, h, v).catch(() => { sent.current = ""; });
+  };
   const place = useCallback(() => {
     const el = view.current;
     if (!inTauri()) return;
-    if (!el || !showing) { void browserPane.bounds(0, 0, 0, 0, false).catch(() => {}); return; }
+    if (!el || !showing) { send(0, 0, 0, 0, false); return; }
     const r = el.getBoundingClientRect();
     const over = [...document.querySelectorAll(OVERLAYS)].some((o) => {
       const b = o.getBoundingClientRect();
       return b.width > 0 && b.height > 0 && b.left < r.right && b.right > r.left && b.top < r.bottom && b.bottom > r.top;
     });
     setCovered(over);
-    void browserPane.bounds(r.left, r.top, r.width, r.height, !over && !off).catch(() => {});
+    send(r.left, r.top, r.width, r.height, !over && !off);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showing, off]);
+  // over the whole view, a key in the rail means "show me that": the pane goes back beside it
+  useEffect(() => {
+    if (!showing || mode !== "full") return;
+    const h = (e: MouseEvent) => { if ((e.target as Element | null)?.closest?.(".side .nv")) setMode("split"); };
+    document.addEventListener("click", h, true);
+    return () => document.removeEventListener("click", h, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showing, mode]);
   useLayoutEffect(() => {
     place();
     const el = view.current;
