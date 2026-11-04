@@ -2,6 +2,7 @@ pub mod addons;
 pub mod browse;
 pub mod collections;
 pub mod existing;
+pub mod extensions;
 pub mod extras;
 pub mod files;
 pub mod game;

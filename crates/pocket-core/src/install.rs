@@ -82,6 +82,8 @@ pub struct InstallRow {
     pub custom_group: bool,
     /// A picture of the mod, from its cached Nexus record.
     pub picture: Option<String>,
+    /// The mod's author, from its cached Nexus record.
+    pub author: Option<String>,
 }
 
 /// The app's own groups, from the Nexus category and the mod type. Users can make their own on top.
@@ -267,11 +269,14 @@ pub fn list_installs(db: &Db) -> Result<Vec<InstallRow>> {
         let custom: Option<String> = r.get(15)?;
         let picture: Option<String> = r.get::<_, Option<String>>(16).ok().flatten()
             .and_then(|d| serde_json::from_str::<serde_json::Value>(&d).ok()).and_then(|v| v["pictureUrl"].as_str().map(str::to_owned));
+        let author: Option<String> = r.get::<_, Option<String>>(16).ok().flatten()
+            .and_then(|d| serde_json::from_str::<serde_json::Value>(&d).ok())
+            .and_then(|v| v["author"].as_str().or(v["uploader"]["name"].as_str()).map(str::to_owned));
         let group = custom.clone().unwrap_or_else(|| preset_group(category.as_deref(), mod_type, &name).to_string());
         Ok(InstallRow {
             id: r.get(0)?, mod_id: r.get(1)?, file_id: r.get(2)?, version: r.get(4)?, mod_type,
             frameworks: serde_json::from_str(&r.get::<_, String>(6)?).unwrap_or_default(), staging: r.get(7)?, installed_at: r.get(8)?, updated_at: r.get(9)?,
-            deployed_files: r.get(10)?, enabled: r.get(11)?, load_order: r.get(12)?, source: r.get(13)?, category, group, custom_group: custom.is_some(), name, picture,
+            deployed_files: r.get(10)?, enabled: r.get(11)?, load_order: r.get(12)?, source: r.get(13)?, category, group, custom_group: custom.is_some(), name, picture, author,
         })
     })?;
     Ok(rows.collect::<std::result::Result<_, _>>()?)

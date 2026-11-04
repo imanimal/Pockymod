@@ -23,6 +23,8 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
+        // extension panels: their page, with its own strict CSP, for a sandboxed frame (docs/extensions.md)
+        .register_uri_scheme_protocol("pmext", |ctx, request| commands::extensions::panel_protocol(ctx.app_handle(), request))
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             let state = state::AppState::new(data_dir)?;
@@ -73,6 +75,13 @@ pub fn run() {
             commands::addons::addon_save,
             commands::addons::addon_remove,
             commands::addons::market_get,
+            commands::addons::market_fetch,
+            commands::extensions::ext_states,
+            commands::extensions::ext_state_set,
+            commands::extensions::ext_tool_start,
+            commands::extensions::ext_launch,
+            commands::extensions::ext_open_link,
+            commands::extensions::open_external,
             commands::files::text_file_read,
             commands::files::text_file_save,
             commands::extras::app_update_check,

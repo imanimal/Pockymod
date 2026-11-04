@@ -20,7 +20,7 @@ fn kind_dir(app: &tauri::AppHandle, kind: &str) -> Result<PathBuf> {
 }
 
 /// Ids are lowercase letters, digits, dots and dashes, so they are safe file names.
-fn check_id(id: &str) -> Result<()> {
+pub(crate) fn check_id(id: &str) -> Result<()> {
     let ok = !id.is_empty() && id.len() <= 64 && id.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
         && !id.starts_with('.') && !id.contains("..");
     if ok { Ok(()) } else { Err(Error::Invalid("An add-on id uses lowercase letters, digits, dots and dashes (for example my-theme).".into())) }
@@ -64,13 +64,28 @@ pub async fn addon_remove(app: tauri::AppHandle, kind: String, id: String) -> Re
 /// copy is used when offline.
 #[tauri::command]
 pub async fn market_get(state: State<'_, AppState>, path: String, fresh: Option<bool>) -> Result<String> {
+    Ok(fetch(&state, &path, fresh.unwrap_or(false)).await?.0)
+}
+
+/// A marketplace file with where it came from: `network`, `cache` (fetched in the last hour) or `offline` (an older
+/// copy, used because the marketplace could not be reached).
+#[derive(serde::Serialize)]
+pub struct MarketFile { text: String, source: &'static str }
+
+#[tauri::command]
+pub async fn market_fetch(state: State<'_, AppState>, path: String, fresh: Option<bool>) -> Result<MarketFile> {
+    let (text, source) = fetch(&state, &path, fresh.unwrap_or(false)).await?;
+    Ok(MarketFile { text, source })
+}
+
+async fn fetch(state: &State<'_, AppState>, path: &str, fresh: bool) -> Result<(String, &'static str)> {
     let safe = !path.is_empty() && !path.contains("..") && !path.starts_with('/') && !path.contains('\\')
         && path.chars().all(|c| c.is_ascii_alphanumeric() || "-_./".contains(c)) && path.ends_with(".json");
     if !safe { return Err(Error::Invalid("That is not a marketplace file.".into())); }
     let key = format!("market:{path}");
     let now = pocket_core::db::now();
-    if !fresh.unwrap_or(false) {
-        if let Some(hit) = state.db.lock().unwrap().cache_get(&key, 3600, now)? { return Ok(hit); }
+    if !fresh {
+        if let Some(hit) = state.db.lock().unwrap().cache_get(&key, 3600, now)? { return Ok((hit, "cache")); }
     }
     let res = state.nexus.http().get(format!("{MARKET_BASE}{path}")).send().await;
     match res {
@@ -78,11 +93,11 @@ pub async fn market_get(state: State<'_, AppState>, path: String, fresh: Option<
             let body = r.text().await?;
             if body.len() > MAX { return Err(Error::Invalid("That marketplace file is too large.".into())); }
             state.db.lock().unwrap().cache_put(&key, &body, now)?;
-            Ok(body)
+            Ok((body, "network"))
         }
         other => {
             // offline or not published yet: any old copy beats nothing
-            if let Some(old) = state.db.lock().unwrap().cache_get(&key, i64::MAX / 4, now)? { return Ok(old); }
+            if let Some(old) = state.db.lock().unwrap().cache_get(&key, i64::MAX / 4, now)? { return Ok((old, "offline")); }
             match other {
                 Ok(r) => Err(Error::Http { status: r.status().as_u16(), message: format!("The marketplace has no {path} yet.") }),
                 Err(e) => Err(e.into()),
