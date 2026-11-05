@@ -5,9 +5,10 @@ import { Empty, Key, Lcd, Module, Pill, Seg, Switch, bytesText } from "../../ui/
 import { authoring, creator, errorText, type MyMods, type UploadTarget } from "../../lib/api";
 import { shortDate } from "../../lib/text";
 import { toast } from "../../ui/toast";
+import { SettingsLink } from "../../ui/SettingsLink";
 import { bump } from "../../lib/version";
 import { prefillFor } from "./MyMods";
-import { fileCategoryText, fileName, type FileCategory, type Pack, type PublishPrefill } from "./shared";
+import { fileCategoryText, fileName, openNexus, type FileCategory, type Pack, type PublishPrefill } from "./shared";
 
 export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
   pack: Pack; mine: MyMods | null; hasKey: boolean; prefill: PublishPrefill | null; onPack: () => void; onPublished: () => void;
@@ -72,7 +73,7 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
   return (
     <div className="grid2 cr-publish" style={{ alignItems: "start" }}>
       <Module icon="share" title="Publish a new version" band="hot" count="Upload API, beta">
-        {!hasKey && <div className="note warn">Needs your Nexus API key, add it in Settings</div>}
+        {!hasKey && <div className="note warn">Needs your Nexus API key, add it in <SettingsLink section="Nexus account" /></div>}
 
         <div className="sub-h">Which file</div>
         {own && !byHand ? <>
@@ -141,6 +142,7 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
           <Switch checked={bumpVersion} onChange={setBumpVersion}>Set the mod's version to {pack.version || "this version"}</Switch>
         </div>
         {prog && <Lcd size="sm" label="Uploaded" value={bytesText(prog[0]).split(" ")[0]} unit={`${bytesText(prog[0]).split(" ")[1]} / ${bytesText(prog[1])}`} bar={prog[1] ? prog[0] / prog[1] : 0} />}
+        <p className="dim hint" style={{ marginTop: ".6em" }}>If this version adds parts made with AI, update the AI statement on the mod's Nexus page{mod && <> (<button type="button" className="linkish" onClick={() => openNexus(mod.links.edit)} title="The mod's edit page on Nexus">edit the page</button>)</>}. Nexus asks for it whenever an update adds AI-made parts.</p>
         <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".6em" }}>
           <Key variant="dark" icon="share" disabled={!ready} onClick={() => void publish()}>{busy ? "Publishing" : "Publish"}</Key>
         </div>

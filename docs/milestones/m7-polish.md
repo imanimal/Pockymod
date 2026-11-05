@@ -6,7 +6,7 @@
 - **CI** (`.github/workflows/ci.yml`): on Linux, the type check, front-end tests, core tests and a Tauri build; on Windows, the core tests (so hard links, backups, rollback and the registry code run on NTFS) and the unsigned installer, uploaded as the `pocket-mods-windows-installer` artifact.
 - **Update checks**:
   - mods: milestone 5's checks (start-up and every six hours, badges in the rail and Library);
-  - the app itself: Settings, About, "Check for a new version" asks GitHub for the latest release and says whether it is newer. It does not download anything.
+  - the app itself: Settings, About, "Check for updates" asks GitHub for the latest release and says whether it is newer. It does not download anything.
 - **mod.io, read-only experiment** (Settings, Experiments, off by default): with a mod.io API key (checked with mod.io, kept in Windows Credential Manager as `mod.io-api-key.Pocket Mods`), Browse gets a "Nexus Mods / mod.io" switch and lists Cyberpunk 2077 mods on mod.io with downloads and size. Installing stays with the game's own Mods menu, as the spec plans.
 
 ## Run and test
@@ -17,7 +17,7 @@ npx tauri build            # Windows: the installer
 ```
 
 1. Run the installer from CI's artifact on a clean Windows 10 or 11 machine. It installs without admin rights; SmartScreen warns because it is unsigned.
-2. Settings, About: "Check for a new version" says no release is published yet (or shows the newer one).
+2. Settings, About: "Check for updates" says no release is published yet (or shows the newer one).
 3. Settings, Experiments: turn on mod.io, paste a mod.io API key. Browse shows the source switch; mod.io lists mods or says Cyberpunk 2077 is not available for that key.
 
 ## Checked here

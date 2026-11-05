@@ -16,7 +16,9 @@ import { shelfQuery, useExtensions } from "../lib/extensions";
 import { Modio } from "./Modio";
 import { MediaWall } from "./browse/Media";
 import { ModKey, useInstalled } from "./browse/ModActions";
-import { ADULT_OPTIONS, setAdultPref, useAdult, type Adult } from "../lib/prefs";
+import { ADULT_OPTIONS, setAdultPref, setAiPref, useAdult, useAiHide, type Adult } from "../lib/prefs";
+import { AI_OPTIONS, aiHideText, withAiHidden, type AiHide } from "../lib/ai";
+import { AiTags } from "../ui/AiTags";
 
 /** What the cards need to show their key: the user's copies of each mod, the queue, updates and the flag setter. */
 interface CardCtx { byMod: Map<number, InstallRow[]>; queued: Map<number, string>; updates: Update[]; onLibrary?: () => void; onFlag: (c: CardView, f: "hidden" | "ignored", on: boolean) => void }
@@ -143,7 +145,8 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
   }, [text]);
 
   const adult = useAdult();
-  const effective = useMemo<BrowseQuery>(() => ({
+  const aiHide = useAiHide();
+  const effective = useMemo<BrowseQuery>(() => withAiHidden({
     ...q,
     includeAdult: adult !== "hide",
     seed: q.sort === "random" ? seed : null,
@@ -152,7 +155,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
     sizeMaxKb: size === "any" ? null : Number(size) * 1024,
     compatibleSince: patch?.at ?? null,
     createdAfter: q.createdAfter ?? (view === "trending" ? daysAgo(TRENDING_DAYS) : null),
-  }), [q, adult, since, dl, size, patch, seed, view]);
+  }, aiHide), [q, adult, aiHide, since, dl, size, patch, seed, view]);
 
   const filtering = !!(q.text || q.categories.length || q.tags.length || q.excludeTags.length || q.frameworks.length || q.modType
     || since !== "any" || dl !== "any" || size !== "any" || local.downloaded !== null || local.showHidden || explore || view !== "discover");
@@ -188,6 +191,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
     ...q.categories.map((c) => ({ label: c, off: () => set({ categories: q.categories.filter((x) => x !== c) }) })),
     ...q.tags.map((t) => ({ label: `#${t}`, off: () => set({ tags: q.tags.filter((x) => x !== t) }) })),
     ...q.excludeTags.map((t) => ({ label: `not #${t}`, off: () => set({ excludeTags: q.excludeTags.filter((x) => x !== t) }) })),
+    ...(aiHide !== "show" ? [{ label: aiHideText(aiHide), off: () => void setAiPref("show").catch((e) => setErr(errorText(e))) }] : []),
     ...(since !== "any" ? [{ label: `Updated in the last ${since === "7" ? "week" : since === "30" ? "month" : "year"}`, off: () => setSince("any") }] : []),
     ...(dl !== "any" ? [{ label: `${formatCount(Number(dl))}+ downloads`, off: () => setDl("any") }] : []),
     ...(size !== "any" ? [{ label: `Under ${size === "1024" ? "1 GB" : `${size} MB`}`, off: () => setSize("any") }] : []),
@@ -284,6 +288,8 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
             </div>
             <div className="sub-h">Adult</div>
             <Seg<Adult> label="Adult content" value={adult} onChange={(x) => void setAdultPref(x).catch((e) => setErr(errorText(e)))} options={ADULT_OPTIONS} />
+            <div className="sub-h">AI <span className="dim">· by Nexus's AI tags</span></div>
+            <Seg<AiHide> label="AI-tagged mods" value={aiHide} onChange={(x) => void setAiPref(x).catch((e) => setErr(errorText(e)))} options={AI_OPTIONS} />
           </Module>
         )}
 
@@ -356,7 +362,7 @@ export function ModCard({ c, onOpen, compact }: { c: CardView; onOpen: () => voi
         <span className="mcard-t">{c.name}</span>
         <span className="m-meta"><span>{c.author ?? c.uploader?.name ?? "Unknown"}</span><span>★ {formatCount(c.endorsements)}</span><span>{shortDate(c.updatedAt)}</span></span>
         {!compact && <span className="mcard-s">{c.summary}</span>}
-        <span className="m-tags"><TypeTag c={c.classification} /><FrameworkTags c={c.classification} /></span>
+        <span className="m-tags"><AiTags tags={c.tags} /><TypeTag c={c.classification} /><FrameworkTags c={c.classification} /></span>
       </span>
     </div>
   );
@@ -389,9 +395,10 @@ function FrontPage({ patch, seed, onReshuffle, onOpen, onSeeAll, categories, onC
   );
 }
 
-function Shelf({ title, icon, hint, q, onOpen, onSeeAll, extra }: { title: string; icon: IconName; hint: string; q: BrowseQuery; onOpen: (c: CardView) => void; onSeeAll: () => void; extra?: React.ReactNode }) {
+function Shelf({ title, icon, hint, q: asked, onOpen, onSeeAll, extra }: { title: string; icon: IconName; hint: string; q: BrowseQuery; onOpen: (c: CardView) => void; onSeeAll: () => void; extra?: React.ReactNode }) {
   const [r, setR] = useState<BrowseResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const q = withAiHidden(asked, useAiHide());
   const key = JSON.stringify(q);
   const empty = r !== null && r.nodes.length === 0;
   useEffect(() => {
@@ -430,6 +437,7 @@ function HeroCard({ c, onOpen }: { c: CardView; onOpen: () => void }) {
           <b>{c.name}</b>
           <span>by {c.author ?? c.uploader?.name} · ↓ {formatCount(c.downloads)}</span>
           <span className="hero-sum">{c.summary}</span>
+          <span className="m-tags"><AiTags tags={c.tags} /></span>
         </span>
       </span>
     </button>

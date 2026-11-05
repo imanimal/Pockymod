@@ -18,7 +18,7 @@ Open **Add-ons** in the rail.
 
 1. Pick the **Themes** or **Extensions** tab. Search by name, author, words in the description or tags, and sort by recently updated, name or author.
 2. Press **Install** on a card.
-   - A **theme** installs straight away. Pick it in **Settings**, under **Look**.
+   - A **theme** installs straight away. Pick it in **Settings**, under **Appearance**.
    - An **extension** first shows what it adds (every shelf, rule, tool with its path, launch option with its arguments, link with its address, and panel) and what it can do (its permissions, in plain words). Nothing is installed unless you press **Install and turn on**.
 3. If an extension has a tool you install yourself (like WolvenKit), choose its program on that screen, or later in **Installed**, or the first time you start it from the Play menu.
 

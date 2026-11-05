@@ -150,3 +150,15 @@ history, read 2026-11-04):
   the number in the page's address.
 - `ModStatus` is one of published, not_published, hidden, under_moderation, removed, removed_by_staff.
 - `POST /mod-files` creates a new file on an existing mod from an upload. A mod page itself cannot be created.
+
+## AI tags
+
+Run: 2026-11-05, anonymous, Cyberpunk 2077 (26,036 mods). The `tag` facet of `mods()` lists 115 tags; the AI ones are
+`AI-Generated Content` (1,151), `AI Media` (606) and `AI Assisted` (326), after Nexus's AI policy change of 3 November.
+`NPC Behaviours (AI)` (124) is about the game's own AI. `Mod.tags` carries them (id, name).
+
+| What | Result | Notes |
+|---|---|---|
+| Leave out one tag | confirmed | `tag: [{ value: "AI-Generated Content", op: NOT_EQUALS }]`: 26,037 mods become 24,885 |
+| Leave out all three | confirmed | the three `NOT_EQUALS` values together: 24,343, so 1,694 mods carry at least one (the tags overlap) |
+| The signed-in user's own AI preference | not exposed | the new content preference is not in the schema we can read; the app has its own setting |

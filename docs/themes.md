@@ -19,7 +19,7 @@ Your theme builds on one of these. It keeps that theme's shapes and changes the 
 2. Press **Make your own**. Each colour you change shows across the whole window straight away.
 3. If the theme has dark and light, use **Editing** to switch between them and set both.
 4. Give it a name and press **Save and use**. It is now installed and in use.
-5. Press **Export file** (in the maker) or **Export current theme** (in Appearance) to get the JSON file.
+5. Press **Export file** (in the maker) or **Export theme** (in Appearance) to get the JSON file.
 
 From there you can open the file in a text editor to go further: change the corners, the fonts, or add your own CSS.
 
@@ -31,7 +31,7 @@ From there you can open the file in a text editor to go further: change the corn
 2. Change `id` and `name` (see the rules below). The id is also the file name, so `neon-harbor` becomes
    `neon-harbor.json`.
 3. Change the colours. The full list of tokens is below; you only need the ones you want to change.
-4. In the app, open **Settings**, **Appearance**, press **Import theme file** and pick your file. If something is wrong,
+4. In the app, open **Settings**, **Appearance**, press **Import theme** and pick your file. If something is wrong,
    the app says what and the theme is not installed.
 5. Change the file and import it again: a theme with the same id replaces the one you installed before.
 6. Open the **Gallery** (bottom of the left rail) to see every part in your theme: keys in each state, bands, LCDs,

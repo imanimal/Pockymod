@@ -1,6 +1,7 @@
 // Preferences kept in the local database (Settings).
 import { settings } from "./api";
 import { useSyncExternalStore } from "react";
+import type { AiHide } from "./ai";
 
 export type Requirements = "always" | "ask" | "never";
 export interface InstallPrefs { requirements: Requirements; confirm: boolean }
@@ -46,3 +47,28 @@ function adultSubscribe(fn: () => void) {
   return () => { adultSubs.delete(fn); };
 }
 export const useAdult = (): Adult => useSyncExternalStore(adultSubscribe, () => adultNow);
+
+/** AI-tagged mods in Browse: shown (the default), AI-generated ones left out, or every AI-tagged one (lib/ai.ts). */
+const AI = "browse.ai";
+export async function aiPref(): Promise<AiHide> {
+  const v = await settings.get(AI).catch(() => null);
+  return v === "generated" || v === "all" ? v : "show";
+}
+export async function setAiPref(v: AiHide) {
+  await settings.set(AI, v);
+  window.dispatchEvent(new Event("pm-prefs"));
+}
+let aiNow: AiHide = "show";
+const aiSubs = new Set<() => void>();
+let aiLoaded = false;
+function aiSubscribe(fn: () => void) {
+  aiSubs.add(fn);
+  if (!aiLoaded) {
+    aiLoaded = true;
+    const load = () => { aiPref().then((v) => { if (v !== aiNow) { aiNow = v; aiSubs.forEach((f) => f()); } }).catch(() => {}); };
+    load();
+    window.addEventListener("pm-prefs", load);
+  }
+  return () => { aiSubs.delete(fn); };
+}
+export const useAiHide = (): AiHide => useSyncExternalStore(aiSubscribe, () => aiNow);

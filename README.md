@@ -10,7 +10,7 @@ Built milestone by milestone from [docs/build-prompt.md](docs/build-prompt.md). 
 
 ## What it does
 
-- **Browse** Nexus Mods in the app: search, categories and tags with counts, sort, and Cyberpunk-aware filters Nexus does not have (required framework, mod type, updated since your patch), plus hide, ignore and downloaded. A mod opens in a drawer or as a full page like its Nexus page; pictures open full window with zoom.
+- **Browse** Nexus Mods in the app: search, categories and tags with counts, sort, and Cyberpunk-aware filters Nexus does not have (required framework, mod type, updated since your patch), plus hide, ignore and downloaded. Mods Nexus tags as made with AI carry a label, and Settings can leave them out. A mod opens in a drawer or as a full page like its Nexus page; pictures open full window with zoom.
 - **Install** with one key, or Quick install from any card: requirements come along, Premium accounts need no clicks, and free accounts click "Mod Manager Download" on the Nexus page (in their own browser by default, or in the app's browser pane) and the queue moves on by itself. A card for a mod you have opens everything you can do to it.
 - **Nexus pages** open in your own browser (your sign-in, saved passwords and extensions) or, if you choose, in a pane docked beside the app that can be resized, put over the whole view, hidden or popped out.
 - **Deploy** with hard links from a mod library on the game's drive; every change is reversible and no mod's file is ever deleted by another.

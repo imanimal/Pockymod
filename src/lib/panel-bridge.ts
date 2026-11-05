@@ -3,6 +3,8 @@
 // user approved, arguments are checked, and calls are rate limited. See docs/extensions.md for the panel side.
 import { browse, bulk, library, nexusPages, settings } from "./api";
 import { LIMITS, type Permission } from "./addon-rules.mjs";
+import { aiPref } from "./prefs";
+import { withAiHidden } from "./ai";
 
 export interface PanelInfo { extId: string; extName: string; release: string; panelId: string; title: string; permissions: Permission[] }
 /** The parts of the app a bridge needs from the screen it is in. */
@@ -92,10 +94,10 @@ export function makeBridge(info: PanelInfo, ui: PanelHostUi) {
         const count = p.count === undefined ? 12 : Math.min(30, int(p.count, "count"));
         const sorts = ["downloads", "endorsements", "updated", "created", "relevance"];
         const sort = p.sort === undefined ? (p.text ? "relevance" : "endorsements") : sorts.includes(String(p.sort)) ? String(p.sort) : fail(`sort must be one of ${sorts.join(", ")}.`);
-        const r = await browse.search({
+        const r = await browse.search(withAiHidden({
           text: p.text === undefined ? "" : text(p.text, "text", 100), categories: [], tags: [], excludeTags: [], sort: sort as never, ascending: false,
           includeAdult: false, frameworks: [], modType: null, offset: 0, count,
-        }, { showHidden: false, downloaded: null, skipCounts: true });
+        }, await aiPref()), { showHidden: false, downloaded: null, skipCounts: true });
         return {
           total: r.total,
           mods: r.nodes.map((n) => ({ modId: n.modId, name: n.name, summary: n.summary, author: n.author ?? n.uploader?.name ?? null, category: n.category, version: n.version,

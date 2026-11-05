@@ -153,7 +153,7 @@ pub async fn app_update_install(app: AppHandle) -> pocket_core::Result<()> {
     if install_now_with(&app, true) { Ok(()) } else { Err(pocket_core::Error::Invalid("No new version downloaded yet".into())) }
 }
 
-/// Run the checks now (Settings, Check now).
+/// Run the checks now (Settings, Background, Check now).
 #[tauri::command]
 pub async fn background_check(app: AppHandle) -> pocket_core::Result<BackgroundState> {
     round(&app, true).await;

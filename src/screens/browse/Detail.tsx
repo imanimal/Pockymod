@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "../../ui/Icon";
 import { Empty, Key, Lcd, Module, Tag, Veil, bytesText, formatCount } from "../../ui/pocket";
 import { useAdult } from "../../lib/prefs";
+import { AiTags } from "../../ui/AiTags";
 import {
   FRAMEWORKS, browse, descriptionMedia, endorseMod, errorText, fileBytes, nexusUrl, openExternal, trackMod,
   type CardView, type Classification, type DetailView, type InstallRow, type ModFile, type Update,
@@ -172,7 +173,7 @@ function Drawer(x: Parts) {
       <Veil {...veil}>{shots.length > 0 ? <Gallery items={shots} /> : m.pictureUrl && <img className="hero-img" src={m.pictureUrl} alt="" />}</Veil>
       <div className="m-meta" style={{ marginTop: ".6em" }}><span>{m.author ?? m.uploader?.name}</span><span>{m.category}</span><span>Updated {shortDate(m.updatedAt)}</span></div>
       <p style={{ margin: ".5em 0 .2em", color: "var(--text)" }}>{m.summary}</p>
-      <div className="m-tags"><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
+      <div className="m-tags"><AiTags tags={m.tags} /><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
       {commands.length > 0 && <Commands list={commands} />}
       {links.length > 0 && <Links key={m.modId} list={links} onMod={p.onOpen} />}
 
@@ -211,7 +212,7 @@ function Page(x: Parts) {
           <h2>{m.name}</h2>
           <div className="m-meta"><span>by {m.author ?? m.uploader?.name ?? "unknown"}</span><span>{m.category}</span><span>v{m.version}</span><span>Updated {shortDate(m.updatedAt)}</span>{m.createdAt && <span>Added {shortDate(m.createdAt)}</span>}</div>
           {m.summary && <p>{m.summary}</p>}
-          <div className="m-tags"><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
+          <div className="m-tags"><AiTags tags={m.tags} /><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
         </div>
       </div>
       <div className="mpage-body">

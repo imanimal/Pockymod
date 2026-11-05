@@ -11,7 +11,8 @@ import { InstallPrefs } from "./InstallPrefs";
 import { PREMIUM_TIPS, getPremium } from "../ui/Premium";
 import { NexusSignIn } from "../ui/SignIn";
 import { ssoReady } from "../lib/sso";
-import { ADULT_OPTIONS, setAdultPref, useAdult, type Adult } from "../lib/prefs";
+import { ADULT_OPTIONS, setAdultPref, setAiPref, useAdult, useAiHide, type Adult } from "../lib/prefs";
+import { AI_OPTIONS, type AiHide } from "../lib/ai";
 
 export function Settings({ onGallery }: { onGallery?: () => void }) {
   return (
@@ -22,6 +23,7 @@ export function Settings({ onGallery }: { onGallery?: () => void }) {
       <GameFolders />
       <InstallPrefs />
       <AdultModule />
+      <AiModule />
       <Appearance />
       <Experiments />
       <About onGallery={onGallery} />
@@ -192,6 +194,17 @@ function AdultModule() {
   return (
     <Module icon="eye" title="Adult content" count={v === "hide" ? "hidden" : v === "blur" ? "blurred" : "shown"}>
       <span title={v === "blur" ? "Open a mod and press Show to unblur" : "Mods Nexus marks adult"}><Seg<Adult> label="Adult content" value={v} onChange={(x) => void setAdultPref(x).catch((e) => toast(errorText(e), true))} options={ADULT_OPTIONS} /></span>
+    </Module>
+  );
+}
+
+/** Mods Nexus tags as made with AI: shown with a label (the default), or left out of Browse. */
+function AiModule() {
+  const v = useAiHide();
+  return (
+    <Module icon="eye" title="AI content" count={v === "show" ? "shown" : v === "generated" ? "AI-generated hidden" : "all AI hidden"}>
+      <span title="Hide AI-generated leaves out mods Nexus tags AI-Generated Content. Hide all AI also leaves out AI Media and AI Assisted"><Seg<AiHide> label="AI-tagged mods" value={v} onChange={(x) => void setAiPref(x).catch((e) => toast(errorText(e), true))} options={AI_OPTIONS} /></span>
+      <p className="dim" style={{ fontSize: ".84em", marginTop: ".5em" }}>Browse labels mods with Nexus's AI tags. Authors tag their own mods, so one with no tag can't be told apart. If you see one that should have a tag, report it on its Nexus page.</p>
     </Module>
   );
 }

@@ -34,6 +34,7 @@ import { BrowserPane } from "./ui/BrowserPane";
 import { useAfterPlayNudge } from "./ui/Endorse";
 import { SHORTCUTS, installKeys } from "./lib/keys";
 import { installGamepad } from "./lib/gamepad";
+import type { Go } from "./lib/nav";
 import { Dialog } from "./ui/Dialog";
 
 export type View = "browse" | "library" | "collections" | "downloads" | "loadorder" | "health" | "settings" | "create" | "gallery" | "addons";
@@ -96,6 +97,25 @@ export function App() {
       play: () => (document.querySelector(".side .foot .btn") as HTMLElement | null)?.focus(),
     });
     return () => { offKeys(); offPad(); };
+  }, []);
+  // a link in a toast or a note goes to a view, and to a section of it (lib/nav.ts)
+  useEffect(() => {
+    let t: number | undefined;
+    const h = (e: Event) => {
+      const { view: to, section } = (e as CustomEvent<Go>).detail;
+      if (!VIEWS.some((x) => x.id === to)) return;
+      setView(to as View);
+      if (!section) return;
+      window.clearTimeout(t);
+      t = window.setTimeout(() => {
+        const title = [...document.querySelectorAll<HTMLElement>(".panel > .ph .pt")].find((x) => x.textContent?.trim() === section);
+        const panel = title?.closest<HTMLElement>(".panel");
+        panel?.scrollIntoView({ block: "start", behavior: "smooth" });
+        panel?.classList.remove("go-flash"); void panel?.offsetWidth; panel?.classList.add("go-flash");
+      }, 500);
+    };
+    window.addEventListener("pm-go", h);
+    return () => { window.removeEventListener("pm-go", h); window.clearTimeout(t); };
   }, []);
   // the way out of a theme that hides the app: Ctrl+Alt+Shift+T, wherever the focus is
   useEffect(() => {

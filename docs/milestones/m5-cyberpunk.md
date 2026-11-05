@@ -4,7 +4,7 @@
 
 ## Summary
 
-- **Game detection** (Settings, Find): Steam (registry, every library in `libraryfolders.vdf`, `appmanifest_1091500.acf`), GOG (Galaxy registry key for product 1423049311), Epic (launcher manifests, best effort). Each result says whether `bin\x64\Cyberpunk2077.exe` is there.
+- **Game detection** (Settings, Game and mod folders): Steam (registry, every library in `libraryfolders.vdf`, `appmanifest_1091500.acf`), GOG (Galaxy registry key for product 1423049311), Epic (launcher manifests, best effort). Each result says whether `bin\x64\Cyberpunk2077.exe` is there.
 - **Versions**: read from the PE version resource of `Cyberpunk2077.exe` and of each framework's main file (`RED4ext.dll`, `ArchiveXL.dll`, `TweakXL.dll`, `Codeware.dll`, `cyber_engine_tweaks.asi`, `cybercmd.asi`, redscript's `scc.exe`). The game patch is taken from the product version when it reads like "2.31"; otherwise it is picked in Settings (and the health panel says it is assumed).
 - **Framework checks** (patches break them):
   - a framework needed by an enabled mod (from its files, its Nexus requirement links, or another framework's needs) and not in the game → problem, fix "Install X";
@@ -24,7 +24,7 @@ npm run tauri dev
 cargo test -p pocket-core        # 66 tests
 ```
 
-1. Settings, Find: your Steam or GOG install is listed. Use it. "Read from the game" shows the patch if the executable says it; otherwise pick it.
+1. Settings, Game and mod folders: your Steam or GOG install is listed. Use it. "Read from the game" shows the patch if the executable says it; otherwise pick it.
 2. Health: with ArchiveXL installed but RED4ext removed, Frameworks turns red with "RED4ext is missing" and an orange "Install RED4ext" that queues it.
 3. Touch the game's exe (or patch the game) so it is newer than RED4ext's DLL: "RED4ext predates the game patch".
 4. Delete a deployed mod file by hand: "N files missing or changed", fix "Deploy again".

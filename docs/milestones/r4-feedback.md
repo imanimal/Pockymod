@@ -68,7 +68,7 @@ keys; drag moves a zoomed picture.
 ## Test
 
 1. Start: the tube comes on through the snow and the modules settle in as it clears. Close with the close key and
-   with Alt+F4: the picture collapses to a dot, then the app quits. In Settings, Look, Effects off: both fade.
+   with Alt+F4: the picture collapses to a dot, then the app quits. In Settings, Appearance, Effects off: both fade.
 2. In Redline, switch between every view: no scrollbar appears.
 3. With Vortex profiles: Library shows Your Vortex profiles; Bring in. The profile switch in the title bar lists
    them, the active one is the one Vortex had deployed, and switching changes the game folder.

@@ -19,6 +19,7 @@ import { installerOptions } from "../lib/api";
 import { record } from "../lib/history";
 import { profilesText } from "./Existing";
 import { EndorseStrip, endorseAll, useCandidates } from "../ui/Endorse";
+import { SettingsLink } from "../ui/SettingsLink";
 
 type Pending =
   | { kind: "conflicts"; installId: number; name: string; conflicts: Conflict[] }
@@ -503,7 +504,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       {pending?.kind === "copy" && (
         <Dialog icon="warn" title="Can't hard link" onClose={() => setPending(null)}>
           <p>{pending.reason}</p>
-          <div className="note warn">Copying uses the space twice. Put the mod library on the game's drive in Settings</div>
+          <div className="note warn">Copying uses the space twice. Put the mod library on the game's drive in <SettingsLink section="Game and mod folders" /></div>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setPending(null)}>Cancel</Key>
             <Key onClick={() => deploy({ id: pending.installId, name: pending.name }, false, true)} disabled={busy}>Copy this once</Key>

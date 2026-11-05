@@ -48,7 +48,9 @@ The list is cached for ten minutes; the refresh key in the band asks Nexus again
    form opens with the mod and the file already picked. With your key, the form also shows the files Nexus takes uploads
    for and uses Nexus's own ID for the one you picked, so there is no ID to look up.
 4. Check the version (**Use 1.2.4** suggests the next one), the file's name and category, and write the changelog.
-   Choose whether the previous version moves to Old files and whether the mod's version follows this file.
+   Choose whether the previous version moves to Old files and whether the mod's version follows this file. A line above
+   **Publish** reminds you that Nexus wants the page's AI statement updated when a version adds AI-made parts, with a
+   link to the mod's edit page: the form cannot do that for you, and nothing here skips it.
 5. Press **Publish**. The LCD follows the upload. Nexus then scans the file; players see the new version once the scan
    passes. My mods refreshes.
 

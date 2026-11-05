@@ -2,6 +2,7 @@
 // turns into a Redo toast once used, like mail apps do.
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
+import { goSettings, settingsTarget } from "../lib/nav";
 
 export interface ToastAction { label: string; run: () => void | Promise<void> }
 type Toast = { id: number; text: string; bad?: boolean; action?: ToastAction; ms: number; leaving?: boolean };
@@ -10,8 +11,11 @@ const subs = new Set<(t: Toast) => void>();
 const updates = new Set<(id: number, patch: Partial<Toast>) => void>();
 const live = new Set<number>();
 
-/** Show a short message. With an action, it stays longer and offers one key. Returns its id. */
+/** Show a short message. With an action, it stays longer and offers one key. A message that sends the user to Settings
+ *  ("in Settings, Appearance") offers an Open Settings link that goes there. Returns its id. */
 export function toast(text: string, bad = false, action?: ToastAction): number {
+  const to = action ? null : settingsTarget(text);
+  if (to) action = { label: "Open Settings", run: () => goSettings(to.section) };
   const t: Toast = { id: next++, text, bad, action, ms: action ? 9000 : bad ? 7000 : 4600 };
   subs.forEach((s) => s(t));
   return t.id;

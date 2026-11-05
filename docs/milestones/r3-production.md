@@ -128,7 +128,7 @@ An independent review of what add-ons, mod archives and installers could do foun
 3. Library: turn a mod off, press Ctrl+Z (it comes back on, the toast says Redo), Ctrl+Y. Remove a mod, open Recently
    removed, Put back.
 4. Without mods: the game starts vanilla; close it and the mods come back (toast).
-5. Settings, Look: switch themes, effects, make a theme. Add-ons: install a theme and an extension, approve it, see its
+5. Settings, Appearance: switch themes, effects, make a theme. Add-ons: install a theme and an extension, approve it, see its
    shelf in Browse and its tools in the Play menu.
 6. Maximise the window: Library groups and Settings use the width.
 

@@ -32,6 +32,29 @@ Each point of the [API Acceptable Use Policy](https://help.nexusmods.com/article
   playing), so authors get endorsements from players who never open the page.
 - Descriptions link to their Nexus pages; requirements open their own mod.
 
+## Nexus's AI rules
+
+Nexus's [announcement of 3 November 2026](https://www.nexusmods.com/news/15654) and its [AI policy page](https://help.nexusmods.com/article/180-ai-policy-changes-2026)
+(updated 5 November 2026) are about mods uploaded to Nexus. They do not mention apps or the API. The app follows their
+direction anyway:
+
+- **Labels.** A card and a mod's page show Nexus's own tags, **AI-Generated Content**, **AI Media** and **AI Assisted**,
+  first in the row, with a hover tip saying what Nexus means by each (`src/lib/ai.ts`). The names were read from
+  Nexus's live tag list for Cyberpunk 2077 (see [live-probe.md](live-probe.md)); "NPC Behaviours (AI)" is the game's
+  own AI and is not shown as one.
+- **Choice.** Settings, AI content (and the Filters key in Browse) leaves out AI-generated mods, or every AI-tagged mod.
+  It is off by default, since Nexus does not ban AI mods and the user decides. The setting is sent to Nexus as a tag
+  filter, so counts and pages are right. A tag a user asks for by name is never also left out.
+- **No AI in the app.** No Nexus data, mod file or description is sent to any AI service, and nothing is used to train
+  one. Nexus's new "AI Training/Tool Usage" permission is about exactly that.
+- **Publishing.** The publish form reminds authors to update the page's AI statement when a version adds AI-made
+  parts, and links to the mod's edit page. A new mod page cannot be made through the app at all (Nexus's form is
+  opened for it), so the disclosure steps there are never skipped.
+- **Tags are the authors' own.** The app cannot tell an untagged AI mod from any other, and says so in Settings; a
+  mislabelled mod is reported on its Nexus page.
+- **How the app was made.** Settings, About, "How it was made" says the app was built with an AI coding assistant, and
+  that it has no AI in it.
+
 ## Not done, on purpose
 
 - Publishing collections to Nexus: off, because Nexus has not said other apps may.

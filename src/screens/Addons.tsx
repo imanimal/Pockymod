@@ -74,7 +74,7 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
     if (e.kind === "theme") {
       const was = themeVersion(e.id);
       const r = await installTheme(pkg, e);
-      toast(was !== undefined ? `${r.name} updated to ${e.version}` : `${r.name} installed. Pick it in Settings, Look`);
+      toast(was !== undefined ? `${r.name} updated to ${e.version}` : `${r.name} installed. Pick it in Settings, Appearance`);
       return;
     }
     const c = checkExtensionText(pkg);
@@ -98,7 +98,7 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
       const c = checkThemeText(f.text);
       if (!c.pkg) { setFileErrors({ kind: "theme", errors: c.errors }); return; }
       const r = await installTheme(f.text);
-      toast(`${r.name} installed. Pick it in Settings, Look`);
+      toast(`${r.name} installed. Pick it in Settings, Appearance`);
       setTab("installed");
     } else if (format === "pocket-mods.extension") {
       const c = checkExtensionText(f.text);
@@ -365,7 +365,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
 
       <Module icon="sun" title="Themes" count={themes.length || "none"} bodyClass="list"
         tools={onNavigate && <Key size="sm" variant="ghost" icon="settings" onClick={() => onNavigate("settings")}>Pick one in Settings</Key>}>
-        {!themes.length && <p className="dim" style={{ padding: ".6em" }}>No themes. Built-in ones are in Settings, Look</p>}
+        {!themes.length && <p className="dim" style={{ padding: ".6em" }}>No themes. Built-in ones are in Settings, Appearance</p>}
         <div className="rows">
           {themes.map((t) => {
             const upd = updateFor("theme", t.id);
