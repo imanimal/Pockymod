@@ -249,10 +249,10 @@ pub async fn open_external(url: String) -> Result<()> {
     open_in_browser(&ok)
 }
 
-/// Hand an https URL to the system. On Windows this is the shell's URL handler (no shell command line is built);
+/// Hand an http or https URL to the system. On Windows this is the shell's URL handler (no shell command line is built);
 /// elsewhere `open` or `xdg-open`.
 pub(crate) fn open_in_browser(url: &str) -> Result<()> {
-    if !url.starts_with("https://") || url.chars().any(|c| c.is_whitespace() || c.is_control() || c == '"') {
+    if !(url.starts_with("https://") || url.starts_with("http://")) || url.chars().any(|c| c.is_whitespace() || c.is_control() || c == '"') {
         return Err(Error::Invalid("That is not a web address the app opens.".into()));
     }
     #[cfg(windows)]

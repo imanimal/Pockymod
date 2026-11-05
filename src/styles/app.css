@@ -41,6 +41,40 @@
 .cmd .dim { font-size: .74em; white-space: nowrap; }
 .cmd .btn { margin-bottom: 0; }
 
+/* links in descriptions, and the Links viewer: each link previewed with its picture, site, title and summary */
+.dlink { color: var(--acc2); text-decoration: underline; text-underline-offset: .15em; text-decoration-thickness: 1px; cursor: pointer; border-radius: 3px; }
+.dlink:hover { text-decoration-thickness: 2px; }
+.dlink:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.links .lnk-hosts { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lnk-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .4em .6em; margin: .1em 0 .5em; }
+.lnk-tools .fbox { flex: 1 1 14em; min-width: 0; }
+.lnk-list { display: flex; flex-direction: column; gap: .6em; margin: .1em 0 .5em; max-height: 34em; overflow: auto; padding-right: .15em; }
+.lnk-h { display: flex; align-items: center; gap: .4em; font-size: .78em; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); margin: .1em .2em .3em; }
+.lnk-h .dim { font: 700 .95em/1 var(--font-mono); }
+.lnk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22em), 1fr)); gap: 4px; }
+.lnk { position: relative; display: flex; align-items: stretch; border-radius: 8px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+.lnk:hover { box-shadow: inset 0 0 0 1px var(--acc2); }
+.lnk-main { all: unset; box-sizing: border-box; flex: 1; min-width: 0; display: flex; gap: .65em; padding: .45em; cursor: pointer; }
+.lnk-main:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
+.lnk-img { position: relative; flex: none; width: 7.6em; aspect-ratio: 16 / 9; border-radius: 5px; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); color: var(--text-3); align-self: flex-start; }
+.lnk-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lnk-play { position: absolute; inset: auto auto .3em .3em; display: grid; place-items: center; width: 1.9em; height: 1.9em; border-radius: 50%; background: var(--chrome-bg); color: var(--chrome-fg); }
+.lnk.loading .lnk-img { animation: lnk-wait 1.2s ease-in-out infinite alternate; }
+@keyframes lnk-wait { to { opacity: .45; } }
+.lnk-b { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .12em; }
+.lnk-site { display: flex; align-items: center; gap: .35em; font-size: .74em; color: var(--text-3); min-width: 0; }
+.lnk-site img { width: 1.15em; height: 1.15em; border-radius: 3px; flex: none; }
+.lnk-site span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lnk-t { font-weight: 600; font-size: .9em; color: var(--text); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lnk-d { font-size: .8em; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lnk-m { display: flex; flex-wrap: wrap; gap: .1em .7em; font-size: .72em; color: var(--text-3); min-width: 0; }
+.lnk-m > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.lnk-p { opacity: .8; }
+.lnk-k { flex: none; display: flex; flex-direction: column; gap: 2px; padding: .3em .25em; }
+.lnk-k .btn { margin-bottom: 0; }
+.lnk.err .lnk-img { opacity: .6; }
+@media (prefers-reduced-motion: reduce) { .lnk.loading .lnk-img { animation: none; } }
+
 /* ── Browse for discovery ── */
 .disc { display: flex; flex-direction: column; gap: .8em; min-height: 100%; }
 .vtabs { display: flex; gap: .4em; flex-wrap: wrap; }

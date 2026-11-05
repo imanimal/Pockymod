@@ -313,7 +313,7 @@ export function installDemo() {
     collection_check: () => new Promise((ok) => setTimeout(() => ok(checkFixture), 300)),
     collection_detail: ({ slug }) => {
       const c = collectionsFixture.nodes.find((n) => n.slug === slug);
-      return { headerImage: c?.tileImage?.url ?? null, description: c ? `${c.summary}\n\n[b]What is in it[/b]\nEvery mod in this collection is listed below, with what you already have. Install adds the rest to the download queue.\n\n[img]${c.tileImage?.url ?? ""}[/img]` : null };
+      return { headerImage: c?.tileImage?.url ?? null, description: c ? `${c.summary}\n\n[b]What is in it[/b]\nEvery mod in this collection is listed below, with what you already have. Install adds the rest to the download queue.\n\nNeeds [url=https://www.nexusmods.com/cyberpunk2077/mods/107]Cyber Engine Tweaks[/url]. Questions go to [url=https://discord.gg/redmodding]the modding Discord[/url]; the guide is at https://wiki.redmodding.org/cyberpunk-2077-modding.\n\n[img]${c.tileImage?.url ?? ""}[/img]` : null };
     },
     collection_install: ({ check }) => {
       for (const e of (check as { entries: Array<{ modId: number; fileId: number; name: string; fileName: string; version: string; size: number; uri: string; status: string }> }).entries.filter((x) => x.status !== "installed").slice(0, 5))
@@ -418,6 +418,22 @@ export function installDemo() {
       const u = String(url);
       if (!["https://github.com/imanimal/pocket-mods/", "https://www.nexusmods.com/", "https://www.youtube.com/watch?v="].some((p) => u.startsWith(p))) throw { kind: "invalid", message: "Only this project's GitHub pages and Nexus Mods pages open from here." };
       window.open(u, "_blank", "noopener,noreferrer");
+    },
+    open_link: ({ url }) => { window.open(String(url), "_blank", "noopener,noreferrer"); },
+    // previews made up from the address (the demo never fetches other sites); Nexus mods from the fixtures
+    link_preview: async ({ url }) => {
+      await new Promise((r) => setTimeout(r, 300 + Math.random() * 700));
+      const u = new URL(String(url));
+      const host = u.hostname.replace(/^www\./, "");
+      const id = Number(u.pathname.match(/^\/cyberpunk2077\/mods\/(\d+)/)?.[1]);
+      const d = id ? details.find((x) => x.detail.modId === id)?.detail : undefined;
+      if (id) return d ? { url, finalUrl: url, kind: "mod", title: d.name, description: d.summary, image: d.pictureUrl, site: "Nexus Mods", icon: "https://www.nexusmods.com/favicon.ico", author: d.author, modId: id, downloads: d.downloads, endorsements: d.endorsements }
+        : { url, finalUrl: url, kind: "mod", site: "Nexus Mods", modId: id, title: `Mod ${id}`, description: "Not in the demo's recorded mods." };
+      const yt = String(url).match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/)?.[1];
+      if (yt) return { url, finalUrl: url, kind: "video", title: "A video from the description", author: "A creator", description: "A video by a creator", image: `https://img.youtube.com/vi/${yt}/hqdefault.jpg`, site: "YouTube" };
+      if (host === "unreachable.example") return { url, finalUrl: url, kind: "page", site: host, error: "The site did not answer." };
+      const path = u.pathname.split("/").filter(Boolean);
+      return { url, finalUrl: url, kind: "page", site: host, title: path.length ? path.slice(-2).join(" / ") : host, description: `The page at ${host}, as its own tags describe it.`, icon: `https://${u.hostname}/favicon.ico` };
     },
     text_file_open: () => null,
     text_file_save_as: () => false,

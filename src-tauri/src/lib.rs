@@ -108,6 +108,8 @@ pub fn run() {
             commands::nexus::rate_limit,
             commands::browse::browse_search,
             commands::browse::browse_detail,
+            commands::browse::link_preview,
+            commands::browse::open_link,
             commands::browse::set_mod_flag,
             commands::browse::settings_get,
             commands::browse::settings_set,

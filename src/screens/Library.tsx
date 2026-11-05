@@ -28,6 +28,8 @@ type Pending =
 type Show = "all" | "on" | "off" | "updates";
 const SOURCE: Record<InstallRow["source"], string> = { pocket: "", vortex: "Vortex", found: "Unmanaged" };
 type From = "all" | "vortex" | "pocket" | "found";
+/** Unmanaged mods set aside with Later: listed last in a folded group of their own. */
+const LATER = "Unmanaged, for later";
 
 export function Library({ updates, onExisting }: { updates?: Update[]; onExisting?: () => void }) {
   const [rows, setRows] = useState<InstallRow[] | null>(null);
@@ -40,6 +42,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const [show, setShow] = useState<Show>("all");
   const [from, setFrom] = useState<From>("all");
   const [unm, setUnm] = useState<Unmanaged | null>(null);
+  const [unmLater, setUnmLaterState] = useState(() => { try { return localStorage.getItem("pm.unmanaged.later") === "1"; } catch { return false; } });
+  const setUnmLater = (v: boolean) => { setUnmLaterState(v); try { localStorage.setItem("pm.unmanaged.later", v ? "1" : "0"); } catch { /* storage unavailable */ } };
   const [sel, setSel] = useState<Set<number>>(new Set());
   const [folded, setFolded] = useState<Set<string>>(new Set());
   const [moveOpen, setMoveOpen] = useState(false);
@@ -110,9 +114,12 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     return true;
   });
   const order = [...customGroups, ...presets];
+  // set aside with Later: the leftover copies and other unmanaged mods wait at the bottom (frameworks stay put)
+  const laterIds = new Set(unmLater && unm ? [...unm.copies, ...unm.other].map((c) => c[0]) : []);
   const byGroup = new Map<string, InstallRow[]>();
-  for (const r of visible) byGroup.set(r.group, [...(byGroup.get(r.group) ?? []), r]);
-  const groupNames = [...byGroup.keys()].sort((a, b) => (order.indexOf(a) + 1 || 999) - (order.indexOf(b) + 1 || 999));
+  for (const r of visible) { const g = laterIds.has(r.id) ? LATER : r.group; byGroup.set(g, [...(byGroup.get(g) ?? []), r]); }
+  const rank = (g: string) => (g === LATER ? 1000 : order.indexOf(g) + 1 || 999);
+  const groupNames = [...byGroup.keys()].sort((a, b) => rank(a) - rank(b));
   const selected = (rows ?? []).filter((r) => sel.has(r.id));
   const toggle = (id: number) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleAll = (ids: number[]) => setSel((s) => { const all = ids.every((i) => s.has(i)); const n = new Set(s); ids.forEach((i) => all ? n.delete(i) : n.add(i)); return n; });
@@ -229,13 +236,17 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
 
       {manage && <GroupManager custom={customGroups} onChange={load} />}
       <EndorseStrip />
-      {unm && unm.copies.length + unm.other.length + unm.frameworks.length > 0 && (() => {
+      {unm && !unmLater && unm.copies.length + unm.other.length + unm.frameworks.length > 0 && (() => {
         const rowsOf = (ids: number[]) => (rows ?? []).filter((r) => ids.includes(r.id));
         const copies = unm.copies.map((c) => c[0]), other = unm.other.map((c) => c[0]);
         const otherOn = rowsOf(other).filter((r) => r.enabled);
         return (
           <Module icon="warn" title="Unmanaged mods" count={unm.copies.length + unm.other.length + unm.frameworks.length}
-            tools={<Key size="sm" variant="ghost" icon="eye" latched={from === "found"} onClick={() => setFrom(from === "found" ? "all" : "found")} title="List only unmanaged mods below">Show them</Key>}>
+            tools={<>
+              <Key size="sm" variant="ghost" icon="eye" latched={from === "found"} onClick={() => setFrom(from === "found" ? "all" : "found")} title="List only unmanaged mods below">Show them</Key>
+              <Key size="sm" variant="ghost" icon="clock" onClick={() => { setUnmLater(true); if (from === "found") setFrom("all"); toast("Set aside: they wait at the bottom of the list, folded, and stay as they are. Sort them out from there whenever you like."); }}
+                title="Not sure yet? Put this away. The mods stay exactly as they are, listed last in a folded group, where Sort them now brings this back.">Later</Key>
+            </>}>
             <p className="dim" style={{ fontSize: ".9em" }}>These were already in the game folder: put there by hand, or left behind by an earlier install, a game reinstall or another manager. Neither Vortex nor Pockymod installed them. Cleaning up only ever touches these; your Vortex mods stay exactly as they are. Everything can be put back (Recently removed, Ctrl+Z).</p>
             <div className="rows" style={{ marginTop: ".5em" }}>
               {unm.copies.length > 0 && (
@@ -331,18 +342,26 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         const list = byGroup.get(g)!;
         const ids = list.map((r) => r.id);
         const allSel = ids.every((i) => sel.has(i));
-        const isFolded = folded.has(g);
+        const later = g === LATER;
+        // the set-aside group starts folded
+        const isFolded = later ? !folded.has(g) : folded.has(g);
         // small groups sit side by side on wide windows instead of leaving a row mostly empty
         const basis = layout === "grid" ? `${Math.max(2, Math.min(list.length, 6)) * 13.3 + 1.4}em` : "46em";
         return (
           <div key={g} className="lib-group" style={{ flexBasis: basis }}>
-          <Module icon={g === "Core" ? "chip" : g === "Character presets" ? "user" : "library"} title={g}
+          <Module icon={later ? "clock" : g === "Core" ? "chip" : g === "Character presets" ? "user" : "library"} title={g}
             count={`${list.filter((r) => r.enabled).length} of ${list.length} on`} bodyClass="list"
             tools={<>
+              {later && <Key size="sm" variant="ghost" icon="warn" onClick={() => setUnmLater(false)} title="Back to the Unmanaged mods section at the top: remove leftover copies or turn the others off in one click">Sort them now</Key>}
               <Key size="sm" variant="ghost" onClick={() => toggleAll(ids)}>{allSel ? "Unselect" : "Select all"}</Key>
               <Key size="sm" variant="ghost" icon="chevron" className={isFolded ? "" : "rot-key"} aria-label={isFolded ? "Open" : "Fold"}
                 onClick={() => setFolded((f) => { const n = new Set(f); n.has(g) ? n.delete(g) : n.add(g); return n; })} />
             </>}>
+            {isFolded && later && (
+              <button type="button" className="linkish fold-line" onClick={() => setFolded((f) => new Set(f).add(g))}>
+                {plural(list.length, "mod")} {list.length === 1 ? "that was" : "that were"} already in the game folder, put there by neither manager. {list.length === 1 ? "It stays as it is; open to look at it." : "They stay as they are; open to look through them."}
+              </button>
+            )}
             {!isFolded && layout === "grid" && (
               <div className="lgrid2">
                 {list.map((r) => (

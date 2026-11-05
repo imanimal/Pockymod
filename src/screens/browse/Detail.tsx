@@ -1,4 +1,4 @@
-// A mod's detail: picture, LCDs, console commands, files, requirements, the indexed file list, description, and the
+// A mod's detail: picture, LCDs, console commands, the description's links, files, requirements, the indexed file list, description, and the
 // screen's one orange key, Install (or, once it is installed, the menu of what the app can do to it). It shows in a
 // drawer, or expanded as a page laid out like the mod's Nexus page: the banner, the media on a big stage, the
 // description, and the files and requirements beside them.
@@ -9,11 +9,12 @@ import {
   FRAMEWORKS, browse, descriptionMedia, endorseMod, errorText, fileBytes, nexusUrl, openExternal, trackMod,
   type CardView, type Classification, type DetailView, type InstallRow, type ModFile, type Update,
 } from "../../lib/api";
-import { descriptionText, shortDate } from "../../lib/text";
+import { descriptionLinks, descriptionParts, descriptionText, shortDate } from "../../lib/text";
 import { extractCommands } from "../../lib/commands";
 import { packCommandsFor, useExtensions } from "../../lib/extensions";
 import { toast } from "../../ui/toast";
 import { Gallery, MediaStage } from "./Media";
+import { DescText, Links } from "./Links";
 import { ModKey, mainFile } from "./ModActions";
 
 export function TypeTag({ c }: { c: Classification }) {
@@ -80,14 +81,16 @@ function useParts({ p, d }: Parts) {
   const packs = useExtensions().active.commandPacks;
   const m = d.detail;
   const current = d.files.filter((f) => CURRENT.includes(f.category)).sort((a, b) => b.date - a.date);
+  const parts = descriptionParts(m.description);
   const desc = descriptionText(m.description);
+  const links = descriptionLinks(parts);
   // the description's own commands, then any from extension command packs that list this mod
   const fromPacks = packCommandsFor(packs, m.modId);
   const own = extractCommands(desc);
   const commands = [...own, ...fromPacks.filter((x) => !own.some((c) => c.command === x.command))];
   const shots = descriptionMedia(m.description, m.pictureUrl);
   const view: CardView = { ...p.card, hidden: d.hidden, ignored: d.ignored };
-  return { m, current, desc, commands, shots, view };
+  return { m, current, desc, parts, links, commands, shots, view };
 }
 
 /** Install, or the installed menu; then hide and ignore. */
@@ -156,7 +159,7 @@ function ArchiveList({ d }: { d: DetailView }) {
 
 function Drawer(x: Parts) {
   const { p, d, setD, fileId, setFileId } = x;
-  const { m, current, desc, commands, shots, view } = useParts(x);
+  const { m, current, desc, parts, links, commands, shots, view } = useParts(x);
   const [full, setFull] = useState(false);
   const file = d.files.find((f) => f.fileId === fileId);
   return (
@@ -166,6 +169,7 @@ function Drawer(x: Parts) {
       <p style={{ margin: ".5em 0 .2em", color: "var(--text)" }}>{m.summary}</p>
       <div className="m-tags"><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
       {commands.length > 0 && <Commands list={commands} />}
+      {links.length > 0 && <Links key={m.modId} list={links} onMod={p.onOpen} />}
 
       <div className="lcds" style={{ marginTop: ".8em" }}>
         <Lcd size="sm" label="Downloads" value={formatCount(m.downloads)} />
@@ -181,7 +185,7 @@ function Drawer(x: Parts) {
       <ArchiveList d={d} />
 
       <div className="sub-h">Description</div>
-      <div className="desc">{full ? desc : desc.slice(0, 900)}{desc.length > 900 && !full && "…"}</div>
+      <div className="desc"><DescText parts={parts} limit={full ? undefined : 900} onMod={p.onOpen} />{desc.length > 900 && !full && "…"}</div>
       {desc.length > 900 && <Key size="sm" variant="ghost" onClick={() => setFull(!full)}>{full ? "Less" : "Read more"}</Key>}
     </Module>
   );
@@ -190,7 +194,7 @@ function Drawer(x: Parts) {
 /** The expanded page: the banner across the top, then the media and description beside the files. */
 function Page(x: Parts) {
   const { p, d, setD, fileId, setFileId } = x;
-  const { m, current, desc, commands, shots, view } = useParts(x);
+  const { m, current, desc, parts, links, commands, shots, view } = useParts(x);
   const file = d.files.find((f) => f.fileId === fileId);
   const banner = m.pictureUrl ?? shots.find((s) => s.kind === "image")?.url ?? null;
   const archived = d.files.filter((f) => !CURRENT.includes(f.category)).length;
@@ -209,8 +213,9 @@ function Page(x: Parts) {
         <div className="mpage-main">
           {shots.length > 0 && <MediaStage items={shots} />}
           {commands.length > 0 && <Commands list={commands} />}
+          {links.length > 0 && <Links key={m.modId} list={links} onMod={p.onOpen} />}
           <div className="sub-h">Description</div>
-          <div className="desc">{desc || <span className="dim">The author wrote no description.</span>}</div>
+          <div className="desc">{desc ? <DescText parts={parts} onMod={p.onOpen} /> : <span className="dim">The author wrote no description.</span>}</div>
         </div>
         <aside className="mpage-side">
           <div className="lcds">
@@ -221,7 +226,7 @@ function Page(x: Parts) {
           <Actions p={p} d={d} setD={setD} file={file} view={view} />
           <div className="sub-h">Files {archived > 0 && <span className="dim">· {archived} older on Nexus</span>}</div>
           <FileRows files={current} fileId={fileId} setFileId={setFileId} have={p.installed ?? []} limit={30} />
-          {file?.description && <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}>{descriptionText(file.description)}</p>}
+          {file?.description && <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}><DescText parts={descriptionParts(file.description)} onMod={p.onOpen} /></p>}
           <Requires d={d} onOpen={p.onOpen} />
           <ArchiveList d={d} />
         </aside>

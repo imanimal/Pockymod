@@ -565,6 +565,17 @@ export const extensionsApi = {
   launch: (extId: string, optionId: string) => call<{ started: boolean; modded?: boolean; redmod?: RedmodResult | null; args?: string[] }>("ext_launch", { extId, optionId }),
   openLink: (extId: string, linkId: string) => call<void>("ext_open_link", { extId, linkId }),
 };
+/** A link from a description, previewed the way chat apps show one. `error` says why the page could not be read. */
+export interface LinkPreview {
+  url: string; finalUrl: string; kind: "page" | "image" | "video" | "file" | "invite" | "mod";
+  title?: string | null; description?: string | null; image?: string | null; site?: string | null; icon?: string | null; author?: string | null;
+  modId?: number | null; downloads?: number | null; endorsements?: number | null; error?: string | null;
+}
+export const links = {
+  preview: (url: string) => call<LinkPreview>("link_preview", { url }),
+  /** Any public web page, in the user's own browser: for links the user clicked in a description. */
+  open: (url: string) => call<void>("open_link", { url }),
+};
 /** Open a page in the default browser. Only this project's GitHub pages and Nexus Mods pages. */
 export const openExternal = (url: string) => call<void>("open_external", { url });
 /** A marketplace file and where it came from: the network, the hour's cache, or an old copy when offline. */

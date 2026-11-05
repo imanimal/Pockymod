@@ -16,6 +16,7 @@ pub mod found;
 pub mod health;
 pub mod install;
 pub mod launch;
+pub mod links;
 pub mod modio;
 pub mod platform;
 pub mod profiles;

@@ -1,7 +1,7 @@
 // Collections: browse Nexus collections, open one as a page (its picture, description, media and every mod in it,
 // against what you have) or check it quickly before installing; make, export and import local ones.
-import { descriptionText, plural } from "../lib/text";
-import { useEffect, useRef, useState } from "react";
+import { descriptionLinks, descriptionParts, descriptionText, plural } from "../lib/text";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
 import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, bytesText, formatCount } from "../ui/pocket";
@@ -11,6 +11,7 @@ import {
 } from "../lib/api";
 import { toast } from "../ui/toast";
 import { MediaStage } from "./browse/Media";
+import { DescText, Links } from "./browse/Links";
 
 const inBrowser = (slug: string) => openExternal(nexusUrl.collection(slug)).catch((e) => toast(errorText(e), true));
 const onNexus = (slug: string) => nexusPages.url(nexusUrl.collection(slug)).catch((e) => toast(errorText(e), true));
@@ -193,7 +194,9 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
   useEffect(() => { collections.detail(c.slug).then(setMore).catch(() => setMore({ description: null, headerImage: null })); }, [c.slug]);
   const r = c.latestPublishedRevision;
   const raw = more?.description ?? "";
+  const parts = useMemo(() => descriptionParts(raw || c.summary || ""), [raw, c.summary]);
   const desc = raw ? descriptionText(raw) : c.summary;
+  const links = useMemo(() => descriptionLinks(parts), [parts]);
   const shots = descriptionMedia(raw, null);
   const banner = more?.headerImage ?? c.tileImage?.url ?? null;
   return (
@@ -223,8 +226,9 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
               <Lcd size="sm" label="Downloads" value={formatCount(c.totalDownloads)} />
             </div>
             {shots.length > 0 && <MediaStage items={shots.map((s) => ({ ...s, caption: c.name }))} />}
+            {links.length > 0 && <Links key={c.slug} list={links} />}
             <div className="sub-h">Description</div>
-            {more === null ? <p className="dim">Loading the description</p> : <div className="desc">{desc || <span className="dim">No description.</span>}</div>}
+            {more === null ? <p className="dim">Loading the description</p> : <div className="desc">{desc ? <DescText parts={parts} /> : <span className="dim">No description.</span>}</div>}
             {more && !more.description && <p className="dim" style={{ fontSize: ".84em" }}>Only the summary is shown: Nexus did not give the full description here. Open the page for it.</p>}
           </div>
           <aside className="mpage-side">
