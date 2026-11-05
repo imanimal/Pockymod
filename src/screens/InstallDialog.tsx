@@ -7,6 +7,7 @@ import { errorText, queue, type QueueItem } from "../lib/api";
 import { toast } from "../ui/toast";
 import { Switch } from "../ui/pocket";
 import { installPrefs, setInstallPrefs } from "../lib/prefs";
+import { PremiumNote } from "../ui/Premium";
 
 export function InstallDialog({ modId, fileId, name, premium, onClose, onQueued }: {
   modId: number; fileId: number; name: string; premium: boolean; onClose: () => void; onQueued: () => void;
@@ -43,7 +44,8 @@ export function InstallDialog({ modId, fileId, name, premium, onClose, onQueued 
           <Lcd size="sm" label="Needs your click" value={String(clicks).padStart(2, "0")} tone={clicks ? "hot" : "ok"} sub={premium ? "Premium: automatic" : "Free account"} />
           <Lcd size="sm" label="Download" value={bytesText(bytes).split(" ")[0]} unit={bytesText(bytes).split(" ")[1]} />
         </div>
-        {!premium && clicks > 0 && <div className="note warn">Free accounts press "Mod Manager Download" once per file. Each page opens here in the app and the queue moves on by itself.</div>}
+        {!premium && clicks > 0 && <div className="note warn">Free accounts press "Mod Manager Download" once per file. Each page opens in turn and the queue moves on by itself.</div>}
+        {!premium && <PremiumNote clicks={clicks} />}
         <div className="rows">
           {chosen.map((i) => (
             <div key={`${i.modId}-${i.fileId}`} className="row">

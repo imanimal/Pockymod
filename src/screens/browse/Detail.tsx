@@ -107,6 +107,7 @@ function Actions({ p, d, setD, file, view }: { p: DetailProps; d: DetailView; se
           {file && !have.some((r) => r.fileId === file.fileId) && !p.updates?.some((u) => u.modId === m.modId && u.fileId === file.fileId) &&
             <Key icon="install" onClick={() => p.onInstall?.(d, file.fileId)} title="Install the file picked above as well (an optional file, or another variant)">Install this file</Key>}
         </>}
+      <Key variant="ghost" icon="web" onClick={() => p.onOpenPage ? p.onOpenPage(m.modId) : void openExternal(nexusUrl.mod(m.modId)).catch((e) => toast(errorText(e), true))} title="The mod's page on Nexus: posts, bugs, articles and its author">View on Nexus</Key>
       <Key variant="ghost" icon="hide" onClick={() => { p.onFlag(view, "hidden", !d.hidden); setD({ ...d, hidden: !d.hidden }); }}>{d.hidden ? "Unhide" : "Hide"}</Key>
       <Key variant="ghost" icon="x" onClick={() => { p.onFlag(view, "ignored", !d.ignored); setD({ ...d, ignored: !d.ignored }); }}>{d.ignored ? "Stop ignoring" : "Ignore"}</Key>
     </div>

@@ -6,6 +6,8 @@ import { errorText, game, handler, nexus, nexusPages, paths, pickFolder, setting
 import { ExistingBody } from "./Existing";
 import { Scanner, type ScanLine } from "../ui/Scanner";
 import { toast } from "../ui/toast";
+import { NexusSignIn } from "../ui/SignIn";
+import { ssoReady } from "../lib/sso";
 
 /** Nexus's personal API key page (its account settings). */
 export const API_KEY_PAGE = "https://next.nexusmods.com/settings/api-keys";
@@ -100,7 +102,11 @@ function AccountStep({ onNext }: { onNext: () => void }) {
         <p>Connected as <b className="hi">{name}</b> {premium ? <Pill tone="ok">Premium: installs run by themselves</Pill> : <Pill>Free: one click per file on Nexus</Pill>}</p>
       ) : (
         <>
-          <p>Browsing needs nothing. To download, paste your personal API key from Nexus Mods (Site preferences, API keys). It is kept in Windows Credential Manager.</p>
+          {ssoReady() ? <>
+            <p>Browsing needs nothing. To download, sign in with your Nexus Mods account. The key it gives Pockymod is kept in Windows Credential Manager.</p>
+            <NexusSignIn primary onDone={(s) => { setName(s.user?.name ?? "connected"); setPremium(!!s.user?.isPremium); }} />
+            <p className="dim" style={{ fontSize: ".84em", marginTop: ".6em" }}>Or paste a personal API key:</p>
+          </> : <p>Browsing needs nothing. To download, paste your personal API key from Nexus Mods (Site preferences, API keys). It is kept in Windows Credential Manager.</p>}
           <div className="actions" style={{ flexWrap: "nowrap", marginTop: ".5em" }}>
             <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Personal API key" aria-label="Nexus API key" onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} /></label>
             <Key icon="check" disabled={!key || busy} onClick={save}>Connect</Key>

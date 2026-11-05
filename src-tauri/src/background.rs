@@ -4,9 +4,10 @@
 //! window, which turns on and comes back where it was (the page keeps its place in local storage).
 //!
 //! Every six hours (first a minute after start), quietly:
-//! - mod updates are checked; for a Premium account their files are downloaded ahead ("mods.prefetch", on by
-//!   default), so installing them is one click and instant; with "mods.autoInstall" on they also go in, but only
-//!   while the window is closed and the game is not running.
+//! - only when the user turned it on ("mods.background", off by default, because Nexus's API policy has a user's
+//!   key used only for what the user starts): mod updates are checked; for a Premium account their files are
+//!   downloaded ahead ("mods.prefetch"), so installing them is one click and instant; with "mods.autoInstall" on
+//!   they also go in, but only while the window is closed and the game is not running. Check now always does this.
 //! - a new Pockymod is looked for ("app.updates": "auto", the default, downloads it and installs it when you are
 //!   away: when the window is closed, or when you quit; "ask" downloads it and waits for a click; "off" does nothing).
 //!   It installs silently and starts again in the background, so the next time you open it, it is just newer.
@@ -44,17 +45,21 @@ pub fn start(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(Duration::from_secs(60)).await;
         loop {
-            round(&app).await;
+            round(&app, false).await;
             tokio::time::sleep(EVERY).await;
         }
     });
 }
 
-/// One quiet round of checks.
-pub async fn round(app: &AppHandle) {
+/// Mod updates are looked for on the timer only when the user turned that on (Settings, Background).
+pub fn mod_checks_on(app: &AppHandle) -> bool { setting(app, "mods.background").as_deref() == Some("1") }
+
+/// One quiet round of checks; `asked` when the user pressed Check now.
+pub async fn round(app: &AppHandle, asked: bool) {
     let st = app.state::<AppState>();
     // mod updates
-    if let Ok(list) = pocket_core::updates::check(&st.nexus, &st.db).await {
+    let list = if asked || mod_checks_on(app) { pocket_core::updates::check(&st.nexus, &st.db).await.ok() } else { None };
+    if let Some(list) = list {
         let _ = app.emit("updates", &list);
         let premium = st.user.read().await.as_ref().is_some_and(|u| u.is_premium);
         if premium && setting(app, "mods.prefetch").as_deref() != Some("0") {
@@ -151,7 +156,7 @@ pub async fn app_update_install(app: AppHandle) -> pocket_core::Result<()> {
 /// Run the checks now (Settings, Check now).
 #[tauri::command]
 pub async fn background_check(app: AppHandle) -> pocket_core::Result<BackgroundState> {
-    round(&app).await;
+    round(&app, true).await;
     background_state(app).await
 }
 

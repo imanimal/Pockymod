@@ -418,8 +418,9 @@ mod tests {
 }
 
 /// Match Vortex's mods to Nexus: each reading of the folder name is tried until the mod's file list has a file
-/// whose archive name is the folder. One request per mod (the mod and its files), eight at a time, each cached
-/// like any mod detail, so a second run is instant. `progress(done, total, name)` follows along.
+/// whose archive name is the folder. One request per mod (the mod and its files), four at a time so a big Vortex
+/// setup is no burst on Nexus, each cached like any mod detail, so a second run is instant. `progress(done, total,
+/// name)` follows along.
 pub async fn resolve(client: &crate::nexus::NexusClient, db: &std::sync::Mutex<Db>, mods: Vec<VortexMod>, progress: impl Fn(usize, usize, &str) + Send + Sync) -> Vec<Resolved> {
     use futures_util::stream::{self, StreamExt};
     let total = mods.len();
@@ -430,7 +431,7 @@ pub async fn resolve(client: &crate::nexus::NexusClient, db: &std::sync::Mutex<D
         let n = done.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
         progress(n, total, &r.name);
         r
-    })).buffer_unordered(8).collect().await
+    })).buffer_unordered(4).collect().await
 }
 
 /// The mod and its files, from the cache or one request; no file-content lookups.

@@ -16,12 +16,17 @@ pub struct NexusStatus {
 }
 
 #[tauri::command]
-pub async fn nexus_status(state: State<'_, AppState>, refresh: Option<bool>) -> Result<NexusStatus> {
+pub async fn nexus_status(app: tauri::AppHandle, state: State<'_, AppState>, refresh: Option<bool>) -> Result<NexusStatus> {
     let has_key = state.nexus.has_key();
     if has_key && (refresh.unwrap_or(false) || state.user.read().await.is_none()) {
         // validate once per session; a bad key shows as no user, the error goes to the caller
         match state.nexus.validate().await {
-            Ok(u) => { state.queue.lock().unwrap().premium = u.is_premium; *state.user.write().await = Some(u) }
+            Ok(u) => {
+                let upgraded = { let mut q = state.queue.lock().unwrap(); let was = q.premium; q.premium = u.is_premium; u.is_premium && !was };
+                *state.user.write().await = Some(u);
+                // just went Premium: the files waiting for a click download by themselves now
+                if upgraded { crate::runner::emit(&app); state.pump.notify_one(); }
+            }
             Err(e @ (Error::BadKey | Error::Throttled { .. })) => return Err(e),
             Err(_) => {}
         }
@@ -31,7 +36,7 @@ pub async fn nexus_status(state: State<'_, AppState>, refresh: Option<bool>) -> 
 
 /// Check the key with Nexus, then store it in Windows Credential Manager. A key Nexus rejects is not stored.
 #[tauri::command]
-pub async fn nexus_set_key(state: State<'_, AppState>, key: String) -> Result<NexusStatus> {
+pub async fn nexus_set_key(app: tauri::AppHandle, state: State<'_, AppState>, key: String) -> Result<NexusStatus> {
     let key = key.trim().to_owned();
     if key.len() < 16 || key.chars().any(char::is_whitespace) { return Err(Error::Invalid("That does not look like a Nexus API key.".into())); }
     let previous = state.keys.get().ok().flatten();
@@ -41,7 +46,7 @@ pub async fn nexus_set_key(state: State<'_, AppState>, key: String) -> Result<Ne
             state.keys.set(&Secret::new(key))?;
             state.queue.lock().unwrap().premium = user.is_premium;
             *state.user.write().await = Some(user);
-            nexus_status(state, None).await
+            nexus_status(app, state, None).await
         }
         Err(e) => {
             state.nexus.set_key(previous);
@@ -51,11 +56,11 @@ pub async fn nexus_set_key(state: State<'_, AppState>, key: String) -> Result<Ne
 }
 
 #[tauri::command]
-pub async fn nexus_clear_key(state: State<'_, AppState>) -> Result<NexusStatus> {
+pub async fn nexus_clear_key(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<NexusStatus> {
     state.keys.clear()?;
     state.nexus.set_key(None);
     *state.user.write().await = None;
-    nexus_status(state, None).await
+    nexus_status(app, state, None).await
 }
 
 #[tauri::command]

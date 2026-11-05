@@ -8,6 +8,9 @@ import { Appearance } from "./Appearance";
 import { GameFolders } from "./GameFolders";
 import { About, Experiments } from "./About";
 import { InstallPrefs } from "./InstallPrefs";
+import { PREMIUM_TIPS, getPremium } from "../ui/Premium";
+import { NexusSignIn } from "../ui/SignIn";
+import { ssoReady } from "../lib/sso";
 
 export function Settings({ onGallery }: { onGallery?: () => void }) {
   return (
@@ -54,9 +57,10 @@ function NexusAccount() {
               {user.isSupporter && <Pill>Supporter</Pill>}
             </div>
           ) : (
-            <p>Browsing works without an account. Downloads, endorsing and tracking need your personal API key from the
+            <p>Browsing works without an account. Downloads, endorsing and tracking need {ssoReady() ? "you to sign in with Nexus, or a" : "your"} personal API key from the
               Nexus site (Site preferences, API keys).</p>
           )}
+          {!user && <NexusSignIn onDone={setSt} />}
           <label className="fbox" style={{ flex: "none" }}>
             <input className="finput" type="password" autoComplete="off" spellCheck={false} placeholder={st?.hasKey ? "Replace the saved key" : "Paste your personal API key"}
               value={key} onChange={(e) => setKey(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} aria-label="Nexus API key" />
@@ -68,6 +72,7 @@ function NexusAccount() {
           </div>
           {err && <div className="note bad">{err}</div>}
           <p className="dim" style={{ fontSize: ".84em" }}>The key is kept in Windows Credential Manager, never in a file. A personal key is for your own use.</p>
+          {user && !user.isPremium && <PremiumTips />}
         </div>
         {rl && (
           <Lcd label="Requests left" tone={rl.level === "throttled" ? "bad" : rl.level === "low" ? "hot" : "ok"}
@@ -77,6 +82,21 @@ function NexusAccount() {
         )}
       </div>
     </Module>
+  );
+}
+
+/** Free accounts: the line that says what Premium would save before an install with several clicks (ui/Premium.tsx). */
+function PremiumTips() {
+  const [on, setOn] = useState(true);
+  useEffect(() => { settings.get(PREMIUM_TIPS).then((v) => setOn(v !== "0")).catch(() => {}); }, []);
+  const set = (v: boolean) => { setOn(v); settings.set(PREMIUM_TIPS, v ? "1" : "0").then(() => window.dispatchEvent(new Event("pm-prefs"))).catch((e) => toast(errorText(e), true)); };
+  return (
+    <div className="actions">
+      <Switch checked={on} onChange={set}>
+        <span title="Before an install that needs several clicks on Nexus, one line says what Premium would do instead">Say what Premium would save</span>
+      </Switch>
+      <Key size="sm" variant="ghost" icon="web" onClick={getPremium} title="Nexus Premium, on the Nexus site. Come back here and Pockymod notices.">Get Premium</Key>
+    </div>
   );
 }
 
@@ -128,10 +148,10 @@ function BackgroundModule() {
   const [auto, setAuto] = useState(false);
   const [st, setSt] = useState<BackgroundState | null>(null);
   const [busy, setBusy] = useState(false);
-  const KEYS = { bg: "app.background", up: "app.updates", pre: "mods.prefetch", inst: "mods.autoInstall" } as const;
+  const KEYS = { bg: "app.background", up: "app.updates", mods: "mods.background", pre: "mods.prefetch", inst: "mods.autoInstall" } as const;
   useEffect(() => {
-    Promise.all(Object.values(KEYS).map((k) => settings.get(k).catch(() => null))).then(([bg, up, pre, inst]) =>
-      setV({ bg: bg ?? "1", up: up ?? "auto", pre: pre ?? "1", inst: inst ?? "0" }));
+    Promise.all(Object.values(KEYS).map((k) => settings.get(k).catch(() => null))).then(([bg, up, mods, pre, inst]) =>
+      setV({ bg: bg ?? "1", up: up ?? "auto", mods: mods ?? "0", pre: pre ?? "1", inst: inst ?? "0" }));
     background.autostart().then(setAuto).catch(() => {});
     background.state().then(setSt).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -153,12 +173,17 @@ function BackgroundModule() {
         <p className="dim" style={{ fontSize: ".84em" }}>{v.up === "auto" ? "A new version downloads quietly and goes in when the window is closed or you quit, never during a download. Next time you open the app, it is just newer."
           : v.up === "ask" ? "A new version downloads quietly; the tray and this screen offer Restart into it." : "No checks for new versions."}</p>
         <div className="sub-h">Mod updates</div>
-        <Switch checked={v.pre === "1"} onChange={(x) => put("pre", x ? "1" : "0")}>
-          <span title="Premium accounts: the files of mod updates download in the background, so Update all is instant. Free accounts need a click on Nexus for each file, so nothing downloads by itself.">Download mod updates ahead (Premium)</span>
+        <Switch checked={v.mods === "1"} onChange={(x) => put("mods", x ? "1" : "0")}>
+          <span title="Off: mod updates are looked for when you open the window and when you press Check now. On: also every six hours, in the tray too, using your Nexus account.">Look for mod updates every six hours</span>
         </Switch>
-        <Switch checked={v.inst === "1"} onChange={(x) => put("inst", x ? "1" : "0")}>
-          <span title="Downloaded mod updates go in by themselves, only while the window is closed and the game is not running. Off: they wait for Update all.">Install them by themselves when I'm away</span>
-        </Switch>
+        {v.mods === "1" && <>
+          <Switch checked={v.pre === "1"} onChange={(x) => put("pre", x ? "1" : "0")}>
+            <span title="Premium accounts: the files of mod updates download in the background, so Update all is instant. Free accounts need a click on Nexus for each file, so nothing downloads by itself.">Download mod updates ahead (Premium)</span>
+          </Switch>
+          <Switch checked={v.inst === "1"} onChange={(x) => put("inst", x ? "1" : "0")}>
+            <span title="Downloaded mod updates go in by themselves, only while the window is closed and the game is not running. Off: they wait for Update all.">Install them by themselves when I'm away</span>
+          </Switch>
+        </>}
         <div className="actions" style={{ marginTop: ".3em" }}>
           <Key size="sm" icon="refresh" disabled={busy} onClick={() => { setBusy(true); background.check().then(setSt).catch((e) => toast(errorText(e), true)).finally(() => setBusy(false)); }}
             title="Look for mod updates and a new Pockymod now">Check now</Key>

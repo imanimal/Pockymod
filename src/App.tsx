@@ -112,12 +112,17 @@ export function App() {
     // a new version is downloaded: one quiet line, never a dialog
     backgroundApi.onUpdate((u) => { if (u.ready) toast(`Pockymod ${u.version} is ready. It goes in when you close the window.`, false, { label: "Restart now", run: () => { void backgroundApi.installUpdate().catch((e) => toast(errorText(e), true)); } }); }).then((u) => offs.push(u));
     nexus.status().then((s) => setPremium(!!s.user?.isPremium)).catch(() => {});
-    // update badges: the last result now, a fresh check shortly after start and every six hours
+    // the account went Premium (ui/Premium.tsx): installs stop counting clicks
+    const upgraded = () => setPremium(true);
+    window.addEventListener("pm-premium", upgraded);
+    offs.push(() => window.removeEventListener("pm-premium", upgraded));
+    // update badges: the last result now and a fresh check shortly after the window opens; every six hours only
+    // when the user turned that on (Settings, Background), since Nexus has a key used only for what the user starts
     updatesApi.last().then(setUpdates).catch(() => {});
     updatesApi.onChange(setUpdates).then((u) => offs.push(u));
     const check = () => updatesApi.check().catch(() => {});
     const t1 = setTimeout(check, 4000);
-    const t2 = setInterval(check, 6 * 3600 * 1000);
+    const t2 = setInterval(() => { settings.get("mods.background").then((v) => { if (v === "1") void check(); }).catch(() => {}); }, 6 * 3600 * 1000);
     game.health().then((h) => setHealthIssues(h.problems)).catch(() => {});
     // another manager (often Vortex on its own start) took the browser's download links: offer them back once
     const t3 = setTimeout(() => {

@@ -10,6 +10,7 @@ import {
   type CollectionCard, type CollectionCheck, type CollectionsPage, type LocalCollection,
 } from "../lib/api";
 import { toast } from "../ui/toast";
+import { PremiumNote } from "../ui/Premium";
 import { MediaStage } from "./browse/Media";
 import { DescText, Links } from "./browse/Links";
 
@@ -144,7 +145,8 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
         {c.manifest && c.manifest.conflicts.length > 0 && (
           <div className="note warn">The curator marks {plural(c.manifest.conflicts.length, "pair")} of mods as clashing: {c.manifest.conflicts.slice(0, 4).map(([a, b]) => `${nameOf(c, a)} and ${nameOf(c, b)}`).join("; ")}.</div>
         )}
-        {c.needsClick > 20 && <div className="note warn">That is {c.needsClick} clicks on Nexus. Each page opens here in turn, and the queue moves on as soon as you click.</div>}
+        {c.needsClick > 20 && <div className="note warn">That is {c.needsClick} clicks on Nexus. Each page opens in turn, and the queue moves on as soon as you click.</div>}
+        <PremiumNote clicks={c.needsClick} />
         <div className="rows" style={all ? undefined : { maxHeight: "16em", overflow: "auto" }}>
           {shown.slice(0, all ? 400 : 80).map((e) => (
             <div key={`${e.modId}-${e.fileId}`} className={`row${e.status === "unavailable" && !e.replacement ? " off" : ""}`}>
@@ -214,7 +216,8 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
             <h2>{c.name}</h2>
             <div className="m-meta"><span>by {c.user.name}</span>{c.category && <span>{c.category.name}</span>}{r && <span>revision {r.revisionNumber}</span>}</div>
             {c.summary && <p>{c.summary}</p>}
-            <div className="actions">{r?.gameVersions.map((g) => <Pill key={g.reference}>Game {g.reference}</Pill>)}{(c.adultContent || r?.adultContent) && <Pill tone="over">Adult content</Pill>}</div>
+            <div className="actions">{r?.gameVersions.map((g) => <Pill key={g.reference}>Game {g.reference}</Pill>)}{(c.adultContent || r?.adultContent) && <Pill tone="over">Adult content</Pill>}
+              <Key size="sm" variant="ghost" icon="web" onClick={() => onNexus(c.slug)} title="The collection's page on Nexus: comments, bugs, revisions and its curator">View on Nexus</Key></div>
           </div>
         </div>
         <div className="mpage-body">

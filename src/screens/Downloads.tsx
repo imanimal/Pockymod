@@ -5,6 +5,7 @@ import { Icon } from "../ui/Icon";
 import { Empty, Key, Lcd, Module, Pill, bytesText, type PillTone } from "../ui/pocket";
 import { errorText, queue, type ItemState, type QueueItem, type QueueSnapshot } from "../lib/api";
 import { toast } from "../ui/toast";
+import { PremiumNote } from "../ui/Premium";
 
 function stateLabel(s: ItemState): { text: string; tone?: PillTone } {
   switch (s.state) {
@@ -48,6 +49,7 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
             <Key variant="ghost" onClick={() => act(queue.remove(waiting.id))}>Skip this mod</Key>
           </div>
           {waiting.manualOnly && <div className="note warn" style={{ marginTop: ".7em" }}>This file is not a .zip, .7z or .rar, so it cannot be installed for you. Follow the steps on its page.</div>}
+          {!s?.premium && <div style={{ marginTop: ".7em" }}><PremiumNote clicks={s?.needsClick ?? 0} what="the" /></div>}
         </Module>
       )}
 
