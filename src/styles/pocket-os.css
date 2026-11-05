@@ -187,7 +187,8 @@ body { background: var(--bg); color: var(--text); font: var(--fs)/1.45 var(--fon
 .fset-f3 :is(.alertbox .ph, .ph.bad) { --band: var(--bad); --band-fg: var(--on-bad); }
 .fset-f3 :is(.alertbox .ph, .ph.bad) .pt .i { color: inherit; }
 .fset-f3 .pb { padding: .85em 1em 1em; }
-.panel.auto { height: auto; }
+.panel.auto { height: auto; min-height: auto; }
+.panel.auto > .pb { flex: none; overflow: visible; }
 
 /* ───────────── desk and window frame ───────────── */
 /* the desk is a dot grid; windows sit on it like devices on a mat */
