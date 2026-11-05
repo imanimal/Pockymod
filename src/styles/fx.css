@@ -96,9 +96,9 @@ html, body { overflow: hidden; }
 .shell > .view.entering { scrollbar-color: transparent transparent; }
 .shell > .view.entering::-webkit-scrollbar-thumb { background: transparent; }
 
-/* channel change (subtle): a brightness blip; full plays Collegiapp's channel change (ui/fx.ts) */
-@keyframes chanSoft { 0% { filter: brightness(1.22); } 40% { filter: brightness(.94); } 100% { filter: none; } }
-html.fx-chan[data-fx="subtle"] .shell > .view { animation: chanSoft calc(var(--m) * 180ms + 1ms) steps(3, end); }
+/* channel change (subtle): a faint, smooth brightness swell; full plays Collegiapp's channel change (ui/fx.ts) */
+@keyframes chanSoft { 0% { filter: brightness(1.06); } 45% { filter: brightness(.98); } 100% { filter: none; } }
+html.fx-chan[data-fx="subtle"] .shell > .view { animation: chanSoft calc(var(--m) * 220ms + 1ms) ease-out; }
 
 /* degauss after a theme change: the colours swim and the picture wobbles, then settle (full); a colour wobble only
    (subtle) */

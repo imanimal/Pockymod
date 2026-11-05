@@ -224,7 +224,7 @@ export const powered = () => !root().classList.contains("off");
 
 // ── between views: Collegiapp's channel change ──
 // Only the part that changes is retuned, and its brightness never jumps: the new picture comes in a touch soft and
-// grey under fine static (blended soft-light, so it textures the picture instead of lighting it), then sharpens and
+// muted under faint static (blended soft-light, so it textures the picture instead of lighting it), then sharpens and
 // settles as the colour locks, as it swings up a few pixels into place. Nothing waits for it, a new one replaces the
 // last, and none plays during power, with motion off or with the CRT layer off. The view never grows a scrollbar for
 // it: the shell clips the swing (fx.css).
@@ -258,17 +258,20 @@ export function channel() {
   const g = L.snow.getContext("2d")!, src = snowSource(w, h);
   Object.assign(L.snow.style, { top: r.top + "px", left: r.left + "px", width: r.width + "px", height: r.height + "px", right: "auto", bottom: "auto" });
   L.snow.classList.add("soft");
-  const t0 = performance.now(), SNOW = 300 + Math.random() * 80;
+  // the snow is faint, eases in rather than popping up, and is redrawn at about 20 fps, so it grains the picture
+  // without strobing
+  const t0 = performance.now(), SNOW = 240 + Math.random() * 40;
+  let drawn = -Infinity;
   const frame = (now: number) => {
     if (blipping !== b) return;
-    g.drawImage(src, 0, (Math.random() * h) | 0, w, h, 0, 0, w, h);
+    if (now - drawn >= 48) { drawn = now; g.drawImage(src, 0, (Math.random() * h) | 0, w, h, 0, 0, w, h); }
     if (now - t0 < SNOW * m) b.raf = requestAnimationFrame(frame);
   };
   frame(t0); // drawn now, so it is up in the same frame as the new view
-  anim(L.snow, SNOW, [[0, { opacity: 0.7 }, "ease-out"], [SNOW, { opacity: 0 }]]);
+  anim(L.snow, SNOW, [[0, { opacity: 0.08 }, "ease-out"], [SNOW * 0.2, { opacity: 0.2 }, "ease-in-out"], [SNOW, { opacity: 0 }]]);
   const rise = `translateY(${(0.3 + Math.random() * 0.35).toFixed(2)}em)`; // a little different every time
-  anim(box, T, [[0, { transform: rise, filter: "blur(1.4px) saturate(.2) contrast(1.06)" }, "cubic-bezier(.2, .7, .3, 1)"],
-    [T * 0.5, { transform: "translateY(-1px)", filter: "blur(.35px) saturate(.75) contrast(1.02)" }, "ease-out"],
+  anim(box, T, [[0, { transform: rise, filter: "blur(.6px) saturate(.6) contrast(1.02)" }, "cubic-bezier(.2, .7, .3, 1)"],
+    [T * 0.5, { transform: "translateY(-1px)", filter: "blur(.2px) saturate(.9) contrast(1.01)" }, "ease-out"],
     [T, { transform: "none", filter: "blur(0px) saturate(1) contrast(1)" }]]);
 }
 
