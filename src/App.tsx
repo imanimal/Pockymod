@@ -56,6 +56,18 @@ export function Shell() {
     return () => mq?.removeEventListener?.("change", onChange);
   }, [settingsTheme]);
 
+  // once per launch: a newer Pocket Mods release, and updates for installed mods
+  const { toast, go: goTo } = useApp();
+  const [checked, setChecked] = useState(false);
+  useEffect(() => {
+    if (checked || !status) return;
+    setChecked(true);
+    api.settings().then((s) => {
+      if (s.checkAppUpdates) api.appUpdateCheck().then((r) => r?.newer && toast(`Pocket Mods ${r.version} is out. See Settings, Updates.`)).catch(() => {});
+    });
+    if (status.hasKey) api.checkUpdates().then((n) => n > 0 && toast(`${n} mod update(s) available.`, { action: { label: "Library", run: () => goTo("library") } })).catch(() => {});
+  }, [status, checked, toast, goTo]);
+
   const flipTheme = async () => {
     const dark = document.documentElement.dataset.scheme === "dark";
     const next = dark ? "cream" : "night";

@@ -38,19 +38,13 @@ pub trait Shell: Send + Sync + 'static {
     fn emit(&self, event: &str, payload: Value);
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Experiments {
     /// Publishing collections to Nexus: unconfirmed for third-party apps.
     pub publish_collections: bool,
     /// Read-only mod.io browsing.
     pub modio: bool,
-}
-
-impl Default for Experiments {
-    fn default() -> Self {
-        Experiments { publish_collections: false, modio: false }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

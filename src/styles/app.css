@@ -86,7 +86,8 @@ ol.rows.lo { list-style: none; margin: 0; padding: .5em; }
 .frail .sect { margin: 1em 0 .35em; }
 .frail .fgrid { grid-template-columns: minmax(0, 1fr) 5.5em; }
 .frail .fgrid input { width: 100%; }
-.browse-empty { display: grid; place-items: center; }
+.browse-empty, .modio { display: grid; place-items: center; }
+.modio { place-items: stretch; }
 .browse-empty > .panel { width: min(34em, 100%); }
 @container screen (max-width: 1180px) { .browse { grid-template-columns: minmax(13em, 15em) minmax(0, 1fr) minmax(18em, 22em); } }
 @container screen (max-width: 980px) {

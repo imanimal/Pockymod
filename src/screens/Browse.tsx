@@ -24,6 +24,7 @@ import {
   type ModDetail,
   type ModKind,
   type ModPage,
+  type ModioMod,
   type SortKey,
 } from "../lib/types";
 
@@ -69,6 +70,74 @@ export function KindTag({ kind }: { kind: ModKind | null | undefined }) {
 }
 
 export function Browse() {
+  const [source, setSource] = useState<"nexus" | "modio">("nexus");
+  const [modio, setModio] = useState(false);
+  useEffect(() => {
+    api.settings().then((s) => setModio(s.experiments.modio)).catch(() => {});
+  }, []);
+  if (modio && source === "modio") return <ModioBrowse onBack={() => setSource("nexus")} />;
+  return <NexusBrowse onModio={modio ? () => setSource("modio") : undefined} />;
+}
+
+function ModioBrowse({ onBack }: { onBack: () => void }) {
+  const [text, setText] = useState("");
+  const [list, setList] = useState<ModioMod[]>([]);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      api
+        .modioBrowse(text, 0)
+        .then((r) => {
+          setList(r.mods);
+          setTotal(r.total);
+          setError(null);
+        })
+        .catch((e) => setError(errMsg(e)));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [text]);
+  return (
+    <div className="modio">
+      <Deck>
+        <Key icon="browse" onClick={onBack}>
+          Back to Nexus
+        </Key>
+      </Deck>
+      <Module title="mod.io (read-only experiment)" icon="browse" count={count(total)} bodyClassName="list-body">
+        <div className="fbar">
+          <SearchField value={text} onChange={setText} placeholder="Search mod.io" />
+        </div>
+        <p className="note pad">Read-only: subscribe and install these from the game's own mod menu. Whether third-party apps may use Cyberpunk's mod.io catalogue is unconfirmed.</p>
+        {error ? (
+          <Empty icon="warn" title="mod.io isn't available">{error}</Empty>
+        ) : (
+          <div className="rows">
+            {list.map((m) => (
+              <div key={m.id} className="row mrow brow">
+                <Thumb src={m.logoUrl} alt="" />
+                <div className="m-main">
+                  <span className="m-t">{m.name}</span>
+                  <span className="m-meta">
+                    <span>{m.author}</span>
+                    <span>{count(m.downloads)} downloads</span>
+                  </span>
+                </div>
+                <span />
+                <div className="m-due">
+                  <SizeChip bytes={m.sizeBytes} />
+                  <span className="m-abs">{ago(m.updatedAt)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Module>
+    </div>
+  );
+}
+
+function NexusBrowse({ onModio }: { onModio?: () => void }) {
   const { status, go, toast, fail, libraryRev } = useApp();
   const [q, setQ] = useState<BrowseQuery>(emptyQuery());
   const [text, setText] = useState("");
@@ -177,6 +246,11 @@ export function Browse() {
         <Key icon="refresh" onClick={() => load({ ...q, offset: 0 }, false)}>
           Refresh
         </Key>
+        {onModio ? (
+          <Key icon="bolt" onClick={onModio}>
+            mod.io (experiment)
+          </Key>
+        ) : null}
         <Key
           icon="close"
           disabled={filterCount === 0}
