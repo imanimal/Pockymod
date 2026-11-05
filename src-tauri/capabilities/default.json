@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The main window. The in-app Nexus window loads remote pages and gets no capabilities, so it has no IPC access.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging",
+    "core:window:allow-is-maximized",
+    "dialog:allow-open",
+    "dialog:allow-save"
+  ]
+}
