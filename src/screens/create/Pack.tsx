@@ -6,8 +6,7 @@ export function CheckModule({ pack, compact }: { pack: Pack; compact?: boolean }
   const c = pack.check;
   return (
     <Module icon="file" title="Check your mod" count={c ? `${c.files} files` : pack.busy ? "checking" : undefined}>
-      <p>Pick your mod's folder, or a packed archive. Pockymod shows where every file would land for a player, and what breaks installs.</p>
-      <div className="actions" style={{ marginTop: ".6em" }}>
+      <div className="actions">
         <Key icon="folder" onClick={() => void pack.pick(true)} disabled={pack.busy}>Choose a folder</Key>
         <Key variant="ghost" icon="file" onClick={() => void pack.pick(false)} disabled={pack.busy}>Choose an archive</Key>
       </div>
@@ -19,9 +18,9 @@ export function CheckModule({ pack, compact }: { pack: Pack; compact?: boolean }
         </div>
         {c.problems.map((p) => <div key={p} className="note bad" style={{ marginTop: ".4em" }}>{p}</div>)}
         {c.tips.map((p) => <div key={p} className="note warn" style={{ marginTop: ".4em" }}>{p}</div>)}
-        {c.problems.length === 0 && <div className="note" style={{ marginTop: ".4em" }}>Ready: every file has a place in the game.</div>}
+        {c.problems.length === 0 && <div className="note" style={{ marginTop: ".4em" }}>Ready, every file has a place</div>}
         {c.needs.length > 0 && <>
-          <div className="sub-h">Needs, from its files</div>
+          <div className="sub-h">Needs</div>
           <div className="m-tags">{c.needs.map((n) => <Tag key={n.key} kind={n.key}>{n.name}</Tag>)}</div>
         </>}
         {!compact && <>
@@ -40,12 +39,11 @@ export function PackModule({ pack, primary }: { pack: Pack; primary?: boolean })
         <span className="lab">Name</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={pack.name} onChange={(e) => pack.set({ name: e.target.value })} aria-label="Mod name" /></label>
         <span className="lab">Version</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={pack.version} onChange={(e) => pack.set({ version: e.target.value })} aria-label="Version" /></label>
       </div>
-      <p className="dim" style={{ fontSize: ".86em", marginTop: ".5em" }}>A .zip with each file at its game path (archive/pc/mod, r6/scripts …), docs and tools left out, saved next to your folder.</p>
       <div className="actions" style={{ marginTop: ".5em" }}>
-        <Key variant={primary ? "primary" : undefined} icon="install" disabled={!pack.path || !pack.isFolder || pack.busy || !pack.check?.plan.files.length} onClick={() => void pack.pack()}>Pack a clean zip</Key>
+        <Key variant={primary ? "primary" : undefined} icon="install" title="Files at their game paths, docs left out, saved next to the folder" disabled={!pack.path || !pack.isFolder || pack.busy || !pack.check?.plan.files.length} onClick={() => void pack.pack()}>Pack a clean zip</Key>
         {pack.zip && <Pill tone="ok">{fileName(pack.zip)}</Pill>}
       </div>
-      {pack.path && !pack.isFolder && <p className="dim hint">An archive is used as it is. Choose the folder to pack a clean copy.</p>}
+      {pack.path && !pack.isFolder && <p className="dim hint">Choose a folder to pack a clean copy</p>}
     </Module>
   );
 }

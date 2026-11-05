@@ -12,18 +12,18 @@ export function NexusSignIn({ onDone, primary }: { onDone: (s: NexusStatus) => v
   useEffect(() => () => cancel.current?.(), []);
   if (!ssoReady()) return null;
   const go = () => {
-    const s = signIn(() => toast("Approve Pockymod on the Nexus page in your browser. This comes back by itself."));
+    const s = signIn(() => toast("Approve Pockymod on Nexus in your browser"));
     cancel.current = s.cancel;
     setWaiting(true);
-    s.done.then((st) => { toast(`Signed in as ${st.user?.name ?? "your Nexus account"}.`); onDone(st); })
+    s.done.then((st) => { toast(`Signed in as ${st.user?.name ?? "your Nexus account"}`); onDone(st); })
       .catch((e) => { if ((e as { kind?: string })?.kind !== "cancelled") toast(errorText(e), true); })
       .finally(() => { setWaiting(false); cancel.current = null; });
   };
   return (
     <div className="actions">
       <Key variant={primary ? "primary" : undefined} icon="key" disabled={waiting} onClick={go}
-        title="Opens Nexus in your browser, where you approve Pockymod. No key to copy.">{waiting ? "Waiting for Nexus" : "Sign in with Nexus"}</Key>
-      {waiting && <Key variant="ghost" onClick={() => cancel.current?.()} title="Stop waiting for the approval">Cancel</Key>}
+        title="Approve Pockymod on Nexus in your browser">{waiting ? "Waiting for Nexus" : "Sign in with Nexus"}</Key>
+      {waiting && <Key variant="ghost" onClick={() => cancel.current?.()} title="Stop waiting">Cancel</Key>}
     </div>
   );
 }

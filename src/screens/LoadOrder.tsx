@@ -47,12 +47,12 @@ export function LoadOrder() {
     <div className="grid2 lo" style={{ alignItems: "start" }}>
       <div className="stack">
         <Module icon="loadorder" title="REDmod deploy" count={`${redmods.filter((r) => r.enabled).length} REDmods`}>
-          <p>The game only sees REDmods after its REDmod tool compiles them, in the order below. Run it after adding, removing or reordering REDmods.</p>
+          <p>Run after adding, removing or reordering REDmods</p>
           <div className="actions" style={{ margin: ".7em 0" }}>
             <Key variant="primary" icon="play" disabled={busy || redmods.length === 0} onClick={() => run(async () => {
               const r = await game.redmodDeploy();
               setResult(r);
-              toast(r.ok ? "REDmod deploy done." : `REDmod deploy reported ${plural(r.problems.length, "problem")}.`, !r.ok);
+              toast(r.ok ? "REDmod deploy done" : `REDmod deploy hit ${plural(r.problems.length, "problem")}`, !r.ok);
             })}>Run REDmod deploy</Key>
           </div>
           {result && <>
@@ -66,10 +66,10 @@ export function LoadOrder() {
           <div className="rows">
             {list.map((p) => (
               <div key={p.id} className={`row${p.active ? " sel" : ""}`} style={{ cursor: "default" }}>
-                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{plural(p.enabled, "mod")} on</span>{!!p.vortex && <span title="Mods Vortex installed, as Vortex lists them in this profile">{p.vortex} from Vortex</span>}{!!p.unmanaged && <span className="warnc" title="Mods that were already in the game folder, put there by neither Vortex nor Pockymod (by hand, or left behind). Library, Unmanaged mods, cleans them up.">{p.unmanaged} unmanaged</span>}</span></span>
+                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{plural(p.enabled, "mod")} on</span>{!!p.vortex && <span title="Installed by Vortex">{p.vortex} from Vortex</span>}{!!p.unmanaged && <span className="warnc" title="Installed by neither manager. Clean up in Library">{p.unmanaged} unmanaged</span>}</span></span>
                 <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                   {p.active ? <span className="led run" aria-label="Active" /> : <>
-                    <Key size="sm" onClick={() => run(async () => { const r = await ops.switchProfile(active, p); if (r.notDeployed.length) toast(`${plural(r.notDeployed.length, "mod")} need${r.notDeployed.length === 1 ? "s" : ""} a decision in Library.`); })} disabled={busy}>Switch</Key>
+                    <Key size="sm" onClick={() => run(async () => { const r = await ops.switchProfile(active, p); if (r.notDeployed.length) toast(`${plural(r.notDeployed.length, "mod")} need${r.notDeployed.length === 1 ? "s" : ""} a decision in Library`); })} disabled={busy}>Switch</Key>
                     <Key size="sm" variant="ghost" icon="trash" aria-label={`Delete ${p.name}`} onClick={() => run(() => profiles.remove(p.id))} disabled={busy} />
                   </>}
                 </span>
@@ -78,12 +78,12 @@ export function LoadOrder() {
           </div>
           <div className="actions" style={{ marginTop: ".6em", flexWrap: "nowrap" }}>
             <label className="fbox"><input className="finput" value={name} onChange={(e) => setName(e.target.value)} placeholder="New profile name" aria-label="New profile name" /></label>
-            <Key size="sm" icon="plus" disabled={!name.trim() || busy} onClick={() => run(async () => { await profiles.create(name, active?.id); setName(""); toast("Profile made as a copy of the active one."); })}>Copy active</Key>
+            <Key size="sm" icon="plus" disabled={!name.trim() || busy} onClick={() => run(async () => { await profiles.create(name, active?.id); setName(""); toast("Profile copied"); })}>Copy active</Key>
           </div>
           {vx && vx.tracked > 0 && vx.profiles.length > 0 && (
             <div className="actions" style={{ marginTop: ".5em" }}>
               <Key size="sm" variant="ghost" icon="user" disabled={busy} onClick={() => run(async () => { const r = await vortexProfiles.import(); toast(profilesText(r)); })}
-                title={`Vortex's profiles (${vx.profiles.map((p) => p.name).join(", ")}) as profiles here, with exactly the mods Vortex has on in each; unmanaged mods stay only in the profile that is live`}>
+                title={`${vx.profiles.map((p) => p.name).join(", ")}, with the same mods on`}>
                 {vx.imported ? "Sync with Vortex's profiles again" : `Bring in Vortex's ${vx.profiles.length} profiles`}</Key>
             </div>
           )}
@@ -112,7 +112,7 @@ export function LoadOrder() {
             </div>
           ))}
         </div>
-        <p className="dim" style={{ fontSize: ".82em", padding: ".6em" }}>The order matters for REDmods (they are compiled first to last). Archive mods load by file name, whatever their place here: see Overlapping archives.</p>
+        <p className="dim" style={{ fontSize: ".82em", padding: ".6em" }}>Order only affects REDmods. Archives load by file name</p>
       </Module>
     </div>
   );

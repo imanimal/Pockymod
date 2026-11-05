@@ -29,11 +29,11 @@ export async function quickInstall(modId: number, name: string): Promise<boolean
   try {
     const [p, d] = await Promise.all([installPrefs().catch(() => ({ requirements: "always" as const, confirm: true })), browse.detail(modId)]);
     const f = mainFile(d.files);
-    if (!f) { toast(`${name} has no current file on Nexus. Open its page to see why.`, true); return false; }
+    if (!f) { toast(`${name} has no current file on Nexus`, true); return false; }
     const snap = await queue.add(modId, f.fileId, p.requirements !== "never");
     const mine = snap.items.filter((i) => i.state.state === "waiting" || i.state.state === "needsClick" || i.state.state === "downloading");
     const extra = mine.filter((i) => i.requiredBy === d.detail.name).length;
-    toast(`${name} is queued${extra ? ` with ${extra} required ${extra === 1 ? "mod" : "mods"}` : ""}.`);
+    toast(`${name} is queued${extra ? ` with ${extra} required ${extra === 1 ? "mod" : "mods"}` : ""}`);
     return true;
   } catch (e) { toast(errorText(e), true); return false; }
 }
@@ -81,7 +81,7 @@ export function ModKey({ mod, rows, queued, updates, onDetail, onLibrary, onFlag
     return (
       <span className="modkey" onClick={stop} onKeyDown={stop}>
         <Key size={size} icon="install" disabled={busy} aria-label={`Quick install ${mod.name}`}
-          title="Quick install: the newest main file and what it needs go straight to the queue"
+          title="Queue the newest main file and its requirements"
           onClick={async () => { setBusy(true); await quickInstall(mod.modId, mod.name); setBusy(false); }}>{label ? "Quick install" : busy ? "…" : "Install"}</Key>
       </span>
     );
@@ -91,7 +91,7 @@ export function ModKey({ mod, rows, queued, updates, onDetail, onLibrary, onFlag
   return (
     <span className="modkey" ref={ref} onClick={stop} onKeyDown={stop}>
       <Key size={size} variant={upd ? undefined : "dark"} icon={upd ? "downloads" : on ? "check" : "minus"} latched={open} aria-haspopup="menu" aria-expanded={open}
-        aria-label={`${mod.name}: installed, ${on ? "on" : "off"}. Options`} title="Installed: turn it on or off, update, group, profiles, remove…"
+        aria-label={`${mod.name}: installed, ${on ? "on" : "off"}. Options`} title="On/off, update, group, profiles, remove"
         onClick={() => setOpen(!open)}>{upd ? "Update" : on ? "Installed" : "Off"}<Icon name="down" size={9} /></Key>
       {open && (
         <Popover anchor={ref.current} onClose={close} label={`${mod.name} options`}>
@@ -108,15 +108,15 @@ async function changeOptions(r: InstallRow, set: (v: { row: InstallRow; need: Ch
   busy(true);
   try {
     const o = await installerOptions.get(r.id);
-    if (!o.saved) toast(`${r.name} was installed before picks were kept, so the installer's own defaults are selected.`);
+    if (!o.saved) toast(`No saved picks for ${r.name}, showing the installer defaults`);
     set({ row: r, need: { request: { modId: r.modId, fileId: r.fileId, name: r.name, version: r.version, archive: "" }, fomod: o.fomod, defaults: o.choices }, before: o.choices });
   } catch (e) { toast(errorText(e), true); } finally { busy(false); }
 }
 async function applyOptions(r: InstallRow, picks: ChoicesNeeded["defaults"], before: ChoicesNeeded["defaults"]) {
   const d = await installerOptions.change(r.id, picks);
-  if (d && d.outcome !== "deployed") toast(`${r.name}'s new options clash with other mods: decide in Library.`, true);
+  if (d && d.outcome !== "deployed") toast(`${r.name}'s new options conflict with other mods. Sort it out in Library`, true);
   record({ label: `Changed the options of ${r.name}`, undo: () => installerOptions.change(r.id, before), redo: () => installerOptions.change(r.id, picks) }, !!d && d.outcome !== "deployed");
-  if (!d) toast(`${r.name} keeps the new options; they go in when you turn it on.`);
+  if (!d) toast(`Options saved. They apply when ${r.name} is turned on`);
 }
 
 const SOURCE: Record<InstallRow["source"], string> = { pocket: "Pockymod", vortex: "Vortex", found: "found in the game" };
@@ -163,14 +163,14 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
                 <Switch checked={r.enabled} disabled={busy} onChange={(v) => run(() => ops.setEnabled([r], v))}>{r.enabled ? "On" : "Off"}</Switch>
               </div>
               <div className="actions">
-                {u && nexus && <Key size="sm" icon="downloads" disabled={busy} onClick={() => run(async () => { await (u.fileId ? queue.add(u.modId, u.fileId, true) : queue.add(r.modId, r.fileId, true)); toast(`${r.name} ${u.latest} is queued.`); }, true)}>Update to {u.latest}</Key>}
-                {u && <Key size="sm" variant="ghost" disabled={busy} title="Do not offer this version again" onClick={() => run(async () => { await updatesApi.skip(u.modId, u.latest); toast(`Skipping ${r.name} ${u.latest}. A newer version shows again.`); })}>Skip {u.latest}</Key>}
+                {u && nexus && <Key size="sm" icon="downloads" disabled={busy} onClick={() => run(async () => { await (u.fileId ? queue.add(u.modId, u.fileId, true) : queue.add(r.modId, r.fileId, true)); toast(`${r.name} ${u.latest} queued`); }, true)}>Update to {u.latest}</Key>}
+                {u && <Key size="sm" variant="ghost" disabled={busy} title="Do not offer this version again" onClick={() => run(async () => { await updatesApi.skip(u.modId, u.latest); toast(`Skipped ${r.name} ${u.latest}`); })}>Skip {u.latest}</Key>}
                 {r.enabled && r.deployedFiles === 0 && <Key size="sm" icon="install" disabled={busy} onClick={() => run(async () => {
                   const d = await library.deploy(r.id, { takeConflicts: false, allowCopy: false });
-                  if (d.outcome === "deployed") toast(`Deployed ${r.name}.`); else { toast(`${r.name} ${d.outcome === "conflicts" ? "clashes with other mods" : "needs copying"}: decide in Library.`, true); onLibrary?.(); }
+                  if (d.outcome === "deployed") toast(`Deployed ${r.name}`); else { toast(`${r.name} ${d.outcome === "conflicts" ? "conflicts with other mods" : "needs copying"}. Sort it out in Library`, true); onLibrary?.(); }
                 })}>Deploy</Key>}
-                {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" disabled={busy} onClick={() => onOptions(r)} title="Pick other installer options; no download needed">Change options</Key>}
-                <Key size="sm" variant="ghost" icon="trash" disabled={busy} title={r.source === "vortex" ? "Remove from the game; it stays in Vortex" : "Remove (it goes to Recently removed)"} onClick={() => run(() => ops.remove([r]), true)}>Remove</Key>
+                {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" disabled={busy} onClick={() => onOptions(r)} title="Pick other installer options, no download">Change options</Key>}
+                <Key size="sm" variant="ghost" icon="trash" disabled={busy} title={r.source === "vortex" ? "Remove from the game, keep in Vortex" : "Goes to Recently removed"} onClick={() => run(() => ops.remove([r]), true)}>Remove</Key>
               </div>
               {(member.get(r.id)?.length ?? 0) > 1 && (
                 <div className="mm-sec">
@@ -188,13 +188,13 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
         <div className="mm-sec">
           <span className="sub-h">Group</span>
           <select value={custom ?? ""} disabled={busy} aria-label="Group" onChange={(e) => run(() => ops.moveToGroup(rows, e.target.value || null))}>
-            <option value="">{custom ? "The app's own group" : `${row0.group} (the app's own)`}</option>
+            <option value="">{custom ? "Default group" : `${row0.group} (default)`}</option>
             {groupList.custom.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
           <div className="fbox" style={{ flex: "none" }}>
             <input className="finput" value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="New group" aria-label="New group name"
               onKeyDown={(e) => { if (e.key === "Enter" && newGroup.trim()) run(async () => { await groupsApi.create(newGroup.trim()); await ops.moveToGroup(rows, newGroup.trim()); setNewGroup(""); }); }} />
-            <Key size="sm" variant="ghost" icon="plus" disabled={busy || !newGroup.trim()} aria-label="Make the group and move it there"
+            <Key size="sm" variant="ghost" icon="plus" disabled={busy || !newGroup.trim()} aria-label="Create group and move here"
               onClick={() => run(async () => { await groupsApi.create(newGroup.trim()); await ops.moveToGroup(rows, newGroup.trim()); setNewGroup(""); })} />
           </div>
         </div>
@@ -203,10 +203,10 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
           <div className="actions">
             {onDetail && <Key size="sm" variant="ghost" icon="info" onClick={() => { onClose(); onDetail(); }}>Page and other files</Key>}
             {onLibrary && <Key size="sm" variant="ghost" icon="library" onClick={() => { onClose(); onLibrary(); }}>Show in Library</Key>}
-            {nexus && <Key size="sm" variant="ghost" icon="star" disabled={busy} onClick={() => run(async () => { await endorseMod(mod.modId, mod.version ?? row0.version); toast(`Endorsed ${mod.name}. Thanks from its author.`); })}>Endorse</Key>}
-            {nexus && <Key size="sm" variant="ghost" icon="eye" disabled={busy} onClick={() => run(async () => { await trackMod(mod.modId); toast(`Tracking ${mod.name} on Nexus.`); })}>Track</Key>}
-            {nexus && <Key size="sm" variant="ghost" icon="web" onClick={() => run(() => nexusPages.mod(mod.modId), true)} title="The mod's Nexus page, where you set pages to open (Settings, Nexus pages)">Nexus page</Key>}
-            {nexus && <Key size="sm" variant="ghost" icon="link" onClick={() => run(() => openExternal(nexusUrl.mod(mod.modId)), true)} title="In your own browser, with your sign-in, passwords and extensions">Open in browser</Key>}
+            {nexus && <Key size="sm" variant="ghost" icon="star" disabled={busy} onClick={() => run(async () => { await endorseMod(mod.modId, mod.version ?? row0.version); toast(`Endorsed ${mod.name}`); })}>Endorse</Key>}
+            {nexus && <Key size="sm" variant="ghost" icon="eye" disabled={busy} onClick={() => run(async () => { await trackMod(mod.modId); toast(`Tracking ${mod.name}`); })}>Track</Key>}
+            {nexus && <Key size="sm" variant="ghost" icon="web" onClick={() => run(() => nexusPages.mod(mod.modId), true)} title="Opens where Settings says Nexus pages go">Nexus page</Key>}
+            {nexus && <Key size="sm" variant="ghost" icon="link" onClick={() => run(() => openExternal(nexusUrl.mod(mod.modId)), true)} title="Open in your browser">Open in browser</Key>}
             {onFlag && flags && <Key size="sm" variant="ghost" icon="hide" onClick={() => { onFlag("hidden", !flags.hidden); onClose(); }}>{flags.hidden ? "Unhide in Browse" : "Hide in Browse"}</Key>}
             {onFlag && flags && <Key size="sm" variant="ghost" icon="x" onClick={() => { onFlag("ignored", !flags.ignored); onClose(); }}>{flags.ignored ? "Stop ignoring" : "Ignore"}</Key>}
           </div>

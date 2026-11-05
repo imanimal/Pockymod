@@ -60,17 +60,17 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
     try {
       const rows = (await library.list()).filter((x) => list.some((m) => m.installId === x.id));
       await ops.setEnabled(rows, false);
-      toast(`Turned off ${plural(rows.length, "mod")} with errors. Ctrl+Z turns them back on.`);
+      toast(`Turned off ${plural(rows.length, "mod")}`);
       load(); onChanged();
     } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
   };
   const copyReport = async () => {
-    try { await copyText(await logs.report()); toast("Report copied. Paste it in a forum post or on the mod's bugs page."); }
+    try { await copyText(await logs.report()); toast("Report copied"); }
     catch (e) { toast(errorText(e), true); }
   };
 
   if (err) return <Module icon="file" title="Logs" className="span"><div className="note bad">{err}</div></Module>;
-  if (!r) return <Module icon="file" title="Logs" count="reading" className="span"><p className="dim">Reading the logs…</p></Module>;
+  if (!r) return <Module icon="file" title="Logs" count="reading" className="span"><p className="dim">Reading logs</p></Module>;
   const current = r.logs.filter((l) => l.current);
   const older = r.logs.length - current.length;
 
@@ -79,12 +79,12 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
       count={r.logs.length ? `${plural(r.logs.length, "log")}${older ? `, ${older} older` : ""}` : "none yet"}
       tools={<>
         {r.mods.filter((m) => m.enabled && m.errors > 0).length > 1 && <Key size="sm" variant="dark" icon="power" disabled={busy}
-          onClick={() => turnOffAll(r.mods.filter((m) => m.enabled && m.errors > 0))} title="Turn off every mod the logs name with an error; Ctrl+Z turns them back on">
+          onClick={() => turnOffAll(r.mods.filter((m) => m.enabled && m.errors > 0))} title="Ctrl+Z turns them back on">
           Turn off all {r.mods.filter((m) => m.enabled && m.errors > 0).length} with errors</Key>}
-        <Key size="sm" icon="share" onClick={copyReport} disabled={!r.logs.length} title="A plain-text summary for a forum post: game version, frameworks, mods on, errors">Copy report</Key>
+        <Key size="sm" icon="share" onClick={copyReport} disabled={!r.logs.length} title="Plain-text summary for a forum post">Copy report</Key>
       </>}>
       {r.logs.length === 0 ? (
-        <p className="dim">No logs yet. RED4ext, redscript, Cyber Engine Tweaks and their plugins write logs when the game starts; start it once, then check again.</p>
+        <p className="dim">No logs yet. Start the game once</p>
       ) : (
         <div className="logs-grid">
           <div className="stack" style={{ gap: ".6em", minWidth: 0 }}>
@@ -93,8 +93,8 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
               <Lcd size="sm" label="Warnings" value={String(r.warnings).padStart(2, "0")} tone={r.warnings ? "hot" : "ok"} sub={r.mods.length ? `${plural(r.mods.length, "mod")} named` : "no mod named"} />
               <Lcd size="sm" label="Last start" value={clock(r.lastStart)} sub={r.lastStart ? ago(r.lastStart) : "not known"} />
             </div>
-            {r.scriptsFailed && <div className="note bad">redscript says the scripts did not compile on the last start, so script mods do nothing. Turning off the mod it names, then starting again, usually tells which one.</div>}
-            {r.mods.length === 0 && !r.other.length && <p className="dim">No errors or warnings in the logs of the last start.</p>}
+            {r.scriptsFailed && <div className="note bad">Scripts failed to compile, so script mods do nothing. Turn off the mod redscript names and try again</div>}
+            {r.mods.length === 0 && !r.other.length && <p className="dim">No errors or warnings</p>}
             {r.mods.length > 0 && <div className="sub-h">By mod</div>}
             <div className="rows">
               {r.mods.map((m) => {
@@ -129,7 +129,7 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
                 <div className="sub-h">Not tied to one mod</div>
                 {showOther ? <div className="log">{r.other.map(entryText).join("\n\n")}</div>
                   : <button type="button" className="linkish fold-line" onClick={() => setShowOther(true)}>
-                      {otherText(r.other)} {r.other.length === 1 ? "names" : "name"} no installed mod (the tool's own, or a mod Pockymod does not manage). Show {r.other.length === 1 ? "it" : "them"}.
+                      {otherText(r.other)}, show
                     </button>}
               </>
             )}
@@ -152,7 +152,6 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
                 </div>
               ))}
             </div>
-            <p className="dim" style={{ fontSize: ".8em", marginTop: ".5em" }}>Only logs written since the game last started count. An older log is from a run before that, or from a tool that did not load.</p>
           </div>
         </div>
       )}

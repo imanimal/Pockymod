@@ -28,7 +28,7 @@ pub async fn browser_pop(app: AppHandle, out: bool) -> Result<()> { browser::pop
 /// The page the pane shows, in the user's own browser (their sign-in, passwords and extensions).
 #[tauri::command]
 pub async fn browser_external(app: AppHandle) -> Result<()> {
-    let u = browser::current(&app).ok_or_else(|| Error::Invalid("The pane has no page to open.".into()))?;
+    let u = browser::current(&app).ok_or_else(|| Error::Invalid("No page to open".into()))?;
     crate::commands::extensions::open_in_browser(u.as_str())
 }
 
@@ -36,7 +36,7 @@ pub async fn browser_external(app: AppHandle) -> Result<()> {
 /// Returns its path and how many extensions are in it.
 #[tauri::command]
 pub async fn browser_extensions_folder(app: AppHandle, open: bool) -> Result<(String, usize)> {
-    let dir = browser::extensions_dir(&app).ok_or_else(|| Error::Invalid("The app's data folder is not known.".into()))?;
+    let dir = browser::extensions_dir(&app).ok_or_else(|| Error::Invalid("The app's data folder is unknown".into()))?;
     std::fs::create_dir_all(&dir)?;
     let n = std::fs::read_dir(&dir)?.flatten().filter(|e| e.path().join("manifest.json").exists()).count();
     if open {

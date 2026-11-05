@@ -16,6 +16,7 @@ import { shelfQuery, useExtensions } from "../lib/extensions";
 import { Modio } from "./Modio";
 import { MediaWall } from "./browse/Media";
 import { ModKey, useInstalled } from "./browse/ModActions";
+import { ADULT_OPTIONS, setAdultPref, useAdult, type Adult } from "../lib/prefs";
 
 /** What the cards need to show their key: the user's copies of each mod, the queue, updates and the flag setter. */
 interface CardCtx { byMod: Map<number, InstallRow[]>; queued: Map<number, string>; updates: Update[]; onLibrary?: () => void; onFlag: (c: CardView, f: "hidden" | "ignored", on: boolean) => void }
@@ -59,12 +60,12 @@ function shelves(patch: PatchOpt | null, seed: number): Array<{ id: string; titl
   return [
     { id: "trending", title: "Trending", icon: "up", hint: `New in the last ${TRENDING_DAYS} days, most endorsed`, q: { createdAfter: daysAgo(TRENDING_DAYS), sort: "endorsements" } },
     ...(patch ? [{ id: "patch", title: `Updated for ${patch.version}`, icon: "check" as IconName, hint: `Updated since patch ${patch.version}${patch.yours ? ", your game" : ""}`, q: { compatibleSince: patch.at, sort: "endorsements" as SortKey } }] : []),
-    { id: "surprise", title: "Surprise me", icon: "refresh", hint: "Well liked, picked at random", q: { sort: "random", seed, endorsementsMin: 100 } },
+    { id: "surprise", title: "Surprise me", icon: "refresh", hint: "Random, 100+ endorsements", q: { sort: "random", seed, endorsementsMin: 100 } },
     { id: "month", title: `Best of ${lastMonth().name}`, icon: "star", hint: `Released in ${lastMonth().name}, most endorsed`, q: { createdAfter: lastMonth().from, createdBefore: lastMonth().to, sort: "endorsements" } },
-    { id: "gems", title: "Hidden gems", icon: "eye", hint: "Loved by the few who found them", q: { endorsementsMin: 150, downloadsMax: 25_000, sort: "endorsements" } },
-    { id: "classics", title: "All-time favourites", icon: "library", hint: "The most endorsed mods ever", q: { sort: "endorsements" } },
-    { id: "new", title: "Just released", icon: "clock", hint: "The newest uploads", q: { sort: "created" } },
-    { id: "frameworks", title: "Frameworks and essentials", icon: "chip", hint: "What other mods build on", q: { modType: "framework", sort: "downloads" } },
+    { id: "gems", title: "Hidden gems", icon: "eye", hint: "Well endorsed, under 25k downloads", q: { endorsementsMin: 150, downloadsMax: 25_000, sort: "endorsements" } },
+    { id: "classics", title: "All-time favourites", icon: "library", hint: "Most endorsed ever", q: { sort: "endorsements" } },
+    { id: "new", title: "Just released", icon: "clock", hint: "Newest uploads", q: { sort: "created" } },
+    { id: "frameworks", title: "Frameworks and essentials", icon: "chip", hint: "What other mods need", q: { modType: "framework", sort: "downloads" } },
   ];
 }
 
@@ -141,15 +142,17 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
     return () => clearTimeout(t);
   }, [text]);
 
+  const adult = useAdult();
   const effective = useMemo<BrowseQuery>(() => ({
     ...q,
+    includeAdult: adult !== "hide",
     seed: q.sort === "random" ? seed : null,
     updatedAfter: since === "any" ? null : daysAgo(Number(since)),
     downloadsMin: dl === "any" ? null : Number(dl),
     sizeMaxKb: size === "any" ? null : Number(size) * 1024,
     compatibleSince: patch?.at ?? null,
     createdAfter: q.createdAfter ?? (view === "trending" ? daysAgo(TRENDING_DAYS) : null),
-  }), [q, since, dl, size, patch, seed, view]);
+  }), [q, adult, since, dl, size, patch, seed, view]);
 
   const filtering = !!(q.text || q.categories.length || q.tags.length || q.excludeTags.length || q.frameworks.length || q.modType
     || since !== "any" || dl !== "any" || size !== "any" || local.downloaded !== null || local.showHidden || explore || view !== "discover");
@@ -256,7 +259,6 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
             <div className="chips">
               {MOD_TYPES.map((t) => <Chip key={t.key} on={q.modType === t.key} count={derived.get(`type_${t.key}`)} onClick={() => { set({ modType: q.modType === t.key ? null : t.key as ModTypeFilter }); setExplore(true); }}>{t.name}</Chip>)}
             </div>
-            <p className="dim hint">Framework and type are worked out from requirements, tags, text and file lists.</p>
             <div className="sub-h">Updated</div>
             <Seg label="Updated" value={since} onChange={setSince} options={[{ value: "any", label: "Any" }, { value: "7", label: "Week" }, { value: "30", label: "Month" }, { value: "365", label: "Year" }]} />
             <div className="sub-h">Downloads</div>
@@ -279,8 +281,9 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
               options={[{ value: "all", label: "All" }, { value: "yes", label: "Downloaded" }, { value: "no", label: "Not yet" }]} />
             <div className="stack" style={{ gap: ".5em", marginTop: ".6em" }}>
               <Switch checked={local.showHidden} onChange={(v) => setLocal({ ...local, showHidden: v })}>Show mods I hid</Switch>
-              <Switch checked={q.includeAdult} onChange={(v) => set({ includeAdult: v })}>Include adult content</Switch>
             </div>
+            <div className="sub-h">Adult</div>
+            <Seg<Adult> label="Adult content" value={adult} onChange={(x) => void setAdultPref(x).catch((e) => setErr(errorText(e)))} options={ADULT_OPTIONS} />
           </Module>
         )}
 
@@ -288,7 +291,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
           {err && <div className="note bad">{err}</div>}
           {!filtering ? (
             <FrontPage patch={patch ?? yours} seed={seed} onReshuffle={() => setSeed((s) => s + 1)} onOpen={open} onSeeAll={openShelf}
-              categories={res?.facets.categories ?? []} onCategory={(c) => { set({ categories: [c] }); setExplore(true); }} includeAdult={q.includeAdult} />
+              categories={res?.facets.categories ?? []} onCategory={(c) => { set({ categories: [c] }); setExplore(true); }} includeAdult={adult !== "hide"} />
           ) : (
             <>
               <div className="results-bar">
@@ -302,7 +305,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
                 </select>
                 {q.sort === "random" && <Key size="sm" icon="refresh" onClick={() => setSeed((s) => s + 1)}>Shuffle again</Key>}
               </div>
-              {!busy && results.length === 0 && <Empty icon="browse" title="No mods match">Try fewer filters, or a different game version.</Empty>}
+              {!busy && results.length === 0 && <Empty icon="browse" title="No mods match">Try fewer filters or another game version</Empty>}
               {(view === "trending" || view === "popular") && active.length === 0 && results.length > 2 && (
                 <div className="hero2">{results.slice(0, 2).map((c) => <HeroCard key={c.modId} c={c} onOpen={() => open(c)} />)}</div>
               )}
@@ -335,11 +338,13 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
 export function ModCard({ c, onOpen, compact }: { c: CardView; onOpen: () => void; compact?: boolean }) {
   const ctx = useContext(Cards);
   const rows = ctx?.byMod.get(c.modId) ?? [];
+  const veil = useAdult() === "blur" && !!c.adultContent;
   return (
     <div role="button" tabIndex={0} className={`mcard panel${c.hidden || c.ignored ? " off" : ""}${compact ? " compact" : ""}${rows.length ? " have" : ""}`} onClick={onOpen}
       onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(); } }} aria-label={c.name}>
       <span className="ph"><span className="pt"><Icon name="browse" size={9} />{c.category}</span><span className="sp" /><span className="cnt">↓ {formatCount(c.downloads)}</span></span>
-      <span className="mcard-img">
+      <span className={`mcard-img${veil ? " veiled" : ""}`} title={veil ? "Adult, open to show" : undefined}>
+        {veil && <span className="mcard-badge l"><Pill tone="over">18+</Pill></span>}
         {c.thumbnailUrl ? <img src={c.thumbnailUrl} alt="" loading="lazy" /> : <Icon name="file" size={27} />}
         {c.downloaded && !rows.length && <span className="mcard-badge"><Pill tone="ok">Downloaded</Pill></span>}
         {ctx && <span className="mcard-q">
@@ -415,10 +420,11 @@ function Shelf({ title, icon, hint, q, onOpen, onSeeAll, extra }: { title: strin
 
 /** A big card: the picture behind the name, like a storefront's front row. */
 function HeroCard({ c, onOpen }: { c: CardView; onOpen: () => void }) {
+  const veil = useAdult() === "blur" && !!c.adultContent;
   return (
     <button type="button" className="hero panel" onClick={onOpen}>
       <span className="ph"><span className="pt"><Icon name="up" size={9} />{c.category}</span><span className="sp" /><span className="cnt">★ {formatCount(c.endorsements)}</span></span>
-      <span className="hero-pic">
+      <span className={`hero-pic${veil ? " veiled" : ""}`}>
         {c.thumbnailUrl && <img src={c.thumbnailUrl.replace("/thumbnails/", "/")} alt="" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = c.thumbnailUrl!; }} />}
         <span className="hero-txt">
           <b>{c.name}</b>

@@ -8,7 +8,7 @@ use std::path::Path;
 
 pub fn launch(game: &Path, modded: bool) -> Result<()> {
     let exe = game.join(EXE);
-    if !exe.exists() { return Err(Error::Invalid("Cyberpunk2077.exe was not found. Check the game folder in Settings.".into())); }
+    if !exe.exists() { return Err(Error::Invalid("Cyberpunk2077.exe not found. Check the game folder in Settings".into())); }
     let mut cmd = std::process::Command::new(&exe);
     if modded { cmd.arg("-modded"); }
     cmd.current_dir(exe.parent().unwrap_or(game));
@@ -34,7 +34,7 @@ pub const VANILLA_KEY: &str = "launch.vanilla";
 /// many files the app does not track are still in mod folders (those it cannot take out). redscript's compiled
 /// scripts are swapped for the game's own while the mods are out, or the vanilla game would load modded scripts.
 pub fn vanilla_prepare(db: &crate::db::Db, game: &Path) -> Result<(usize, usize)> {
-    if db.setting(VANILLA_KEY)?.is_some() { return Err(Error::Invalid("The game is already running without mods. Close it first; your mods go back by themselves.".into())); }
+    if db.setting(VANILLA_KEY)?.is_some() { return Err(Error::Invalid("The game is already running without mods. Close it first and your mods come back".into())); }
     // oldest deploy first, so putting them back in this order gives each path to the mod that won it last
     let ids: Vec<i64> = {
         let mut st = db.conn.prepare("SELECT install_id FROM deployed_files GROUP BY install_id ORDER BY MAX(deployed_at), install_id")?;

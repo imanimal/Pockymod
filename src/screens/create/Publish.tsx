@@ -64,7 +64,7 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
     try {
       const id = await creator.publish({ file: zip!, fileId: /^\d+$/.test(fileId) ? Number(fileId) : fileId, modId: modId ? Number(modId) : null, version: pack.version,
         displayName: display || pack.name || null, category, changelog: changelog || null, archiveExisting: archiveOld, updateModVersion: bumpVersion });
-      toast(`Published version ${pack.version}${id ? ` (version ${id})` : ""}. Nexus scans it before players see it.`);
+      toast(`Published ${pack.version}${id ? ` (version ${id})` : ""}. Nexus scans it first`);
       onPublished();
     } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
   };
@@ -72,8 +72,7 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
   return (
     <div className="grid2 cr-publish" style={{ alignItems: "start" }}>
       <Module icon="share" title="Publish a new version" band="hot" count="Upload API, beta">
-        <p>Adds a version to a file you already have on Nexus. The page and its first file are made on the website once; every update after that can go from here.</p>
-        {!hasKey && <div className="note warn" style={{ marginTop: ".6em" }}>Publishing needs your Nexus API key. Add it in Settings; it stays in Windows Credential Manager.</div>}
+        {!hasKey && <div className="note warn">Needs your Nexus API key, add it in Settings</div>}
 
         <div className="sub-h">Which file</div>
         {own && !byHand ? <>
@@ -86,7 +85,7 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
               {own.mods.map((m) => <option key={m.modId} value={m.modId}>{m.name} (v{m.version})</option>)}
             </select>
           </label>
-          {mod && (mod.files.length === 0 ? <p className="dim">This mod has no current file. Add its first file on the website.</p> : (
+          {mod && (mod.files.length === 0 ? <p className="dim">No current file. Add the first one on Nexus</p> : (
             <div className="rows" role="radiogroup" aria-label="File">
               {mod.files.map((f) => {
                 const on = (f.groupId != null && String(f.groupId) === fileId) || targets?.find((t) => t.id === fileId)?.groupId === f.groupId;
@@ -99,7 +98,7 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
             </div>
           ))}
           {targets && targets.length > 0 && <>
-            <div className="sub-h">Files Nexus takes uploads for</div>
+            <div className="sub-h">Upload targets</div>
             <div className="rows">
               {targets.map((t) => (
                 <button key={t.id} type="button" className={`row${t.id === fileId ? " sel" : ""}`} onClick={() => { setFileId(t.id); if (t.name) setDisplay(t.name); }}>
@@ -110,15 +109,15 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
               ))}
             </div>
           </>}
-          {targetsErr && <p className="dim hint">Nexus did not list the files for uploads ({targetsErr}). The file's update chain id is used.</p>}
-          <p className="dim hint">File ID for the upload: <span className="mono hi">{fileId || "none"}</span>{fileId && (listed ? " (from Nexus's list)" : " (the file's update chain; if Nexus refuses it, compare it with the Files tab, \"Advanced\")")}.</p>
-          <Key size="sm" variant="ghost" onClick={() => setByHand(true)}>Enter the IDs by hand</Key>
+          {targetsErr && <p className="dim hint">Nexus didn't list upload targets ({targetsErr}). Using the file's update chain ID</p>}
+          <p className="dim hint">File ID <span className="mono hi">{fileId || "none"}</span>{fileId && (listed ? "" : " (update chain, check Files tab, Advanced if refused)")}</p>
+          <Key size="sm" variant="ghost" onClick={() => setByHand(true)}>Enter IDs manually</Key>
         </> : <>
           <div className="fgrid">
             <span className="lab">File ID</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={fileId} onChange={(e) => setFileId(e.target.value.trim())} aria-label="File ID" /></label>
             <span className="lab">Mod ID</span><label className="fbox" style={{ flex: "none" }}><input className="finput" inputMode="numeric" value={modId} onChange={(e) => setModId(e.target.value.replace(/\D/g, ""))} placeholder="for the changelog" aria-label="Mod ID" /></label>
           </div>
-          <p className="dim hint">The file ID is on the mod page: Files tab, "Advanced", or the file's edit menu on Manage files. {own ? "" : "Show your mods in My mods to pick it instead."}</p>
+          <p className="dim hint">File ID is on the mod page under Files tab, Advanced</p>
           {own && <Key size="sm" variant="ghost" onClick={() => setByHand(false)}>Pick from my mods</Key>}
         </>}
       </Module>
@@ -130,13 +129,13 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
         </>} /> : <div className="actions"><Pill tone="ok">{fileName(zip)}</Pill><Key size="sm" variant="ghost" onClick={() => void pack.pick(false)}>Another archive</Key></div>}
         <div className="fgrid" style={{ marginTop: ".7em" }}>
           <span className="lab">Version</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={pack.version} onChange={(e) => pack.set({ version: e.target.value })} aria-label="Version" /></label>
-          <span className="lab">Name</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={display} onChange={(e) => setDisplay(e.target.value)} placeholder={pack.name || "The file's name on Nexus"} aria-label="File name on Nexus" /></label>
+          <span className="lab">Name</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={display} onChange={(e) => setDisplay(e.target.value)} placeholder={pack.name || "File name on Nexus"} aria-label="File name on Nexus" /></label>
           <span className="lab">Category</span><Seg label="Category" value={category} onChange={setCategory} options={[{ value: "main", label: "Main" }, { value: "optional", label: "Optional" }, { value: "miscellaneous", label: "Misc" }]} />
           <span className="lab">Changelog</span><textarea rows={4} value={changelog} onChange={(e) => setChangelog(e.target.value)} aria-label="Changelog" placeholder="What changed in this version" />
         </div>
-        {current && <div className="actions" style={{ marginTop: ".5em" }}><span className="dim" style={{ fontSize: ".86em" }}>The file is at version {current} now.</span>
+        {current && <div className="actions" style={{ marginTop: ".5em" }}><span className="dim" style={{ fontSize: ".86em" }}>Currently {current}</span>
           {next && next !== pack.version && <Key size="sm" variant="ghost" onClick={() => pack.set({ version: next })}>Use {next}</Key>}</div>}
-        {changelog.trim() && !modId && <p className="dim hint">The changelog needs the mod: pick it, or enter its ID.</p>}
+        {changelog.trim() && !modId && <p className="dim hint">A changelog needs the mod ID</p>}
         <div className="stack" style={{ gap: ".4em", marginTop: ".6em" }}>
           <Switch checked={archiveOld} onChange={setArchiveOld}>Move the previous version to Old files</Switch>
           <Switch checked={bumpVersion} onChange={setBumpVersion}>Set the mod's version to {pack.version || "this version"}</Switch>

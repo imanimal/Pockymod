@@ -17,7 +17,7 @@ fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T> + Send + 'static) -
 }
 
 fn game_dir(state: &State<'_, AppState>) -> Result<PathBuf> {
-    Paths::load(&state.db.lock().unwrap()).game_dir.ok_or_else(|| Error::Invalid("Set the Cyberpunk 2077 folder in Settings first.".into()))
+    Paths::load(&state.db.lock().unwrap()).game_dir.ok_or_else(|| Error::Invalid("Set the Cyberpunk 2077 folder in Settings first".into()))
 }
 
 // ── logs ──
@@ -55,7 +55,7 @@ pub async fn log_open(state: State<'_, AppState>, path: String) -> Result<()> {
     let game = game_dir(&state)?;
     let ok = path.to_lowercase().ends_with(".log") && !path.contains("..") && !path.contains(':');
     let file = game.join(&path);
-    if !ok || !file.is_file() { return Err(Error::Invalid("That log is not there any more.".into())); }
+    if !ok || !file.is_file() { return Err(Error::Invalid("That log is gone".into())); }
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -150,7 +150,7 @@ pub async fn library_move_check(state: State<'_, AppState>, to: String) -> Resul
 #[tauri::command]
 pub async fn library_move(app: AppHandle, state: State<'_, AppState>, to: String) -> Result<MoveReport> {
     crate::commands::not_while_running()?;
-    if state.queue.lock().unwrap().summary().running { return Err(Error::Invalid("Wait for the downloads and installs in progress to finish first.".into())); }
+    if state.queue.lock().unwrap().summary().running { return Err(Error::Invalid("Wait for downloads and installs to finish first".into())); }
     let (game, library) = Paths::load(&state.db.lock().unwrap()).require()?;
     let db = state.db.clone();
     let a = app.clone();

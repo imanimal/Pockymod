@@ -21,10 +21,10 @@ export interface LoadedIndex { index: MarketIndex; source: "network" | "cache" |
 export async function loadIndex(fresh = false): Promise<LoadedIndex> {
   const f = await marketFetch("index.json", fresh);
   let raw: unknown;
-  try { raw = JSON.parse(f.text); } catch { throw new Error("The marketplace index is not valid JSON."); }
+  try { raw = JSON.parse(f.text); } catch { throw new Error("Marketplace index isn't valid JSON"); }
   const r = validateIndex(raw);
   const ix = raw as MarketIndex;
-  if (!ix || ix.format !== "pocket-mods.marketplace") throw new Error("That is not a Pockymod marketplace index.");
+  if (!ix || ix.format !== "pocket-mods.marketplace") throw new Error("Not a Pockymod marketplace index");
   // keep good entries even when another one is broken
   const bad = new Set(r.errors.map((e) => e.match(/^(themes|extensions)\[(\d+)\]/)?.slice(1, 3).join(":")).filter(Boolean));
   const keep = (key: "themes" | "extensions") => (Array.isArray(ix[key]) ? ix[key] : []).filter((_, i) => !bad.has(`${key}:${i}`));
@@ -75,7 +75,7 @@ export async function installedThemes(): Promise<InstalledTheme[]> {
 /** Check a theme's text the way the marketplace does. */
 export function checkThemeText(text: string): { pkg: ThemePackage | null; errors: string[] } {
   let v: unknown;
-  try { v = JSON.parse(text); } catch (e) { return { pkg: null, errors: [`This is not valid JSON: ${e instanceof Error ? e.message : String(e)}`] }; }
+  try { v = JSON.parse(text); } catch (e) { return { pkg: null, errors: [`Not valid JSON. ${e instanceof Error ? e.message : String(e)}`] }; }
   const r = validateTheme(v);
   return { pkg: r.ok ? (v as ThemePackage) : null, errors: r.errors };
 }

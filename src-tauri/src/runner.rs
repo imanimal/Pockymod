@@ -50,7 +50,7 @@ fn open_click_page(app: &AppHandle, url: &str) {
             if let Ok(h) = pocket_core::platform::nxm_handler_status(&exe) {
                 if h.supported && !h.ours {
                     let who = h.owner.unwrap_or_else(|| "another program".into());
-                    let _ = app.emit("toast", format!("Mod Manager Download links from your browser go to {who}, not here. Settings, Nexus pages: Take them back."));
+                    let _ = app.emit("toast", format!("Mod Manager Download links go to {who}. Take them back in Settings, Nexus pages"));
                 }
             }
         }
@@ -62,9 +62,9 @@ fn open_click_page(app: &AppHandle, url: &str) {
 pub async fn handle_nxm(app: &AppHandle, raw: &str) {
     let st = app.state::<AppState>();
     let link = match NxmLink::parse(raw) {
-        Ok(l) if l.is_for_this_game() && l.mod_id == 0 && l.file_id == 0 => { let _ = app.emit("toast", "The test link reached Pockymod: browser downloads will come here."); return; }
+        Ok(l) if l.is_for_this_game() && l.mod_id == 0 && l.file_id == 0 => { let _ = app.emit("toast", "Test link received. Browser downloads come here"); return; }
         Ok(l) if l.is_for_this_game() => l,
-        Ok(l) => { let _ = app.emit("toast", format!("That link is for {}, not Cyberpunk 2077.", l.game)); return; }
+        Ok(l) => { let _ = app.emit("toast", format!("That link is for {}, not Cyberpunk 2077", l.game)); return; }
         Err(e) => { let _ = app.emit("toast", e.to_string()); return; }
     };
     // a link for something not queued: look the file up so the item has names and a size
@@ -192,9 +192,9 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
             let (g, l, o) = (game.clone(), library.clone(), paths.deploy_options());
             let _ = tauri::async_runtime::spawn_blocking(move || pocket_core::profiles::set_enabled(&db.lock().unwrap(), &g, &l, id, true, &o)).await;
             let _ = app.emit("library-changed", ());
-            return Ok(ItemState::Done { install_id: Some(id), note: Some(format!("You already have {}: it was off, so it is on now.", item.mod_name)) });
+            return Ok(ItemState::Done { install_id: Some(id), note: Some(format!("You already have {}. Turned it on", item.mod_name)) });
         }
-        return Ok(ItemState::Done { install_id: None, note: Some(format!("You already have {}. Kept yours.", item.mod_name)) });
+        return Ok(ItemState::Done { install_id: None, note: Some(format!("You already have {}", item.mod_name)) });
     }
     st.queue.lock().unwrap().set(item.id, ItemState::Downloading { received: 0, total: Some(item.size) });
     emit(app);
@@ -205,9 +205,9 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         Some((p, _)) => p,
         None => {
             let nxm = item.nxm.as_ref().and_then(|l| l.key.as_deref().map(|k| (k.to_string(), l.expires.unwrap_or(0))));
-            if let Some(l) = &item.nxm { if l.expired(pocket_core::db::now()) { return Err(Error::Invalid("The Nexus link expired. Press Mod Manager Download again.".into())); } }
+            if let Some(l) = &item.nxm { if l.expired(pocket_core::db::now()) { return Err(Error::Invalid("The Nexus link expired. Press Mod Manager Download again".into())); } }
             let links = st.nexus.download_links(item.mod_id, item.file_id, nxm.as_ref().map(|(k, e)| (k.as_str(), *e))).await?;
-            let url = links.first().map(|l| l.uri.clone()).ok_or_else(|| Error::Invalid("Nexus gave no download link for this file.".into()))?;
+            let url = links.first().map(|l| l.uri.clone()).ok_or_else(|| Error::Invalid("Nexus gave no download link for this file".into()))?;
             let started = Instant::now();
             let mut last = Instant::now();
             let id = item.id;
@@ -234,7 +234,7 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
     if st.cancel.lock().unwrap().remove(&item.id) { return Err(Error::Invalid(pocket_core::download::CANCELLED.into())); }
     // the game locks its files: an install waits until it is closed
     if pocket_core::launch::game_running() {
-        return Err(Error::Invalid("Downloaded. Close Cyberpunk 2077, then press Retry to install it.".into()));
+        return Err(Error::Invalid("Downloaded. Close Cyberpunk 2077 and press Retry to install".into()));
     }
     st.queue.lock().unwrap().set(item.id, ItemState::Installing);
     emit(app);
@@ -270,8 +270,8 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
             .map_err(|e| Error::Invalid(e.to_string()))??;
         let _ = app.emit("library-changed", ());
         return Ok(match out {
-            pocket_core::deploy::DeployOutcome::Deployed { .. } => ItemState::Done { install_id: Some(vid), note: Some("Updated inside Vortex's folder, so Vortex keeps it.".into()) },
-            _ => ItemState::Done { install_id: Some(vid), note: Some("Not updated: the new files clash with other mods. The old version is back.".into()) },
+            pocket_core::deploy::DeployOutcome::Deployed { .. } => ItemState::Done { install_id: Some(vid), note: Some("Updated in Vortex's folder, so Vortex keeps it".into()) },
+            _ => ItemState::Done { install_id: Some(vid), note: Some("Not updated. The new files clash with other mods, so the old version is back".into()) },
         });
     }
     let archive_for_choices = archive.to_string_lossy().into_owned();
@@ -301,18 +301,18 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
     Ok(match out {
         InstallOutcome::Installed { install_id, needs_redmod_deploy, warnings, .. } => ItemState::Done {
             install_id: Some(install_id),
-            note: if needs_redmod_deploy { Some("REDmod deploy needed: run it from Health or Load order.".into()) } else { warnings.first().cloned() },
+            note: if needs_redmod_deploy { Some("REDmod deploy needed. Run it from Health or Load order".into()) } else { warnings.first().cloned() },
         },
-        InstallOutcome::AlreadyHave { install_id, .. } => ItemState::Done { install_id, note: Some(format!("You already have {}. Kept yours; nothing was replaced.", item.mod_name)) },
-        InstallOutcome::Staged { install_id, .. } => ItemState::Done { install_id: Some(install_id), note: Some("Downloaded, not deployed yet: it clashes with installed mods. Decide in Library.".into()) },
-        InstallOutcome::NeedsReview { plan } => ItemState::Failed { message: format!("{} files have no known place in the game folder. Open Library, Downloads to install it anyway.", plan.unknown.len()) },
+        InstallOutcome::AlreadyHave { install_id, .. } => ItemState::Done { install_id, note: Some(format!("You already have {}. Nothing was replaced", item.mod_name)) },
+        InstallOutcome::Staged { install_id, .. } => ItemState::Done { install_id: Some(install_id), note: Some("Downloaded but not deployed. It clashes with installed mods, decide in Library".into()) },
+        InstallOutcome::NeedsReview { plan } => ItemState::Failed { message: format!("{} files have no known place in the game folder. Install it anyway from Library, Downloads", plan.unknown.len()) },
         InstallOutcome::NeedsChoices { fomod, defaults } => {
             // ask now: the app opens the installer's options
             let _ = app.emit("install-choices", serde_json::json!({
                 "request": { "modId": item.mod_id, "fileId": item.file_id, "name": item.mod_name, "version": item.version, "archive": archive_for_choices,
                     "origin": item.required_by, "keepExisting": for_another, "fileName": item.file_name, "sameFileOnly": item.from_collection },
                 "fomod": fomod, "defaults": defaults }));
-            ItemState::Done { install_id: None, note: Some("This mod has installer options. Choose them in the window that opened (or in Library, Downloaded).".into()) }
+            ItemState::Done { install_id: None, note: Some("This mod has installer options. Choose them in the window that opened".into()) }
         }
     })
 }

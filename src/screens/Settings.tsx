@@ -11,6 +11,7 @@ import { InstallPrefs } from "./InstallPrefs";
 import { PREMIUM_TIPS, getPremium } from "../ui/Premium";
 import { NexusSignIn } from "../ui/SignIn";
 import { ssoReady } from "../lib/sso";
+import { ADULT_OPTIONS, setAdultPref, useAdult, type Adult } from "../lib/prefs";
 
 export function Settings({ onGallery }: { onGallery?: () => void }) {
   return (
@@ -20,6 +21,7 @@ export function Settings({ onGallery }: { onGallery?: () => void }) {
       <BackgroundModule />
       <GameFolders />
       <InstallPrefs />
+      <AdultModule />
       <Appearance />
       <Experiments />
       <About onGallery={onGallery} />
@@ -57,27 +59,25 @@ function NexusAccount() {
               {user.isSupporter && <Pill>Supporter</Pill>}
             </div>
           ) : (
-            <p>Browsing works without an account. Downloads, endorsing and tracking need {ssoReady() ? "you to sign in with Nexus, or a" : "your"} personal API key from the
-              Nexus site (Site preferences, API keys).</p>
+            <p>{ssoReady() ? "Sign in or paste an API key" : "Paste an API key"} to download, endorse and track</p>
           )}
           {!user && <NexusSignIn onDone={setSt} />}
           <label className="fbox" style={{ flex: "none" }}>
-            <input className="finput" type="password" autoComplete="off" spellCheck={false} placeholder={st?.hasKey ? "Replace the saved key" : "Paste your personal API key"}
+            <input className="finput" type="password" autoComplete="off" spellCheck={false} placeholder={st?.hasKey ? "Replace saved key" : "Personal API key"}
               value={key} onChange={(e) => setKey(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} aria-label="Nexus API key" />
           </label>
           <div className="actions">
-            <Key icon="check" onClick={save} disabled={busy || !key}>Check and save</Key>
-            {!st?.hasKey && <Key variant="ghost" icon="web" onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => setErr(errorText(e)))}>Get my key</Key>}
+            <Key icon="check" onClick={save} disabled={busy || !key} title="Saved in Windows Credential Manager">Save</Key>
+            {!st?.hasKey && <Key variant="ghost" icon="web" onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => setErr(errorText(e)))} title="Nexus, Site preferences, API keys">Get my key</Key>}
             {st?.hasKey && <Key variant="ghost" icon="trash" onClick={clear} disabled={busy}>Remove key</Key>}
           </div>
           {err && <div className="note bad">{err}</div>}
-          <p className="dim" style={{ fontSize: ".84em" }}>The key is kept in Windows Credential Manager, never in a file. A personal key is for your own use.</p>
           {user && !user.isPremium && <PremiumTips />}
         </div>
         {rl && (
           <Lcd label="Requests left" tone={rl.level === "throttled" ? "bad" : rl.level === "low" ? "hot" : "ok"}
             value={rl.remaining ?? "---"} unit={rl.limit ? `/${rl.limit}` : undefined}
-            sub={rl.level === "unknown" ? "Nexus reports this after the first keyed request" : `This ${rl.window}${rl.level === "low" ? ", slowing down" : rl.level === "throttled" ? ", throttled" : ""}`}
+            sub={rl.level === "unknown" ? "Shows after the first request" : `This ${rl.window}${rl.level === "low" ? ", slowing down" : rl.level === "throttled" ? ", throttled" : ""}`}
             level={rl.limit && rl.remaining !== null ? { on: Math.ceil((rl.remaining / rl.limit) * 10), of: 10 } : undefined} />
         )}
       </div>
@@ -93,9 +93,9 @@ function PremiumTips() {
   return (
     <div className="actions">
       <Switch checked={on} onChange={set}>
-        <span title="Before an install that needs several clicks on Nexus, one line says what Premium would do instead">Say what Premium would save</span>
+        <span title="A note before installs that need several Nexus clicks">Show Premium hints</span>
       </Switch>
-      <Key size="sm" variant="ghost" icon="web" onClick={getPremium} title="Nexus Premium, on the Nexus site. Come back here and Pockymod notices.">Get Premium</Key>
+      <Key size="sm" variant="ghost" icon="web" onClick={getPremium} title="Opens Nexus Premium on the Nexus site">Get Premium</Key>
     </div>
   );
 }
@@ -112,29 +112,21 @@ function NexusPagesModule() {
   }, []);
   if (!where) return null;
   const pick = (w: PagesWhere) => { setWhere(w); void pagesWhere.set(w).catch((e) => toast(errorText(e), true)); };
-  const takeBack = () => handler.register().then((x) => { setH(x); toast("Mod Manager Download links from your browser open in Pockymod again."); }).catch((e) => toast(errorText(e), true));
+  const takeBack = () => handler.register().then((x) => { setH(x); toast("Download links open in Pockymod"); }).catch((e) => toast(errorText(e), true));
   return (
     <Module icon="web" title="Nexus pages" count={where === "browser" ? "in your browser" : "in the app"}>
-      <Seg<PagesWhere> label="Open Nexus pages" value={where} onChange={pick}
-        options={[{ value: "browser", label: "In your browser" }, { value: "pane", label: "In the app" }]} />
-      {where === "browser" ? (
-        <p style={{ marginTop: ".5em" }}>Pages open in your own browser, where you are already signed in to Nexus and your saved passwords and
-          extensions work. Mod Manager Download there comes straight back to the queue here.</p>
-      ) : (
-        <p style={{ marginTop: ".5em" }}>Pages open in a pane beside your mods: drag its edge to resize it, or put it over the whole view, behind
-          a tab or in a window of its own. Sign in to Nexus there once and it stays signed in. Your browser's saved passwords are not
-          in it; the pane's link key opens any page in your browser.</p>
-      )}
+      <span title={where === "browser" ? "Your sign-in, passwords and extensions" : "A pane beside your mods. Drag its edge to resize"}>
+        <Seg<PagesWhere> label="Open Nexus pages" value={where} onChange={pick}
+          options={[{ value: "browser", label: "In your browser" }, { value: "pane", label: "In the app" }]} /></span>
       {h?.supported && (h.ours
-        ? <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}><Pill tone="ok">Linked</Pill> Mod Manager Download links from your browser come to Pockymod.</p>
-        : <div className="note warn" style={{ marginTop: ".5em" }}>Mod Manager Download links from your browser go to {h.owner ?? "another program"}, so downloads started there do not reach the queue.
-            <div className="actions" style={{ marginTop: ".4em" }}><Key size="sm" icon="link" onClick={takeBack}>Take them back</Key></div></div>)}
+        ? <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}><Pill tone="ok">Linked</Pill> Download links come here</p>
+        : <div className="note warn" style={{ marginTop: ".5em" }}>Download links go to {h.owner ?? "another program"}
+            <div className="actions" style={{ marginTop: ".4em" }}><Key size="sm" icon="link" onClick={takeBack}>Use Pockymod</Key></div></div>)}
       {where === "pane" && ext && (
         <>
           <div className="sub-h">Extensions in the pane</div>
-          <p className="dim" style={{ fontSize: ".86em" }}>Unpacked Chrome extensions (a folder with a manifest.json each) in the pane's extensions folder load when the
-            pane first opens; restart the app after adding one. {ext[1] ? `${ext[1]} found.` : "None yet."} Not every extension works in the pane.</p>
-          <div className="actions" style={{ marginTop: ".3em" }}><Key size="sm" variant="ghost" icon="folder" onClick={() => browserPane.extensionsFolder(true).then(setExt).catch((e) => toast(errorText(e), true))}>Open the extensions folder</Key></div>
+          <div className="actions"><Key size="sm" variant="ghost" icon="folder" onClick={() => browserPane.extensionsFolder(true).then(setExt).catch((e) => toast(errorText(e), true))}
+            title="Unpacked Chrome extensions. Restart after adding one">Open extensions folder</Key><span className="dim" style={{ fontSize: ".86em" }}>{ext[1] ? `${ext[1]} found` : "None"}</span></div>
         </>
       )}
     </Module>
@@ -162,36 +154,44 @@ function BackgroundModule() {
     <Module icon="power" title="Background" count={v.bg === "1" ? "on" : "off"}>
       <div className="stack" style={{ gap: ".55em" }}>
         <Switch checked={v.bg === "1"} onChange={(x) => put("bg", x ? "1" : "0")}>
-          <span title="The window closes, the app stays in the tray: downloads, browser links and update checks carry on, and nothing is drawn, so the game does not feel it. Quit from the tray.">Keep running in the tray when I close the window</span>
+          <span title="Downloads and update checks keep going. Quit from the tray">Keep running in the tray on close</span>
         </Switch>
         <Switch checked={auto} onChange={(x) => background.setAutostart(x).then(setAuto).catch((e) => toast(errorText(e), true))}>
-          <span title="Starts with Windows in the tray, without a window, so updates are ready before you open it.">Start with Windows, in the tray</span>
+          Start with Windows
         </Switch>
-        <div className="sub-h">New versions of Pockymod</div>
+        <div className="sub-h">App updates</div>
         <Seg label="App updates" value={v.up} onChange={(x) => put("up", x)}
-          options={[{ value: "auto", label: "Install when I'm away" }, { value: "ask", label: "Download, I'll restart" }, { value: "off", label: "Off" }]} />
-        <p className="dim" style={{ fontSize: ".84em" }}>{v.up === "auto" ? "A new version downloads quietly and goes in when the window is closed or you quit, never during a download. Next time you open the app, it is just newer."
-          : v.up === "ask" ? "A new version downloads quietly; the tray and this screen offer Restart into it." : "No checks for new versions."}</p>
+          options={[{ value: "auto", label: "Install when closed" }, { value: "ask", label: "Download only" }, { value: "off", label: "Off" }]} />
         <div className="sub-h">Mod updates</div>
         <Switch checked={v.mods === "1"} onChange={(x) => put("mods", x ? "1" : "0")}>
-          <span title="Off: mod updates are looked for when you open the window and when you press Check now. On: also every six hours, in the tray too, using your Nexus account.">Look for mod updates every six hours</span>
+          <span title="Otherwise on open and on Check now">Check for mod updates every 6 hours</span>
         </Switch>
         {v.mods === "1" && <>
           <Switch checked={v.pre === "1"} onChange={(x) => put("pre", x ? "1" : "0")}>
-            <span title="Premium accounts: the files of mod updates download in the background, so Update all is instant. Free accounts need a click on Nexus for each file, so nothing downloads by itself.">Download mod updates ahead (Premium)</span>
+            <span title="Premium only. Free accounts need a click per file">Download updates ahead</span>
           </Switch>
           <Switch checked={v.inst === "1"} onChange={(x) => put("inst", x ? "1" : "0")}>
-            <span title="Downloaded mod updates go in by themselves, only while the window is closed and the game is not running. Off: they wait for Update all.">Install them by themselves when I'm away</span>
+            <span title="Only while the window is closed and the game isn't running">Install them when closed</span>
           </Switch>
         </>}
         <div className="actions" style={{ marginTop: ".3em" }}>
           <Key size="sm" icon="refresh" disabled={busy} onClick={() => { setBusy(true); background.check().then(setSt).catch((e) => toast(errorText(e), true)).finally(() => setBusy(false)); }}
-            title="Look for mod updates and a new Pockymod now">Check now</Key>
+            title="Mod updates and app updates">Check now</Key>
           {st?.readyVersion && <Key size="sm" variant="dark" icon="power" onClick={() => background.installUpdate().catch((e) => toast(errorText(e), true))}
-            title="Close, install the new version and open it again">Restart into {st.readyVersion}</Key>}
-          {st && st.modsReady > 0 && <span className="dim" style={{ fontSize: ".84em" }}>{st.modsReady} mod {st.modsReady === 1 ? "update is" : "updates are"} downloaded and ready.</span>}
+            title="Close, install and reopen">Restart into {st.readyVersion}</Key>}
+          {st && st.modsReady > 0 && <span className="dim" style={{ fontSize: ".84em" }}>{st.modsReady} {st.modsReady === 1 ? "update" : "updates"} ready</span>}
         </div>
       </div>
+    </Module>
+  );
+}
+
+/** Mods and collections Nexus marks adult, in Browse and Collections. */
+function AdultModule() {
+  const v = useAdult();
+  return (
+    <Module icon="eye" title="Adult content" count={v === "hide" ? "hidden" : v === "blur" ? "blurred" : "shown"}>
+      <span title={v === "blur" ? "Open a mod and press Show to unblur" : "Mods Nexus marks adult"}><Seg<Adult> label="Adult content" value={v} onChange={(x) => void setAdultPref(x).catch((e) => toast(errorText(e), true))} options={ADULT_OPTIONS} /></span>
     </Module>
   );
 }

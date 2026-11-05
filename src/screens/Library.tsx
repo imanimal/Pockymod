@@ -62,7 +62,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   // mods not endorsed yet get a one-click star
   const toEndorse = new Set(useCandidates().list.map((c) => c.modId));
   const star = (r: InstallRow) => toEndorse.has(r.modId) && (
-    <Key size="sm" variant="ghost" icon="star" disabled={busy} aria-label={`Endorse ${r.name}`} title={`Endorse ${r.name} on Nexus: tells its author it is liked`}
+    <Key size="sm" variant="ghost" icon="star" disabled={busy} aria-label={`Endorse ${r.name}`} title={`Endorse ${r.name} on Nexus`}
       onClick={() => void endorseAll([{ modId: r.modId, name: r.name, version: r.version }])} />
   );
   const [sortPlan, setSortPlan] = useState<ReturnType<typeof planGroups> | null>(null);
@@ -136,36 +136,36 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   const updateMany = (list: InstallRow[]) => run(async () => {
     let n = 0;
     for (const r of list) { try { await queueUpdate(r); n++; } catch { /* reported by the queue */ } }
-    toast(`${n} ${n === 1 ? "update" : "updates"} queued.`);
+    toast(`${n} ${n === 1 ? "update" : "updates"} queued`);
   });
   const moveTo = (g: string | null) => run(async () => { await ops.moveToGroup(selected, g); setMoveOpen(false); setNewGroup(""); });
   const useMine = (ids: number[]) => run(async () => {
     const n = await library.restoreReplaced(ids);
-    toast(n ? `Your own ${n === 1 ? "copy is" : "copies are"} back in the game.` : "Nothing changed.", n === 0);
+    toast(n ? `Your own ${n === 1 ? "copy is" : "copies are"} back in the game` : "Nothing changed", n === 0);
   });
   const keepOne = (set: number[]) => run(async () => {
     const keep = byId.get(set[0]);
     await library.keepOne(set[0], set.slice(1));
-    toast(`Kept ${keep?.name ?? "one copy"}${keep?.source && keep.source !== "pocket" ? ` (${SOURCE[keep.source]})` : ""}; the extra ${set.length > 2 ? "copies are" : "copy is"} in Recently removed.`);
+    toast(`Kept ${keep?.name ?? "one copy"}${keep?.source && keep.source !== "pocket" ? ` (${SOURCE[keep.source]})` : ""}. Extra ${set.length > 2 ? "copies" : "copy"} in Recently removed`);
   });
   const keepAll = () => run(async () => {
     for (const d of dupes) await library.keepOne(d[0], d.slice(1));
-    toast(`Cleaned up ${dupes.length} ${dupes.length === 1 ? "mod" : "mods"} with extra copies. They are in Recently removed.`);
+    toast(`Cleaned up ${dupes.length} ${dupes.length === 1 ? "mod" : "mods"}. Extras in Recently removed`);
   });
 
   const handleOutcome = (o: InstallOutcome, name: string, download?: Extract<Pending, { kind: "review" }>["download"]) => {
     if (o.status === "installed") {
-      toast(`Installed ${name}${o.deploy.outcome === "deployed" && o.deploy.copied ? ` (${plural(o.deploy.copied, "file")} copied)` : ""}.`);
-      if (o.needsRedmodDeploy) toast("This is a REDmod: run the REDmod deploy from Load order.");
+      toast(`Installed ${name}${o.deploy.outcome === "deployed" && o.deploy.copied ? ` (${plural(o.deploy.copied, "file")} copied)` : ""}`);
+      if (o.needsRedmodDeploy) toast("REDmod. Deploy it from Load order");
     } else if (o.status === "needsReview" && download) setPending({ kind: "review", download, plan: o.plan });
     else if (o.status === "staged") onDeployOutcome(o.installId, name, o.deploy);
     else if (o.status === "needsChoices" && download) setChoices({ request: download, fomod: o.fomod, defaults: o.defaults });
-    else if (o.status === "alreadyHave") toast(`You already have ${name}. Kept yours.`);
+    else if (o.status === "alreadyHave") toast(`Already have ${name}`);
   };
   const onDeployOutcome = (installId: number, name: string, d: DeployOutcome) => {
     if (d.outcome === "conflicts") setPending({ kind: "conflicts", installId, name, conflicts: d.conflicts });
     else if (d.outcome === "needsCopy") setPending({ kind: "copy", installId, name, reason: d.reason });
-    else { toast(`Deployed ${name}.`); setPending(null); }
+    else { toast(`Deployed ${name}`); setPending(null); }
   };
   const deploy = (r: { id: number; name: string }, takeConflicts = false, allowCopy = false) =>
     run(async () => onDeployOutcome(r.id, r.name, await library.deploy(r.id, { takeConflicts, allowCopy })));
@@ -181,7 +181,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
   // a FOMOD mod's installer again, its last picks selected; the new picks go in from the staged files
   const changeOptions = (r: InstallRow) => run(async () => {
     const o = await installerOptions.get(r.id);
-    if (!o.saved) toast(`${r.name} was installed before picks were kept, so the installer's own defaults are selected.`);
+    if (!o.saved) toast(`No saved picks for ${r.name}, showing the installer defaults`);
     const request = { modId: r.modId, fileId: r.fileId, name: r.name, version: r.version, archive: "" };
     setReopt({ row: r, need: { request, fomod: o.fomod, defaults: o.choices }, before: o.choices });
   });
@@ -189,7 +189,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
     const d = await installerOptions.change(r.id, picks);
     if (d && d.outcome !== "deployed") onDeployOutcome(r.id, r.name, d);
     record({ label: `Changed the options of ${r.name}`, undo: () => installerOptions.change(r.id, before), redo: () => installerOptions.change(r.id, picks) }, !!d && d.outcome !== "deployed");
-    if (!d) toast(`${r.name} keeps the new options; they go in when you turn it on.`);
+    if (!d) toast(`Options saved. They apply when ${r.name} is turned on`);
     load();
   };
 
@@ -210,13 +210,13 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         <SearchField value={text} onChange={setText} placeholder="Find in your mods" />
         <Seg label="Layout" value={layout} onChange={setLayout} options={[{ value: "grid", label: "Grid" }, { value: "list", label: "List" }]} />
         <Seg label="From" value={from} onChange={setFrom} options={[{ value: "all", label: "All" }, { value: "vortex", label: "Vortex", title: "Mods Vortex installed" },
-          { value: "pocket", label: "Pockymod", title: "Mods installed here" }, { value: "found", label: "Unmanaged", title: "Mods that were already in the game folder, put there by neither manager" }]} />
+          { value: "pocket", label: "Pockymod", title: "Mods installed here" }, { value: "found", label: "Unmanaged", title: "In the game folder, installed by neither manager" }]} />
         <Seg label="Show" value={show} onChange={setShow} options={[{ value: "all", label: "All" }, { value: "on", label: "On" }, { value: "off", label: "Off" }, { value: "updates", label: `Updates${withUpdates.length ? ` ${withUpdates.length}` : ""}` }]} />
         {withUpdates.length > 0 && <Key icon="downloads" variant="primary" disabled={busy} onClick={() => updateMany(withUpdates)}>Update all ({withUpdates.length})</Key>}
         <Key size="sm" icon="file" onClick={installFromFile} disabled={busy}>Install from file</Key>
-        <Key size="sm" icon="folder" onClick={() => onExisting?.()} title="Find mods Vortex installed or that are in the game folder already">Find existing mods</Key>
+        <Key size="sm" icon="folder" onClick={() => onExisting?.()} title="Vortex mods and mods already in the game folder">Find existing mods</Key>
         <Key size="sm" variant="ghost" icon="settings" latched={manage} onClick={() => setManage(!manage)}>Groups</Key>
-        {groupRules.length > 0 && <Key size="sm" icon="folder" disabled={busy || !rows?.length} onClick={() => setSortPlan(planGroups(rows ?? [], groupRules))} title="Use the group rules from your extensions">Sort into groups</Key>}
+        {groupRules.length > 0 && <Key size="sm" icon="folder" disabled={busy || !rows?.length} onClick={() => setSortPlan(planGroups(rows ?? [], groupRules))} title="Apply your extensions' group rules">Sort into groups</Key>}
       </div>
 
       {sel.size > 0 && (
@@ -244,23 +244,23 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
           <Module icon="warn" title="Unmanaged mods" count={unm.copies.length + unm.other.length + unm.frameworks.length}
             tools={<>
               <Key size="sm" variant="ghost" icon="eye" latched={from === "found"} onClick={() => setFrom(from === "found" ? "all" : "found")} title="List only unmanaged mods below">Show them</Key>
-              <Key size="sm" variant="ghost" icon="clock" onClick={() => { setUnmLater(true); if (from === "found") setFrom("all"); toast("Set aside: they wait at the bottom of the list, folded, and stay as they are. Sort them out from there whenever you like."); }}
-                title="Not sure yet? Put this away. The mods stay exactly as they are, listed last in a folded group, where Sort them now brings this back.">Later</Key>
+              <Key size="sm" variant="ghost" icon="clock" onClick={() => { setUnmLater(true); if (from === "found") setFrom("all"); toast("Moved to the bottom of the list"); }}
+                title="Fold them into a group at the bottom. Nothing changes">Later</Key>
             </>}>
-            <p className="dim" style={{ fontSize: ".9em" }}>These were already in the game folder: put there by hand, or left behind by an earlier install, a game reinstall or another manager. Neither Vortex nor Pockymod installed them. Cleaning up only ever touches these; your Vortex mods stay exactly as they are. Everything can be put back (Recently removed, Ctrl+Z).</p>
+            <p className="dim" style={{ fontSize: ".9em" }}>Installed by neither Vortex nor Pockymod. Ctrl+Z undoes any cleanup</p>
             <div className="rows" style={{ marginTop: ".5em" }}>
               {unm.copies.length > 0 && (
                 <div className="row" style={{ cursor: "default" }}>
                   <span className="m-main"><span className="m-t">{plural(unm.copies.length, "leftover copy", "leftover copies")} of Vortex mods</span>
-                    <span className="m-meta"><span title={unm.copies.slice(0, 12).map((c) => `${c[1]} (copy of ${c[2]})`).join("\n")}>for example {unm.copies.slice(0, 3).map((c) => c[2]).join(", ")}</span><span>safe to remove: Vortex has its own</span></span></span>
-                  <span className="m-side"><Key size="sm" icon="trash" disabled={busy} onClick={() => run(async () => { await ops.remove(rowsOf(copies)); toast(`Removed ${plural(copies.length, "leftover copy", "leftover copies")}. They are in Recently removed for 14 days.`); })}
-                    title="Takes these copies out of the game; the Vortex mods they copy are not touched">Remove {unm.copies.length}</Key></span>
+                    <span className="m-meta"><span title={unm.copies.slice(0, 12).map((c) => `${c[1]} (copy of ${c[2]})`).join("\n")}>for example {unm.copies.slice(0, 3).map((c) => c[2]).join(", ")}</span><span>safe to remove, Vortex has its own</span></span></span>
+                  <span className="m-side"><Key size="sm" icon="trash" disabled={busy} onClick={() => run(async () => { await ops.remove(rowsOf(copies)); toast(`Removed ${plural(copies.length, "leftover copy", "leftover copies")}`); })}
+                    title="The Vortex originals stay">Remove {unm.copies.length}</Key></span>
                 </div>
               )}
               {unm.frameworks.length > 0 && (
                 <div className="row" style={{ cursor: "default" }}>
                   <span className="m-main"><span className="m-t">{plural(unm.frameworks.length, "framework")} put in by hand</span>
-                    <span className="m-meta"><span>{unm.frameworks.map((f) => f[1]).join(", ")}</span><span className="okc">usually wanted: kept</span></span></span>
+                    <span className="m-meta"><span>{unm.frameworks.map((f) => f[1]).join(", ")}</span><span className="okc">kept</span></span></span>
                 </div>
               )}
               {unm.other.length > 0 && (
@@ -268,9 +268,9 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                   <span className="m-main"><span className="m-t">{plural(unm.other.length, "other mod")}</span>
                     <span className="m-meta"><span>{otherOn.length} on now</span><span>not in any Vortex profile</span></span></span>
                   <span className="m-side" style={{ flexDirection: "row", gap: ".3em" }}>
-                    <Key size="sm" variant="ghost" icon="eye" onClick={() => { setFrom("found"); }} title="List them below to keep the ones you want">Review</Key>
-                    {otherOn.length > 0 && <Key size="sm" icon="minus" disabled={busy} onClick={() => run(async () => { await ops.setEnabled(otherOn, false); toast(`Turned off ${plural(otherOn.length, "unmanaged mod")}. They wait in the library; Ctrl+Z turns them back on.`); })}
-                      title="They leave the game and wait in the library: nothing is deleted, and Ctrl+Z turns them back on">Turn off {otherOn.length}</Key>}
+                    <Key size="sm" variant="ghost" icon="eye" onClick={() => { setFrom("found"); }} title="List them below">Review</Key>
+                    {otherOn.length > 0 && <Key size="sm" icon="minus" disabled={busy} onClick={() => run(async () => { await ops.setEnabled(otherOn, false); toast(`Turned off ${plural(otherOn.length, "unmanaged mod")}`); })}
+                      title="Nothing is deleted. Ctrl+Z turns them back on">Turn off {otherOn.length}</Key>}
                   </span>
                 </div>
               )}
@@ -281,18 +281,17 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
 
       {vxp && (
         <Module icon="user" title="Your Vortex profiles" count={vxp.names.length}>
-          <p>Vortex has {vxp.names.length} profiles for Cyberpunk 2077 ({vxp.names.join(", ")}), and the {vxp.tracked} Vortex mods here are all in one. Bring the profiles in: each becomes a profile here with the same mods on, and the one Vortex uses now stays active, so the game does not change.</p>
+          <p>Vortex has {vxp.names.length} profiles ({vxp.names.join(", ")}). Bring them in as profiles here. The active one stays active</p>
           <div className="actions" style={{ marginTop: ".5em" }}>
             <Key icon="user" disabled={busy} onClick={() => run(async () => { const r = await vortexProfiles.import(); toast(profilesText(r)); setVxp(null); })}>Bring in {vxp.names.length} profiles</Key>
-            <Key variant="ghost" onClick={() => { try { localStorage.setItem("pm.vortexProfiles.later", "1"); } catch { /* storage unavailable */ } setVxp(null); }}>Not now</Key>
+            <Key variant="ghost" title="Load order, Profiles has it later" onClick={() => { try { localStorage.setItem("pm.vortexProfiles.later", "1"); } catch { /* storage unavailable */ } setVxp(null); }}>Not now</Key>
           </div>
-          <p className="dim" style={{ fontSize: ".84em", marginTop: ".4em" }}>You can do it later from Load order, Profiles.</p>
         </Module>
       )}
 
       {replacedRows.length > 0 && (
         <Module icon="warn" title="Your own files were set aside" count={replacedRows.length}>
-          <p>When these went in, files you already had in the game (yours, or Vortex's) were set aside to make room. You can go back to yours: these copies come out and yours are tracked as your own mods.</p>
+          <p>Installing these set aside files you already had. Use mine puts yours back</p>
           {replacedRows.length > 1 && <div className="actions" style={{ marginTop: ".5em" }}><Key icon="check" disabled={busy} onClick={() => useMine(replacedRows.map((r) => r.id))}>Use mine for all {replacedRows.length}</Key></div>}
           <div className="rows" style={{ marginTop: ".5em" }}>
             {replacedRows.map((r) => (
@@ -309,7 +308,6 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       {dupes.length > 0 && (
         <Module icon="library" title="Mods you have twice" count={dupes.length}
           tools={<Key size="sm" variant="ghost" icon={showExtra ? "hide" : "eye"} onClick={() => setShowExtra(!showExtra)}>{showExtra ? "Hide extra copies" : "Show extra copies"}</Key>}>
-          <p className="dim" style={{ fontSize: ".9em" }}>Only one copy of each shows below: the one that is on, your own before one added for another mod. Keep one to tidy up; the others go to Recently removed (a Vortex copy stays in Vortex).</p>
           {dupes.length > 1 && <div className="actions" style={{ marginTop: ".5em" }}><Key icon="check" disabled={busy} onClick={keepAll}>Tidy up all {dupes.length}</Key></div>}
           <div className="rows" style={{ marginTop: ".5em" }}>
             {dupes.map((d) => {
@@ -332,7 +330,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
       {rows?.length === 0 && (
         <Module icon="library" title="Your mods">
           <Empty icon="library" title="No mods yet" actions={<Key icon="folder" onClick={() => onExisting?.()}>Find mods I already have</Key>}>
-            Install from Browse, or bring in the mods Vortex or you already put in the game.
+            Install from Browse or bring in what you already have
           </Empty>
         </Module>
       )}
@@ -352,14 +350,14 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
           <Module icon={later ? "clock" : g === "Core" ? "chip" : g === "Character presets" ? "user" : "library"} title={g}
             count={`${list.filter((r) => r.enabled).length} of ${list.length} on`} bodyClass="list"
             tools={<>
-              {later && <Key size="sm" variant="ghost" icon="warn" onClick={() => setUnmLater(false)} title="Back to the Unmanaged mods section at the top: remove leftover copies or turn the others off in one click">Sort them now</Key>}
+              {later && <Key size="sm" variant="ghost" icon="warn" onClick={() => setUnmLater(false)} title="Back to Unmanaged mods at the top">Sort them now</Key>}
               <Key size="sm" variant="ghost" onClick={() => toggleAll(ids)}>{allSel ? "Unselect" : "Select all"}</Key>
               <Key size="sm" variant="ghost" icon="chevron" className={isFolded ? "" : "rot-key"} aria-label={isFolded ? "Open" : "Fold"}
                 onClick={() => setFolded((f) => { const n = new Set(f); n.has(g) ? n.delete(g) : n.add(g); return n; })} />
             </>}>
             {isFolded && later && (
               <button type="button" className="linkish fold-line" onClick={() => setFolded((f) => new Set(f).add(g))}>
-                {plural(list.length, "mod")} {list.length === 1 ? "that was" : "that were"} already in the game folder, put there by neither manager. {list.length === 1 ? "It stays as it is; open to look at it." : "They stay as they are; open to look through them."}
+                {plural(list.length, "unmanaged mod")}
               </button>
             )}
             {!isFolded && layout === "grid" && (
@@ -377,8 +375,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       <span className="m-meta">{r.version && <span>v{r.version}</span>}{SOURCE[r.source] && <span>{SOURCE[r.source]}</span>}</span>
                       <span className="lcard-f" onClick={(e) => e.stopPropagation()}>
                         <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}>{r.enabled ? "On" : "Off"}</Switch>
-                        {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
-                        {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} aria-label={`Change the options of ${r.name}`} title="Change its installer options: one page, searchable, no download" />}
+                        {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued`); })} disabled={busy} aria-label={`Update ${r.name}`} />}
+                        {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} aria-label={`Change the options of ${r.name}`} title="Change installer options" />}
                         {star(r)}
                       </span>
                     </span>
@@ -406,13 +404,13 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                       </span>
                     </span>
                     <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
-                      {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued.`); })} disabled={busy}>Update</Key>}
-                      {updOf(r) && <Key size="sm" variant="ghost" onClick={() => run(async () => { const u = updOf(r)!; await updatesApi.skip(u.modId, u.latest); toast(`Skipping ${r.name} ${u.latest}. A newer version shows again.`); })} disabled={busy} title="Do not offer this version again">Skip</Key>}
+                      {updOf(r) && r.modId < 900_000_000 && <Key size="sm" icon="downloads" onClick={() => run(async () => { await queueUpdate(r); toast(`${r.name} update queued`); })} disabled={busy}>Update</Key>}
+                      {updOf(r) && <Key size="sm" variant="ghost" onClick={() => run(async () => { const u = updOf(r)!; await updatesApi.skip(u.modId, u.latest); toast(`Skipping ${r.name} ${u.latest}`); })} disabled={busy} title="Skip this version">Skip</Key>}
                       {r.enabled && r.deployedFiles === 0 && <Key size="sm" onClick={() => deploy(r)} disabled={busy}>Deploy</Key>}
-                      {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} title="Pick other installer options; no download needed">Change options</Key>}
+                      {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" onClick={() => changeOptions(r)} disabled={busy} title="Pick other installer options">Change options</Key>}
                       {star(r)}
                       <Switch checked={r.enabled} onChange={(v) => doBulk(v ? "enable" : "disable", [r.id])} disabled={busy}><span className="sr-only">On</span></Switch>
-                      <Key size="sm" variant="ghost" icon="trash" onClick={() => doBulk("uninstall", [r.id])} disabled={busy} aria-label={`Remove ${r.name}`} title={r.source === "vortex" ? "Remove from the game; it stays in Vortex" : "Remove"} />
+                      <Key size="sm" variant="ghost" icon="trash" onClick={() => doBulk("uninstall", [r.id])} disabled={busy} aria-label={`Remove ${r.name}`} title={r.source === "vortex" ? "Remove from the game. Stays in Vortex" : "Remove"} />
                     </span>
                   </div>
                 ))}
@@ -447,7 +445,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
           </>}>
           {!trashOpen ? (
             <button type="button" className="linkish fold-line" onClick={() => setTrashOpen(true)}>
-              {trash.slice(0, 3).map((t) => t.name).join(", ")}{trash.length > 3 ? ` and ${trash.length - 3} more` : ""}: kept {14} days, then deleted. Open to put any back.
+              {trash.slice(0, 3).map((t) => t.name).join(", ")}{trash.length > 3 ? ` and ${trash.length - 3} more` : ""}, kept 14 days
             </button>
           ) : (
             <>
@@ -455,7 +453,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                 {trash.map((t) => (
                   <div key={t.id} className="row" style={{ cursor: "default" }}>
                     <span className="m-main"><span className="m-t">{t.name}</span>
-                      <span className="m-meta">{t.version && <span>v{t.version}</span>}<span>{t.reason === "updated" ? "older version, replaced by an update" : t.reason}</span><span>{ago(t.removedAt)}</span>{t.size > 0 && <span>{bytesText(t.size)}</span>}{t.source === "vortex" && <span>still in Vortex</span>}</span></span>
+                      <span className="m-meta">{t.version && <span>v{t.version}</span>}<span>{t.reason === "updated" ? "replaced by an update" : t.reason}</span><span>{ago(t.removedAt)}</span>{t.size > 0 && <span>{bytesText(t.size)}</span>}{t.source === "vortex" && <span>still in Vortex</span>}</span></span>
                     <span className="m-side" style={{ flexDirection: "row", gap: ".3em" }}>
                       <Key size="sm" icon="undo" disabled={busy} onClick={() => run(async () => { await ops.restoreRemoved([t.id], [t.name]); })}>Put back</Key>
                       <Key size="sm" variant="ghost" icon="x" disabled={busy} aria-label={`Delete ${t.name} for good`} title="Delete for good" onClick={() => run(async () => { await library.purge(t.id); })} />
@@ -464,7 +462,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
                 ))}
               </div>
               <div className="actions" style={{ justifyContent: "flex-end", padding: ".5em .8em" }}>
-                <Key size="sm" variant="ghost" icon="trash" disabled={busy} onClick={() => run(async () => { const n = await library.purge(undefined, true); toast(`Deleted ${n} removed ${n === 1 ? "mod" : "mods"} for good.`); })}>Empty</Key>
+                <Key size="sm" variant="ghost" icon="trash" disabled={busy} onClick={() => run(async () => { const n = await library.purge(undefined, true); toast(`Deleted ${n} ${n === 1 ? "mod" : "mods"} for good`); })}>Empty</Key>
               </div>
             </>
           )}
@@ -477,7 +475,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         for (const p of sortPlan) by.set(p.group, [...(by.get(p.group) ?? []), p.row.id]);
         for (const [g, ids] of by) await groupsApi.set(ids, g);
         setSortPlan(null);
-        toast(`${sortPlan.length} ${sortPlan.length === 1 ? "mod" : "mods"} sorted into ${by.size} ${by.size === 1 ? "group" : "groups"}.`);
+        toast(`${sortPlan.length} ${sortPlan.length === 1 ? "mod" : "mods"} sorted into ${by.size} ${by.size === 1 ? "group" : "groups"}`);
       })} />}
       {reopt && <FomodDialog need={reopt.need} onClose={() => setReopt(null)} apply={(picks) => applyOptions(reopt.row, picks, reopt.before)} />}
       {moveOpen && (
@@ -487,27 +485,25 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
             <button type="button" className="chip" onClick={() => moveTo(null)}>Back to their own group</button>
           </div>
           <div className="actions" style={{ flexWrap: "nowrap" }}>
-            <label className="fbox"><input className="finput" value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="A new group, e.g. Night look" aria-label="New group" onKeyDown={(e) => { if (e.key === "Enter" && newGroup.trim()) moveTo(newGroup); }} /></label>
+            <label className="fbox"><input className="finput" value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="New group" aria-label="New group" onKeyDown={(e) => { if (e.key === "Enter" && newGroup.trim()) moveTo(newGroup); }} /></label>
             <Key icon="plus" disabled={!newGroup.trim() || busy} onClick={() => moveTo(newGroup)}>Make and move</Key>
           </div>
-          <p className="dim" style={{ fontSize: ".84em" }}>The app's groups ({presets.join(", ")}) fill themselves from each mod's category. Your own groups come first.</p>
         </Dialog>
       )}
       {pending?.kind === "conflicts" && (
         <Dialog icon="warn" title="Files already in use" count={plural(pending.conflicts.length, "file")} band="bad" onClose={() => setPending(null)}>
-          <p>{pending.name} wants files that other mods have put in the game. Nothing has been changed yet.</p>
+          <p>{pending.name} needs files other mods already put in the game</p>
           <div className="log" style={{ maxHeight: "10em" }}>{pending.conflicts.slice(0, 50).map((c) => `${c.target}  ·  ${c.ownerName}`).join("\n")}</div>
-          <p className="dim" style={{ fontSize: ".86em" }}>Taking them over keeps the other mods' copies. They get their files back if you remove {pending.name} later. The choice is remembered for profile switches and updates; Load order lists it under Your choices.</p>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setPending(null)}>Leave it staged</Key>
-            <Key onClick={() => deploy({ id: pending.installId, name: pending.name }, true)} disabled={busy}>Take them over</Key>
+            <Key onClick={() => deploy({ id: pending.installId, name: pending.name }, true)} disabled={busy} title="The other mods get them back if you remove it">Take them over</Key>
           </div>
         </Dialog>
       )}
       {pending?.kind === "copy" && (
-        <Dialog icon="warn" title="Hard links are not possible" onClose={() => setPending(null)}>
+        <Dialog icon="warn" title="Can't hard link" onClose={() => setPending(null)}>
           <p>{pending.reason}</p>
-          <div className="note warn">Copying uses disk space twice and, on the C drive, fills the system disk. Moving the mod library to the game's drive in Settings is better.</div>
+          <div className="note warn">Copying uses the space twice. Put the mod library on the game's drive in Settings</div>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setPending(null)}>Cancel</Key>
             <Key onClick={() => deploy({ id: pending.installId, name: pending.name }, false, true)} disabled={busy}>Copy this once</Key>
@@ -515,8 +511,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
         </Dialog>
       )}
       {pending?.kind === "review" && (
-        <Dialog icon="warn" title="Some files have no known place" count={plural(pending.plan.unknown.length, "file")} onClose={() => setPending(null)}>
-          <p>{pending.download.name} has files the installer does not know where to put. They will be left out; the rest goes in as planned.</p>
+        <Dialog icon="warn" title="Unknown files" count={plural(pending.plan.unknown.length, "file")} onClose={() => setPending(null)}>
+          <p>{pending.download.name} has files with no known place. They'll be left out</p>
           <div className="log" style={{ maxHeight: "10em" }}>{pending.plan.unknown.slice(0, 60).join("\n")}</div>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setPending(null)}>Cancel</Key>
@@ -543,7 +539,6 @@ function GroupManager({ custom, onChange }: { custom: string[]; onChange: () => 
   const act = (p: Promise<unknown>) => p.then(onChange).catch((e) => toast(errorText(e), true));
   return (
     <Module icon="folder" title="Your groups" count={custom.length || undefined}>
-      <p className="dim" style={{ fontSize: ".86em", marginBottom: ".5em" }}>Make groups of your own (a look, a playthrough, mods to test). Select mods and use Move to group. Deleting a group sends its mods back to the app's groups.</p>
       <div className="rows">
         {custom.map((g) => (
           <div key={g} className="row" style={{ cursor: "default" }}>
@@ -570,8 +565,8 @@ function GroupManager({ custom, onChange }: { custom: string[]; onChange: () => 
 function SortPlan({ plan, busy, onClose, onApply }: { plan: ReturnType<typeof planGroups>; busy: boolean; onClose: () => void; onApply: () => void }) {
   return (
     <Dialog icon="folder" title="Sort into groups" count={`${plan.length} ${plan.length === 1 ? "mod" : "mods"}`} onClose={onClose}>
-      {plan.length === 0 ? <p>Every mod is where the rules would put it already. Mods in groups you made yourself are left alone.</p> : <>
-        <p>The group rules from your extensions move these mods. Mods in groups you made yourself are left alone.</p>
+      {plan.length === 0 ? <p>Everything is already sorted</p> : <>
+        <p>Mods in your own groups stay put</p>
         <div className="rows sortplan">
           {plan.map((p) => (
             <div key={p.row.id} className="row">
@@ -579,7 +574,6 @@ function SortPlan({ plan, busy, onClose, onApply }: { plan: ReturnType<typeof pl
             </div>
           ))}
         </div>
-        <p className="dim" style={{ fontSize: ".84em" }}>To undo, select them and use Move to group, then Back to their own group.</p>
       </>}
       <div className="actions" style={{ justifyContent: "flex-end" }}>
         <Key variant="ghost" onClick={onClose}>{plan.length ? "Cancel" : "Close"}</Key>

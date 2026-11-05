@@ -68,7 +68,7 @@ export async function switchProfile(from: { id: number; name: string } | undefin
 export async function restoreRemoved(trashIds: number[], names: string[]) {
   const ids = await library.restore(trashIds);
   const ok = ids.filter((x) => x > 0);
-  toast(ok.length ? `Put back ${names.length === 1 ? names[0] : plural(ok.length, "mod")}.` : "Nothing could be put back.", ok.length === 0);
+  toast(ok.length ? `Restored ${names.length === 1 ? names[0] : plural(ok.length, "mod")}` : "Couldn't restore", ok.length === 0);
   return ok;
 }
 

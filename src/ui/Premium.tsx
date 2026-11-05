@@ -30,7 +30,7 @@ export function getPremium() {
       if (!s.user?.isPremium) return;
       window.removeEventListener("focus", h);
       window.dispatchEvent(new Event("pm-premium"));
-      toast("Premium is on. Downloads run by themselves now, with no clicks on Nexus.");
+      toast("Premium is on");
     }).catch(() => {});
   };
   window.addEventListener("focus", h);
@@ -55,10 +55,9 @@ export function PremiumNote({ clicks, what = "these" }: { clicks: number; what?:
   if (!free || off || snoozed || clicks < MIN_CLICKS) return null;
   return (
     <div className="premium-strip" role="note">
-      <span className="m-main"><b className="hi">Premium would download {what} {clicks} by itself.</b>
-        <span className="dim"> No Nexus pages to click through and full download speed, and it helps pay for Nexus and the rewards it gives mod authors.</span></span>
-      <Key size="sm" icon="web" onClick={getPremium} title="Nexus Premium, on the Nexus site. Come back here and the queue goes on by itself.">Get Premium</Key>
-      <Key size="sm" variant="ghost" onClick={() => { write(SNOOZE, Date.now() + 14 * 86400_000); setSnoozed(true); }} title="Hide this for two weeks. Settings, Nexus account turns it off for good.">Not now</Key>
+      <span className="m-main" title="No clicking through Nexus pages, full speed"><b className="hi">Premium skips the {clicks} clicks for {what}</b></span>
+      <Key size="sm" icon="web" onClick={getPremium} title="Opens Nexus Premium on the Nexus site">Get Premium</Key>
+      <Key size="sm" variant="ghost" onClick={() => { write(SNOOZE, Date.now() + 14 * 86400_000); setSnoozed(true); }} title="Hide for two weeks. Turn off in Settings">Not now</Key>
     </div>
   );
 }

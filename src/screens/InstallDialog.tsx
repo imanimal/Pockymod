@@ -29,7 +29,7 @@ export function InstallDialog({ modId, fileId, name, premium, onClose, onQueued 
     try {
       if (dontAsk) await setInstallPrefs({ confirm: false, requirements: withReqs ? "always" : "never" });
       await queue.add(modId, fileId, withReqs);
-      toast(clicks ? `Queued. ${clicks} ${clicks === 1 ? "mod needs" : "mods need"} a click on Nexus.` : "Queued. It installs by itself.");
+      toast(clicks ? `Queued. ${clicks} ${clicks === 1 ? "mod needs" : "mods need"} a click on Nexus` : "Queued");
       onQueued();
     } catch (e) { setErr(errorText(e)); setBusy(false); }
   };
@@ -41,10 +41,10 @@ export function InstallDialog({ modId, fileId, name, premium, onClose, onQueued 
       {items && chosen && <>
         <div className="lcds">
           <Lcd size="sm" label="Mods" value={String(chosen.length).padStart(2, "0")} sub={reqCount ? (withReqs ? `with ${reqCount} required` : "requirements left out") : "no missing requirements"} />
-          <Lcd size="sm" label="Needs your click" value={String(clicks).padStart(2, "0")} tone={clicks ? "hot" : "ok"} sub={premium ? "Premium: automatic" : "Free account"} />
+          <Lcd size="sm" label="Needs your click" value={String(clicks).padStart(2, "0")} tone={clicks ? "hot" : "ok"} sub={premium ? "Premium" : "Free account"} />
           <Lcd size="sm" label="Download" value={bytesText(bytes).split(" ")[0]} unit={bytesText(bytes).split(" ")[1]} />
         </div>
-        {!premium && clicks > 0 && <div className="note warn">Free accounts press "Mod Manager Download" once per file. Each page opens in turn and the queue moves on by itself.</div>}
+        {!premium && clicks > 0 && <div className="note warn">Press Mod Manager Download on each page as it opens</div>}
         {!premium && <PremiumNote clicks={clicks} />}
         <div className="rows">
           {chosen.map((i) => (
@@ -57,8 +57,8 @@ export function InstallDialog({ modId, fileId, name, premium, onClose, onQueued 
         </div>
         <div className="stack" style={{ gap: ".4em" }}>
           {reqCount > 0 && <Switch checked={withReqs} onChange={setWithReqs}>Also install the {reqCount} required {reqCount === 1 ? "mod" : "mods"}</Switch>}
-          {!withReqs && reqCount > 0 && <div className="note warn">Without its requirements this mod may not work or may stop the game from starting.</div>}
-          <Switch checked={dontAsk} onChange={setDontAsk}>Next time, install straight away with these choices</Switch>
+          {!withReqs && reqCount > 0 && <div className="note warn">It may not work, or the game may not start</div>}
+          <Switch checked={dontAsk} onChange={setDontAsk}>Don't ask next time</Switch>
         </div>
         <div className="actions" style={{ justifyContent: "flex-end" }}>
           <Key variant="ghost" onClick={onClose}>Cancel</Key>

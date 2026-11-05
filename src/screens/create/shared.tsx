@@ -36,15 +36,15 @@ export function usePack(): Pack {
   const pack = async () => {
     if (!s.path) return;
     set({ busy: true });
-    try { const z = await creator.pack(s.path, s.name, s.version); set({ zip: z, busy: false }); toast("Packed."); } catch (e) { set({ busy: false }); toast(errorText(e), true); }
+    try { const z = await creator.pack(s.path, s.name, s.version); set({ zip: z, busy: false }); toast("Packed"); } catch (e) { set({ busy: false }); toast(errorText(e), true); }
   };
   return { ...s, set, pick, pack };
 }
 
 export const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
-export function copy(text: string, what = "Copied.") {
-  navigator.clipboard.writeText(text).then(() => toast(what)).catch(() => toast("Could not copy.", true));
+export function copy(text: string, what = "Copied") {
+  navigator.clipboard.writeText(text).then(() => toast(what)).catch(() => toast("Couldn't copy", true));
 }
 
 /** A Nexus page in the app's own Nexus window. */

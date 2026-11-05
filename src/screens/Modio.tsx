@@ -16,8 +16,8 @@ export function Modio() {
       <SearchField value={text} onChange={setText} placeholder="Search mod.io" />
       <Module icon="web" title="mod.io" count={r?.page ? `${formatCount(r.page.result_total)} · read-only` : "read-only"} bodyClass="list">
         {err && <div className="note bad" style={{ margin: ".6em" }}>{err}</div>}
-        {r && !r.game && <Empty icon="web" title="Cyberpunk 2077 is not on mod.io for this key" />}
-        <div className="note" style={{ margin: ".6em" }}>Install these from the game: Main menu, Mods. Pockymod only lists them.</div>
+        {r && !r.game && <Empty icon="web" title="Cyberpunk 2077 isn't on mod.io for this key" />}
+        <div className="note" style={{ margin: ".6em" }}>Install these in game from Main menu, Mods</div>
         <div className="rows">
           {r?.page?.data.map((m) => (
             <div key={m.id} className="row modrow" style={{ cursor: "default" }}>

@@ -43,9 +43,9 @@ export const blankState = (): ExtState => ({ enabled: false, approvedRelease: nu
 
 /** Parse and check an extension file's text. */
 export function checkExtensionText(text: string): { manifest: ExtensionManifest | null; errors: string[]; warnings: string[] } {
-  if (text.length > LIMITS.manifest) return { manifest: null, errors: ["The file is larger than 1 MB."], warnings: [] };
+  if (text.length > LIMITS.manifest) return { manifest: null, errors: ["File is over 1 MB"], warnings: [] };
   let v: unknown;
-  try { v = JSON.parse(text); } catch (e) { return { manifest: null, errors: [`This is not valid JSON: ${e instanceof Error ? e.message : String(e)}`], warnings: [] }; }
+  try { v = JSON.parse(text); } catch (e) { return { manifest: null, errors: [`Not valid JSON. ${e instanceof Error ? e.message : String(e)}`], warnings: [] }; }
   const r = validateExtension(v);
   return { manifest: r.ok ? (v as ExtensionManifest) : null, errors: r.errors, warnings: r.warnings };
 }
@@ -142,7 +142,7 @@ async function patchState(id: string, f: (s: ExtState) => ExtState) {
 
 export async function approveExtension(id: string, toolPaths?: Record<string, string>) {
   const x = snap.list.find((e) => e.id === id);
-  if (!x?.manifest) throw new Error("That extension does not check out, so it cannot be turned on.");
+  if (!x?.manifest) throw new Error("Extension has errors, can't turn it on");
   const m = x.manifest;
   await patchState(id, (s) => ({ ...s, enabled: true, approvedRelease: m.release, approved: approvalItems(m), toolPaths: { ...s.toolPaths, ...(toolPaths ?? {}) } }));
 }
@@ -211,7 +211,7 @@ export function describeItem(item: string, m: ExtensionManifest): string {
   const [kind, id, ...rest] = item.split(":");
   const k = m.contributes;
   if (kind === "permission") return id;
-  if (kind === "tool") { const t = k.tools?.find((x) => x.id === id); return t ? `Start ${t.name}${t.path ? ` (${t.path} in the game folder)` : " (a program you choose)"}` : item; }
+  if (kind === "tool") { const t = k.tools?.find((x) => x.id === id); return t ? `Start ${t.name}${t.path ? ` (${t.path} in the game folder)` : " (a program you pick)"}` : item; }
   if (kind === "launch") { const o = k.launchOptions?.find((x) => x.id === id); return o ? `Start the game with ${o.args.join(" ")}` : item; }
   if (kind === "link") return `Open ${rest.length ? `${id}:${rest.join(":")}` : id}`;
   return item;

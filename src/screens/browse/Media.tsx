@@ -53,8 +53,8 @@ export function Lightbox({ items, start, onClose }: { items: Shot[]; start: numb
               : <div className="lb-video">
                   <img src={it.thumb.replace("/mqdefault.", "/hqdefault.")} alt="" />
                   <div className="lb-video-keys">
-                    <Key variant="primary" size="lg" icon="play" onClick={() => watch(it)} title="Opens in your own browser, where you are signed in to YouTube">Watch on YouTube</Key>
-                    <Key variant="dark" onClick={() => setPlayHere(true)} title="Some videos play here; YouTube may ask to sign in to prove you are not a bot, which it refuses inside apps">Play here</Key>
+                    <Key variant="primary" size="lg" icon="play" onClick={() => watch(it)} title="Opens in your browser">Watch on YouTube</Key>
+                    <Key variant="dark" onClick={() => setPlayHere(true)} title="YouTube may block some videos in the app">Play here</Key>
                   </div>
                   <label className="lb-video-pref"><input type="checkbox" checked={here} onChange={(e) => setHere(e.target.checked)} /> Always play videos here</label>
                 </div>}
@@ -69,10 +69,10 @@ export function Lightbox({ items, start, onClose }: { items: Shot[]; start: numb
           <Key size="sm" variant="dark" icon="minus" onClick={() => zoom.current?.step(-1)} disabled={z.fit} aria-label="Zoom out" title="Zoom out (-)" />
           <span className="display sm inline" title={z.fit ? "Fits the window" : "Zoom, of the picture's own size"}><span className="d-lbl">{z.fit ? "Fit" : "Zoom"}</span><span className="d-num">{z.pct}<small>%</small></span></span>
           <Key size="sm" variant="dark" icon="plus" onClick={() => zoom.current?.step(1)} aria-label="Zoom in" title="Zoom in (+)" />
-          <Key size="sm" variant="dark" onClick={() => zoom.current?.fit()} disabled={z.fit} title="Fit the window (0)">Fit</Key>
-          <Key size="sm" variant="dark" onClick={() => zoom.current?.actual()} title="The picture's own size (1)">1:1</Key>
+          <Key size="sm" variant="dark" onClick={() => zoom.current?.fit()} disabled={z.fit} title="Fit (0)">Fit</Key>
+          <Key size="sm" variant="dark" onClick={() => zoom.current?.actual()} title="Actual size (1)">1:1</Key>
         </span>}
-        {it.kind === "video" && <Key size="sm" variant="dark" icon="link" onClick={() => watch(it)} title="Watch it in your own browser">YouTube</Key>}
+        {it.kind === "video" && <Key size="sm" variant="dark" icon="link" onClick={() => watch(it)} title="Watch in your browser">YouTube</Key>}
         <Key size="sm" variant="dark" icon="x" onClick={onClose} aria-label="Close" />
       </div>
     </div>, host);

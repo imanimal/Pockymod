@@ -48,12 +48,12 @@ fn inside(child: &Path, parent: &Path) -> bool {
 pub fn check_move(game: &Path, from: &Path, to: &Path) -> MoveCheck {
     let (mut files, mut bytes) = (0, 0);
     for e in walkdir::WalkDir::new(from).into_iter().flatten().filter(|e| e.file_type().is_file()) { files += 1; bytes += e.metadata().map(|m| m.len()).unwrap_or(0); }
-    let problem = if !from.is_dir() { Some(format!("The library folder {} is not there, so there is nothing to move.", from.display())) }
-        else if inside(to, from) { Some("The new place is inside the library itself. Choose a folder outside it.".into()) }
-        else if inside(to, game) { Some("The new place is inside the game folder. Choose a folder outside it, on the same drive.".into()) }
-        else if inside(game, to) { Some("The game folder is inside the new place. Choose a folder of its own.".into()) }
-        else if to.exists() && fs::read_dir(to).map(|mut d| d.next().is_some()).unwrap_or(true) { Some(format!("{} is not empty. Choose a new or empty folder.", to.display())) }
-        else if to.to_string_lossy().to_lowercase().contains("program files") { Some("Windows does not let normal users write under Program Files. Choose another folder.".into()) }
+    let problem = if !from.is_dir() { Some(format!("The library folder {} doesn't exist, so there's nothing to move", from.display())) }
+        else if inside(to, from) { Some("That's inside the library. Choose a folder outside it".into()) }
+        else if inside(to, game) { Some("That's inside the game folder. Choose a folder outside it on the same drive".into()) }
+        else if inside(game, to) { Some("The game folder is inside that one. Choose a separate folder".into()) }
+        else if to.exists() && fs::read_dir(to).map(|mut d| d.next().is_some()).unwrap_or(true) { Some(format!("{} isn't empty. Choose a new or empty folder", to.display())) }
+        else if to.to_string_lossy().to_lowercase().contains("program files") { Some("Windows blocks writing under Program Files. Choose another folder".into()) }
         else { None };
     let target = to.parent().unwrap_or(to);
     MoveCheck { from: from.to_path_buf(), to: to.to_path_buf(), same_drive_as_game: same_volume(target, game), quick: same_volume(target, from), files, bytes, problem }
@@ -159,7 +159,7 @@ fn move_library_as(db: &Db, game: &Path, from: &Path, to: &Path, force_copy: boo
     // on one drive it is a rename; when that fails (a file in use), stop rather than copy everything
     let renamed = !force_copy && check.quick;
     if renamed {
-        fs::rename(from, to).map_err(|e| Error::Invalid(format!("Could not move the library: {e}. Close the game and any program using files in it (an archive tool, an Explorer window), then try again.")))?;
+        fs::rename(from, to).map_err(|e| Error::Invalid(format!("Could not move the library: {e}. Close the game and anything using its files, then try again")))?;
         rep.how = "renamed".into();
         match rewrite_paths(db, from, to) {
             Ok(n) => rep.rewritten = n,

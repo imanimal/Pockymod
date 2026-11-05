@@ -39,11 +39,10 @@ export function MyMods({ mine, loading, error, me, who, onLoad, onPublish, onNew
 
   if (!mine) return (
     <Module icon="user" title="My mods" count={loading ? "loading" : undefined}>
-      {loading ? <Empty icon="clock" title="Asking Nexus for your mods" /> : <>
-        <p>See the mods you uploaded for Cyberpunk 2077: their status, numbers and files, and publish new versions without hunting for IDs.</p>
-        <div style={{ marginTop: ".7em" }}>{lookup}</div>
+      {loading ? <Empty icon="clock" title="Loading your mods" /> : <>
+        <div>{lookup}</div>
         {error && <div className="note warn" style={{ marginTop: ".6em" }}>{error}</div>}
-        <p className="dim hint">Without an API key this is read-only and shows published mods. Add your key in Settings to publish versions from here.</p>
+        <p className="dim hint">Read-only without an API key</p>
       </>}
     </Module>
   );
@@ -52,7 +51,7 @@ export function MyMods({ mine, loading, error, me, who, onLoad, onPublish, onNew
   const t = mine.totals;
   const month = mine.thisMonth;
   const addPin = async () => {
-    try { await authoring.pin(a.memberId, pin); setPin(""); toast("Added. It shows here once Nexus lists it."); onChanged(); } catch (e) { toast(errorText(e), true); }
+    try { await authoring.pin(a.memberId, pin); setPin(""); toast("Added. Shows once Nexus lists it"); onChanged(); } catch (e) { toast(errorText(e), true); }
   };
 
   return (
@@ -86,14 +85,14 @@ export function MyMods({ mine, loading, error, me, who, onLoad, onPublish, onNew
           {!other ? <Key variant="ghost" size="sm" icon="browse" onClick={() => setOther(true)}>Look up another member</Key> : null}
         </div>
         {other && <div style={{ marginTop: ".6em" }}>{lookup}</div>}
-        {!mine.own && <p className="dim hint">{me ? "These are another member's mods, so publishing is off for them." : "Read-only: Nexus shows published mods without a key. Add your API key in Settings to see hidden ones (if Nexus lists them) and to publish."}</p>}
+        {!mine.own && <p className="dim hint">{me ? "Another member's mods, read-only" : "Read-only without an API key"}</p>}
         {error && <div className="note warn" style={{ marginTop: ".6em" }}>{error}</div>}
       </Module>
 
       {mine.mods.length === 0 ? (
         <Module icon="library" title="No mods yet" count="Cyberpunk 2077">
           <Empty icon="share" title={`${a.name} has no published Cyberpunk 2077 mods`} actions={<Key icon="plus" onClick={onNew}>Upload a new mod</Key>}>
-            A new or hidden mod shows once Nexus lists it. You can add it by its link below.
+            New and hidden mods show once Nexus lists them
           </Empty>
         </Module>
       ) : (
@@ -103,14 +102,13 @@ export function MyMods({ mine, loading, error, me, who, onLoad, onPublish, onNew
       )}
 
       <Module icon="link" title="Add a mod by its link" count={mine.missingPinned.length ? `${mine.missingPinned.length} not listed yet` : undefined}>
-        <p className="dim" style={{ fontSize: ".9em" }}>A page you just made, or a mod you work on in someone else's team. Paste the link to its page or its number.</p>
-        <form className="cr-who" style={{ marginTop: ".5em" }} onSubmit={(e) => { e.preventDefault(); void addPin(); }}>
+        <form className="cr-who" onSubmit={(e) => { e.preventDefault(); void addPin(); }}>
           <label className="fbox"><Icon name="link" /><input className="finput" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="nexusmods.com/cyberpunk2077/mods/…" aria-label="Mod link or number" /></label>
           <Key type="submit" icon="plus" disabled={!pin.trim()}>Add</Key>
         </form>
         {mine.missingPinned.map((x) => (
           <div key={x.modId} className="note cr-missing">
-            <span>Mod {x.modId} is not listed yet. Nexus shows a mod to apps once it is published and its file is scanned.</span>
+            <span title="Nexus lists a mod once it's published and scanned">Mod {x.modId} isn't listed yet</span>
             <Key size="sm" variant="ghost" icon="web" onClick={() => openNexus(x.links.edit)}>Edit page</Key>
             <Key size="sm" variant="ghost" icon="x" onClick={() => authoring.unpin(a.memberId, x.modId).then(onChanged).catch((e) => toast(errorText(e), true))}>Remove</Key>
           </div>
@@ -148,7 +146,7 @@ function ModCard({ m, canPublish, onPublish, onManage }: { m: MyMod; canPublish:
           </div>
         </div>
         <div className="sub-h">Files <span className="dim mono">{m.files.length}{m.oldFiles ? ` · ${m.oldFiles} older` : ""}</span></div>
-        {m.files.length === 0 ? <p className="dim" style={{ fontSize: ".86em" }}>No current files. Add one on the website's Files step.</p> : (
+        {m.files.length === 0 ? <p className="dim" style={{ fontSize: ".86em" }}>No current files</p> : (
           <div className="rows">
             {m.files.slice(0, 5).map((f) => <FileRow key={f.fileId} f={f} onPublish={canPublish ? () => onPublish(prefillFor(m, f)) : undefined} />)}
             {m.files.length > 5 && <button type="button" className="linkish" style={{ margin: ".3em .6em", fontSize: ".86em" }} onClick={onManage}>{m.files.length - 5} more files</button>}
@@ -160,7 +158,7 @@ function ModCard({ m, canPublish, onPublish, onManage }: { m: MyMod; canPublish:
         <div className="actions cr-foot">
           <Key size="sm" icon="settings" onClick={onManage}>Manage</Key>
           <Key size="sm" variant="ghost" icon="web" onClick={() => openNexus(m.links.edit)}>Edit on Nexus</Key>
-          <Key size="sm" variant="ghost" icon="link" onClick={() => copy(m.links.page, "Link copied.")}>Copy link</Key>
+          <Key size="sm" variant="ghost" icon="link" onClick={() => copy(m.links.page, "Link copied")}>Copy link</Key>
         </div>
       </div>
     </section>
@@ -174,13 +172,13 @@ function FileRow({ f, onPublish, onCopy }: { f: AuthorFile; onPublish?: () => vo
         <span className="m-t">{f.name}</span>
         <span className="m-meta">
           <span>{fileCategoryText(f.category)}</span><span>v{f.version}</span><span>{bytesText(bytesOf(f))}</span>
-          <span className="mono" title="The file's id on Nexus">ID {f.fileId}</span>
+          <span className="mono" title="Nexus file ID">ID {f.fileId}</span>
         </span>
       </span>
       <span className="cr-file-k">
         <ScanPill scan={f.scannedV2} />
-        {onCopy && <Key size="sm" variant="ghost" icon="link" onClick={onCopy} aria-label={`Copy a link to ${f.name}`} title="Copy a link to this file" />}
-        {onPublish && <Key size="sm" variant="dark" icon="share" onClick={onPublish} title="Publish a new version of this file">New version</Key>}
+        {onCopy && <Key size="sm" variant="ghost" icon="link" onClick={onCopy} aria-label={`Copy a link to ${f.name}`} title="Copy link" />}
+        {onPublish && <Key size="sm" variant="dark" icon="share" onClick={onPublish} title="Publish a new version">New version</Key>}
       </span>
     </div>
   );
@@ -225,7 +223,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
             <Key icon="web" onClick={() => openNexus(links.edit)}>Edit the page</Key>
             <Key icon="file" onClick={() => openNexus(links.editFiles)}>Manage files</Key>
           </div>
-          {!canPublish && <p className="dim hint">Publishing is for the mod's owner, signed in with their API key.</p>}
+          {!canPublish && <p className="dim hint">Only the owner can publish, with their API key</p>}
 
           <div className="sub-h">On Nexus</div>
           <div className="actions">
@@ -235,14 +233,13 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
             <Key size="sm" variant="ghost" icon="warn" onClick={() => openNexus(links.bugs)}>Bugs</Key>
             <Key size="sm" variant="ghost" icon="clock" onClick={() => openNexus(links.logs)}>Logs</Key>
           </div>
-          <p className="dim hint">Comments and bug reports open on the website: Nexus does not give apps a mod's posts.</p>
 
           <div className="sub-h">Share</div>
           <div className="actions">
-            <Key size="sm" icon="link" onClick={() => copy(links.page, "Link copied.")}>Copy the link</Key>
-            <Key size="sm" variant="ghost" icon="file" onClick={() => copy(links.files, "Link to the files copied.")}>Link to the files</Key>
-            <Key size="sm" variant="ghost" icon="chip" onClick={() => copy(`[url=${links.page}]${m.name}[/url]`, "BBCode copied.")}>BBCode</Key>
-            <Key size="sm" variant="ghost" icon="chip" onClick={() => copy(`[${m.name}](${links.page})`, "Markdown copied.")}>Markdown</Key>
+            <Key size="sm" icon="link" onClick={() => copy(links.page, "Link copied")}>Copy the link</Key>
+            <Key size="sm" variant="ghost" icon="file" onClick={() => copy(links.files, "Files link copied")}>Link to the files</Key>
+            <Key size="sm" variant="ghost" icon="chip" onClick={() => copy(`[url=${links.page}]${m.name}[/url]`, "BBCode copied")}>BBCode</Key>
+            <Key size="sm" variant="ghost" icon="chip" onClick={() => copy(`[${m.name}](${links.page})`, "Markdown copied")}>Markdown</Key>
           </div>
 
           <div className="sub-h cr-subh">
@@ -253,16 +250,16 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
           <div className="rows">
             {list.slice(0, 60).map((f) => (
               <div key={f.fileId}>
-                <FileRow f={f} onCopy={() => copy(fileLink(links, f.fileId), "Link to the file copied.")}
+                <FileRow f={f} onCopy={() => copy(fileLink(links, f.fileId), "File link copied")}
                   onPublish={canPublish && ["MAIN", "UPDATE", "OPTIONAL", "MISCELLANEOUS"].includes(f.category) ? () => onPublish(prefillFor(m, f)) : undefined} />
                 {files === "all" && <div className="cr-file-sub dim">{shortDate(unixDate(f.date))} · {formatCount(f.totalDownloads)} downloads, {formatCount(f.uniqueDownloads)} unique{f.groupId != null && <> · update chain <span className="mono">{f.groupId}</span></>}</div>}
               </div>
             ))}
-            {list.length === 0 && <p className="dim">No files.</p>}
+            {list.length === 0 && <p className="dim">No files</p>}
           </div>
 
           <div className="sub-h">Changelog</div>
-          {!d ? <p className="dim">Loading</p> : d.changelog.length === 0 ? <p className="dim" style={{ fontSize: ".9em" }}>No changelog on Nexus yet. Add one when you publish a version.</p> : (
+          {!d ? <p className="dim">Loading</p> : d.changelog.length === 0 ? <p className="dim" style={{ fontSize: ".9em" }}>No changelog yet</p> : (
             <div className="cr-log">
               {d.changelog.map((c) => (
                 <div key={c.version} className="cr-log-v">
@@ -274,7 +271,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
           )}
 
           <div className="sub-h">Requires <span className="dim mono">{d?.requirementsTotal ?? m.requirements}</span></div>
-          {d && d.requirements.length === 0 && d.dlc.length === 0 && <p className="dim" style={{ fontSize: ".9em" }}>Nothing. Add requirements on the page's Requirements step so managers install them too.</p>}
+          {d && d.requirements.length === 0 && d.dlc.length === 0 && <p className="dim" style={{ fontSize: ".9em" }}>None</p>}
           {d && <div className="rows">
             {d.dlc.map((x) => <div key={x} className="row"><span className="m-main"><span className="m-t">{x}</span><span className="m-meta"><span>DLC</span></span></span></div>)}
             {d.requirements.map((r) => (
@@ -286,7 +283,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
           </div>}
 
           <div className="sub-h">Required by <span className="dim mono">{formatCount(d?.requiredByTotal ?? m.requiredBy)}</span></div>
-          {d && d.requiredBy.length === 0 && <p className="dim" style={{ fontSize: ".9em" }}>No mod lists this one as a requirement yet.</p>}
+          {d && d.requiredBy.length === 0 && <p className="dim" style={{ fontSize: ".9em" }}>None yet</p>}
           {d && <div className="rows">
             {(allBy ? d.requiredBy : d.requiredBy.slice(0, 8)).map((r) => (
               <button key={`${r.modId}-${r.modName}`} type="button" className="row" onClick={() => openPage(r.modId)}>
@@ -296,7 +293,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
             ))}
           </div>}
           {d && d.requiredBy.length > 8 && <Key size="sm" variant="ghost" onClick={() => setAllBy(!allBy)}>{allBy ? "Fewer" : `Show ${d.requiredBy.length - 8} more`}</Key>}
-          {d && d.requiredByTotal > d.requiredBy.length && allBy && <p className="dim hint">The first {d.requiredBy.length} of {formatCount(d.requiredByTotal)}.</p>}
+          {d && d.requiredByTotal > d.requiredBy.length && allBy && <p className="dim hint">First {d.requiredBy.length} of {formatCount(d.requiredByTotal)}</p>}
 
           {onUnpin && <div className="actions" style={{ marginTop: "1em" }}><Key size="sm" variant="ghost" icon="x" onClick={onUnpin}>Remove from My mods</Key></div>}
         </Module>

@@ -239,7 +239,7 @@ pub fn create_local(db: &Db, name: &str, description: &str, game_version: Option
         .query_map(params![active], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?, r.get(6)?, r.get(7)?)))?
         .collect::<std::result::Result<_, _>>()?;
     let rows: Vec<_> = rows.into_iter().filter(|r| only.is_none_or(|o| o.contains(&r.0))).collect();
-    if rows.is_empty() { return Err(Error::Invalid("There are no Nexus mods enabled to put in a collection. Mods installed from a file cannot be shared.".into())); }
+    if rows.is_empty() { return Err(Error::Invalid("No enabled Nexus mods to share. Mods installed from a file can't go in a collection".into())); }
     let ids: BTreeSet<u32> = rows.iter().map(|r| r.1).collect();
     let mut mods = Vec::new();
     for (_, mod_id, file_id, mname, version, md5, size, file_name) in &rows {
@@ -264,11 +264,11 @@ pub fn create_local(db: &Db, name: &str, description: &str, game_version: Option
 }
 
 pub fn parse_local(text: &str) -> Result<LocalCollection> {
-    if text.len() > 8 * 1024 * 1024 { return Err(Error::Invalid("That file is too large to be a collection.".into())); }
+    if text.len() > 8 * 1024 * 1024 { return Err(Error::Invalid("Too large to be a collection".into())); }
     let c: LocalCollection = serde_json::from_str(text).map_err(|e| Error::Invalid(format!("Not a Pockymod collection: {e}")))?;
-    if c.format != FORMAT { return Err(Error::Invalid("Not a Pockymod collection file.".into())); }
-    if c.version > 1 { return Err(Error::Invalid("This collection was made by a newer Pockymod. Update the app to open it.".into())); }
-    if c.game != crate::GAME_DOMAIN { return Err(Error::Invalid(format!("This collection is for {}, not Cyberpunk 2077.", c.game))); }
+    if c.format != FORMAT { return Err(Error::Invalid("Not a Pockymod collection file".into())); }
+    if c.version > 1 { return Err(Error::Invalid("Made by a newer Pockymod. Update to open it".into())); }
+    if c.game != crate::GAME_DOMAIN { return Err(Error::Invalid(format!("This collection is for {}, not Cyberpunk 2077", c.game))); }
     Ok(c)
 }
 

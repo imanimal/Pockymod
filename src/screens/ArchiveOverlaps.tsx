@@ -35,7 +35,7 @@ export function OverlapsModule() {
       const id = o.loser.installId;
       const renames = o.loadFirst;
       const out = await archives.loadFirst(id, renames);
-      if (out.outcome !== "deployed") toast(`${o.loser.name} is renamed but not back in the game: ${out.outcome === "conflicts" ? "its files clash with other mods. Decide in Library." : out.reason}`, true);
+      if (out.outcome !== "deployed") toast(`${o.loser.name} renamed but not deployed. ${out.outcome === "conflicts" ? "Its files clash, decide in Library" : out.reason}`, true);
       const modId = o.loser.modId;
       if (modId != null) {
         record({
@@ -43,26 +43,26 @@ export function OverlapsModule() {
           undo: async () => { for (const x of renames) await archives.undoRename(modId, x.target); },
           redo: () => archives.loadFirst(id, renames),
         });
-      } else toast(`${o.loser.name} now loads first.`);
+      } else toast(`${o.loser.name} now loads first`);
     } catch (e) { toast(errorText(e), true); } finally { setBusy(false); load(); }
   };
 
   if (err) return <Module icon="warn" title="Overlapping archives"><div className="note bad">{err}</div></Module>;
-  if (!r) return <Module icon="warn" title="Overlapping archives" count="reading"><p className="dim">Reading the archives' file tables…</p></Module>;
+  if (!r) return <Module icon="warn" title="Overlapping archives" count="reading"><p className="dim">Reading archives</p></Module>;
   const shown = all ? r.overlaps : r.overlaps.slice(0, 8);
   return (
     <Module icon="warn" title="Overlapping archives" count={r.overlaps.length ? plural(r.overlaps.length, "pair") : "none"} band={r.modlist ? "hot" : undefined}
       tools={<Key size="sm" variant="ghost" icon="refresh" onClick={load} aria-label="Check again" title="Check again" />}>
-      <p className="dim" style={{ fontSize: ".86em", marginBottom: ".5em" }}>Mods whose archives change the same game files. Archives load in name order and the first one wins, so the other mod's change to those files does nothing.</p>
+      <p className="dim" style={{ fontSize: ".86em", marginBottom: ".5em" }}>Archives load in name order. The first one wins</p>
       {r.modlist && (
         <div className="note warn" style={{ marginBottom: ".6em" }}>
-          A modlist.txt in archive/pc/mod sets the order ({plural(r.modlist.length, "archive")} listed), not the file names.
+          archive/pc/mod/modlist.txt sets the order ({plural(r.modlist.length, "archive")} listed)
           <div className="actions" style={{ marginTop: ".4em" }}>
-            <Key size="sm" disabled={busy} onClick={async () => { setBusy(true); try { await archives.disableModlist(); toast("modlist.txt is set aside (modlist.txt.off)."); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); load(); } }}>Move it aside</Key>
+            <Key size="sm" disabled={busy} onClick={async () => { setBusy(true); try { await archives.disableModlist(); toast("modlist.txt renamed to modlist.txt.off"); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); load(); } }}>Move it aside</Key>
           </div>
         </div>
       )}
-      {r.overlaps.length === 0 && <Empty icon="check" title="No clashes inside archives">No two mods change the same game files{r.archives ? ` (${plural(r.archives, "archive")} read)` : ""}.</Empty>}
+      {r.overlaps.length === 0 && <Empty icon="check" title="No clashes">{r.archives ? `${plural(r.archives, "archive")} read` : ""}</Empty>}
       <div className="rows">
         {shown.map((o) => (
           <div key={`${o.winner.name}>${o.loser.name}`} className="row ovrow" style={{ cursor: "default" }}>
@@ -76,16 +76,15 @@ export function OverlapsModule() {
               {!o.loadFirst && <span className="ovhow">{o.how}</span>}
             </span>
             <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".3em" }}>
-              {o.loadFirst && <Key size="sm" disabled={busy} onClick={() => makeWin(o)} title={`Renames ${o.loadFirst.map((x) => `${file(x.target)} to ${x.name}`).join(", ")} in the game. Undo puts the old name back.`}>Make {o.loser.name} win</Key>}
+              {o.loadFirst && <Key size="sm" disabled={busy} onClick={() => makeWin(o)} title={`Renames ${o.loadFirst.map((x) => `${file(x.target)} to ${x.name}`).join(", ")}`}>Make {o.loser.name} win</Key>}
             </span>
           </div>
         ))}
       </div>
-      {r.overlaps.length > shown.length && <button type="button" className="linkish fold-line" onClick={() => setAll(true)}>{plural(r.overlaps.length - shown.length, "more pair")}. Show all.</button>}
+      {r.overlaps.length > shown.length && <button type="button" className="linkish fold-line" onClick={() => setAll(true)}>{plural(r.overlaps.length - shown.length, "more pair")}, show all</button>}
       <p className="dim" style={{ fontSize: ".78em", marginTop: ".5em" }}>
-        {plural(r.archives, "archive")} read in {r.millis} ms.{r.sameContent ? ` ${plural(r.sameContent, "file")} two archives share byte for byte (no effect).` : ""}
-        {r.unreadable.length ? ` ${plural(r.unreadable.length, "archive")} could not be read: ${r.unreadable.map(([p]) => file(p)).join(", ")}.` : ""}
-        {" "}Making a mod win renames its archive in the game with ! in front, as players do by hand; the staged file keeps its name.
+        {plural(r.archives, "archive")} read in {r.millis} ms{r.sameContent ? `, ${plural(r.sameContent, "identical file")}` : ""}
+        {r.unreadable.length ? `. Couldn't read ${r.unreadable.map(([p]) => file(p)).join(", ")}` : ""}
       </p>
     </Module>
   );
@@ -102,7 +101,7 @@ export function RulesModule() {
   return (
     <Module icon="key" title="Your choices" count={n ? plural(n, "rule") : "none"}>
       {n === 0 ? (
-        <p className="dim" style={{ fontSize: ".88em" }}>Choices you make about mods that want the same files are kept here: Take them over in Library, and Make … win above. They hold on every deploy, profile switch and update.</p>
+        <p className="dim" style={{ fontSize: ".88em" }}>None yet</p>
       ) : (
         <div className="rows">
           {wins.map((w) => (
@@ -111,8 +110,8 @@ export function RulesModule() {
                 <span className="m-t" style={{ whiteSpace: "normal" }}><b>{w.winner}</b> <span className="dim">wins over</span> {w.loser}</span>
                 <span className="m-meta"><span>{plural(w.files, "file")} both want</span><span>since {date(w.createdAt)}</span></span>
               </span>
-              <span className="m-side"><Key size="sm" variant="ghost" icon="x" disabled={busy} title="The game stays as it is; next time these mods meet, you are asked again"
-                onClick={() => run(() => rules.forget(w.id), `Forgot that ${w.winner} wins over ${w.loser}.`)}>Forget</Key></span>
+              <span className="m-side"><Key size="sm" variant="ghost" icon="x" disabled={busy} title="You'll be asked again next time"
+                onClick={() => run(() => rules.forget(w.id), `Forgot ${w.winner} over ${w.loser}`)}>Forget</Key></span>
             </div>
           ))}
           {renames.map((x) => (
@@ -121,8 +120,8 @@ export function RulesModule() {
                 <span className="m-t">{x.name}</span>
                 <span className="m-meta"><span className="mono">{file(x.target)}</span><span className="mono">loads as {x.renamed}</span><span>since {date(x.createdAt)}</span></span>
               </span>
-              <span className="m-side"><Key size="sm" variant="ghost" icon="undo" disabled={busy} title="Gives the archive its own name back in the game"
-                onClick={() => run(() => archives.undoRename(x.modId, x.target), `${file(x.target)} has its own name again.`)}>Undo</Key></span>
+              <span className="m-side"><Key size="sm" variant="ghost" icon="undo" disabled={busy} title="Restore the original name"
+                onClick={() => run(() => archives.undoRename(x.modId, x.target), `${file(x.target)} restored`)}>Undo</Key></span>
             </div>
           ))}
         </div>

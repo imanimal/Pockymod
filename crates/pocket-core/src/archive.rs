@@ -22,7 +22,7 @@ pub fn detect(path: &Path) -> Result<Format> {
         Some("zip") => Ok(Format::Zip),
         Some("7z") => Ok(Format::SevenZ),
         Some("rar") => Ok(Format::Rar),
-        _ => Err(Error::Archive("This file is not a .zip, .7z or .rar archive.".into())),
+        _ => Err(Error::Archive("Not a .zip, .7z or .rar archive".into())),
     }
 }
 

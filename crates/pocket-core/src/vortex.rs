@@ -92,7 +92,7 @@ pub fn find(game: &Path) -> Option<Setup> {
 
 fn read_json(p: &Path) -> Result<Value> {
     let text = fs::read_to_string(p)?;
-    serde_json::from_str(&text).map_err(|e| Error::Invalid(format!("{} is not valid JSON: {e}", p.display())))
+    serde_json::from_str(&text).map_err(|e| Error::Invalid(format!("{} isn't valid JSON: {e}", p.display())))
 }
 
 fn rel_of(game: &Path, dir: &Path) -> String {
@@ -238,11 +238,11 @@ fn write_manifest(path: &Path, v: &Value, staging: Option<&Path>) -> Result<()> 
 /// The archive is also put in Vortex's downloads folder so Vortex lists it.
 pub fn update_in_place(db: &Db, game: &Path, library: &Path, setup: &Setup, install_id: i64, archive_path: &Path, archive_name: &str, new_file_id: u32, new_version: &str) -> Result<DeployOutcome> {
     let (folder, name): (String, String) = db.conn.query_row("SELECT external, name FROM installs WHERE id = ?1 AND source = 'vortex'", params![install_id], |r| Ok((r.get(0)?, r.get(1)?)))?;
-    let staging_root = setup.staging.clone().ok_or_else(|| Error::Invalid("Vortex's staging folder was not found, so the update cannot be kept in Vortex's format.".into()))?;
+    let staging_root = setup.staging.clone().ok_or_else(|| Error::Invalid("Vortex's staging folder is missing, so the update can't stay in Vortex's format".into()))?;
     let dir = staging_root.join(&folder);
     let entries = archive::list(archive_path)?;
     let plan = plan_install(&entries, &name);
-    if plan.files.is_empty() { return Err(Error::Invalid("Nothing in the new archive belongs in the game folder.".into())); }
+    if plan.files.is_empty() { return Err(Error::Invalid("Nothing in the new archive goes in the game folder".into())); }
 
     // build the new folder beside the old one, then swap, so a failure leaves Vortex's folder as it was
     let fresh = staging_root.join(format!("__pocket_{folder}"));

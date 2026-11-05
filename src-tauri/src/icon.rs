@@ -15,7 +15,7 @@ pub fn builtin(look: &str) -> &'static [u8] {
 
 /// A theme's own icon, checked: a PNG, small, square-ish and not huge.
 pub fn checked(png: &[u8]) -> pocket_core::Result<Image<'static>> {
-    let bad = |m: &str| pocket_core::Error::Invalid(format!("That theme icon cannot be used: {m}."));
+    let bad = |m: &str| pocket_core::Error::Invalid(format!("Can't use that theme icon: {m}"));
     if png.len() > 256 * 1024 { return Err(bad("it is over 256 KB")); }
     if !png.starts_with(b"\x89PNG\r\n\x1a\n") { return Err(bad("it is not a PNG")); }
     let img = Image::from_bytes(png).map_err(|e| bad(&e.to_string()))?;

@@ -1,4 +1,4 @@
-/* fx.css — the CRT and glass layer, after the Collegiapp tube (its crt.css moments: power, channel change, degauss).
+/* fx.css: the CRT and glass layer, after the Collegiapp tube (its crt.css moments: power, channel change, degauss).
    A theme suggests a level with --fx; the user can pick another in Settings, Appearance. html[data-fx]:
      off     nothing.
      subtle  faint scanlines on LCDs and the title bar, a soft vignette at the window's edge, and short flickers when

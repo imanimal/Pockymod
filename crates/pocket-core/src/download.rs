@@ -7,7 +7,7 @@ use md5::{Digest, Md5};
 use std::path::{Path, PathBuf};
 use tokio::io::AsyncWriteExt;
 
-pub const CANCELLED: &str = "Download cancelled. Retry picks it up where it stopped.";
+pub const CANCELLED: &str = "Cancelled. Retry resumes it";
 
 pub struct Downloaded { pub path: PathBuf, pub size: u64, pub md5: String }
 
@@ -64,11 +64,11 @@ async fn try_download(http: &reqwest::Client, url: &str, part: &Path, progress: 
     let have = tokio::fs::metadata(part).await.map(|m| m.len()).unwrap_or(0);
     let mut req = http.get(url);
     if have > 0 { req = req.header("Range", format!("bytes={have}-")); }
-    let resp = req.send().await.map_err(|e| Error::Network(format!("{}. Retry to resume the download.", e.without_url())))?;
+    let resp = req.send().await.map_err(|e| Error::Network(format!("{}. Retry to resume", e.without_url())))?;
     // asked for the rest of a file that is already complete
     if have > 0 && resp.status().as_u16() == 416 { progress(have, Some(have)); return Ok(()); }
     if !resp.status().is_success() {
-        return Err(Error::Http { status: resp.status().as_u16(), message: "The download server refused the link. Links from Nexus expire; try the file again.".into() });
+        return Err(Error::Http { status: resp.status().as_u16(), message: "The link expired. Try the file again".into() });
     }
     let resumed = have > 0 && resp.status().as_u16() == 206;
     let mut received = if resumed { have } else { 0 };
@@ -76,7 +76,7 @@ async fn try_download(http: &reqwest::Client, url: &str, part: &Path, progress: 
     let total = resp.content_length().map(|l| l + received);
     let mut stream = resp.bytes_stream();
     while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|e| Error::Network(format!("{}. Retry to resume the download.", e.without_url())))?;
+        let chunk = chunk.map_err(|e| Error::Network(format!("{}. Retry to resume", e.without_url())))?;
         file.write_all(&chunk).await?;
         received += chunk.len() as u64;
         // false: the user cancelled; the part stays, so starting it again resumes
@@ -86,7 +86,7 @@ async fn try_download(http: &reqwest::Client, url: &str, part: &Path, progress: 
     drop(file);
     if total.is_some_and(|t| t != received) {
         // keep the part: the next try asks for the rest
-        return Err(Error::Network(format!("The download stopped early ({received} of {} bytes). Retry to resume it.", total.unwrap_or(0))));
+        return Err(Error::Network(format!("Stopped early at {received} of {} bytes. Retry to resume", total.unwrap_or(0))));
     }
     Ok(())
 }

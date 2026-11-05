@@ -33,13 +33,13 @@ pub fn plain_problems(output: &str) -> Vec<String> {
         if !is_err { continue; }
         let text = line.trim();
         let plain = if l.contains("access is denied") || l.contains("unauthorized") {
-            "Windows blocked REDmod from writing to the game folder. Close the game, and if it is under Program Files, see Settings for the fix.".to_string()
+            "Windows blocked REDmod from writing to the game folder. Close the game. Under Program Files, see Settings".to_string()
         } else if l.contains("script") && (l.contains("compil") || l.contains("syntax")) {
-            format!("A REDmod script did not compile. A mod may be outdated for this game patch. ({text})")
+            format!("A REDmod script did not compile. A mod may be outdated for this patch ({text})")
         } else if l.contains("info.json") {
-            format!("A REDmod has a broken or missing info.json. ({text})")
+            format!("A REDmod has a broken or missing info.json ({text})")
         } else if l.contains("not found") || l.contains("cannot find") || l.contains("could not find") {
-            format!("REDmod could not find a file it needs. Reinstall the mod named in the message. ({text})")
+            format!("REDmod is missing a file. Reinstall the mod it names ({text})")
         } else {
             text.to_string()
         };
@@ -51,7 +51,7 @@ pub fn plain_problems(output: &str) -> Vec<String> {
 pub fn run_deploy(game: &Path, mods: &[String]) -> Result<RedmodResult> {
     let exe = game.join(REDMOD_EXE);
     if !exe.exists() {
-        return Err(Error::Invalid("The REDmod tool is not installed. It is a free DLC: add \"REDmod\" in Steam (DLC) or GOG Galaxy, then try again.".into()));
+        return Err(Error::Invalid("REDmod isn't installed. Add the free REDmod DLC in Steam or GOG Galaxy, then try again".into()));
     }
     let mut cmd = std::process::Command::new(&exe);
     cmd.args(deploy_args(game, mods)).current_dir(exe.parent().unwrap_or(game));

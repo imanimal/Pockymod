@@ -141,9 +141,9 @@ pub async fn vortex_profiles_import(app: AppHandle, state: State<'_, AppState>) 
     crate::commands::not_while_running()?;
     let paths = Paths::load(&state.db.lock().unwrap());
     let (game, library) = paths.require()?;
-    let dir = vortex_profiles::state_dir().ok_or_else(|| Error::Invalid("Vortex's settings folder (%APPDATA%\\Vortex\\state.v2) is not there.".into()))?;
+    let dir = vortex_profiles::state_dir().ok_or_else(|| Error::Invalid("Vortex's settings folder (%APPDATA%\\Vortex\\state.v2) is missing".into()))?;
     let list = blocking(move || vortex_profiles::read(&dir)).await?;
-    if list.is_empty() { return Err(Error::Invalid("Vortex has no profiles for Cyberpunk 2077.".into())); }
+    if list.is_empty() { return Err(Error::Invalid("Vortex has no Cyberpunk 2077 profiles".into())); }
     let db = state.db.clone();
     let o = paths.deploy_options();
     let r = blocking(move || vortex_profiles::import(&db.lock().unwrap(), &game, &library, &o, &list)).await?;
@@ -203,7 +203,7 @@ pub async fn library_bulk(app: AppHandle, state: State<'_, AppState>, install_id
             let r = match action.as_str() {
                 // on, but clashing with mods that are on: say so instead of counting it as done
                 "enable" => match profiles::set_enabled(&d, &game, &library, id, true, &opts) {
-                    Ok(Some(pocket_core::deploy::DeployOutcome::Conflicts { conflicts })) => Err(Error::Invalid(format!("{} of its files clash with other mods. Open it in Library to choose.", conflicts.len()))),
+                    Ok(Some(pocket_core::deploy::DeployOutcome::Conflicts { conflicts })) => Err(Error::Invalid(format!("{} of its files clash with other mods. Choose in Library", conflicts.len()))),
                     Ok(Some(pocket_core::deploy::DeployOutcome::NeedsCopy { reason })) => Err(Error::Invalid(reason)),
                     other => other.map(|_| ()),
                 },

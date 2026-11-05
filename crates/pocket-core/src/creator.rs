@@ -60,20 +60,20 @@ pub fn check(path: &Path, name: &str) -> Result<Check> {
     let plan = plan_install(&entries, name);
     let mut problems = Vec::new();
     let mut tips = Vec::new();
-    if crate::fomod::find_config(&entries).is_some() { tips.push("It has a FOMOD installer: players choose options. Check every option installs something.".into()); }
-    if !plan.unknown.is_empty() { problems.push(format!("{} files have no place in the game folder (for example {}). Managers skip them or stop.", plan.unknown.len(), plan.unknown[0])); }
-    if plan.files.is_empty() { problems.push("Nothing here installs into the game folder.".into()); }
+    if crate::fomod::find_config(&entries).is_some() { tips.push("Has a FOMOD installer. Check every option installs something".into()); }
+    if !plan.unknown.is_empty() { problems.push(format!("{} files have no place in the game folder, like {}. Managers skip them or stop", plan.unknown.len(), plan.unknown[0])); }
+    if plan.files.is_empty() { problems.push("Nothing here installs into the game folder".into()); }
     let loose_archives = entries.iter().filter(|e| e.to_lowercase().ends_with(".archive") && !e.to_lowercase().contains("archive/pc/mod/") && !e.to_lowercase().contains("/archives/")).count();
-    if loose_archives > 0 { tips.push(format!("{loose_archives} .archive files are not inside archive/pc/mod. Pockymod and Vortex place them, but a manual install by a player may not.")); }
+    if loose_archives > 0 { tips.push(format!("{loose_archives} .archive files are outside archive/pc/mod. Managers fix that, manual installs may not")); }
     let top: std::collections::BTreeSet<&str> = entries.iter().filter_map(|e| e.split('/').next()).collect();
     if top.len() == 1 && !["archive", "bin", "engine", "mods", "r6", "red4ext"].contains(&top.iter().next().map(|s| s.to_lowercase()).unwrap_or_default().as_str()) && entries.iter().all(|e| e.contains('/')) {
-        tips.push("Everything sits in one extra top folder. It works here, but packing from inside it (archive, r6 … at the top) suits every manager.".into());
+        tips.push("Everything sits in one extra top folder. Pack from inside it, with archive, r6 and so on at the top, so every manager reads it".into());
     }
     if plan.files.iter().any(|p| p.kind == FileKind::Redmod) && !entries.iter().any(|e| e.to_lowercase().ends_with("info.json")) {
-        problems.push("REDmod files without an info.json: the game's REDmod tool will not see the mod.".into());
+        problems.push("REDmod files without an info.json. REDmod won't see the mod".into());
     }
     if !plan.warnings.is_empty() { problems.extend(plan.warnings.iter().filter(|w| w.contains("same path")).cloned()); }
-    if entries.iter().any(|e| e.to_lowercase().ends_with(".exe") || e.to_lowercase().ends_with(".msi")) { problems.push("It contains an installer program. Nexus may hold it for a virus scan and managers will not run it.".into()); }
+    if entries.iter().any(|e| e.to_lowercase().ends_with(".exe") || e.to_lowercase().ends_with(".msi")) { problems.push("Contains an installer program. Nexus may hold it for a virus scan and managers won't run it".into()); }
     let needs = plan.uses.iter().map(|f| crate::cyberpunk::frameworks::info(*f))
         .map(|i| Needed { key: i.key, name: i.name, mod_id: i.nexus_mod_id, url: format!("https://www.nexusmods.com/{}/mods/{}", crate::GAME_DOMAIN, i.nexus_mod_id) }).collect();
     Ok(Check { files: entries.len(), plan, problems, tips, needs })
@@ -81,9 +81,9 @@ pub fn check(path: &Path, name: &str) -> Result<Check> {
 
 /// A .zip with each file at its game path (archive/pc/mod/…, r6/scripts/…). Only folders can be packed.
 pub fn package(folder: &Path, out_dir: &Path, name: &str, version: &str) -> Result<PathBuf> {
-    if !folder.is_dir() { return Err(Error::Invalid("Choose the mod's folder to pack it.".into())); }
+    if !folder.is_dir() { return Err(Error::Invalid("Choose the mod's folder to pack it".into())); }
     let c = check(folder, name)?;
-    if c.plan.files.is_empty() { return Err(Error::Invalid("Nothing in that folder installs into the game.".into())); }
+    if c.plan.files.is_empty() { return Err(Error::Invalid("Nothing in that folder installs into the game".into())); }
     fs::create_dir_all(out_dir)?;
     let file = out_dir.join(format!("{}-{}.zip", crate::cyberpunk::layout::safe_folder(name).replace(' ', "_"), version.replace(' ', "")));
     let mut z = zip::ZipWriter::new(fs::File::create(&file)?);
@@ -158,7 +158,7 @@ pub async fn publish(http: &reqwest::Client, key: &str, p: &Publish, mut progres
         let r = api(reqwest::Method::GET, &format!("/uploads/{id}")).send().await?;
         let v: serde_json::Value = r.json().await.unwrap_or_default();
         if v["data"]["state"] == "available" { break; }
-        if wait > 120_000 { return Err(Error::Invalid("Nexus is still processing the upload. Check the mod page in a few minutes.".into())); }
+        if wait > 120_000 { return Err(Error::Invalid("Nexus is still processing the upload. Check the mod page in a few minutes".into())); }
         tokio::time::sleep(std::time::Duration::from_millis(wait)).await;
         wait = (wait as f64 * 1.5) as u64;
     }

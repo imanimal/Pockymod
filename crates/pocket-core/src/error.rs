@@ -5,13 +5,13 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// Errors the UI shows in plain language. `kind` lets the UI pick a band colour or a fix key.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Nexus is limiting requests. Try again after {until}.")]
+    #[error("Nexus is limiting requests. Try again after {until}")]
     Throttled { until: String },
-    #[error("No Nexus API key is set. Add one in Settings.")]
+    #[error("No Nexus API key. Add one in Settings")]
     NoKey,
-    #[error("Nexus did not accept the API key.")]
+    #[error("Nexus rejected the API key")]
     BadKey,
-    #[error("This needs a Nexus Premium account.")]
+    #[error("Needs Nexus Premium")]
     NeedsPremium,
     #[error("Nexus answered {status}: {message}")]
     Http { status: u16, message: String },

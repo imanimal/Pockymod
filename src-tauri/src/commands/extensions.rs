@@ -71,14 +71,14 @@ pub async fn ext_state_set(app: AppHandle, id: String, state: Option<ExtState>) 
 fn approved(app: &AppHandle, id: &str) -> Result<(Value, ExtState)> {
     super::addons::check_id(id)?;
     let f = addons_dir(app)?.join("extension").join(format!("{id}.json"));
-    let text = std::fs::read_to_string(&f).map_err(|_| Error::Invalid("That extension is not installed.".into()))?;
+    let text = std::fs::read_to_string(&f).map_err(|_| Error::Invalid("That extension isn't installed".into()))?;
     let m: Value = serde_json::from_str(&text).map_err(|e| Error::Invalid(format!("The extension file is broken: {e}")))?;
-    if m["format"] != "pocket-mods.extension" { return Err(Error::Invalid("That is not a Pockymod extension.".into())); }
+    if m["format"] != "pocket-mods.extension" { return Err(Error::Invalid("Not a Pockymod extension".into())); }
     let st = load_states(app)?.remove(id).unwrap_or_default();
     let release = m["release"].as_str().unwrap_or_default();
-    if !st.enabled { return Err(Error::Invalid("That extension is turned off. Turn it on in Add-ons.".into())); }
+    if !st.enabled { return Err(Error::Invalid("That extension is off. Turn it on in Add-ons".into())); }
     if st.approved_release.as_deref() != Some(release) || approval_items(&m).iter().any(|i| !st.approved.contains(i)) {
-        return Err(Error::Invalid("That extension changed since you approved it. Review it in Add-ons first.".into()));
+        return Err(Error::Invalid("That extension changed since you approved it. Review it in Add-ons".into()));
     }
     Ok((m, st))
 }
@@ -103,7 +103,7 @@ pub fn approval_items(m: &Value) -> Vec<String> {
 /// An entry of `contributes.<list>` by id.
 fn find<'a>(m: &'a Value, list: &str, id: &str) -> Result<&'a Value> {
     m["contributes"][list].as_array().and_then(|a| a.iter().find(|x| x["id"].as_str() == Some(id)))
-        .ok_or_else(|| Error::Invalid("The extension does not list that.".into()))
+        .ok_or_else(|| Error::Invalid("The extension doesn't list that".into()))
 }
 
 /// Arguments are passed straight to the program (no shell). Quotes, control characters and very long values are
@@ -117,13 +117,13 @@ fn check_arg(a: &str) -> Result<()> {
 
 fn args_of(v: &Value, game: Option<&Path>) -> Result<Vec<String>> {
     let list = v["args"].as_array().cloned().unwrap_or_default();
-    if list.len() > 24 { return Err(Error::Invalid("The extension lists too many arguments.".into())); }
+    if list.len() > 24 { return Err(Error::Invalid("Too many arguments".into())); }
     let mut out = Vec::new();
     for a in list {
-        let a = a.as_str().ok_or_else(|| Error::Invalid("An argument is not text.".into()))?;
+        let a = a.as_str().ok_or_else(|| Error::Invalid("An argument isn't text".into()))?;
         check_arg(a)?;
         let a = if a.contains("{game}") {
-            let g = game.ok_or_else(|| Error::Invalid("Set the Cyberpunk 2077 folder in Settings first.".into()))?;
+            let g = game.ok_or_else(|| Error::Invalid("Set the Cyberpunk 2077 folder in Settings first".into()))?;
             a.replace("{game}", &g.to_string_lossy())
         } else { a.to_string() };
         out.push(a);
@@ -134,7 +134,7 @@ fn args_of(v: &Value, game: Option<&Path>) -> Result<Vec<String>> {
 /// A path inside the game folder: relative, no `..`, no drive or root.
 fn inside(game: &Path, rel: &str) -> Result<PathBuf> {
     let p = Path::new(rel);
-    let bad = || Error::Invalid("A tool's path must be inside the game folder, like tools/x/x.exe.".into());
+    let bad = || Error::Invalid("A tool's path must be inside the game folder, like tools/x/x.exe".into());
     // no drive, root, "..", or ":" (a stream name); then, with links and junctions resolved, still inside the game
     if rel.is_empty() || rel.contains(':') || p.components().any(|c| !matches!(c, Component::Normal(_))) { return Err(bad()); }
     let full = game.join(p);
@@ -144,23 +144,23 @@ fn inside(game: &Path, rel: &str) -> Result<PathBuf> {
 
 fn tool_program(tool: &Value, st: &ExtState, tool_id: &str, game: Option<&Path>) -> Result<PathBuf> {
     let exe = if let Some(rel) = tool["path"].as_str() {
-        let g = game.ok_or_else(|| Error::Invalid("Set the Cyberpunk 2077 folder in Settings first.".into()))?;
+        let g = game.ok_or_else(|| Error::Invalid("Set the Cyberpunk 2077 folder in Settings first".into()))?;
         inside(g, rel)?
     } else if tool.get("pick").is_some() {
-        let p = st.tool_paths.get(tool_id).ok_or_else(|| Error::Invalid("Choose where this program is first (Add-ons, Installed).".into()))?;
+        let p = st.tool_paths.get(tool_id).ok_or_else(|| Error::Invalid("Choose where this program is first in Add-ons, Installed".into()))?;
         let p = PathBuf::from(p);
-        if !p.is_absolute() { return Err(Error::Invalid("The program's path is not a full path.".into())); }
+        if !p.is_absolute() { return Err(Error::Invalid("The program's path isn't a full path".into())); }
         if let Some(want) = tool["pick"]["file"].as_str() {
             let name = p.file_name().and_then(|n| n.to_str()).unwrap_or_default();
-            if !name.eq_ignore_ascii_case(want) { return Err(Error::Invalid(format!("This tool starts {want}; choose that file."))); }
+            if !name.eq_ignore_ascii_case(want) { return Err(Error::Invalid(format!("This tool starts {want}. Choose that file"))); }
         }
         p
     } else {
-        return Err(Error::Invalid("The tool has no program.".into()));
+        return Err(Error::Invalid("The tool has no program".into()));
     };
-    if !exe.is_file() { return Err(Error::Invalid(format!("{} was not found.", exe.display()))); }
+    if !exe.is_file() { return Err(Error::Invalid(format!("{} not found", exe.display()))); }
     if cfg!(windows) && !exe.extension().and_then(|x| x.to_str()).is_some_and(|x| x.eq_ignore_ascii_case("exe")) {
-        return Err(Error::Invalid("Only .exe programs can be started.".into()));
+        return Err(Error::Invalid("Only .exe programs can start".into()));
     }
     Ok(exe)
 }
@@ -205,7 +205,7 @@ pub async fn ext_launch(app: AppHandle, state: State<'_, AppState>, ext_id: Stri
         deployed = Some(r);
     }
     let exe = game.join(pocket_core::cyberpunk::game::EXE);
-    if !exe.exists() { return Err(Error::Invalid("Cyberpunk2077.exe was not found. Check the game folder in Settings.".into())); }
+    if !exe.exists() { return Err(Error::Invalid("Cyberpunk2077.exe not found. Check the game folder in Settings".into())); }
     let mut all = Vec::new();
     if redmods && !args.iter().any(|a| a == "-modded") { all.push("-modded".to_string()); }
     all.extend(args);
@@ -222,8 +222,8 @@ pub async fn ext_open_link(app: AppHandle, ext_id: String, link_id: String) -> R
         Some(tool) => find(&m, "tools", tool)?["download"].as_str().map(str::to_owned),
         None => find(&m, "links", &link_id)?["url"].as_str().map(str::to_owned),
     };
-    let url = url::Url::parse(&raw.unwrap_or_default()).map_err(|_| Error::Invalid("That link is not a web address.".into()))?;
-    if url.scheme() != "https" { return Err(Error::Invalid("Only https links open.".into())); }
+    let url = url::Url::parse(&raw.unwrap_or_default()).map_err(|_| Error::Invalid("Not a web address".into()))?;
+    if url.scheme() != "https" { return Err(Error::Invalid("Only https links open".into())); }
     open_in_browser(url.as_str())
 }
 
@@ -245,7 +245,7 @@ pub fn browser_url_allowed(url: &str) -> Option<String> {
 /// Open a page in the default browser. Only this project's GitHub pages and Nexus Mods pages.
 #[tauri::command]
 pub async fn open_external(url: String) -> Result<()> {
-    let ok = browser_url_allowed(&url).ok_or_else(|| Error::Invalid("Only this project's GitHub pages and Nexus Mods pages open from here.".into()))?;
+    let ok = browser_url_allowed(&url).ok_or_else(|| Error::Invalid("Only this project's GitHub and Nexus Mods pages open from here".into()))?;
     open_in_browser(&ok)
 }
 
@@ -253,7 +253,7 @@ pub async fn open_external(url: String) -> Result<()> {
 /// elsewhere `open` or `xdg-open`.
 pub(crate) fn open_in_browser(url: &str) -> Result<()> {
     if !(url.starts_with("https://") || url.starts_with("http://")) || url.chars().any(|c| c.is_whitespace() || c.is_control() || c == '"') {
-        return Err(Error::Invalid("That is not a web address the app opens.".into()));
+        return Err(Error::Invalid("The app doesn't open that address".into()));
     }
     #[cfg(windows)]
     let r = {
@@ -313,7 +313,7 @@ pub fn panel_protocol(app: &AppHandle, request: Request<Vec<u8>>) -> Response<Ve
     let dest = request.headers().get("sec-fetch-dest").and_then(|v| v.to_str().ok()).unwrap_or("iframe").to_ascii_lowercase();
     if dest != "iframe" && dest != "frame" && dest != "empty" {
         return Response::builder().status(StatusCode::FORBIDDEN).header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
-            .body(b"A panel opens only inside Pockymod' Add-ons screen.".to_vec()).unwrap_or_else(|_| Response::new(Vec::new()));
+            .body(b"Panels only open in Add-ons".to_vec()).unwrap_or_else(|_| Response::new(Vec::new()));
     }
     let page = panel_page(app, request.uri().path());
     let (status, kind, body) = match page {

@@ -35,7 +35,7 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
       if (mode === "review") await approveExtension(m.id, paths);
       else await installExtension(text, { approve: true, fromMarket, toolPaths: paths });
       if (fromMarket) await recordVersion("extension", m.id, m.release).catch(() => {});
-      toast(mode === "update" ? `${m.name} is updated to ${m.release}.` : `${m.name} is on.${(m.contributes.tools?.length || m.contributes.launchOptions?.length) ? " Its tools are in the Play menu." : ""}`);
+      toast(mode === "update" ? `${m.name} updated to ${m.release}` : `${m.name} on${(m.contributes.tools?.length || m.contributes.launchOptions?.length) ? ". Tools are in the Play menu" : ""}`);
       onDone?.(m);
       onClose();
     } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
@@ -52,7 +52,7 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
         </span>
       </div>
       {m.description && <p>{m.description}</p>}
-      {mode !== "install" && fresh && fresh.length > 0 && <div className="note warn">Marked <b>New</b>: things this release needs that you have not allowed before.</div>}
+      {mode !== "install" && fresh && fresh.length > 0 && <div className="note warn"><b>New</b> means you haven't allowed it before</div>}
       {warnings.length > 0 && <div className="note">{warnings.slice(0, 3).map((w) => <div key={w}>{w}</div>)}</div>}
 
       <div className="ext-sec">
@@ -62,7 +62,7 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
       <div className="ext-sec">
         <div className="ext-sec-h"><Icon name="key" size={9} /> What it can do</div>
         <PermissionList perms={m.permissions ?? []} fresh={fresh} />
-        {hasPanels && <p className="dim ext-fine">Panels run in a sandbox: no web requests, no files, no access to the app except the permissions above.</p>}
+        {hasPanels && <p className="dim ext-fine">Panels are sandboxed. No web, no files, only the permissions above</p>}
       </div>
 
       {picks.length > 0 && (
@@ -70,7 +70,7 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
           <div className="ext-sec-h"><Icon name="folder" size={9} /> Programs to find</div>
           {picks.map((t) => (
             <div key={t.id} className="ext-pick">
-              <span className="m-main"><span className="m-t">{t.name}</span><span className="dim mono ext-path">{paths[t.id] ?? "Not chosen yet. You can choose it later in Installed."}</span></span>
+              <span className="m-main"><span className="m-t">{t.name}</span><span className="dim mono ext-path">{paths[t.id] ?? "Not chosen, can be set later"}</span></span>
               <Key size="sm" icon="folder" onClick={() => choose(t.id, t.pick?.title ?? `Find ${t.pick?.file ?? t.name}`)}>{paths[t.id] ? "Change" : `Choose ${t.pick?.file ?? "program"}`}</Key>
             </div>
           ))}

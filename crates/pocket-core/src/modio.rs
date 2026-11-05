@@ -56,7 +56,7 @@ impl Client {
         Ok(Client { http, key })
     }
     pub fn from_store() -> Result<Self> {
-        let key = key_store().get()?.ok_or_else(|| Error::Invalid("Add a mod.io API key in Settings first.".into()))?;
+        let key = key_store().get()?.ok_or_else(|| Error::Invalid("Add a mod.io API key in Settings first".into()))?;
         Self::new(key)
     }
 
@@ -65,7 +65,7 @@ impl Client {
         q.extend(query.iter().cloned());
         let resp = self.http.get(format!("{BASE}{path}")).query(&q).send().await?;
         let status = resp.status().as_u16();
-        if status == 401 || status == 403 { return Err(Error::Invalid("mod.io did not accept the API key.".into())); }
+        if status == 401 || status == 403 { return Err(Error::Invalid("mod.io rejected the API key".into())); }
         if !resp.status().is_success() { return Err(Error::Http { status, message: "mod.io request failed".into() }); }
         resp.json().await.map_err(Error::from)
     }

@@ -29,7 +29,7 @@ impl NxmLink {
             _ => (None, None),
         };
         let (Some(mod_id), Some(file_id)) = (mod_id, file_id) else {
-            return Err(Error::Invalid("This nxm link is not for a mod file (collections are opened from the Collections view)".into()));
+            return Err(Error::Invalid("Not a mod file link. Open collections from Collections".into()));
         };
         let mut link = NxmLink { game, mod_id, file_id, key: None, expires: None, user_id: None };
         for (k, v) in u.query_pairs() {

@@ -170,7 +170,7 @@ pub fn fomod_options(db: &Db, install_id: i64) -> Result<FomodOptions> {
     let (staging, name): (String, String) = db.conn.query_row("SELECT staging, name FROM installs WHERE id = ?1", params![install_id], |r| Ok((r.get(0)?, r.get(1)?)))?;
     let st = Path::new(&staging);
     let entries = staged_files(st);
-    let cfg = crate::fomod::find_config(&entries).ok_or_else(|| Error::Invalid(format!("{name} has no installer options to change.")))?;
+    let cfg = crate::fomod::find_config(&entries).ok_or_else(|| Error::Invalid(format!("{name} has no installer options")))?;
     let fomod = crate::fomod::parse(&crate::fomod::decode(&fs::read(st.join(&cfg))?), &cfg)?;
     let saved: Option<Vec<[usize; 3]>> = fs::read_to_string(st.join(CHOICES_FILE)).ok()
         .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok()).and_then(|v| serde_json::from_value(v["choices"].clone()).ok());
@@ -185,10 +185,10 @@ pub fn fomod_options(db: &Db, install_id: i64) -> Result<FomodOptions> {
 /// Returns the deploy outcome (None when the mod is off). If deploying fails, the old picks are put back.
 pub fn change_fomod(db: &Db, game: &Path, library: &Path, install_id: i64, choices: &[[usize; 3]], opts: &DeployOptions) -> Result<Option<DeployOutcome>> {
     let (staging, name, source): (String, String, String) = db.conn.query_row("SELECT staging, name, source FROM installs WHERE id = ?1", params![install_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
-    if source != "pocket" { return Err(Error::Invalid(format!("{name} was not installed by Pockymod, so its installer is not kept."))); }
+    if source != "pocket" { return Err(Error::Invalid(format!("{name} wasn't installed by Pockymod, so there's no installer to rerun"))); }
     let st = Path::new(&staging);
     let entries = staged_files(st);
-    let cfg = crate::fomod::find_config(&entries).ok_or_else(|| Error::Invalid(format!("{name} has no installer options to change.")))?;
+    let cfg = crate::fomod::find_config(&entries).ok_or_else(|| Error::Invalid(format!("{name} has no installer options")))?;
     let f = crate::fomod::parse(&crate::fomod::decode(&fs::read(st.join(&cfg))?), &cfg)?;
     let files = crate::fomod::resolve(&f, choices, &entries)?;
     let plan = crate::cyberpunk::layout::summarize(files.clone());
@@ -213,7 +213,7 @@ pub fn change_fomod(db: &Db, game: &Path, library: &Path, install_id: i64, choic
 
 pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Result<InstallOutcome> {
     if !game.join("bin/x64").exists() && !game.join("bin").exists() {
-        return Err(Error::Invalid(format!("{} does not look like the Cyberpunk 2077 folder (no bin\\x64). Set the game folder in Settings.", game.display())));
+        return Err(Error::Invalid(format!("{} isn't the Cyberpunk 2077 folder (no bin\\x64). Set it in Settings", game.display())));
     }
     let entries = archive::list(&req.archive)?;
     let staging = staging_dir(library, req.mod_id, req.file_id);
@@ -235,7 +235,7 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
         }
     } else {
         let plan = plan_install(&entries, &req.name);
-        if plan.files.is_empty() { return Err(Error::Invalid("Nothing in this archive belongs in the game folder. It may need a manual install; see the mod's page.".into())); }
+        if plan.files.is_empty() { return Err(Error::Invalid("Nothing in this archive goes in the game folder. Check the mod's page for manual steps".into())); }
         if !plan.unknown.is_empty() && !req.accept_unknown { return Ok(InstallOutcome::NeedsReview { plan }); }
         // extract to a fresh folder, then swap it in
         let _ = fs::remove_dir_all(&fresh);
@@ -397,7 +397,7 @@ pub fn restore_replaced(db: &Db, game: &Path, library: &Path, install_id: i64) -
         let v = st.query_map(params![install_id], |r| r.get(0))?.collect::<std::result::Result<_, _>>()?;
         v
     };
-    if files.is_empty() { return Err(Error::Invalid(format!("{name} did not replace any of your files."))); }
+    if files.is_empty() { return Err(Error::Invalid(format!("{name} didn't replace any of your files"))); }
     // files Vortex deployed go back to Vortex (the undeploy below restores them); they are not a new mod of the user's
     let vortex: std::collections::BTreeSet<String> = crate::vortex::find(game)
         .map(|s| crate::vortex::list_mods(&s, game).into_iter().filter(|m| m.deployed).flat_map(|m| m.files).map(|f| f.to_lowercase()).collect())
@@ -554,12 +554,12 @@ pub fn list_trash(db: &Db) -> Result<Vec<TrashRow>> {
 /// entries, and into the game when it was on in the active profile. Returns the install id.
 pub fn restore_trash(db: &Db, game: &Path, library: &Path, trash_id: i64, opts: &DeployOptions) -> Result<i64> {
     let (old_id, data, kept, reason): (i64, String, Option<String>, String) = db.conn.query_row("SELECT install_id, data, kept, reason FROM trash WHERE id = ?1", params![trash_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
-        .optional()?.ok_or_else(|| Error::Invalid("That mod is no longer in Recently removed.".into()))?;
+        .optional()?.ok_or_else(|| Error::Invalid("That mod is no longer in Recently removed".into()))?;
     let v: serde_json::Value = serde_json::from_str(&data).map_err(|e| Error::Decode(e.to_string()))?;
     let staging = PathBuf::from(v["staging"].as_str().unwrap_or(""));
     let (mod_id, file_id) = (v["modId"].as_u64().unwrap_or(0) as u32, v["fileId"].as_u64().unwrap_or(0) as u32);
     let taken: Option<i64> = db.conn.query_row("SELECT id FROM installs WHERE mod_id = ?1 AND file_id = ?2", params![mod_id, file_id], |r| r.get(0)).optional()?;
-    if let Some(id) = taken { return Err(Error::Invalid(format!("{} is installed again already (install {id}). Remove that one first.", v["name"].as_str().unwrap_or("This mod")))); }
+    if let Some(id) = taken { return Err(Error::Invalid(format!("{} is already installed again (install {id}). Remove that one first", v["name"].as_str().unwrap_or("This mod")))); }
     // the folder it lived in may belong to a live install now (found installs are named by mod name): never delete
     // that, put this one beside it
     let mut staging = staging;
@@ -570,9 +570,9 @@ pub fn restore_trash(db: &Db, game: &Path, library: &Path, trash_id: i64, opts: 
         if let Some(p) = staging.parent() { fs::create_dir_all(p)?; }
         fs::rename(k, &staging).map_err(|e| Error::Invalid(format!("Could not put the files back: {e}")))?;
     } else if v["source"] != "vortex" {
-        return Err(Error::Invalid("Its files were not kept, so it cannot be put back. Install it again from Browse.".into()));
+        return Err(Error::Invalid("Its files are gone. Install it again from Browse".into()));
     } else if !staging.exists() {
-        return Err(Error::Invalid("Its folder is no longer in Vortex's mods folder.".into()));
+        return Err(Error::Invalid("Its folder is no longer in Vortex's mods folder".into()));
     }
     let free: bool = db.conn.query_row("SELECT NOT EXISTS(SELECT 1 FROM installs WHERE id = ?1)", params![old_id], |r| r.get(0))?;
     db.conn.execute(
@@ -1003,7 +1003,7 @@ pub fn custom_groups(db: &Db) -> Result<Vec<String>> {
 
 pub fn create_group(db: &Db, name: &str) -> Result<()> {
     let n = name.trim();
-    if n.is_empty() { return Err(Error::Invalid("A group needs a name.".into())); }
+    if n.is_empty() { return Err(Error::Invalid("A group needs a name".into())); }
     db.conn.execute("INSERT OR IGNORE INTO groups (name, sort) VALUES (?1, (SELECT COALESCE(MAX(sort), 0) + 1 FROM groups))", params![n])?;
     Ok(())
 }
@@ -1011,7 +1011,7 @@ pub fn create_group(db: &Db, name: &str) -> Result<()> {
 /// Rename a group; mods in it move with it. Deleting one sends its mods back to their preset groups.
 pub fn rename_group(db: &Db, from: &str, to: &str) -> Result<()> {
     let to = to.trim();
-    if to.is_empty() { return Err(Error::Invalid("A group needs a name.".into())); }
+    if to.is_empty() { return Err(Error::Invalid("A group needs a name".into())); }
     db.conn.execute("UPDATE groups SET name = ?2 WHERE name = ?1", params![from, to])?;
     db.conn.execute("UPDATE installs SET group_name = ?2 WHERE group_name = ?1", params![from, to])?;
     Ok(())

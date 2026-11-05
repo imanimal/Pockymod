@@ -479,3 +479,12 @@ html.pad .padbar { display: flex; }
 .lb-video > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
 .lb-video-keys { position: relative; display: flex; gap: .7em; flex-wrap: wrap; justify-content: center; }
 .lb-video-pref { position: absolute; left: .9em; bottom: .8em; display: flex; align-items: center; gap: .4em; font-size: .84em; color: #ece6da; cursor: pointer; }
+
+/* adult pictures with Settings on Blur: blurred until the card is opened and Show is pressed */
+.veiled img, .veil img, .veil video, .veil iframe, img.veiled-img { filter: blur(22px) saturate(.6); }
+.mcard-img.veiled img, .hero-pic.veiled img { transform: scale(1.1); }
+.mcard-badge.l { right: auto; left: .5em; }
+.veil { position: relative; overflow: hidden; }
+.veil-k { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .5em; border: 0; cursor: pointer;
+  background: color-mix(in srgb, var(--surface) 30%, transparent); color: var(--text); font: inherit; font-weight: 600; }
+.veil-k:hover, .veil-k:focus-visible { background: color-mix(in srgb, var(--surface) 10%, transparent); }

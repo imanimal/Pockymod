@@ -23,8 +23,8 @@ export function PlayKey({ onHealth }: { onHealth: () => void }) {
     try {
       const r = opt ? await extensionsApi.launch(opt.extId, opt.id) : await launchGame();
       notePlayed();
-      if (!r.started && r.redmod) toast(`The REDmod deploy reported problems: ${r.redmod.problems[0] ?? "see Load order"}. The game was not started.`, true);
-      else toast(`${r.modded ? "Starting Cyberpunk 2077 with REDmods" : "Starting Cyberpunk 2077"}${opt ? `: ${opt.name}` : ""}.`);
+      if (!r.started && r.redmod) toast(`REDmod deploy failed, game not started: ${r.redmod.problems[0] ?? "see Load order"}`, true);
+      else toast(`${r.modded ? "Starting Cyberpunk 2077 with REDmods" : "Starting Cyberpunk 2077"}${opt ? `, ${opt.name}` : ""}`);
       setProblems(null);
     } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
   };
@@ -39,7 +39,7 @@ export function PlayKey({ onHealth }: { onHealth: () => void }) {
   };
   return (
     <span className="playkey">
-      <Key variant="dark" icon="play" className="play-key" onClick={() => void check()} disabled={busy} title="Check for problems, then start the game with your mods">{busy ? "Starting" : "Play"}</Key>
+      <Key variant="dark" icon="play" className="play-key" onClick={() => void check()} disabled={busy} title="Check for problems and start the game">{busy ? "Starting" : "Play"}</Key>
       <PlayMenu onLaunch={(o) => void check(o)} disabled={busy} />
       {problems && (
         <Dialog icon="warn" title="Before you play" count={plural(problems.length, "problem")} band="bad" onClose={() => setProblems(null)}>
@@ -63,7 +63,7 @@ export async function startTool(t: Contributions["tools"][number]) {
       await setToolPath(t.extId, t.id, p);
     }
     await extensionsApi.startTool(t.extId, t.id);
-    toast(`Starting ${t.name}.`);
+    toast(`Starting ${t.name}`);
   } catch (e) { toast(errorText(e), true); }
 }
 
@@ -91,7 +91,7 @@ export function PlayMenu({ onLaunch, disabled }: { onLaunch: (o: LaunchChoice) =
       <Key size="sm" variant="dark" icon="down" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="More ways to play" title="Launch options and tools" disabled={disabled} />
       {open && (
         <div className="playmenu panel" role="menu">
-          <div className="ph"><span className="pt"><Icon name="play" />Play</span><span className="cnt">from your add-ons</span></div>
+          <div className="ph"><span className="pt"><Icon name="play" />Play</span><span className="cnt">add-ons</span></div>
           <div className="pb">
             {launchOptions.length > 0 && <div className="grp">Start the game with</div>}
             {launchOptions.map((o) => (
@@ -103,7 +103,7 @@ export function PlayMenu({ onLaunch, disabled }: { onLaunch: (o: LaunchChoice) =
             {tools.length > 0 && <div className="grp">Tools</div>}
             {tools.map((t) => (
               <button key={`${t.extId}/${t.id}`} type="button" role="menuitem" className="row" onClick={() => { setOpen(false); void startTool(t); }} title={t.description ?? t.extName}>
-                <span className="m-main"><span className="m-t">{t.name}</span><span className="m-meta"><span>{t.ready ? (t.path ? "In the game folder" : "Your copy") : `Choose ${t.pick?.file ?? "the program"} first`}</span><span>{t.extName}</span></span></span>
+                <span className="m-main"><span className="m-t">{t.name}</span><span className="m-meta"><span>{t.ready ? (t.path ? "Game folder" : "Your copy") : `Find ${t.pick?.file ?? "the program"} first`}</span><span>{t.extName}</span></span></span>
                 <Icon name={t.ready ? "chevron" : "folder"} size={9} />
               </button>
             ))}
@@ -119,7 +119,7 @@ export function PlayMenu({ onLaunch, disabled }: { onLaunch: (o: LaunchChoice) =
       )}
       {cmds && (
         <Dialog icon="file" title="Console commands" count={`${commandPacks.length} packs`} onClose={() => setCmds(false)}>
-          <p className="dim">Copy one, then paste it in the Cyber Engine Tweaks console in game.</p>
+          <p className="dim">Copy one, paste it in the CET console</p>
           {commandPacks.map((p) => (
             <div key={`${p.extId}/${p.id}`} className="stack" style={{ gap: ".3em" }}>
               <div className="sub-h">{p.title} <span className="dim">· {p.extName}</span></div>

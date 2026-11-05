@@ -20,7 +20,7 @@ pub fn modio_has_key() -> Result<bool> { Ok(modio::key_store().get()?.is_some())
 #[tauri::command]
 pub async fn modio_set_key(key: String) -> Result<Option<Game>> {
     let key = key.trim().to_owned();
-    if key.len() < 8 { return Err(Error::Invalid("That does not look like a mod.io API key.".into())); }
+    if key.len() < 8 { return Err(Error::Invalid("That isn't a mod.io API key".into())); }
     // keep the key only if mod.io accepts it
     let c = modio::Client::new(Secret::new(key.clone()))?;
     let g = c.find_game().await?;

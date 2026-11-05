@@ -49,7 +49,7 @@ pub async fn media_browse(state: State<'_, AppState>, kind: String, sort: String
 /// week (half an hour when the page could not be read).
 #[tauri::command]
 pub async fn link_preview(state: State<'_, AppState>, url: String) -> Result<LinkPreview> {
-    let u = links::safe_url(&url).ok_or_else(|| Error::Invalid("That link is not a public web address.".into()))?;
+    let u = links::safe_url(&url).ok_or_else(|| Error::Invalid("Not a public web address".into()))?;
     let key = format!("link:{u}");
     let now = pocket_core::db::now();
     let hit = state.db.lock().unwrap().cache_get(&key, 7 * 86400, now)?.and_then(|b| serde_json::from_str::<LinkPreview>(&b).ok());
@@ -65,7 +65,7 @@ pub async fn link_preview(state: State<'_, AppState>, url: String) -> Result<Lin
                 author: d.author.or(d.uploader.map(|x| x.name)), mod_id: Some(id), downloads: Some(d.downloads), endorsements: Some(d.endorsements), error: None,
             },
             None => LinkPreview { url: url.clone(), final_url: u.to_string(), kind: "mod".into(), site: Some("Nexus Mods".into()), mod_id: Some(id),
-                error: Some("Nexus did not answer for this mod.".into()), ..Default::default() },
+                error: Some("Nexus didn't answer for this mod".into()), ..Default::default() },
         },
         None => links::fetch(links::client(), &u).await,
     };
@@ -85,6 +85,6 @@ async fn nexus_mod(state: &State<'_, AppState>, id: u32) -> Option<pocket_core::
 /// Open a link the user clicked in a description, in their own browser. Any public http or https address.
 #[tauri::command]
 pub async fn open_link(url: String) -> Result<()> {
-    let u = links::safe_url(&url).ok_or_else(|| Error::Invalid("That link is not a web address the app opens.".into()))?;
+    let u = links::safe_url(&url).ok_or_else(|| Error::Invalid("The app doesn't open that link".into()))?;
     crate::commands::extensions::open_in_browser(u.as_str())
 }

@@ -74,7 +74,7 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
     if (e.kind === "theme") {
       const was = themeVersion(e.id);
       const r = await installTheme(pkg, e);
-      toast(was !== undefined ? `${r.name} is updated to ${e.version}.` : `${r.name} is installed. Pick it in Settings, under Look.`);
+      toast(was !== undefined ? `${r.name} updated to ${e.version}` : `${r.name} installed. Pick it in Settings, Look`);
       return;
     }
     const c = checkExtensionText(pkg);
@@ -83,7 +83,7 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
     if (have && have.manifest && newApprovals(c.manifest, have.state).length === 0 && have.state.approvedRelease) {
       await installExtension(pkg, { approve: false, fromMarket: true });
       await recordVersion("extension", e.id, c.manifest.release);
-      toast(`${c.manifest.name} is updated to ${c.manifest.release}.`);
+      toast(`${c.manifest.name} updated to ${c.manifest.release}`);
       return;
     }
     setReview({ manifest: c.manifest, text: pkg, mode: have ? "update" : "install", fromMarket: true, warnings: c.warnings });
@@ -93,18 +93,18 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
     const f = await pickTextFile("Install a theme or extension", ["json"]);
     if (!f) return;
     let format: unknown;
-    try { format = (JSON.parse(f.text) as { format?: unknown }).format; } catch { throw new Error("That file is not valid JSON."); }
+    try { format = (JSON.parse(f.text) as { format?: unknown }).format; } catch { throw new Error("Not valid JSON"); }
     if (format === "pocket-mods.theme") {
       const c = checkThemeText(f.text);
       if (!c.pkg) { setFileErrors({ kind: "theme", errors: c.errors }); return; }
       const r = await installTheme(f.text);
-      toast(`${r.name} is installed. Pick it in Settings, under Look.`);
+      toast(`${r.name} installed. Pick it in Settings, Look`);
       setTab("installed");
     } else if (format === "pocket-mods.extension") {
       const c = checkExtensionText(f.text);
       if (!c.manifest) { setFileErrors({ kind: "extension", errors: c.errors }); return; }
       setReview({ manifest: c.manifest, text: f.text, mode: extOf(c.manifest.id) ? "update" : "install", fromMarket: false, warnings: c.warnings });
-    } else throw new Error("That is not a Pockymod theme or extension (its format field says what it is).");
+    } else throw new Error("Not a Pockymod theme or extension");
   });
 
   const match = (e: MarketEntry) => {
@@ -139,12 +139,12 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
         ))}
       </div>
 
-      {!panel && ixErr && <div className="note bad">The marketplace could not be loaded: {ixErr} <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>}
+      {!panel && ixErr && <div className="note bad">Couldn't load the marketplace ({ixErr}) <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>}
       {!panel && ix?.source === "offline" && (tab === "themes" || tab === "extensions") && (
-        <div className="note warn">The marketplace could not be reached, so this is the copy saved the last time it was. <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>
+        <div className="note warn">Offline, showing the last saved copy <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>
       )}
       {!panel && ix?.source === "bundled" && (tab === "themes" || tab === "extensions") && (
-        <div className="note">This is the marketplace that came with this version of the app: the online one is not published yet or could not be reached. Its pictures may be missing. <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>
+        <div className="note">Offline, showing the built-in copy <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>
       )}
 
       {panel ? <PanelHost key={`${panel.extId}/${panel.id}/${panel.release}`} panel={panel} />
@@ -152,12 +152,12 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
           <Installed ext={ext.list} themes={themes} versions={versions} index={ix?.index ?? null} updates={updates} busy={busy}
             onUpdate={installEntry} onShare={setShare} onRemoveExt={setRemoving} onCommands={setCmds} onNavigate={onNavigate}
             onOpenPanel={(id) => setTab(`panel:${id}`)} onReview={(x) => x.manifest && setReview({ manifest: x.manifest, text: x.text, mode: "review", fromMarket: x.state.fromMarket, warnings: x.warnings })}
-            onRemoveTheme={(t) => run(`theme:${t.id}`, async () => { await removeTheme(t.id); toast(`${t.pkg.name} is removed.`); })}
+            onRemoveTheme={(t) => run(`theme:${t.id}`, async () => { await removeTheme(t.id); toast(`${t.pkg.name} removed`); })}
             onBrowse={() => setTab("extensions")} />
         ) : (
           <MarketGrid kind={tab === "themes" ? "theme" : "extension"} entries={list(tab === "themes" ? "themes" : "extensions")} loaded={!!ix || !!ixErr}
             installedVersion={installedVersion} busy={busy} onInstall={installEntry} searching={!!text.trim()} onMake={() => setMake(true)}
-            onRemove={(e) => e.kind === "theme" ? run(`theme:${e.id}`, async () => { await removeTheme(e.id); toast(`${e.name} is removed.`); }) : setRemoving(extOf(e.id) ?? null)} />
+            onRemove={(e) => e.kind === "theme" ? run(`theme:${e.id}`, async () => { await removeTheme(e.id); toast(`${e.name} removed`); }) : setRemoving(extOf(e.id) ?? null)} />
         )}
 
       {review && <ReviewDialog manifest={review.manifest} text={review.text} mode={review.mode} fromMarket={review.fromMarket} warnings={review.warnings}
@@ -166,25 +166,24 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
       {make && <MakeDialog onClose={() => setMake(false)} />}
       {fileErrors && (
         <Dialog icon="warn" title="This file needs fixing" count={`${fileErrors.errors.length} ${fileErrors.errors.length === 1 ? "problem" : "problems"}`} band="bad" onClose={() => setFileErrors(null)}>
-          <p>Nothing was installed. Each line names the field to fix in the {fileErrors.kind} file:</p>
+          <p>Nothing installed. Fix these in the {fileErrors.kind} file</p>
           <ul className="ext-errs">{fileErrors.errors.slice(0, 20).map((e) => <li key={e} className="mono">{e}</li>)}</ul>
-          <p className="dim" style={{ fontSize: ".86em" }}>Fix them in a text editor, save, and use Install from file again.{" "}
-            <button type="button" className="linkish" onClick={() => openDocs(fileErrors.kind === "theme" ? "themes" : "extensions")}>The {fileErrors.kind} format</button></p>
+          <p className="dim" style={{ fontSize: ".86em" }}><button type="button" className="linkish" onClick={() => openDocs(fileErrors.kind === "theme" ? "themes" : "extensions")}>The {fileErrors.kind} format</button></p>
           <div className="actions" style={{ justifyContent: "flex-end" }}><Key variant="ghost" onClick={() => setFileErrors(null)}>Close</Key></div>
         </Dialog>
       )}
       {removing && (
         <Dialog icon="trash" title="Remove this extension?" count={removing.manifest?.name ?? removing.id} onClose={() => setRemoving(null)}>
-          <p>{removing.manifest?.name ?? removing.id} and what it adds go away. Notes it kept are deleted too. Mods it sorted into groups stay where they are.</p>
+          <p>Its notes are deleted too. Mods it grouped stay put</p>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setRemoving(null)}>Cancel</Key>
-            <Key icon="trash" onClick={() => { const x = removing; setRemoving(null); void run(`extension:${x.id}`, async () => { await removeExtension(x.id); await recordVersion("extension", x.id, null); toast(`${x.manifest?.name ?? x.id} is removed.`); }); }}>Remove</Key>
+            <Key icon="trash" onClick={() => { const x = removing; setRemoving(null); void run(`extension:${x.id}`, async () => { await removeExtension(x.id); await recordVersion("extension", x.id, null); toast(`${x.manifest?.name ?? x.id} removed`); }); }}>Remove</Key>
           </div>
         </Dialog>
       )}
       {cmds?.manifest && (
         <Dialog icon="file" title="Console commands" count={cmds.manifest.name} onClose={() => setCmds(null)}>
-          <p className="dim">Type these in the Cyber Engine Tweaks console in game (the key you set for it, often ~).</p>
+          <p className="dim">Cyber Engine Tweaks console, in game</p>
           {(cmds.manifest.contributes.commandPacks ?? []).map((p) => (
             <div key={p.id} className="stack" style={{ gap: ".3em" }}>
               <div className="sub-h">{p.title}</div>
@@ -205,16 +204,11 @@ function MarketGrid({ kind, entries, loaded, installedVersion, busy, onInstall, 
   if (!loaded) return <div className="agrid">{Array.from({ length: 4 }, (_, i) => <span key={i} className="acard panel skel" />)}</div>;
   if (!entries.length) return (
     <Module icon="addons" title={kind === "theme" ? "Themes" : "Extensions"}>
-      <Empty icon="addons" title={searching ? "Nothing matches" : `No ${kind}s yet`} actions={<Key icon="plus" onClick={onMake}>Make your own</Key>}>
-        {searching ? "Try other words." : `Be the first to share a ${kind}.`}
-      </Empty>
+      <Empty icon="addons" title={searching ? "Nothing matches" : `No ${kind}s yet`} actions={<Key icon="plus" onClick={onMake}>Make your own</Key>} />
     </Module>
   );
   return (
     <>
-      <p className="dim addons-hint">{kind === "theme"
-        ? "Themes change the app's colours. After installing one, pick it in Settings, under Look."
-        : "Extensions add shelves, group rules, tools, launch options, console commands, links and panels. You see what each can do before it is installed."}</p>
       <div className="agrid">
         {entries.map((e) => {
           const have = installedVersion(e);
@@ -236,7 +230,7 @@ function MarketGrid({ kind, entries, loaded, installedVersion, busy, onInstall, 
                 {e.kind === "extension" && (
                   <span className="acard-can">
                     {e.adds?.length ? <span><Icon name="plus" size={9} /> {e.adds.join(" · ")}</span> : null}
-                    <span><Icon name="key" size={9} /> {e.permissions?.length ? `Can: ${e.permissions.map((p) => (PERMISSIONS[p] ? PERMISSIONS[p].title[0].toLowerCase() + PERMISSIONS[p].title.slice(1) : p)).join(", ")}` : "Needs no permissions"}</span>
+                    <span><Icon name="key" size={9} /> {e.permissions?.length ? `Can: ${e.permissions.map((p) => (PERMISSIONS[p] ? PERMISSIONS[p].title[0].toLowerCase() + PERMISSIONS[p].title.slice(1) : p)).join(", ")}` : "No permissions"}</span>
                   </span>
                 )}
                 {(e.tags?.length ?? 0) > 0 && <span className="m-tags">{e.tags!.map((t) => <Tag key={t}>{t}</Tag>)}</span>}
@@ -274,9 +268,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
 
   if (!ext.length && !themes.length) return (
     <Module icon="addons" title="Installed">
-      <Empty icon="addons" title="Nothing installed yet" actions={<Key icon="addons" onClick={onBrowse}>See extensions</Key>}>
-        Get themes and extensions from the marketplace, or install one from a file.
-      </Empty>
+      <Empty icon="addons" title="Nothing installed yet" actions={<Key icon="addons" onClick={onBrowse}>See extensions</Key>} />
     </Module>
   );
 
@@ -297,7 +289,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
       )}
 
       <Module icon="addons" title="Extensions" count={ext.length ? `${ext.filter((x) => x.status === "on").length} of ${ext.length} on` : "none"} bodyClass="list">
-        {!ext.length && <p className="dim" style={{ padding: ".6em" }}>No extensions yet.</p>}
+        {!ext.length && <p className="dim" style={{ padding: ".6em" }}>No extensions</p>}
         <div className="rows">
           {ext.map((x) => {
             const m = x.manifest;
@@ -322,13 +314,13 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
                   <span className="ext-row-k">
                     {x.status === "review" && <Key size="sm" icon="check" onClick={() => onReview(x)}>Review</Key>}
                     {(x.status === "on" || x.status === "off") && <Switch checked={x.status === "on"} disabled={busy !== null}
-                      onChange={(v) => setExtensionEnabled(x.id, v).then(() => toast(`${m?.name} is ${v ? "on" : "off"}.`)).catch((e) => toast(errorText(e), true))}>
+                      onChange={(v) => setExtensionEnabled(x.id, v).then(() => toast(`${m?.name} ${v ? "on" : "off"}`)).catch((e) => toast(errorText(e), true))}>
                       <span className="sr-only">{m?.name} on</span></Switch>}
                     <Key size="sm" variant="ghost" icon="chevron" className={isOpen ? "rot-key" : ""} onClick={() => toggleOpen(x.id)} aria-expanded={isOpen}>Details</Key>
                   </span>
                 </div>
                 {x.status === "broken" && <div className="note bad ext-errs-n">{x.errors.slice(0, 4).map((e) => <div key={e} className="mono">{e}</div>)}</div>}
-                {x.status === "review" && <p className="dim ext-fine">This release changed what it needs since you allowed it. It does nothing until you review it.</p>}
+                {x.status === "review" && <p className="dim ext-fine">Asks for new permissions. Off until you review it</p>}
                 {isOpen && m && k && (
                   <div className="ext-more">
                     {m.description && <p>{m.description}</p>}
@@ -339,7 +331,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
                         <div key={t.id} className="ext-pick">
                           <span className="m-main"><span className="m-t">{t.name}</span>
                             <span className="dim mono ext-path">{t.path ? `Game folder\\${t.path.replace(/\//g, "\\")}` : x.state.toolPaths[t.id] ?? "Not chosen yet"}</span></span>
-                          {t.pick && <Key size="sm" icon="folder" onClick={async () => { const p = await pickProgram(t.pick?.title ?? `Find ${t.pick?.file ?? t.name}`); if (p) setToolPath(x.id, t.id, p).then(() => toast(`${t.name} is set.`)).catch((e) => toast(errorText(e), true)); }}>
+                          {t.pick && <Key size="sm" icon="folder" onClick={async () => { const p = await pickProgram(t.pick?.title ?? `Find ${t.pick?.file ?? t.name}`); if (p) setToolPath(x.id, t.id, p).then(() => toast(`${t.name} set`)).catch((e) => toast(errorText(e), true)); }}>
                             {x.state.toolPaths[t.id] ? "Change" : `Choose ${t.pick.file ?? "program"}`}</Key>}
                           {t.download && <Key size="sm" variant="ghost" icon="web" disabled={x.status !== "on"} title={t.download} onClick={() => extensionsApi.openLink(x.id, `tool:${t.id}`).catch((e) => { if (!("__TAURI_INTERNALS__" in window)) window.open(t.download, "_blank", "noopener,noreferrer"); else toast(errorText(e), true); })}>Get it</Key>}
                         </div>
@@ -355,8 +347,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
                         onClick={() => extensionsApi.openLink(x.id, l.id).catch((e) => { if (!("__TAURI_INTERNALS__" in window)) window.open(l.url, "_blank", "noopener,noreferrer"); else toast(errorText(e), true); })}>{l.title} <span className="dim">· {hostOf(l.url)}</span></Key>)}</div>
                     </>}
                     {(k.commandPacks ?? []).length > 0 && <div className="actions"><Key size="sm" icon="file" onClick={() => onCommands(x)}>Console commands ({k.commandPacks!.reduce((a, p) => a + p.commands.length, 0)})</Key></div>}
-                    {(k.shelves ?? []).length > 0 && <p className="dim ext-fine">Shelves show on the Browse front page. {(k.groupRules ?? []).length > 0 && "Group rules apply when you use Sort into groups in Library."}</p>}
-                    {(k.shelves ?? []).length === 0 && (k.groupRules ?? []).length > 0 && <p className="dim ext-fine">Group rules apply when you use Sort into groups in Library.</p>}
+                    {(k.groupRules ?? []).length > 0 && <p className="dim ext-fine">Group rules apply with Sort into groups in Library</p>}
                   </div>
                 )}
                 <div className="actions ext-row-f">
@@ -374,7 +365,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
 
       <Module icon="sun" title="Themes" count={themes.length || "none"} bodyClass="list"
         tools={onNavigate && <Key size="sm" variant="ghost" icon="settings" onClick={() => onNavigate("settings")}>Pick one in Settings</Key>}>
-        {!themes.length && <p className="dim" style={{ padding: ".6em" }}>No themes yet. The built-in ones are in Settings, under Look.</p>}
+        {!themes.length && <p className="dim" style={{ padding: ".6em" }}>No themes. Built-in ones are in Settings, Look</p>}
         <div className="rows">
           {themes.map((t) => {
             const upd = updateFor("theme", t.id);
@@ -399,7 +390,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
         </div>
       </Module>
 
-      <p className="dim addons-hint">Made one yourself? Use Share on it. <button type="button" className="linkish" onClick={() => openDocs("marketplace")}>How the marketplace works</button></p>
+      <p className="dim addons-hint"><button type="button" className="linkish" onClick={() => openDocs("marketplace")}>How the marketplace works</button></p>
     </div>
   );
 }

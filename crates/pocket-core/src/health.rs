@@ -93,20 +93,20 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
     // ── game ──
     let Some(g) = game else {
         issues.push(Issue { id: "game.unset".into(), severity: Severity::Problem, area: "game", title: "The game folder is not set".into(),
-            detail: "Choose the Cyberpunk 2077 folder so mods can be installed and checked.".into(), fix: Some(Fix::OpenSettings) });
+            detail: "Choose the Cyberpunk 2077 folder".into(), fix: Some(Fix::OpenSettings) });
         return Ok(finish(None, patch, patch_source, Vec::new(), issues));
     };
     if !g.exe_found {
         issues.push(Issue { id: "game.exe".into(), severity: Severity::Problem, area: "game", title: "Cyberpunk2077.exe is missing".into(),
-            detail: format!("{} has no bin\\x64\\Cyberpunk2077.exe. Check the game folder in Settings.", g.path.display()), fix: Some(Fix::OpenSettings) });
+            detail: format!("No bin\\x64\\Cyberpunk2077.exe in {}. Check the game folder in Settings", g.path.display()), fix: Some(Fix::OpenSettings) });
     }
     if !g.writable {
         issues.push(Issue { id: "game.write".into(), severity: Severity::Problem, area: "game", title: "The game folder cannot be written".into(),
-            detail: "Windows does not let this account write to the game folder (common under Program Files). Move the game to another Steam library folder, or give your account Modify rights on it.".into(), fix: None });
+            detail: "Windows blocks writing here, often under Program Files. Move the game to another Steam library folder or give your account Modify rights".into(), fix: None });
     }
     if patch_source == "assumed" {
         issues.push(Issue { id: "game.patch".into(), severity: Severity::Info, area: "game", title: format!("Game patch assumed to be {}", patch.as_deref().unwrap_or("?")),
-            detail: "The patch could not be read from the game. Pick it in Settings so compatibility checks are right.".into(), fix: Some(Fix::OpenSettings) });
+            detail: "Could not read it from the game. Pick it in Settings".into(), fix: Some(Fix::OpenSettings) });
     }
 
     // ── what the enabled mods need ──
@@ -136,7 +136,7 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
     }
     if !needs_dlc.is_empty() {
         issues.push(Issue { id: "dlc.missing".into(), severity: Severity::Problem, area: "game", title: "Mods need Phantom Liberty".into(),
-            detail: format!("{} need the Phantom Liberty expansion, which is not installed (no archive/pc/ep1). Turn them off or install the expansion.", list_names(&needs_dlc)),
+            detail: format!("{} need Phantom Liberty, which is not installed. Turn them off or install it", list_names(&needs_dlc)),
             fix: Some(Fix::OpenLibrary) });
     }
     // frameworks need their own requirements too
@@ -145,8 +145,8 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
     }
 
     if crate::cyberpunk::game::stale_scripts(&g.path) {
-        issues.push(Issue { id: "scripts.stale".into(), severity: Severity::Problem, area: "game", title: "Compiled scripts are left from redscript".into(),
-            detail: "redscript is gone but the scripts it compiled are still in r6/cache, which can stop the game from starting. Resetting puts the game's own scripts back.".into(),
+        issues.push(Issue { id: "scripts.stale".into(), severity: Severity::Problem, area: "game", title: "Leftover redscript cache".into(),
+            detail: "redscript is gone but its compiled scripts are still in r6/cache and can stop the game from starting. Reset restores the game's own scripts".into(),
             fix: Some(Fix::ResetScripts) });
     }
     // RED4ext 1.13 and newer do what cybercmd did; the redmodding wiki says to uninstall cybercmd then
@@ -156,7 +156,7 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
         needed.remove(&Framework::Cybercmd);
         if g.frameworks.iter().any(|f| f.framework == Framework::Cybercmd && f.installed) {
             issues.push(Issue { id: "fw.cybercmd.obsolete".into(), severity: Severity::Warning, area: "frameworks", title: "cybercmd is no longer needed".into(),
-                detail: "RED4ext 1.13 and newer do its job. The modding wiki advises removing cybercmd; turn it off in Library and check the game still starts.".into(),
+                detail: "RED4ext 1.13+ replaces it. Turn it off in Library and check the game still starts".into(),
                 fix: Some(Fix::OpenLibrary) });
         }
     }
@@ -172,7 +172,7 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
             let mut who = needed_by.clone();
             who.dedup();
             issues.push(Issue { id: format!("fw.missing.{}", info.key), severity: Severity::Problem, area: "frameworks", title: format!("{} is missing", info.name),
-                detail: format!("Needed by {}. Without it those mods do nothing or stop the game from starting.", list_names(&who)),
+                detail: format!("Needed by {}. Without it they fail or stop the game from starting", list_names(&who)),
                 fix: Some(Fix::InstallMod { mod_id: info.nexus_mod_id, name: info.name.into() }) });
         }
         if st.installed && st.older_than_game {
@@ -180,13 +180,13 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
             let newer_on_nexus = lat.and_then(|l| chrono::DateTime::parse_from_rfc3339(&l.updated_at).ok()).map(|t| t.timestamp())
                 .zip(exe_patch_time).is_some_and(|(t, e)| t > e);
             issues.push(Issue { id: format!("fw.old.{}", info.key), severity: if newer_on_nexus || update_available { Severity::Problem } else { Severity::Warning }, area: "frameworks",
-                title: format!("{} predates the game patch", info.name),
-                detail: if newer_on_nexus || update_available { format!("The game was patched after {} was installed, and Nexus has a newer version{}. Update it before you play.", info.name, lat.map(|l| format!(" ({})", l.version)).unwrap_or_default()) }
-                        else { format!("The game was patched after {} was installed. If the game crashes at start, check its page for an update.", info.name) },
+                title: format!("{} is older than the game patch", info.name),
+                detail: if newer_on_nexus || update_available { format!("Nexus has a newer version{1}. Update {0} before you play", info.name, lat.map(|l| format!(" ({})", l.version)).unwrap_or_default()) }
+                        else { format!("If the game crashes at start, check {}'s page for an update", info.name) },
                 fix: Some(Fix::UpdateMod { mod_id: info.nexus_mod_id, name: info.name.into() }) });
         } else if st.installed && update_available {
             issues.push(Issue { id: format!("fw.update.{}", info.key), severity: Severity::Warning, area: "frameworks", title: format!("{} has an update", info.name),
-                detail: format!("Installed {}, newest {}.", st.version.as_deref().unwrap_or("?"), lat.map(|l| l.version.as_str()).unwrap_or("?")),
+                detail: format!("Installed {}, newest {}", st.version.as_deref().unwrap_or("?"), lat.map(|l| l.version.as_str()).unwrap_or("?")),
                 fix: Some(Fix::UpdateMod { mod_id: info.nexus_mod_id, name: info.name.into() }) });
         }
         rows.push(FrameworkRow { state: st.clone(), latest: lat.map(|l| l.version.clone()), update_available, needed_by });
@@ -199,13 +199,13 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
     for (install_id, n) in by_install {
         let name = mods.iter().find(|m| m.0 == install_id).map(|m| m.2.clone()).unwrap_or_else(|| format!("Install {install_id}"));
         issues.push(Issue { id: format!("deploy.broken.{install_id}"), severity: Severity::Problem, area: "deploy", title: format!("{name}: {n} files missing or changed"),
-            detail: "Something outside Pockymod removed or replaced files this mod put in the game. Deploy it again to restore them.".into(), fix: Some(Fix::Redeploy { install_id }) });
+            detail: "Something outside Pockymod removed or replaced them. Deploy again to restore them".into(), fix: Some(Fix::Redeploy { install_id }) });
     }
     for (install_id, _, name, _, _) in &mods {
         let n: i64 = db.conn.query_row("SELECT COUNT(*) FROM deployed_files WHERE install_id = ?1", params![install_id], |r| r.get(0))?;
         if n == 0 {
             issues.push(Issue { id: format!("deploy.staged.{install_id}"), severity: Severity::Warning, area: "deploy", title: format!("{name} is not in the game"),
-                detail: "It is installed and enabled but not deployed, usually because its files clash with another mod. Decide in Library.".into(), fix: Some(Fix::OpenLibrary) });
+                detail: "Enabled but not deployed, usually because its files clash with another mod. Decide in Library".into(), fix: Some(Fix::OpenLibrary) });
         }
     }
     // ── conflicts: paths one mod took from another ──
@@ -213,23 +213,23 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
     let over: Vec<(String, String, i64)> = st.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?.collect::<std::result::Result<_, _>>()?;
     for (a, b, n) in over {
         issues.push(Issue { id: format!("conflict.{a}.{b}"), severity: Severity::Info, area: "conflicts", title: format!("{a} overrides {n} files of {b}"),
-            detail: format!("You chose {a}'s copies. Removing {a} gives {b} its files back."), fix: None });
+            detail: format!("You picked {a}'s copies. Removing {a} gives {b} its files back"), fix: None });
     }
 
     // ── REDmod ──
     let redmods = mods.iter().filter(|m| m.4 == "redmod").count();
     if redmods > 0 && !g.redmod_available {
         issues.push(Issue { id: "redmod.tool".into(), severity: Severity::Problem, area: "redmod", title: "The REDmod tool is not installed".into(),
-            detail: format!("{redmods} REDmods are installed, but the game's free REDmod DLC is not. Add it in Steam (DLC) or GOG Galaxy."), fix: None });
+            detail: format!("{redmods} REDmods are installed without the free REDmod DLC. Add it in Steam or GOG Galaxy"), fix: None });
     } else if profiles::redmod_needs_deploy(db)? {
         issues.push(Issue { id: "redmod.deploy".into(), severity: Severity::Warning, area: "redmod", title: "REDmods need deploying".into(),
-            detail: "REDmods were added, removed or reordered since the last REDmod deploy. The game will not see the change until it runs.".into(), fix: Some(Fix::RunRedmodDeploy) });
+            detail: "REDmods changed since the last deploy. The game won't see it until deploy runs".into(), fix: Some(Fix::RunRedmodDeploy) });
     }
 
     // ── archive order: a stray modlist.txt decides it instead of file names ──
     if let Some(list) = crate::cyberpunk::rdar::modlist(&g.path) {
         issues.push(Issue { id: "archive.modlist".into(), severity: Severity::Warning, area: "conflicts", title: "A modlist.txt decides the archive order".into(),
-            detail: format!("archive/pc/mod/modlist.txt lists {} archives, and the game loads them in its order instead of by file name. It is usually left over from another tool; the modding wiki advises deleting it. Moving it aside keeps a copy (modlist.txt.off).", list.len()),
+            detail: format!("archive/pc/mod/modlist.txt lists {} archives and overrides name order. Usually left by another tool. Moving it aside keeps a copy as modlist.txt.off", list.len()),
             fix: Some(Fix::DisableModlist) });
     }
 
@@ -246,7 +246,7 @@ pub fn log_issues(logs: &crate::cyberpunk::logs::LogReport) -> Vec<Issue> {
     let mut out = Vec::new();
     if logs.scripts_failed {
         out.push(Issue { id: "logs.scripts".into(), severity: Severity::Problem, area: "logs", title: "Scripts did not compile on the last start".into(),
-            detail: "redscript reported errors, so no script mod works until they are fixed. The mods it names are below; turning one off and starting again usually tells.".into(), fix: None });
+            detail: "No script mod works until this is fixed. Turn off the mods named below one at a time to find it".into(), fix: None });
     }
     for m in logs.mods.iter().filter(|m| m.errors > 0 && m.enabled) {
         let first = m.entries.iter().find(|e| e.level == crate::cyberpunk::logs::Level::Error).map(|e| e.text.lines().next().unwrap_or("").chars().take(160).collect::<String>()).unwrap_or_default();

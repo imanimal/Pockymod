@@ -50,7 +50,7 @@ export function PanelHost({ panel }: { panel: Panel }) {
         .catch((err) => {
           // calls over the limit get no answer; a panel that keeps flooding is stopped
           if (err instanceof PanelError && err.message === TOO_MANY) {
-            if (++flood > 200) { setStopped(true); toast(`${panel.extName}'s panel was stopped: it sent too many requests. You can remove it in Add-ons, Installed.`, true); }
+            if (++flood > 200) { setStopped(true); toast(`Stopped ${panel.extName}'s panel, too many requests`, true); }
             return;
           }
           post({ pocket: 1, id: c.id, error: err instanceof PanelError ? err.message : errorText(err) });
@@ -70,12 +70,12 @@ export function PanelHost({ panel }: { panel: Panel }) {
       tools={<Key size="sm" variant="ghost" icon="key" latched={showPerms} onClick={() => setShowPerms(!showPerms)} title="What this panel may do">Permissions</Key>}>
       {showPerms && (
         <div className="ext-panel-perms">
-          {panel.permissions.length === 0 ? <span>This panel has no permissions: it can only show things.</span>
+          {panel.permissions.length === 0 ? <span>No permissions, display only</span>
             : panel.permissions.map((p) => <span key={p} className="pill"><Icon name="key" size={9} />{PERMISSIONS[p]?.title ?? p}</span>)}
-          <span className="dim">Sandboxed: no web requests, no files, no access to the app beyond these.</span>
+          <span className="dim">Sandboxed. No web, no files</span>
         </div>
       )}
-      {stopped && <div className="note warn" style={{ margin: ".8em" }}>This panel was stopped because it sent too many requests. Remove or turn off its extension in Add-ons, Installed.</div>}
+      {stopped && <div className="note warn" style={{ margin: ".8em" }}>Stopped, too many requests</div>}
       {!stopped && (src || demoDoc !== undefined) && (
         <iframe ref={frame} className="ext-frame" title={`${panel.title} (${panel.extName})`} sandbox="allow-scripts" referrerPolicy="no-referrer" allow=""
           src={src ?? undefined} srcDoc={demoDoc} />
@@ -95,11 +95,11 @@ function QueueAsk({ extName, modId, fileId, onClose }: { extName: string; modId:
   const yes = async () => {
     if (!d || !file) return;
     setBusy(true);
-    try { await queue.add(modId, file.fileId); toast(`${d.detail.name} is queued.`); onClose(true); } catch (e) { toast(errorText(e), true); onClose(false); } finally { setBusy(false); }
+    try { await queue.add(modId, file.fileId); toast(`${d.detail.name} queued`); onClose(true); } catch (e) { toast(errorText(e), true); onClose(false); } finally { setBusy(false); }
   };
   return (
     <Dialog icon="downloads" title="Add to the download queue?" onClose={() => onClose(false)}>
-      <p><b className="hi">{extName}</b> wants to add a mod to your downloads.</p>
+      <p><b className="hi">{extName}</b> wants to add a mod to your downloads</p>
       {err && <div className="note bad">{err}</div>}
       {d && (
         <div className="ext-ask">
@@ -110,10 +110,9 @@ function QueueAsk({ extName, modId, fileId, onClose }: { extName: string; modId:
           </span>
         </div>
       )}
-      {d && !file && <div className="note warn">This mod has no file to download.</div>}
-      <p className="dim" style={{ fontSize: ".86em" }}>Required mods come along as usual. Nothing is downloaded unless you say yes.</p>
+      {d && !file && <div className="note warn">No file to download</div>}
       <div className="actions" style={{ justifyContent: "flex-end" }}>
-        <Key variant="ghost" onClick={() => onClose("block")} title="It cannot ask again until Pockymod restarts">Block its requests</Key>
+        <Key variant="ghost" onClick={() => onClose("block")} title="Until Pockymod restarts">Block its requests</Key>
         <Key variant="ghost" onClick={() => onClose(false)}>No</Key>
         <Key variant="primary" icon="downloads" disabled={!file || busy} onClick={yes}>Add to downloads</Key>
       </div>

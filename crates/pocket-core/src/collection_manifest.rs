@@ -47,7 +47,7 @@ pub struct Manifest {
 
 /// Read `collection.json`.
 pub fn parse(text: &str) -> Result<Manifest> {
-    let v: Value = serde_json::from_str(text).map_err(|e| Error::Invalid(format!("The collection's manifest is not valid JSON: {e}")))?;
+    let v: Value = serde_json::from_str(text).map_err(|e| Error::Invalid(format!("The collection manifest isn't valid JSON: {e}")))?;
     let mods = v["mods"].as_array().cloned().unwrap_or_default();
     let mut m = Manifest::default();
     // every way a rule can name a mod, to its Nexus mod id

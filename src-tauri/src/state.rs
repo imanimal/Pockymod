@@ -58,7 +58,7 @@ impl Paths {
     pub fn require(&self) -> pocket_core::Result<(PathBuf, PathBuf)> {
         match (&self.game_dir, &self.library_dir) {
             (Some(g), Some(l)) => Ok((g.clone(), l.clone())),
-            _ => Err(pocket_core::Error::Invalid("Set the Cyberpunk 2077 folder in Settings first.".into())),
+            _ => Err(pocket_core::Error::Invalid("Set the Cyberpunk 2077 folder in Settings first".into())),
         }
     }
     pub fn deploy_options(&self) -> DeployOptions { DeployOptions { allow_copy: self.allow_copy, ..Default::default() } }

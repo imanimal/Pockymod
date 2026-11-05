@@ -16,7 +16,7 @@ export function RateLcd() {
   const value = r.level === "throttled" && r.remaining === null ? "0" : r.remaining === null ? "---" : String(r.remaining);
   const sub = r.level === "throttled"
     ? `Throttled until ${time(r.throttledUntil ?? r.resetsAt)}`
-    : r.level === "unknown" ? "Nexus has not reported yet" : `Requests left this ${r.window}`;
+    : r.level === "unknown" ? "Not reported yet" : `Requests left this ${r.window}`;
   const blocks = r.remaining !== null && r.limit ? Math.ceil((r.remaining / r.limit) * 8) : 0;
   return (
     <div className={`display sm${tone}`} role="status" aria-label="Nexus requests remaining">

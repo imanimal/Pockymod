@@ -131,7 +131,7 @@ pub fn variants(entries: &[String], mod_name: &str) -> Option<Fomod> {
         Plugin { name: k.rsplit('/').next().unwrap_or(k).to_string(), description: format!("{} files", p.len()), image: None, files: maps(p), flags: Vec::new(), kind: "Optional".into() }
     }).collect();
     Some(Fomod { name: mod_name.to_string(), root: String::new(), required,
-        steps: vec![Step { name: "Choose a variant".into(), groups: vec![Group { name: "This archive holds several versions of the mod. Pick one.".into(), kind: "SelectExactlyOne".into(), plugins }], visible: None }],
+        steps: vec![Step { name: "Choose a variant".into(), groups: vec![Group { name: "This archive holds several versions of the mod. Pick one".into(), kind: "SelectExactlyOne".into(), plugins }], visible: None }],
         conditional: Vec::new() })
 }
 
@@ -169,7 +169,7 @@ fn files_of(n: Option<roxmltree::Node>) -> Vec<FileMap> {
 }
 
 pub fn parse(xml: &str, config_path: &str) -> Result<Fomod> {
-    let doc = roxmltree::Document::parse(xml.trim_start_matches('\u{feff}')).map_err(|e| Error::Invalid(format!("The mod's installer (ModuleConfig.xml) could not be read: {e}")))?;
+    let doc = roxmltree::Document::parse(xml.trim_start_matches('\u{feff}')).map_err(|e| Error::Invalid(format!("Could not read the mod's installer (ModuleConfig.xml): {e}")))?;
     let root_el = doc.root_element();
     let root = config_path.replace('\\', "/");
     let root = root[..root.to_lowercase().rfind("fomod/moduleconfig.xml").unwrap_or(0)].trim_end_matches('/').to_string();
@@ -235,7 +235,7 @@ pub fn resolve(f: &Fomod, choices: &[[usize; 3]], entries: &[String]) -> Result<
     let shows = visible_steps(f, choices);
     for [si, gi, pi] in choices.iter().filter(|c| shows.get(c[0]).copied().unwrap_or(true)) {
         let p = f.steps.get(*si).and_then(|s| s.groups.get(*gi)).and_then(|g| g.plugins.get(*pi))
-            .ok_or_else(|| Error::Invalid("That installer choice does not exist.".into()))?;
+            .ok_or_else(|| Error::Invalid("That installer choice doesn't exist".into()))?;
         maps.extend(p.files.iter().cloned());
         for (k, v) in &p.flags { flags.insert(k.clone(), v.clone()); }
     }
@@ -266,7 +266,7 @@ pub fn resolve(f: &Fomod, choices: &[[usize; 3]], entries: &[String]) -> Result<
             if let Some(p) = placement(orig, &dest) { out.insert(p.target.to_lowercase(), p); }
         }
     }
-    if out.is_empty() { return Err(Error::Invalid("Those choices install no files. Pick at least one option.".into())); }
+    if out.is_empty() { return Err(Error::Invalid("Those choices install nothing. Pick at least one option".into())); }
     Ok(out.into_values().collect())
 }
 

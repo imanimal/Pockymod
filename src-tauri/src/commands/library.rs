@@ -126,7 +126,7 @@ pub async fn queue_add_mod(app: AppHandle, state: State<'_, AppState>, mod_id: u
     let have: Option<(u32, Option<String>)> = state.db.lock().unwrap().conn.query_row(
         "SELECT file_id, file_name FROM installs WHERE mod_id = ?1 ORDER BY installed_at DESC LIMIT 1", [mod_id], |r| Ok((r.get(0)?, r.get(1)?))).ok();
     let next = have.as_ref().and_then(|(fid, name)| pocket_core::browse::successor(&d.files, *fid, name.as_deref()));
-    let file = next.or_else(|| pocket_core::browse::main_file(&d.files)).ok_or_else(|| Error::Invalid(format!("{} has no current file on Nexus.", d.detail.name)))?.file_id;
+    let file = next.or_else(|| pocket_core::browse::main_file(&d.files)).ok_or_else(|| Error::Invalid(format!("{} has no current file on Nexus", d.detail.name)))?.file_id;
     queue_add(app, state, mod_id, file, true).await
 }
 
@@ -144,7 +144,7 @@ pub fn queue_clear_finished(app: AppHandle, state: State<'_, AppState>) -> Queue
 // (WebView2 needs the main thread the command would be blocking), which shows as a blank white window.
 #[tauri::command]
 pub async fn queue_show_page(app: AppHandle, state: State<'_, AppState>, id: u64) -> Result<()> {
-    let item = state.queue.lock().unwrap().get(id).cloned().ok_or_else(|| Error::Invalid("That download is no longer queued.".into()))?;
+    let item = state.queue.lock().unwrap().get(id).cloned().ok_or_else(|| Error::Invalid("That download is no longer queued".into()))?;
     runner::open_nexus(&app, &runner::file_page(item.mod_id, (!item.manual_only).then_some(item.file_id)))
 }
 
@@ -157,7 +157,7 @@ pub async fn open_nexus_page(app: AppHandle, mod_id: u32, file_id: Option<u32>) 
 #[tauri::command]
 pub async fn open_nexus_url(app: AppHandle, url: String) -> Result<()> {
     let ok = url.starts_with("https://www.nexusmods.com/") || url.starts_with("https://next.nexusmods.com/") || url.starts_with("https://users.nexusmods.com/");
-    if !ok { return Err(Error::Invalid("Only Nexus Mods pages open from here.".into())); }
+    if !ok { return Err(Error::Invalid("Only Nexus Mods pages open from here".into())); }
     runner::open_nexus(&app, &url)
 }
 
@@ -222,7 +222,7 @@ pub fn nxm_handler_test() -> Result<()> {
         Ok(())
     }
     #[cfg(not(windows))]
-    { Err(Error::Invalid("The link test runs on Windows.".into())) }
+    { Err(Error::Invalid("The link test only runs on Windows".into())) }
 }
 
 // ── archives from outside the queue (Install from file, dropped files, manual downloads) ──

@@ -92,9 +92,9 @@ export function FomodDialog({ need, onClose, onInstalled, apply }: { need: Choic
       const choices = live.map((x) => x.split(".").map(Number) as Choice);
       if (apply) { await apply(choices); onClose(); return; }
       const out = await library.installFile({ ...need.request, fomodChoices: choices });
-      if (out.status === "installed") toast(`Installed ${need.request.name}${out.needsRedmodDeploy ? ". Run the REDmod deploy from Load order." : "."}`);
-      else if (out.status === "staged") toast(`${need.request.name} is staged: its files clash with other mods. Decide in Library.`, true);
-      else if (out.status === "alreadyHave") toast(`You already have ${need.request.name}. Kept yours.`);
+      if (out.status === "installed") toast(`Installed ${need.request.name}${out.needsRedmodDeploy ? ". Deploy REDmods from Load order" : ""}`);
+      else if (out.status === "staged") toast(`${need.request.name} clashes with other mods. Decide in Library`, true);
+      else if (out.status === "alreadyHave") toast(`Already have ${need.request.name}`);
       onInstalled?.(); onClose();
     } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
@@ -104,17 +104,16 @@ export function FomodDialog({ need, onClose, onInstalled, apply }: { need: Choic
   return (
     <Dialog icon="tool" title={`${f.name || need.request.name}: options`} count={`${live.length} picked`} onClose={onClose} className="fomod">
       <div className="fomod-top">
-        <SearchField value={q} onChange={setQ} placeholder="Find an option (name or description)" />
-        <Key size="sm" variant="ghost" icon="star" onClick={recommended} title="Pick what the mod's author recommends in every group">Recommended</Key>
-        <Key size="sm" variant="ghost" icon="undo" onClick={() => setPicked(new Set(defaults))} title={apply ? "Back to the options you have now" : "Back to the installer's own picks"}>{apply ? "As installed" : "Defaults"}</Key>
+        <SearchField value={q} onChange={setQ} placeholder="Find an option" />
+        <Key size="sm" variant="ghost" icon="star" onClick={recommended} title="The author's picks in every group">Recommended</Key>
+        <Key size="sm" variant="ghost" icon="undo" onClick={() => setPicked(new Set(defaults))} title={apply ? "Back to your current options" : "Back to the installer defaults"}>{apply ? "As installed" : "Defaults"}</Key>
       </div>
-      {apply && <p className="dim" style={{ fontSize: ".84em" }}>Your current picks are selected. The new ones go in from the files already on disk; nothing is downloaded.</p>}
       {visibleCount > 2 && !needle && (
         <div className="fomod-jump" aria-label="Steps">
           {f.steps.map((s, si) => shows[si] && <button key={si} type="button" className="chip" onClick={() => jump(si)} title={`Go to ${s.name}`}>{s.name || `Step ${si + 1}`}</button>)}
         </div>
       )}
-      {needle && <p className="dim" style={{ fontSize: ".84em" }}>{matches ? `${matches} ${matches === 1 ? "option matches" : "options match"}.` : "No option matches. Try another word."}</p>}
+      {needle && <p className="dim" style={{ fontSize: ".84em" }}>{matches ? `${matches} ${matches === 1 ? "match" : "matches"}` : "No matches"}</p>}
       <div className="fomod-body" ref={body}>
         {f.steps.map((s, si) => {
           if (!shows[si]) return null;
@@ -144,11 +143,11 @@ export function FomodDialog({ need, onClose, onInstalled, apply }: { need: Choic
           );
         })}
       </div>
-      {missing.length > 0 && <div className="note warn">Still to pick: {missing.map((m) => `${m.g.name}${m.st.name ? ` (${m.st.name})` : ""}`).join(", ")}.</div>}
+      {missing.length > 0 && <div className="note warn">Still to pick {missing.map((m) => `${m.g.name}${m.st.name ? ` (${m.st.name})` : ""}`).join(", ")}</div>}
       <div className="actions" style={{ justifyContent: "flex-end" }}>
         <Key variant="ghost" onClick={onClose}>Cancel</Key>
         <Key variant="primary" icon="install" disabled={busy || missing.length > 0} onClick={install}
-          title={missing.length ? "A group above still needs a pick" : undefined}>{apply ? "Use these options" : "Install with these"}</Key>
+          title={missing.length ? "A group still needs a pick" : undefined}>{apply ? "Use these options" : "Install with these"}</Key>
       </div>
     </Dialog>
   );

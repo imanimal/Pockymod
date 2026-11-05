@@ -59,7 +59,7 @@ pub async fn collection_check(app: AppHandle, state: State<'_, AppState>, slug: 
 #[tauri::command]
 pub async fn collection_install(app: AppHandle, state: State<'_, AppState>, check: Check, include_optional: bool) -> Result<QueueSnapshot> {
     let items = collections::queue_items(&check, include_optional, &check.name);
-    if items.is_empty() { return Err(Error::Invalid("Everything in this collection is already installed.".into())); }
+    if items.is_empty() { return Err(Error::Invalid("Everything in this collection is already installed".into())); }
     // the curator's installer picks and rules go in with the mods (best effort: without them each mod gets its defaults)
     if let Some(slug) = &check.slug {
         if let Some(m) = manifest(&app, &state, slug, check.revision).await {

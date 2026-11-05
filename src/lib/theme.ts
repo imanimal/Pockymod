@@ -38,11 +38,11 @@ export const DEFAULT_THEME = "redline";
 /** The default first: it is also where the app falls back to when a theme is removed. */
 export const BUILTIN_THEMES: ThemeInfo[] = [
   { id: "redline", name: "Redline", builtin: true, look: "redline", schemes: ["dark"],
-    description: "Red on black with cyan highlights. Dark only. The default." },
+    description: "Red on black, cyan highlights. Dark only, default" },
   { id: "standard", name: "Standard", builtin: true, look: "standard", schemes: ["dark", "light"],
-    description: "Blue-grey with a yellow accent. Dark or light." },
+    description: "Blue-grey, yellow accent. Dark or light" },
   { id: "pocket", name: "Pocket", builtin: true, look: "pocket", schemes: ["light", "dark"],
-    description: "Raised keys, green LCDs, pixel icons. Cream or Night." },
+    description: "Raised keys, green LCDs, pixel icons. Cream or Night" },
 ];
 
 const K = { id: "pm.theme.id", scheme: "pm.theme.scheme", cache: "pm.theme.css", fx: "pm.fx", motion: "pm.motion", legacy: "pm.theme" };
@@ -251,7 +251,7 @@ export function resetTheme(): Promise<void> { return setTheme(DEFAULT_THEME, "da
 export async function setTheme(id: string, choice?: SchemeChoice): Promise<void> {
   let info = themeInfo(id);
   if (!info || (!info.builtin && !installed.has(id))) { await loadInstalled(); info = installed.get(id) ?? BUILTIN_THEMES.find((t) => t.id === id); }
-  if (!info) throw new Error("That theme is not installed.");
+  if (!info) throw new Error("Theme not installed");
   const c = choice ?? savedChoice() ?? state.choice; // nothing saved yet: keep the scheme showing (dark for new users)
   write(K.id, info.id);
   if (choice) write(K.scheme, choice);
@@ -390,7 +390,7 @@ export function themeAsPackage(info: ThemeInfo): ThemePackage {
   const names = [...COLOR_TOKENS.map((t) => t.token), ...SHAPE_TOKENS];
   const pkg: ThemePackage = {
     format: "pocket-mods.theme", version: 1, id: `my-${info.id}`, name: `My ${info.name}`,
-    description: `Starts from ${info.name}.`, scheme: info.schemes[0], base: info.look,
+    description: `Based on ${info.name}`, scheme: info.schemes[0], base: info.look,
   };
   if (info.schemes.length > 1) { pkg.dark = readTokens(info, "dark", names); pkg.light = readTokens(info, "light", names); }
   else pkg.tokens = readTokens(info, info.schemes[0], names);
@@ -443,16 +443,16 @@ export function applyCustom() {
 }
 /** The few colours most people want, and the shades worked out from them. */
 export const SIMPLE: Array<{ key: string; label: string; tip: string; tokens: (v: string) => Record<string, string> }> = [
-  { key: "--accent", label: "Accent", tip: "The one key to press first (Install, Play) and its glow.", tokens: (v) => ({ "--accent": v }) },
-  { key: "--acc2", label: "Highlight", tip: "What is selected or focused, and links.", tokens: (v) => ({ "--acc2": v, "--sel": v, "--focus": v }) },
-  { key: "--bg", label: "Background", tip: "The window; modules, fields and lines are shaded from it.", tokens: (v) => ({
+  { key: "--accent", label: "Accent", tip: "Main keys like Install and Play", tokens: (v) => ({ "--accent": v }) },
+  { key: "--acc2", label: "Highlight", tip: "Selection, focus and links", tokens: (v) => ({ "--acc2": v, "--sel": v, "--focus": v }) },
+  { key: "--bg", label: "Background", tip: "Window background, other shades follow", tokens: (v) => ({
     "--bg": v, "--bg2": `color-mix(in srgb, ${v} 88%, var(--text))`, "--surface": `color-mix(in srgb, ${v} 93%, var(--text))`,
     "--surface-2": `color-mix(in srgb, ${v} 86%, var(--text))`, "--line": `color-mix(in srgb, ${v} 72%, var(--text))`,
   }) },
-  { key: "--text", label: "Text", tip: "Titles; body and quiet text are shaded from it.", tokens: (v) => ({
+  { key: "--text", label: "Text", tip: "Titles, other text shades follow", tokens: (v) => ({
     "--text": v, "--text-2": `color-mix(in srgb, ${v} 80%, var(--bg))`, "--text-3": `color-mix(in srgb, ${v} 60%, var(--bg))`,
   }) },
-  { key: "--disp-bg", label: "Displays", tip: "The LCDs that show numbers; their digits stay readable.", tokens: (v) => ({ "--disp-bg": v }) },
+  { key: "--disp-bg", label: "Displays", tip: "LCD number displays", tokens: (v) => ({ "--disp-bg": v }) },
 ];
 /** One-click accent pairs. */
 export const PALETTES: Array<{ name: string; accent: string; acc2: string }> = [

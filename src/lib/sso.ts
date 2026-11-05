@@ -21,7 +21,7 @@ export function signIn(onWaiting?: () => void): { done: Promise<NexusStatus>; ca
     const end = (e: unknown) => { clearTimeout(timer); ws?.close(); reject(e); };
     stop = end;
     ws = new WebSocket(SOCKET);
-    timer = setTimeout(() => end({ kind: "invalid", message: "Nothing came back from Nexus. Try Sign in again." }), GIVE_UP);
+    timer = setTimeout(() => end({ kind: "invalid", message: "No answer from Nexus. Try signing in again" }), GIVE_UP);
     ws.onopen = () => {
       ws?.send(JSON.stringify({ id, token: null, protocol: 2 }));
       openExternal(`https://www.nexusmods.com/sso?id=${id}&application=${SSO_SLUG}`).then(() => onWaiting?.()).catch(end);
@@ -29,11 +29,11 @@ export function signIn(onWaiting?: () => void): { done: Promise<NexusStatus>; ca
     ws.onmessage = (ev) => {
       let m: { success?: boolean; error?: string; data?: { connection_token?: string; api_key?: string } };
       try { m = JSON.parse(String(ev.data)); } catch { return; }
-      if (!m.success) { end({ kind: "invalid", message: m.error || "Nexus did not sign you in." }); return; }
+      if (!m.success) { end({ kind: "invalid", message: m.error || "Nexus sign-in failed" }); return; }
       if (m.data?.api_key) { clearTimeout(timer); ws?.close(); nexus.setKey(m.data.api_key).then(resolve, reject); }
       // a connection_token only matters for reconnecting, which a fresh attempt replaces
     };
-    ws.onerror = () => end({ kind: "network", message: "Could not reach Nexus sign-in. Check the connection and try again." });
+    ws.onerror = () => end({ kind: "network", message: "Couldn't reach Nexus sign-in. Check your connection" });
   });
   return { done, cancel: () => stop({ kind: "cancelled", message: "Sign-in cancelled." }) };
 }

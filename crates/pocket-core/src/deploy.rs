@@ -80,7 +80,7 @@ fn permission_error(target: &Path, game: &Path) -> Error {
              Fix: in Steam, move the game to another library folder (Properties, Installed files, Move install folder), \
              or give your account Modify rights on the game folder.", target.display()))
     } else {
-        Error::Invalid(format!("Windows did not allow writing to {}. Close the game and any tool using the file, then try again.", target.display()))
+        Error::Invalid(format!("Windows blocked writing to {}. Close the game and any tool using it, then try again", target.display()))
     }
 }
 
@@ -123,7 +123,7 @@ fn owner_of(db: &Db, target_key: &str) -> Result<Option<(i64, String)>> {
 pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &Path, plan: &[Placement], opts: &DeployOptions) -> Result<DeployOutcome> {
     // every file stays inside the game folder and comes from inside the staging folder, whatever wrote the plan
     if let Some(bad) = plan.iter().find(|p| !crate::cyberpunk::layout::safe_target(&p.target) || !crate::cyberpunk::layout::safe_target(&p.source)) {
-        return Err(Error::Invalid(format!("This mod asks to put a file outside the game folder ({}). Nothing was installed.", bad.target)));
+        return Err(Error::Invalid(format!("This mod tried to put a file outside the game folder ({}). Nothing was installed", bad.target)));
     }
     let plan = &crate::rules::apply_renames(db, install_id, plan)?[..];
     // 1. conflicts with other installs
@@ -145,7 +145,7 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
 
     // 2. hard links need one volume
     if !same_volume(staging, game) && !opts.allow_copy {
-        return Ok(DeployOutcome::NeedsCopy { reason: "The mod library is on a different drive from the game, so files cannot be hard-linked.".into() });
+        return Ok(DeployOutcome::NeedsCopy { reason: "The library is on a different drive from the game, so files can't be hard-linked".into() });
     }
 
     let backup_root = library.join("backup");
@@ -206,7 +206,7 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
                     copied += 1;
                     Method::Copy
                 }
-                Err(e) => return Err(Error::Invalid(format!("Could not hard-link {}: {e}. Allow the copy fallback in Settings to copy instead.", p.target))),
+                Err(e) => return Err(Error::Invalid(format!("Could not hard-link {}: {e}. Turn on the copy fallback in Settings", p.target))),
             } };
             let row = Row { target_key: tkey, target_path: p.target.clone(), source: src.to_string_lossy().into_owned(), method: method.as_str().into(), backup, prev_install, size, in_place };
             db.conn.execute(

@@ -259,14 +259,14 @@ pub fn overlaps(db: &Db, game: &Path) -> Result<OverlapReport> {
         let loser = side(l, li);
         let source = loser.install_id.and_then(|id| info.get(&id)).map(|x| x.1.as_str());
         let (load_first, how) = if rep.modlist.is_some() {
-            (None, "A modlist.txt in archive/pc/mod sets the order. Remove it (Health offers to), and file names decide again.".to_string())
+            (None, "A modlist.txt in archive/pc/mod sets the order. Remove it in Health and names decide again".to_string())
         } else if loser.redmod {
-            (None, format!("{} is a REDmod. REDmod archives load after every archive in archive/pc/mod{}, so it cannot win by a new name.",
+            (None, format!("{} is a REDmod. REDmods load after archive/pc/mod{}, so renaming can't make it win",
                 loser.name, if winner.redmod { ", and REDmods load by folder name" } else { "" }))
         } else if loser.install_id.is_none() {
-            (None, format!("{} is not managed by Pockymod. To make it win, rename it in archive/pc/mod so its name sorts first, for example with ! in front.", loser.name))
+            (None, format!("{} isn't managed by Pockymod. Rename it in archive/pc/mod so it sorts first, like with a ! in front", loser.name))
         } else if source == Some("vortex") {
-            (None, format!("{} is tracked from Vortex, and its files stay as Vortex named them. Install it in Pockymod to change its order here.", loser.name))
+            (None, format!("{} is tracked from Vortex and keeps Vortex's file names. Install it in Pockymod to reorder it here", loser.name))
         } else {
             let before: Vec<String> = winner.archives.iter().map(|t| t.rsplit('/').next().unwrap_or(t).to_string()).collect();
             let map = loser.install_id.and_then(|id| renames.get(&id));
@@ -278,8 +278,8 @@ pub fn overlaps(db: &Db, game: &Path) -> Result<OverlapReport> {
                 crate::rules::load_first_name(&base, &before).map(|name| RenameTo { target: original.clone(), name })
             }).collect();
             match r {
-                Some(r) => (Some(r), "Archives load in name order and the first one wins. Players put ! in front of a name to load it earlier; Pockymod can do that to the link in the game and undo it.".into()),
-                None => (None, "No name sorts before the winner's. Rename the winner instead.".into()),
+                Some(r) => (Some(r), "Archives load in name order and the first wins. A ! in front loads one earlier. Pockymod can add it and take it off again".into()),
+                None => (None, "Nothing sorts before the winner. Rename the winner instead".into()),
             }
         };
         rep.overlaps.push(Overlap { winner, loser, files: *n, load_first, how });
@@ -293,11 +293,11 @@ pub fn overlaps(db: &Db, game: &Path) -> Result<OverlapReport> {
 /// If the redeploy fails, the old names come back.
 pub fn load_first(db: &Db, game: &Path, library: &Path, install_id: i64, renames: &[RenameTo], opts: &crate::deploy::DeployOptions) -> Result<crate::deploy::DeployOutcome> {
     let source = crate::install::source_of(db, install_id)?;
-    if source == "vortex" { return Err(Error::Invalid("Mods tracked from Vortex keep Vortex's file names.".into())); }
+    if source == "vortex" { return Err(Error::Invalid("Mods tracked from Vortex keep Vortex's file names".into())); }
     for r in renames {
         let ok = r.target.to_lowercase().starts_with("archive/pc/mod/") && r.name.to_lowercase().ends_with(".archive")
             && !r.name.contains(['/', '\\', ':', '*', '?', '"', '<', '>', '|']);
-        if !ok { return Err(Error::Invalid(format!("{} cannot be renamed that way.", r.target))); }
+        if !ok { return Err(Error::Invalid(format!("{} can't be renamed that way", r.target))); }
     }
     let mod_id: u32 = db.conn.query_row("SELECT mod_id FROM installs WHERE id = ?1", params![install_id], |r| r.get(0))?;
     let before = crate::rules::renames_for(db, install_id)?;

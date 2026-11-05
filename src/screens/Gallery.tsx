@@ -34,8 +34,8 @@ function ThemeStrip() {
         <Seg label="Scheme" value={t.choice} onChange={setSchemeChoice}
           options={(["dark", "light", "system"] as const).map((v) => ({ value: v, label: v[0].toUpperCase() + v.slice(1), disabled: t.schemes.length < 2 }))} />
         <Seg label="Effects" value={t.fx} onChange={(v) => setFx(v)} options={[{ value: "off", label: "Effects off" }, { value: "subtle", label: "Subtle" }, { value: "full", label: "Full" }]} />
-        <Key size="sm" onClick={(e) => { nope(e.currentTarget); toast("Refused: this is what a refused action looks like.", true); }}>Try a refused action</Key>
-        <Key size="sm" onClick={() => toast("Saved. Toasts slide in, drain and slide out.")}>Show a toast</Key>
+        <Key size="sm" onClick={(e) => { nope(e.currentTarget); toast("Refused", true); }}>Try a refused action</Key>
+        <Key size="sm" onClick={() => toast("Saved")}>Show a toast</Key>
       </div>
     </Module>
   );
@@ -69,7 +69,6 @@ export function Gallery() {
   return (
     <div className="stack gallery">
       <div className="grp" style={{ paddingTop: 0 }}>Component gallery <span>pocket-os.css</span></div>
-      <p className="dim" style={{ marginTop: -6 }}>Every part in every state. This screen alone shows orange more than once, so the variants sit side by side.</p>
       <ThemeStrip />
 
       <div className="grid2">
@@ -118,13 +117,13 @@ export function Gallery() {
 
       <div className="grid3">
         <Module icon="library" title="Graphite band" count="12 mods">
-          <p>Every module wears a band with an icon, an uppercase title and a count.</p>
+          <p>Icon, title, count</p>
         </Module>
         <Module icon="install" title="Do this first" count="1" band="hot">
-          <p>The orange band. Exactly one per screen, on the primary task.</p>
+          <p>One per screen, on the main task</p>
         </Module>
         <Module icon="warn" title="Problem" count="2 issues" band="bad" tools={<Key size="sm" variant="ghost">Details</Key>}>
-          <p>A red band when something is broken.</p>
+          <p>Something is broken</p>
         </Module>
       </div>
 
@@ -162,7 +161,7 @@ export function Gallery() {
         <Module icon="settings" title="Switches, pills, tags" count=".sw .pill .cchip">
           <div className="stack" style={{ gap: ".6em" }}>
             <Switch checked={sw1} onChange={setSw1}>Deploy with hard links</Switch>
-            <Switch checked={sw2} onChange={setSw2}>Show adult content</Switch>
+            <Switch checked={sw2} onChange={setSw2}>Start with Windows</Switch>
             <Switch checked={false} onChange={() => {}} disabled>Publish collections (experiment)</Switch>
           </div>
           <div className="sub-h">Status pills</div>
@@ -226,7 +225,7 @@ export function Gallery() {
               </span>
             </div>
             <div className="wbody">
-              <Empty icon="browse" title="Nothing here yet">Views sit on the dot grid like devices on a mat.</Empty>
+              <Empty icon="browse" title="Nothing here yet" />
               <div className="deck">
                 <Key latched icon="browse">Mods</Key>
                 <Key icon="collections">Collections</Key>
@@ -271,7 +270,7 @@ export function Gallery() {
       </div>
 
       <Module icon="info" title="Spec names" count={`${NAMES.length} parts`}>
-        <p className="dim" style={{ marginBottom: ".6em" }}>The build spec names components .k, .pk, .mod and so on. The Pocket stylesheet is the source of truth, so the app uses its classes:</p>
+        <p className="dim" style={{ marginBottom: ".6em" }}>Spec names and the Pocket classes they map to</p>
         <div className="fgrid" style={{ gridTemplateColumns: "10em 15em minmax(0,1fr)" }}>
           {NAMES.map(([s, p, n]) => [<code key={s + "s"}>{s}</code>, <code key={s + "p"}>{p}</code>, <span key={s + "n"} style={{ fontSize: ".86em" }}>{n}</span>])}
         </div>
@@ -283,15 +282,15 @@ export function Gallery() {
           <span className="skel skel-line" style={{ width: "60%" }} />
           <span className="skel skel-line" style={{ width: "85%" }} />
         </div>
-        <div className="note bad" style={{ marginTop: ".8em" }}>A problem note shakes once as it appears.</div>
+        <div className="note bad" style={{ marginTop: ".8em" }}>Problem notes shake once</div>
       </Module>
 
       <div className="grid2">
         <section className="panel dialog" style={{ width: "auto", animation: "none" }}>
           <header className="ph"><span className="pt"><Icon name="warn" />Dialog</span><span className="sp" /><Key variant="ghost" size="sm" icon="x" aria-label="Close" /></header>
           <div className="pb">
-            <p>Dialogs are modules on a solid scrim. Nothing is blurred.</p>
-            <div className="note warn">Game is under Program Files (x86). Writes may be blocked.</div>
+            <p>A module on a solid scrim</p>
+            <div className="note warn">Game is under Program Files (x86). Writes may be blocked</div>
             <div className="actions"><Key variant="ghost">Cancel</Key><Key>Choose a folder</Key></div>
           </div>
         </section>

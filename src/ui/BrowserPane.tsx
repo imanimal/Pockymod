@@ -116,7 +116,7 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
   if (!st.open) return null;
   if (st.popped || mode === "hidden") return (
     <button type="button" className="bpane-tab" onClick={() => (st.popped ? act(browserPane.pop(false)) : setMode((read(MODE) as Mode | null) === "full" ? "full" : "split"))}
-      title={st.popped ? "The Nexus window is open on its own. Bring it back into this window." : "Show the Nexus pane again"}>
+      title={st.popped ? "Bring the Nexus window back in" : "Show the Nexus pane"}>
       <Icon name="web" size={9} /><span>{st.popped ? "Nexus window" : "Nexus"}</span>{waiting && <span className="led wait" aria-label="Waiting for your click" />}
     </button>
   );
@@ -131,21 +131,21 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
         <Key size="sm" variant="ghost" icon="chevron" onClick={() => act(browserPane.nav("forward"))} aria-label="Forward" title="Forward" />
         <Key size="sm" variant="ghost" icon="refresh" onClick={() => act(browserPane.nav(st.loading ? "stop" : "reload"))} aria-label={st.loading ? "Stop" : "Reload"} title={st.loading ? "Stop" : "Reload"} />
         <button type="button" className="bpane-url" title={st.url ? `${st.url} (click to copy)` : undefined}
-          onClick={() => st.url && navigator.clipboard?.writeText(st.url).then(() => toast("Address copied.")).catch(() => {})}>
+          onClick={() => st.url && navigator.clipboard?.writeText(st.url).then(() => toast("Address copied")).catch(() => {})}>
           {st.loading && <span className="led run" aria-label="Loading" />}
           <b>{title || host || "Nexus Mods"}</b>{host && <span className="dim">{host}</span>}
         </button>
         <Key size="sm" variant="ghost" icon="link" onClick={() => act(browserPane.external())} aria-label="Open in your browser"
-          title="This page in your own browser: you are signed in there, with your saved passwords and extensions" />
+          title="Open in your browser" />
         <Key size="sm" variant="ghost" icon="max" latched={mode === "full"} onClick={() => setMode(mode === "full" ? "split" : "full")}
           aria-label={mode === "full" ? "Beside the app" : "Over the whole view"} title={mode === "full" ? "Beside the app" : "Over the whole view"} />
-        <Key size="sm" variant="ghost" icon="share" onClick={() => act(browserPane.pop(true))} aria-label="Pop out" title="Pop out into a window of its own (still signed in)" />
-        <Key size="sm" variant="ghost" icon="minus" onClick={() => setMode("hidden")} aria-label="Hide" title="Hide behind a tab; the page keeps its place" />
+        <Key size="sm" variant="ghost" icon="share" onClick={() => act(browserPane.pop(true))} aria-label="Pop out" title="Pop out into its own window" />
+        <Key size="sm" variant="ghost" icon="minus" onClick={() => setMode("hidden")} aria-label="Hide" title="Hide behind a tab" />
         <Key size="sm" variant="ghost" icon="x" onClick={() => act(browserPane.close())} aria-label="Close the Nexus pane" title="Close" />
       </div>
       <div className="bpane-view" ref={view}>
-        {!inTauri() && <div className="bpane-stub"><Icon name="web" size={27} /><b>{st.url}</b><span className="dim">The Nexus page shows here in the desktop app.</span></div>}
-        {inTauri() && covered && <div className="bpane-stub"><Icon name="web" size={27} /><span className="dim">The page steps aside while this window is open.</span></div>}
+        {!inTauri() && <div className="bpane-stub"><Icon name="web" size={27} /><b>{st.url}</b><span className="dim">Shows here in the desktop app</span></div>}
+        {inTauri() && covered && <div className="bpane-stub"><Icon name="web" size={27} /><span className="dim">Hidden while this window is open</span></div>}
       </div>
     </aside>
   );

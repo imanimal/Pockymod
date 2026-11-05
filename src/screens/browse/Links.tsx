@@ -28,10 +28,8 @@ export function openLink(url: string, onMod?: (modId: number) => void, own = fal
   void linksApi.open(url).catch(fail);
 }
 
-const tipOf = (url: string, onMod?: unknown) =>
-  nexusModId(url) ? `${url}\n${onMod ? "Opens the mod here" : "Opens the mod's page"}. Ctrl+click: in your own browser.`
-    : isNexus(url) ? `${url}\nOpens where Settings says Nexus pages open. Ctrl+click: in your own browser.`
-      : `${url}\nOpens in your own browser.`;
+const tipOf = (url: string) =>
+  nexusModId(url) || isNexus(url) ? `${url}\nCtrl+click opens in your browser` : url;
 
 /** A description's text with its links clickable. `limit` cuts it after that many characters. */
 export function DescText({ parts, limit, onMod }: { parts: DescPart[]; limit?: number; onMod?: (modId: number) => void }) {
@@ -41,7 +39,7 @@ export function DescText({ parts, limit, onMod }: { parts: DescPart[]; limit?: n
     if (left <= 0) break;
     if (typeof p === "string") { out.push(p.length > left ? p.slice(0, left) : p); left -= p.length; continue; }
     const go = (e: MouseEvent) => { e.preventDefault(); openLink(p.url, onMod, e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1); };
-    out.push(<a key={i} href={p.url} className="dlink" onClick={go} onAuxClick={(e) => { if (e.button === 1) go(e); }} title={tipOf(p.url, onMod)}>{p.text.length > left ? p.text.slice(0, left) : p.text}</a>);
+    out.push(<a key={i} href={p.url} className="dlink" onClick={go} onAuxClick={(e) => { if (e.button === 1) go(e); }} title={tipOf(p.url)}>{p.text.length > left ? p.text.slice(0, left) : p.text}</a>);
     left -= p.text.length;
   }
   return <>{out}</>;
@@ -124,10 +122,10 @@ export function Links({ list, onMod }: { list: Array<{ url: string; labels: stri
     return `${l.url} ${l.labels.join(" ")} ${p?.title ?? ""} ${p?.description ?? ""} ${p?.site ?? ""} ${p?.author ?? ""}`.toLowerCase().includes(t);
   });
   const hosts = [...new Set(list.map((l) => hostOf(l.url)))];
-  const copy = (text: string) => navigator.clipboard.writeText(text).then(() => toast("Link copied.")).catch(() => toast("Could not copy.", true));
+  const copy = (text: string) => navigator.clipboard.writeText(text).then(() => toast("Link copied")).catch(() => toast("Couldn't copy", true));
   return (
     <div className="cmds links">
-      <button type="button" className="cmds-h" aria-expanded={open} onClick={() => setOpen(!open)} title={open ? "Fold the links" : "Every link in the description, with a preview of each"}>
+      <button type="button" className="cmds-h" aria-expanded={open} onClick={() => setOpen(!open)} title={open ? "Collapse" : "Links in the description"}>
         <Icon name="chevron" size={9} className={open ? "rot" : ""} />
         <b>Links</b><span className="n">{list.length}</span>
         <span className="sp" />
@@ -137,7 +135,7 @@ export function Links({ list, onMod }: { list: Array<{ url: string; labels: stri
         {list.length > 4 && (
           <div className="lnk-tools">
             <label className="fbox"><Icon name="browse" />
-              <input className="finput" type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a link (title, site or words)" aria-label="Find a link"
+              <input className="finput" type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a link" aria-label="Find a link"
                 onKeyDown={(e) => { if (e.key === "Escape" && q) { e.stopPropagation(); setQ(""); } }} />
             </label>
             {present.length > 1 && <Seg label="Kind" value={cat} onChange={setCat}
@@ -145,7 +143,7 @@ export function Links({ list, onMod }: { list: Array<{ url: string; labels: stri
           </div>
         )}
         <div className="lnk-list">
-          {shown.length === 0 && <p className="dim" style={{ fontSize: ".86em", padding: ".3em" }}>No link matches. <button type="button" className="linkish" onClick={() => { setQ(""); setCat("all"); }}>Show all</button></p>}
+          {shown.length === 0 && <p className="dim" style={{ fontSize: ".86em", padding: ".3em" }}>No matches <button type="button" className="linkish" onClick={() => { setQ(""); setCat("all"); }}>Show all</button></p>}
           {CATS.map((c) => {
             const here = shown.filter((l) => l.cat === c.key);
             if (!here.length) return null;
@@ -159,7 +157,7 @@ export function Links({ list, onMod }: { list: Array<{ url: string; labels: stri
             );
           })}
         </div>
-        {list.length > 1 && <Key size="sm" icon="file" onClick={() => copy(list.map((l) => l.url).join("\n"))} title="Every link, one per line">Copy all</Key>}
+        {list.length > 1 && <Key size="sm" icon="file" onClick={() => copy(list.map((l) => l.url).join("\n"))} title="One per line">Copy all</Key>}
       </>}
     </div>
   );
@@ -178,7 +176,7 @@ function LinkCard({ url, labels, p, onMod, onCopy }: { url: string; labels: stri
   const go = (e: MouseEvent) => openLink(url, onMod, e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1);
   return (
     <div className={`lnk${p ? "" : " loading"}${p?.error ? " err" : ""}`}>
-      <button type="button" className="lnk-main" onClick={go} onAuxClick={(e) => { if (e.button === 1) go(e); }} title={tipOf(url, onMod)}>
+      <button type="button" className="lnk-main" onClick={go} onAuxClick={(e) => { if (e.button === 1) go(e); }} title={tipOf(url)}>
         <span className={`lnk-img${video ? " video" : ""}`}>
           {p?.image && imgOk ? <img src={p.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgOk(false)} /> : <Icon name={fallback} size={27} />}
           {video && p?.image && imgOk && <span className="lnk-play"><Icon name="play" size={18} /></span>}
@@ -190,20 +188,20 @@ function LinkCard({ url, labels, p, onMod, onCopy }: { url: string; labels: stri
           </span>
           <span className="lnk-t">{title}</span>
           {p?.description && <span className="lnk-d">{p.description}</span>}
-          {!p && <span className="lnk-d dim">Loading the preview</span>}
-          {p?.error && <span className="lnk-d dim">{p.error} The link still opens.</span>}
+          {!p && <span className="lnk-d dim">Loading</span>}
+          {p?.error && <span className="lnk-d dim">{p.error}</span>}
           <span className="lnk-m">
             {modId && p?.author && <span>by {p.author}</span>}
             {p?.downloads != null && <span>{formatCount(p.downloads)} downloads</span>}
             {p?.endorsements != null && <span>{formatCount(p.endorsements)} endorsements</span>}
-            {labels.length > 0 && labels.some((l) => l !== title) && <span className="lnk-w" title="The words the description links with">“{labels.filter((l) => l !== title).slice(0, 2).join("”, “")}”</span>}
+            {labels.length > 0 && labels.some((l) => l !== title) && <span className="lnk-w" title="Link text">“{labels.filter((l) => l !== title).slice(0, 2).join("”, “")}”</span>}
             {!modId && path && path.length > 1 && <span className="mono lnk-p">{path}</span>}
           </span>
         </span>
       </button>
       <span className="lnk-k">
-        <Key size="sm" variant="ghost" icon="file" aria-label={`Copy ${url}`} title="Copy the link" onClick={() => onCopy(url)} />
-        {(modId || isNexus(url)) && <Key size="sm" variant="ghost" icon="link" aria-label="Open in your browser" title="Open in your own browser: your sign-in, saved passwords and extensions (Ctrl+click does the same)" onClick={() => openLink(url, onMod, true)} />}
+        <Key size="sm" variant="ghost" icon="file" aria-label={`Copy ${url}`} title="Copy link" onClick={() => onCopy(url)} />
+        {(modId || isNexus(url)) && <Key size="sm" variant="ghost" icon="link" aria-label="Open in your browser" title="Open in your browser (Ctrl+click)" onClick={() => openLink(url, onMod, true)} />}
       </span>
     </div>
   );

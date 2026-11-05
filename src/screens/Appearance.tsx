@@ -14,9 +14,9 @@ import {
 import "./Appearance.css";
 
 const FX_HINT: Record<FxLevel, string> = {
-  off: "No scanlines or flickers.",
-  subtle: "Faint scanlines on LCDs and the title bar, a soft edge, short flickers when views change.",
-  full: "Scanlines over the window, glass on the title bar and toasts, and the full screen flickers.",
+  off: "No scanlines or flicker",
+  subtle: "Faint scanlines, short flicker between views",
+  full: "Scanlines, glass and full-screen flicker",
 };
 
 const SCHEME_NAME: Record<Scheme, string> = { dark: "Dark", light: "Light" };
@@ -38,8 +38,8 @@ export function Appearance() {
     setTheme(id).then(() => {
       if (builtin || before === id) return;
       let kept = false;
-      toast("Keep this theme? It goes back in 12 seconds otherwise (Ctrl+Alt+Shift+T resets to Redline any time).", false, { label: "Keep", run: () => { kept = true; toast("Theme kept."); } });
-      setTimeout(() => { if (!kept) void setTheme(before).then(() => toast("Back to the theme you had.")); }, 12_000);
+      toast("Keep this theme? Reverts in 12s (Ctrl+Alt+Shift+T resets to Redline)", false, { label: "Keep", run: () => { kept = true; toast("Theme kept"); } });
+      setTimeout(() => { if (!kept) void setTheme(before).then(() => toast("Theme reverted")); }, 12_000);
     }).catch((e) => toast(errorText(e), true));
   };
 
@@ -51,22 +51,22 @@ export function Appearance() {
       const r = await installThemePackage(f.text);
       await reload();
       await setTheme(r.id);
-      toast(`${r.name} is installed.`);
+      toast(`${r.name} installed`);
     } catch (e) {
       nope(key);
-      toast(`That theme was not installed. ${errorText(e)}`, true);
+      toast(`Theme not installed. ${errorText(e)}`, true);
     }
   };
 
   const doExport = async () => {
     const { file, text } = exportTheme();
-    try { if (await saveTextAs(file, text, ["json"])) toast(`Saved ${file}.`); } catch (e) { toast(errorText(e), true); }
+    try { if (await saveTextAs(file, text, ["json"])) toast(`Saved ${file}`); } catch (e) { toast(errorText(e), true); }
   };
 
   const remove = async (info: ThemeInfo) => {
     if (removing !== info.id) { setRemoving(info.id); return; }
     setRemoving(null);
-    try { await uninstallTheme(info.id); await reload(); toast(`${info.name} is removed.`); } catch (e) { toast(errorText(e), true); }
+    try { await uninstallTheme(info.id); await reload(); toast(`${info.name} removed`); } catch (e) { toast(errorText(e), true); }
   };
 
   const one = t.schemes.length < 2;
@@ -90,31 +90,26 @@ export function Appearance() {
           <span className="lab">Mode</span>
           <div className="appear-row">
             <Seg label="Mode" value={one ? t.schemes[0] : t.choice} onChange={setSchemeChoice} options={modeOptions} />
-            {one && <span className="dim hint">{only}.</span>}
+            {one && <span className="dim hint">{only}</span>}
           </div>
           <span className="lab">Effects</span>
           <div className="appear-row">
-            <Seg label="Effects" value={t.fx} onChange={(v) => setFx(v)}
-              options={[{ value: "off", label: "Off" }, { value: "subtle", label: "Subtle" }, { value: "full", label: "Full" }]} />
-            <span className="dim hint">
-              {FX_HINT[t.fx]}{" "}
-              {t.fxChoice === null || t.fxChoice === t.fxTheme
-                ? <>This is what {t.name} suggests.</>
-                : <button type="button" className="linkish" onClick={() => setFx(null)}>Use what {t.name} suggests ({t.fxTheme})</button>}
-            </span>
+            <span title={FX_HINT[t.fx]}><Seg label="Effects" value={t.fx} onChange={(v) => setFx(v)}
+              options={[{ value: "off", label: "Off" }, { value: "subtle", label: "Subtle" }, { value: "full", label: "Full" }]} /></span>
+            {t.fxChoice !== null && t.fxChoice !== t.fxTheme && (
+              <button type="button" className="linkish dim hint" onClick={() => setFx(null)}>{t.name} default ({t.fxTheme})</button>)}
           </div>
           <span className="lab">Motion</span>
-          <Switch checked={t.motion} onChange={setMotion}>Keys travel, LCDs flicker on, views and cards settle in</Switch>
+          <Switch checked={t.motion} onChange={setMotion}>Animations</Switch>
           <span className="lab">Text size</span>
           <TextSize />
         </div>
         <div className="actions appear-actions">
           <Key icon="gallery" variant="dark" onClick={() => setCustomOpen(!custom)} latched={custom}
-            title={`Change ${t.name}'s colours in place: a few swatches, or every colour under Advanced. Reset any time.`}>Customize {t.name}</Key>
-          <Key icon="plus" onClick={() => setMaking(true)} disabled={making} title="A new theme of your own, saved as a file you can share">Make your own</Key>
-          <Key icon="folder" onClick={(e) => void doImport(e.currentTarget)}>Import theme file</Key>
-          <Key icon="share" onClick={() => void doExport()}>Export current theme</Key>
-          <span className="dim hint">A theme is a small JSON file. docs/themes.md in the project explains how to write one.</span>
+            title={`Change ${t.name}'s colours`}>Customize {t.name}</Key>
+          <Key icon="plus" onClick={() => setMaking(true)} disabled={making} title="New theme, saved as a shareable file">Make your own</Key>
+          <Key icon="folder" onClick={(e) => void doImport(e.currentTarget)} title="A theme .json file">Import theme</Key>
+          <Key icon="share" onClick={() => void doExport()}>Export theme</Key>
         </div>
       </Module>
       {custom && <Customizer onClose={() => setCustomOpen(false)} onSaveAs={() => { setCustomOpen(false); setMaking(true); }} />}
@@ -154,13 +149,13 @@ function ThemeCard({ info, on, scheme, onPick, onRemove, removing }:
         <span className={`tprev-pair${both ? " two" : ""}`}>{shown.map((s) => <ThemeSample key={s} info={info} scheme={s} />)}</span>
         <span className="tcard-b">
           <span className="tcard-h"><b>{info.name}</b>{on && <Icon name="check" />}</span>
-          <span className="tcard-d">{info.description ?? (info.author ? `By ${info.author}.` : "An installed theme.")}</span>
+          <span className="tcard-d">{info.description ?? (info.author ? `By ${info.author}` : "Installed theme")}</span>
           <span className="tcard-m">{both ? "Dark and light" : `${SCHEME_NAME[info.schemes[0]]} only`} · {info.builtin ? "built in" : info.author ? `by ${info.author}` : "installed"}</span>
         </span>
       </button>
       {onRemove && (
         <Key size="sm" variant="ghost" icon="trash" className="tcard-x" onClick={onRemove} title={`Remove ${info.name}`}>
-          {removing ? "Remove for good?" : "Remove"}
+          {removing ? "Sure?" : "Remove"}
         </Key>
       )}
     </div>
@@ -228,12 +223,12 @@ function ThemeMaker({ onDone }: { onDone: () => void }) {
       previewDraft(null);
       await setTheme(r.id, edit);
       saved(box.current);
-      toast(`${r.name} is saved and in use.`);
+      toast(`${r.name} saved`);
       onDone();
     } catch (e) { nope(key); toast(errorText(e), true); }
   };
   const doExport = async () => {
-    try { if (await saveTextAs(`${id}.json`, JSON.stringify(pkg(), null, 2) + "\n", ["json"])) toast(`Saved ${id}.json.`); } catch (e) { toast(errorText(e), true); }
+    try { if (await saveTextAs(`${id}.json`, JSON.stringify(pkg(), null, 2) + "\n", ["json"])) toast(`Saved ${id}.json`); } catch (e) { toast(errorText(e), true); }
   };
   const cancel = () => { previewDraft(null); previewScheme(null); onDone(); };
 
@@ -249,12 +244,11 @@ function ThemeMaker({ onDone }: { onDone: () => void }) {
         <Key variant="ghost" size="sm" icon="x" onClick={cancel} aria-label="Close without saving" />
       </header>
       <div className="pb">
-        <p className="dim">Change a colour and the whole window shows it. Your theme keeps the shapes of {base.name}; save it to install it, or export it as a file to share.</p>
         <div className="fgrid appear-grid">
           <label className="lab" htmlFor="tmake-name">Name</label>
           <div className="appear-row">
             <label className="fbox tmake-name"><input id="tmake-name" className="finput" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} spellCheck={false} /></label>
-            <span className="dim hint mono">{id}.json{replaces && !replaces.builtin ? " · replaces your theme with this id" : ""}</span>
+            <span className="dim hint mono">{id}.json{replaces && !replaces.builtin ? " · replaces your theme of this name" : ""}</span>
           </div>
           {base.schemes.length > 1 && (
             <>
@@ -290,8 +284,7 @@ function TextSize() {
   const value = opts.some((o) => Number(o.value) === px) ? String(px) : "14";
   return (
     <span className="actions" style={{ gap: ".5em" }}>
-      <Seg label="Text size" value={value} onChange={(v) => { setTextSize(Number(v)); setPx(Number(v)); }} options={opts} />
-      <span className="dim" style={{ fontSize: ".84em" }}>Ctrl+= and Ctrl+- anywhere</span>
+      <span title="Ctrl+= and Ctrl+-, Ctrl+0 resets"><Seg label="Text size" value={value} onChange={(v) => { setTextSize(Number(v)); setPx(Number(v)); }} options={opts} /></span>
     </span>
   );
 }
@@ -318,7 +311,7 @@ function Customizer({ onClose, onSaveAs }: { onClose: () => void; onSaveAs: () =
         <span className="pt"><Icon name="gallery" />Customize {t.name}</span>
         <span className="cnt">{SCHEME_NAME[t.scheme]}{changed ? ` · ${changed} changed` : ""}</span>
         <span className="sp" />
-        <Key variant="ghost" size="sm" icon="x" onClick={onClose} aria-label="Close" title="Close; your colours stay" />
+        <Key variant="ghost" size="sm" icon="x" onClick={onClose} aria-label="Close" title="Close, colours stay" />
       </header>
       <div className="pb">
         <div className="cust-swatches">
@@ -332,16 +325,15 @@ function Customizer({ onClose, onSaveAs }: { onClose: () => void; onSaveAs: () =
         <div className="sub-h">Palettes</div>
         <div className="chips">
           {PALETTES.map((p) => (
-            <button key={p.name} type="button" className="chip cust-pal" onClick={() => put({ "--accent": p.accent, "--acc2": p.acc2, "--sel": p.acc2, "--focus": p.acc2 })} title={`${p.name}: accent and highlight`}>
+            <button key={p.name} type="button" className="chip cust-pal" onClick={() => put({ "--accent": p.accent, "--acc2": p.acc2, "--sel": p.acc2, "--focus": p.acc2 })} title={`${p.name} accent and highlight`}>
               <i style={{ background: p.accent }} /><i style={{ background: p.acc2 }} />{p.name}
             </button>
           ))}
         </div>
         <div className="actions" style={{ marginTop: ".6em" }}>
           <Key size="sm" variant="ghost" icon="undo" disabled={!changed} onClick={() => setCustom(t.id, t.scheme, null)} title={`Back to ${t.name}'s own colours`}>Reset</Key>
-          <Key size="sm" variant="ghost" icon="chevron" className={adv ? "rot-key" : ""} onClick={() => setAdv(!adv)} aria-expanded={adv} title="Every colour the theme has">Advanced</Key>
-          <Key size="sm" variant="ghost" icon="plus" onClick={onSaveAs} title="Make these colours into a theme of your own, as a file to share">Save as a new theme</Key>
-          <span className="dim hint">Kept for {t.name} in {SCHEME_NAME[t.scheme].toLowerCase()} mode; other themes keep theirs.</span>
+          <Key size="sm" variant="ghost" icon="chevron" className={adv ? "rot-key" : ""} onClick={() => setAdv(!adv)} aria-expanded={adv} title="Every colour">Advanced</Key>
+          <Key size="sm" variant="ghost" icon="plus" onClick={onSaveAs} title="Save these colours as a new theme">Save as a new theme</Key>
         </div>
         {adv && (
           <div className="tmake-grid" style={{ marginTop: ".6em" }}>
@@ -349,7 +341,7 @@ function Customizer({ onClose, onSaveAs }: { onClose: () => void; onSaveAs: () =
               <label key={token} className="tmake-tok" title={`${label} (${token})`}>
                 <input type="color" value={live(token)} onChange={(e) => put({ [token]: e.target.value })} aria-label={label} />
                 <span>{label}</span>
-                {mine[token] && <button type="button" className="linkish" onClick={() => { const n = { ...mine }; delete n[token]; setCustom(t.id, t.scheme, n); }} title="Back to the theme's own">reset</button>}
+                {mine[token] && <button type="button" className="linkish" onClick={() => { const n = { ...mine }; delete n[token]; setCustom(t.id, t.scheme, n); }} title="Theme default">reset</button>}
               </label>
             ))}
           </div>

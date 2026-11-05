@@ -61,7 +61,7 @@ function pump() {
 }
 function planFor(modId: number, fileId: number): QueueItem[] {
   const d = details.find((x) => x.detail.modId === modId);
-  if (!d) throw { kind: "demo", message: "The demo data has details for the first eight mods only." };
+  if (!d) throw { kind: "demo", message: "Demo only has the first eight mods" };
   const f = d.files.find((x) => x.fileId === fileId) ?? d.files[0];
   const reqs = d.detail.modRequirements.nexusRequirements.nodes.filter((r) => !installs.some((i) => i.modId === r.modId))
     .map((r) => details.find((x) => x.detail.modId === r.modId)).filter((x): x is DetailView => !!x);
@@ -123,10 +123,10 @@ function health(): HealthReport {
       fw("redscript", "redscript", false, null, "0.5.32", false, ["Mod Settings"]), fw("archivexl", "ArchiveXL", true, "1.28.6", "1.28.6"), fw("tweakxl", "TweakXL", false, null, "1.10.9"),
       fw("codeware", "Codeware", false, null, "1.19.2"), fw("cybercmd", "cybercmd", false, null, "0.0.9")],
     issues: [
-      { id: "fw.missing.redscript", severity: "problem", area: "frameworks", title: "redscript is missing", detail: "Needed by Mod Settings. Without it those mods do nothing or stop the game from starting.", fix: { kind: "installMod", modId: 1511, name: "redscript" } },
-      { id: "fw.old.cet", severity: "problem", area: "frameworks", title: "Cyber Engine Tweaks predates the game patch", detail: "The game was patched after Cyber Engine Tweaks was installed, and Nexus has a newer version (1.38.1). Update it before you play.", fix: { kind: "updateMod", modId: 107, name: "Cyber Engine Tweaks" } },
-      { id: "redmod.deploy", severity: "warning", area: "redmod", title: "REDmods need deploying", detail: "REDmods were added, removed or reordered since the last REDmod deploy. The game will not see the change until it runs.", fix: { kind: "runRedmodDeploy" } },
-      { id: "game.patch", severity: "info", area: "game", title: "Game patch assumed to be 2.5", detail: "The patch could not be read from the game. Pick it in Settings so compatibility checks are right.", fix: { kind: "openSettings" } },
+      { id: "fw.missing.redscript", severity: "problem", area: "frameworks", title: "redscript is missing", detail: "Mod Settings needs it. Without it the game may not start", fix: { kind: "installMod", modId: 1511, name: "redscript" } },
+      { id: "fw.old.cet", severity: "problem", area: "frameworks", title: "Cyber Engine Tweaks predates the game patch", detail: "Older than the game patch. Nexus has 1.38.1", fix: { kind: "updateMod", modId: 107, name: "Cyber Engine Tweaks" } },
+      { id: "redmod.deploy", severity: "warning", area: "redmod", title: "REDmods need deploying", detail: "REDmods changed since the last deploy", fix: { kind: "runRedmodDeploy" } },
+      { id: "game.patch", severity: "info", area: "game", title: "Game patch assumed to be 2.5", detail: "Couldn't read the patch. Pick it in Settings", fix: { kind: "openSettings" } },
     ],
     problems: 2, warnings: 1,
   };
@@ -142,6 +142,7 @@ function search(q: BrowseQuery, local: LocalFilter): BrowseResult {
     && !q.excludeTags.some((t) => n.tags.some((x) => x.name === t))
     && q.frameworks.every((f) => n.classification.frameworks.some((x) => x.key === f))
     && (!q.modType || n.classification.modType === q.modType)
+    && (q.includeAdult || !n.adultContent)
     && (!q.updatedAfter || Date.parse(n.updatedAt) / 1000 >= q.updatedAfter)
     && (!q.createdAfter || Date.parse(n.createdAt) / 1000 >= q.createdAfter)
     && (!q.createdBefore || Date.parse(n.createdAt) / 1000 <= q.createdBefore)
@@ -167,7 +168,7 @@ export function installDemo() {
     nexus_status: () => status,
     rate_limit: () => status.rateLimit,
     nexus_set_key: ({ key }) => {
-      if (String(key).trim().length < 16) throw { kind: "invalid", message: "That does not look like a Nexus API key." };
+      if (String(key).trim().length < 16) throw { kind: "invalid", message: "That does not look like a Nexus API key" };
       status = {
         hasKey: true,
         user: { userId: 1, name: "demo-user", isPremium: false, isSupporter: false },
@@ -180,7 +181,7 @@ export function installDemo() {
     browse_search: ({ query, local }) => new Promise((ok) => setTimeout(() => ok(search(query as BrowseQuery, local as LocalFilter)), 120)),
     browse_detail: ({ modId }) => {
       const d = details.find((x) => x.detail.modId === modId);
-      if (!d) throw { kind: "demo", message: "The demo data has details for the first eight mods only." };
+      if (!d) throw { kind: "demo", message: "Demo only has the first eight mods" };
       return { ...d, ...(flags.get(Number(modId)) ?? {}) };
     },
     set_mod_flag: ({ modId, flag, on }) => {
@@ -198,10 +199,10 @@ export function installDemo() {
     },
     queue_remove: ({ id }) => { const i = q.findIndex((x) => x.id === id); if (i >= 0) q.splice(i, 1); pump(); return snapshot(); },
     queue_retry: () => snapshot(),
-    mod_endorse: () => { if (!status.hasKey) throw { kind: "no_key", message: "Add your Nexus API key in Settings first." }; },
-    mod_track: () => { if (!status.hasKey) throw { kind: "no_key", message: "Add your Nexus API key in Settings first." }; },
+    mod_endorse: () => { if (!status.hasKey) throw { kind: "no_key", message: "Add your Nexus API key in Settings first" }; },
+    mod_track: () => { if (!status.hasKey) throw { kind: "no_key", message: "Add your Nexus API key in Settings first" }; },
     updates_skip: () => { demoEmit("updates", []); return []; },
-    queue_cancel: ({ id }) => { const k = q.findIndex((x) => x.id === id); if (k >= 0) q[k].state = { state: "failed", message: "Download cancelled. Retry picks it up where it stopped." }; pump(); return snapshot(); },
+    queue_cancel: ({ id }) => { const k = q.findIndex((x) => x.id === id); if (k >= 0) q[k].state = { state: "failed", message: "Cancelled. Retry resumes it" }; pump(); return snapshot(); },
     queue_clear_finished: () => { for (let i = q.length - 1; i >= 0; i--) if (["done", "failed"].includes(q[i].state.state)) q.splice(i, 1); demoEmit("queue", snapshot()); return snapshot(); },
     queue_show_page: () => {},
     // pages open in this browser (a new tab), or in the stand-in pane (the desktop app shows the real page there)
@@ -215,7 +216,7 @@ export function installDemo() {
     endorse_mark: ({ modId }) => { demoEndorsed.add(Number(modId)); },
     background_state: () => ({ readyVersion: null, modsReady: 0 }),
     background_check: () => ({ readyVersion: null, modsReady: 0 }),
-    app_update_install: () => { throw { kind: "demo", message: "Updates install in the desktop app." }; },
+    app_update_install: () => { throw { kind: "demo", message: "Updates install in the desktop app" }; },
     autostart_get: () => store.get("demo.autostart") === "1",
     autostart_set: ({ on }) => { store.set("demo.autostart", on ? "1" : "0"); return Boolean(on); },
     browser_bounds: () => {},
@@ -250,7 +251,7 @@ export function installDemo() {
     library_keep_one: ({ keep, remove }) => { for (const id of remove as number[]) { const k = installs.findIndex((x) => x.id === id && id !== keep); if (k >= 0) { toTrash(installs[k], "extra copy"); installs.splice(k, 1); } } demoEmit("library-changed", null); },
     library_restore_replaced: ({ installIds }) => { let n = 0; for (const i of installs) if ((installIds as number[]).includes(i.id) && i.replaced) { i.replaced = 0; i.source = "found"; i.origin = null; n++; } demoEmit("library-changed", null); return n; },
     library_deploy: () => ({ outcome: "deployed", linked: 3, copied: 0, backedUp: [], tookFrom: [] }),
-    library_install_file: () => { throw { kind: "demo", message: "Installing from a file needs the desktop app." }; },
+    library_install_file: () => { throw { kind: "demo", message: "Installing from a file needs the desktop app" }; },
     paths_get: () => pathsView,
     paths_set: ({ gameDir, libraryDir, allowCopy }) => {
       const g = (gameDir as string | undefined) ?? pathsView.gameDir;
@@ -291,9 +292,9 @@ export function installDemo() {
     queue_add_mod: () => snapshot(),
     downloads_usage: () => ({ files: 0, bytes: 0, installedFiles: 0, installedBytes: 0 }),
     downloads_cleanup: () => 0,
-    nxm_handler_test: () => { throw { kind: "demo", message: "The link test needs the desktop app on Windows." }; },
-    game_launch: () => { throw { kind: "demo", message: "Starting the game needs the desktop app." }; },
-    game_launch_vanilla: () => { throw { kind: "demo", message: "Starting the game needs the desktop app." }; },
+    nxm_handler_test: () => { throw { kind: "demo", message: "The link test needs the desktop app on Windows" }; },
+    game_launch: () => { throw { kind: "demo", message: "Starting the game needs the desktop app" }; },
+    game_launch_vanilla: () => { throw { kind: "demo", message: "Starting the game needs the desktop app" }; },
     game_vanilla_pending: () => false,
     scripts_reset: () => 2,
     library_identify: ({ path }) => {
@@ -302,12 +303,12 @@ export function installDemo() {
       return m ? { modId: Number(m[2]), fileId: null, name: m[1].replace(/[_-]/g, " "), version: m[3].replace(/-/g, "."), fileName: null } : { modId: null, fileId: null, name: stem.replace(/[_-]/g, " "), version: "", fileName: null };
     },
     game_vanilla_restore: () => 0,
-    game_open_folder: () => { throw { kind: "demo", message: "Opening folders needs the desktop app." }; },
-    app_update_check: () => ({ current: "0.1.0", latest: null, newer: false, notes: null, url: null, message: "No published release found yet." }),
+    game_open_folder: () => { throw { kind: "demo", message: "Opening folders needs the desktop app" }; },
+    app_update_check: () => ({ current: "0.1.0", latest: null, newer: false, notes: null, url: null, message: "No published release found yet" }),
     modio_has_key: () => false,
-    modio_set_key: () => { throw { kind: "demo", message: "mod.io needs the desktop app." }; },
+    modio_set_key: () => { throw { kind: "demo", message: "mod.io needs the desktop app" }; },
     modio_clear_key: () => {},
-    modio_browse: () => { throw { kind: "invalid", message: "Add a mod.io API key in Settings first." }; },
+    modio_browse: () => { throw { kind: "invalid", message: "Add a mod.io API key in Settings first" }; },
     collections_browse: () => collectionsFixture,
     media_browse: ({ kind }) => (mediaFixture as Record<string, unknown>)[String(kind)],
     collection_check: () => new Promise((ok) => setTimeout(() => ok(checkFixture), 300)),
@@ -322,13 +323,13 @@ export function installDemo() {
       return snapshot();
     },
     local_collection_create: ({ name, description }) => {
-      if (installs.length === 0) throw { kind: "invalid", message: "There are no Nexus mods enabled to put in a collection. Mods installed from a file cannot be shared." };
+      if (installs.length === 0) throw { kind: "invalid", message: "No enabled Nexus mods to collect. Mods from files can't be shared" };
       return { format: "pocket-mods.collection", version: 1, name, description, game: "cyberpunk2077", gameVersion: "2.5", createdAt: new Date().toISOString(),
         mods: installs.map((i) => ({ modId: i.modId, fileId: i.fileId, name: i.name, fileName: i.name, version: i.version, md5: "d41d8cd98f00b204e9800998ecf8427e", size: 1000, optional: false, requires: [], uri: "" })),
         loadOrder: installs.map((i) => i.modId) };
     },
     local_collection_export: () => {},
-    local_collection_import: () => { throw { kind: "demo", message: "Importing a file needs the desktop app." }; },
+    local_collection_import: () => { throw { kind: "demo", message: "Importing a file needs the desktop app" }; },
     existing_scan: async () => {
       for (const d of ["%APPDATA%\\Vortex", "archive\\pc\\mod", "mods", "r6\\scripts", "r6\\tweaks", "bin\\x64\\plugins\\cyber_engine_tweaks\\mods", "red4ext\\plugins"]) {
         demoEmit("existing-progress", { stage: d.startsWith("%") ? "vortex" : "folder", done: 0, total: 0, name: d.startsWith("%") ? d : `D:\\SteamLibrary\\steamapps\\common\\Cyberpunk 2077\\${d}` });
@@ -395,13 +396,13 @@ export function installDemo() {
     },
     market_get: ({ path }) => {
       const hit = marketFiles[`../../marketplace/${String(path)}`];
-      if (hit === undefined) throw { kind: "http", message: `The marketplace has no ${String(path)} yet.` };
+      if (hit === undefined) throw { kind: "http", message: `The marketplace has no ${String(path)} yet` };
       return hit;
     },
     // ?market=offline in the address shows the marketplace as an old cached copy
     market_fetch: ({ path }) => {
       const hit = marketFiles[`../../marketplace/${String(path)}`];
-      if (hit === undefined) throw { kind: "http", message: `The marketplace has no ${String(path)} yet.` };
+      if (hit === undefined) throw { kind: "http", message: `The marketplace has no ${String(path)} yet` };
       return { text: hit, source: location.search.includes("market=offline") ? "offline" : "network" };
     },
     ext_states: () => { try { return JSON.parse(localStorage.getItem("pm.demo.extState") ?? "{}"); } catch { return {}; } },
@@ -411,12 +412,12 @@ export function installDemo() {
       if (state) all[String(id)] = state; else delete all[String(id)];
       try { localStorage.setItem("pm.demo.extState", JSON.stringify(all)); } catch { /* storage unavailable */ }
     },
-    ext_tool_start: () => { throw { kind: "demo", message: "Starting programs needs the desktop app." }; },
-    ext_launch: () => { throw { kind: "demo", message: "Starting the game needs the desktop app." }; },
-    ext_open_link: () => { throw { kind: "demo", message: "Links open in your browser from the desktop app." }; },
+    ext_tool_start: () => { throw { kind: "demo", message: "Starting programs needs the desktop app" }; },
+    ext_launch: () => { throw { kind: "demo", message: "Starting the game needs the desktop app" }; },
+    ext_open_link: () => { throw { kind: "demo", message: "Links open in your browser from the desktop app" }; },
     open_external: ({ url }) => {
       const u = String(url);
-      if (!["https://github.com/imanimal/pocket-mods/", "https://www.nexusmods.com/", "https://www.youtube.com/watch?v="].some((p) => u.startsWith(p))) throw { kind: "invalid", message: "Only this project's GitHub pages and Nexus Mods pages open from here." };
+      if (!["https://github.com/imanimal/pocket-mods/", "https://www.nexusmods.com/", "https://www.youtube.com/watch?v="].some((p) => u.startsWith(p))) throw { kind: "invalid", message: "Only this project's GitHub pages and Nexus Mods pages open from here" };
       window.open(u, "_blank", "noopener,noreferrer");
     },
     open_link: ({ url }) => { window.open(String(url), "_blank", "noopener,noreferrer"); },
@@ -428,12 +429,12 @@ export function installDemo() {
       const id = Number(u.pathname.match(/^\/cyberpunk2077\/mods\/(\d+)/)?.[1]);
       const d = id ? details.find((x) => x.detail.modId === id)?.detail : undefined;
       if (id) return d ? { url, finalUrl: url, kind: "mod", title: d.name, description: d.summary, image: d.pictureUrl, site: "Nexus Mods", icon: "https://www.nexusmods.com/favicon.ico", author: d.author, modId: id, downloads: d.downloads, endorsements: d.endorsements }
-        : { url, finalUrl: url, kind: "mod", site: "Nexus Mods", modId: id, title: `Mod ${id}`, description: "Not in the demo's recorded mods." };
+        : { url, finalUrl: url, kind: "mod", site: "Nexus Mods", modId: id, title: `Mod ${id}`, description: "Not in the demo data" };
       const yt = String(url).match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/)?.[1];
       if (yt) return { url, finalUrl: url, kind: "video", title: "A video from the description", author: "A creator", description: "A video by a creator", image: `https://img.youtube.com/vi/${yt}/hqdefault.jpg`, site: "YouTube" };
-      if (host === "unreachable.example") return { url, finalUrl: url, kind: "page", site: host, error: "The site did not answer." };
+      if (host === "unreachable.example") return { url, finalUrl: url, kind: "page", site: host, error: "The site did not answer" };
       const path = u.pathname.split("/").filter(Boolean);
-      return { url, finalUrl: url, kind: "page", site: host, title: path.length ? path.slice(-2).join(" / ") : host, description: `The page at ${host}, as its own tags describe it.`, icon: `https://${u.hostname}/favicon.ico` };
+      return { url, finalUrl: url, kind: "page", site: host, title: path.length ? path.slice(-2).join(" / ") : host, description: `A page on ${host}`, icon: `https://${u.hostname}/favicon.ico` };
     },
     text_file_open: () => null,
     text_file_save_as: () => false,
@@ -495,11 +496,11 @@ function demoOverlaps() {
   const out = [];
   if (a && !renamed("archive/pc/mod/HairRework.archive"))
     out.push({ winner: side({ id: null, modId: null, name: "#Hair Pack Base" }, ["archive/pc/mod/#HairPackBase.archive"]), loser: side(a, ["archive/pc/mod/HairRework.archive"]), files: 42,
-      loadFirst: [{ target: "archive/pc/mod/HairRework.archive", name: "!HairRework.archive" }], how: "Archives load in name order and the first one wins." });
+      loadFirst: [{ target: "archive/pc/mod/HairRework.archive", name: "!HairRework.archive" }], how: "Archives load in name order and the first one wins" });
   if (b) out.push({ winner: side(b, ["archive/pc/mod/ApartmentLights.archive"]), loser: side(c, ["mods/BetterApartments/archives/apartments.archive"], true), files: 7, loadFirst: null,
-    how: `${c?.name ?? "This mod"} is a REDmod. REDmod archives load after every archive in archive/pc/mod, so it cannot win by a new name.` });
+    how: `${c?.name ?? "This mod"} is a REDmod, which loads after archive/pc/mod. Renaming won't help` });
   out.push({ winner: side(c ?? a, ["archive/pc/mod/basegame_ui_tweaks.archive"]), loser: side(undefined, ["archive/pc/mod/zz_old_ui.archive"]), files: 3, loadFirst: null,
-    how: "zz_old_ui.archive is not managed by Pockymod. To make it win, rename it in archive/pc/mod so its name sorts first, for example with ! in front." });
+    how: "zz_old_ui.archive isn't managed by Pockymod. Rename it with a leading ! to make it win" });
   return { archives: 128, overlaps: out, sameContent: 13, unreadable: [], modlist: null, millis: 37 };
 }
 const demoFomod = {
@@ -533,7 +534,7 @@ function installTroubleshootDemo() {
         `Mods: ${installs.filter((i) => i.enabled).length} on of ${installs.length} installed`, `Errors: ${l.errors}, warnings: ${l.warnings}`,
         ...l.mods.flatMap((m) => [``, `${m.name} (${m.enabled ? "on" : "off"}): ${m.errors} errors, ${m.warnings} warnings`, ...m.entries.map((e) => `  [${e.tool}] ${e.level}: ${e.text.split("\n").slice(0, 2).join(" / ")}`)])].join("\n");
     },
-    log_open: () => { throw { kind: "demo", message: "Opening logs needs the desktop app." }; },
+    log_open: () => { throw { kind: "demo", message: "Opening logs needs the desktop app" }; },
     archive_overlaps: () => new Promise((ok) => setTimeout(() => ok(demoOverlaps()), 120)),
     archive_load_first: ({ installId, renames }) => {
       const who = installs.find((i) => i.id === installId);
@@ -551,7 +552,7 @@ function installTroubleshootDemo() {
       const from = pathsView.libraryDir ?? "D:\\PocketMods";
       const dest = String(to);
       const drive = (p: string) => p.slice(0, 2).toLowerCase();
-      const problem = dest.toLowerCase().startsWith(from.toLowerCase()) ? "The new place is inside the library itself. Choose a folder outside it." : null;
+      const problem = dest.toLowerCase().startsWith(from.toLowerCase()) ? "That folder is inside the library. Pick one outside it" : null;
       return { from, to: dest, sameDriveAsGame: drive(dest) === drive(pathsView.gameDir ?? from), quick: drive(dest) === drive(from), files: 1834, bytes: 18_200_000_000, problem };
     },
     library_move: async ({ to }) => {
@@ -581,7 +582,7 @@ const later = <T,>(v: T, ms = 250) => new Promise<T>((ok) => setTimeout(() => ok
 if (!inTauri()) registerDemo({
   creator_my_mods: ({ user }) => {
     const typed = String(user ?? "").trim();
-    if (!typed && !status.hasKey) throw { kind: "invalid", message: "Add your Nexus API key in Settings, or type your Nexus user name to see your mods." };
+    if (!typed && !status.hasKey) throw { kind: "invalid", message: "Add your Nexus API key in Settings, or type your Nexus user name to see your mods" };
     const known = new Set(demoMine.mods.map((m) => m.modId));
     const missingPinned = demoPins.filter((id) => !known.has(id)).map((modId) => ({ modId, links: { ...demoMine.mods[0].links,
       page: `https://www.nexusmods.com/cyberpunk2077/mods/${modId}`, edit: `https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=${modId}` } }));
@@ -589,11 +590,11 @@ if (!inTauri()) registerDemo({
   },
   creator_mod_files: ({ modId }) => {
     const d = demoManage.find((x) => x.modId === Number(modId));
-    if (!d) throw { kind: "demo", message: "The demo data has no files for that mod." };
+    if (!d) throw { kind: "demo", message: "The demo data has no files for that mod" };
     return later(d);
   },
   creator_upload_targets: ({ modId }) => {
-    if (!status.hasKey) throw { kind: "no_key", message: "No Nexus API key is set. Add one in Settings." };
+    if (!status.hasKey) throw { kind: "no_key", message: "No Nexus API key. Add one in Settings" };
     const m = demoMine.mods.find((x) => x.modId === Number(modId));
     return later((m?.files ?? []).filter((f) => f.groupId != null).map((f) => ({ id: String(f.groupId), name: f.name, versionsCount: 1 + (m?.oldFiles ?? 0),
       lastUploadedAt: new Date(f.date * 1000).toISOString(), isActive: true, groupId: f.groupId })));
@@ -601,7 +602,7 @@ if (!inTauri()) registerDemo({
   creator_pin: ({ modRef }) => {
     const t = String(modRef).trim();
     const id = Number(/^\d+$/.test(t) ? t : /cyberpunk2077\/mods\/(\d+)/.exec(t)?.[1] ?? /[?&]id=(\d+)/.exec(t)?.[1] ?? NaN);
-    if (!id) throw { kind: "invalid", message: "Paste the link to the mod's page (nexusmods.com/cyberpunk2077/mods/…) or its number." };
+    if (!id) throw { kind: "invalid", message: "Paste the link to the mod's page (nexusmods.com/cyberpunk2077/mods/…) or its number" };
     if (!demoPins.includes(id)) demoPins.push(id);
     return id;
   },
@@ -609,7 +610,7 @@ if (!inTauri()) registerDemo({
   creator_check: ({ path, name }) => {
     const n = String(name || "My mod").replace(/[^\w -]/g, "").trim() || "mod";
     const files = [`archive/pc/mod/${n}.archive`, `archive/pc/mod/${n}.archive.xl`, `r6/scripts/${n}/${n}.reds`];
-    return later({ files: files.length + 1, problems: [], tips: String(path).toLowerCase().endsWith(".zip") ? [] : ["Everything sits in one extra top folder. It works here, but packing from inside it (archive, r6 … at the top) suits every manager."],
+    return later({ files: files.length + 1, problems: [], tips: String(path).toLowerCase().endsWith(".zip") ? [] : ["Everything is in one extra top folder. Pack from inside it so archive and r6 sit at the top"],
       needs: [{ key: "archivexl", name: "ArchiveXL", modId: 4198, url: "https://www.nexusmods.com/cyberpunk2077/mods/4198" }, { key: "redscript", name: "redscript", modId: 1511, url: "https://www.nexusmods.com/cyberpunk2077/mods/1511" }],
       plan: { files: files.map((f) => ({ source: f, target: f, kind: f.endsWith(".reds") ? "script" : "archive" })), skipped: ["readme.txt"], unknown: [], modType: "mixed", warnings: [] } }, 500);
   },

@@ -33,20 +33,20 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
   /** Run one fix; with `quiet` it neither navigates nor reloads (Fix all does that once at the end). */
   const run = async (f: Fix, quiet = false): Promise<boolean> => {
     switch (f.kind) {
-      case "installMod": case "updateMod": await queueMod(f.modId); if (!quiet) { toast(`${f.name} is queued.`); onNavigate("downloads"); } return true;
+      case "installMod": case "updateMod": await queueMod(f.modId); if (!quiet) { toast(`${f.name} queued`); onNavigate("downloads"); } return true;
       case "runRedmodDeploy": {
         const res = await game.redmodDeploy();
-        toast(res.ok ? `REDmod deploy done (${plural(res.mods.length, "mod")}).` : `REDmod deploy reported ${plural(res.problems.length, "problem")}.`, !res.ok);
+        toast(res.ok ? `REDmod deploy done (${plural(res.mods.length, "mod")})` : `REDmod deploy hit ${plural(res.problems.length, "problem")}`, !res.ok);
         return res.ok;
       }
-      case "redeploy": { const d = await library.deploy(f.installId, { allowCopy: false, takeConflicts: false }); if (!quiet) toast("Deployed again."); return d.outcome === "deployed"; }
-      case "resetScripts": { const n = await resetScripts(); if (!quiet) toast(n ? "The game's own scripts are back." : "Nothing needed resetting."); return true; }
+      case "redeploy": { const d = await library.deploy(f.installId, { allowCopy: false, takeConflicts: false }); if (!quiet) toast("Deployed again"); return d.outcome === "deployed"; }
+      case "resetScripts": { const n = await resetScripts(); if (!quiet) toast(n ? "Game scripts reset" : "Nothing to reset"); return true; }
       case "turnOff": {
         const row = (await library.list()).find((x) => x.id === f.installId);
         if (row) await ops.setEnabled([row], false);
         return true;
       }
-      case "disableModlist": { const done = await archives.disableModlist(); if (!quiet) toast(done ? "modlist.txt is set aside (modlist.txt.off). File names decide the order again." : "modlist.txt is already gone."); return true; }
+      case "disableModlist": { const done = await archives.disableModlist(); if (!quiet) toast(done ? "modlist.txt renamed to modlist.txt.off" : "No modlist.txt"); return true; }
       case "openLibrary": case "openSettings": return false;
     }
   };
@@ -62,7 +62,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
       if (f.kind === "runRedmodDeploy" && queued) continue;
       try { if (await run(f, true)) ok++; else failed++; if (f.kind === "installMod" || f.kind === "updateMod") queued++; } catch { failed++; }
     }
-    toast(`${plural(ok, "fix", "fixes")} done${queued ? `, ${plural(queued, "download")} queued` : ""}${failed ? `; ${failed} could not be fixed here` : ""}.`, failed > 0);
+    toast(`${plural(ok, "fix", "fixes")} done${queued ? `, ${plural(queued, "download")} queued` : ""}${failed ? `, ${failed} failed` : ""}`, failed > 0);
     load();
     if (queued) onNavigate("downloads");
   };
@@ -90,11 +90,11 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
       <div className="lcds">
         <Lcd label="Problems" value={String(r.problems).padStart(2, "0")} tone={r.problems ? "bad" : "ok"} sub={r.problems ? "Fix before you play" : "Nothing broken"} />
         <Lcd label="Warnings" value={String(r.warnings).padStart(2, "0")} tone={r.warnings ? "hot" : "ok"} sub={r.warnings ? "Worth a look" : "All clear"} />
-        <Lcd label="Game patch" value={r.patch ?? "?"} sub={r.patchSource === "detected" ? "Read from the game" : r.patchSource === "settings" ? "Set in Settings" : "Assumed: set it in Settings"} tone={r.patchSource === "assumed" ? "hot" : "ok"} />
+        <Lcd label="Game patch" value={r.patch ?? "?"} sub={r.patchSource === "detected" ? "From the game" : r.patchSource === "settings" ? "Set in Settings" : "Guessed, set it in Settings"} tone={r.patchSource === "assumed" ? "hot" : "ok"} />
       </div>
       <div className="actions span">
         {fixable.length > 1 && <Key variant="primary" icon="check" onClick={() => fixAll(fixable)} disabled={busy}
-          title="Every fix the app can do by itself: installs and updates, deploys, scripts, then the REDmod deploy">Fix all {fixable.length}</Key>}
+          title="Run every automatic fix">Fix all {fixable.length}</Key>}
         <Key size="sm" icon="refresh" onClick={() => load(true)} disabled={busy}>Check again</Key>
         {g?.version && <span className="dim mono" style={{ fontSize: ".8em" }}>Cyberpunk2077.exe {g.version.productString ?? g.version.product}</span>}
       </div>
@@ -107,9 +107,9 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         return (
           <Module key={a.id} icon={a.icon} title={a.title} band={bad ? "bad" : undefined} count={list.length ? `${list.length} ${list.length === 1 ? "item" : "items"}` : "ok"}
             tools={a.id === "frameworks" && fwFixes.length > 1 ? <Key size="sm" variant="dark" icon="downloads" disabled={busy} onClick={() => fixAll(fwFixes)}
-              title="Queue every framework update and every missing framework">{fwFixes.every((f) => f.kind === "updateMod") ? `Update all ${fwFixes.length}` : `Install and update all ${fwFixes.length}`}</Key> : undefined}>
+              title="Queue missing and outdated frameworks">{fwFixes.every((f) => f.kind === "updateMod") ? `Update all ${fwFixes.length}` : `Install and update all ${fwFixes.length}`}</Key> : undefined}>
             {a.id === "frameworks" && <FrameworkTable r={r} />}
-            {list.length === 0 && a.id !== "frameworks" && <p className="dim">{a.id === "redmod" ? (g?.redmodAvailable ? "REDmod is installed and up to date." : "No REDmods installed.") : "All good."}</p>}
+            {list.length === 0 && a.id !== "frameworks" && <p className="dim">{a.id === "redmod" ? (g?.redmodAvailable ? "Up to date" : "No REDmods") : "All good"}</p>}
             <div className="rows" style={{ marginTop: a.id === "frameworks" && list.length ? ".6em" : 0 }}>
               {list.map((i) => (
                 <div key={i.id} className="row">

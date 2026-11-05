@@ -1,4 +1,4 @@
-/* motion.css — arrival, hover and press motion for the app's own parts (the layouts in app.css). The kit's motion,
+/* motion.css: arrival, hover and press motion for the app's own parts (the layouts in app.css). The kit's motion,
    keyframes and the stagger (--i) are in pocket-os.css; every duration scales with --m. */
 
 /* cards and tiles settle in one after another */

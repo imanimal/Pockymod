@@ -58,7 +58,7 @@ export function ThemeSwatch({ pkg, preview, compact }: { pkg?: Partial<ThemePack
 
 /** The permissions an extension asks for, in words. New ones (not approved before) are marked. */
 export function PermissionList({ perms, fresh }: { perms: Permission[]; fresh?: string[] }) {
-  if (!perms.length) return <p className="dim ext-none"><Icon name="check" size={9} /> Needs no permissions. It cannot reach your mods, Nexus or the internet.</p>;
+  if (!perms.length) return <p className="dim ext-none"><Icon name="check" size={9} /> No permissions. Can't reach your mods, Nexus or the internet</p>;
   return (
     <ul className="ext-perms">
       {perms.map((p) => (
@@ -78,11 +78,11 @@ export function AddsList({ m, fresh }: { m: ExtensionManifest; fresh?: string[] 
   const all: Array<{ icon: IconName; what: string; items: Array<{ key: string; main: string; sub?: string; badge?: ReactNode }> }> = [
     { icon: "browse", what: "Browse shelves", items: (k.shelves ?? []).map((s) => ({ key: s.id, main: s.title, sub: s.hint })) },
     { icon: "library", what: "Library group rules", items: (k.groupRules ?? []).map((r, i) => ({ key: String(i), main: `Into ${r.group}`, sub: ruleText(r.match) })) },
-    { icon: "play", what: "Tools in the Play menu", items: (k.tools ?? []).map((t) => ({ key: t.id, main: t.name, sub: t.path ? `Starts ${t.path} in the game folder${t.args?.length ? ` with ${t.args.join(" ")}` : ""}` : `Starts ${t.pick?.file ?? "a program"} that you choose${t.args?.length ? `, with ${t.args.join(" ")}` : ""}`, badge: isNew(`tool:${t.id}:`) })) },
-    { icon: "play", what: "Launch options", items: (k.launchOptions ?? []).map((o) => ({ key: o.id, main: o.name, sub: `Starts the game with ${o.args.join(" ")}`, badge: isNew(`launch:${o.id}:`) })) },
+    { icon: "play", what: "Tools in the Play menu", items: (k.tools ?? []).map((t) => ({ key: t.id, main: t.name, sub: t.path ? `Runs ${t.path} in the game folder${t.args?.length ? ` with ${t.args.join(" ")}` : ""}` : `Runs ${t.pick?.file ?? "a program"} you pick${t.args?.length ? ` with ${t.args.join(" ")}` : ""}`, badge: isNew(`tool:${t.id}:`) })) },
+    { icon: "play", what: "Launch options", items: (k.launchOptions ?? []).map((o) => ({ key: o.id, main: o.name, sub: `Game with ${o.args.join(" ")}`, badge: isNew(`launch:${o.id}:`) })) },
     { icon: "file", what: "Console command packs", items: (k.commandPacks ?? []).map((p) => ({ key: p.id, main: p.title, sub: `${p.commands.length} commands${p.mods?.length ? `, shown on ${p.mods.length === 1 ? "one mod's" : `${p.mods.length} mods'`} page` : ""}` })) },
     { icon: "link", what: "Links", items: (k.links ?? []).map((l) => ({ key: l.id, main: l.title, sub: hostOf(l.url), badge: isNew(`link:${l.url}`) })) },
-    { icon: "addons", what: "Panels", items: (k.panels ?? []).map((p) => ({ key: p.id, main: p.title, sub: "A page of its own in Add-ons, sandboxed" })) },
+    { icon: "addons", what: "Panels", items: (k.panels ?? []).map((p) => ({ key: p.id, main: p.title, sub: "Own page in Add-ons, sandboxed" })) },
   ];
   const rows = all.filter((r) => r.items.length);
   return (
@@ -111,7 +111,7 @@ function ruleText(m: GroupRule["match"]): string {
 
 /** Console commands to copy, with a label each. */
 export function CommandList({ commands }: { commands: Array<{ command: string; label?: string }> }) {
-  const copy = (t: string) => navigator.clipboard.writeText(t).then(() => toast("Copied. Paste it in the Cyber Engine Tweaks console in game.")).catch(() => toast("Could not copy.", true));
+  const copy = (t: string) => navigator.clipboard.writeText(t).then(() => toast("Copied")).catch(() => toast("Couldn't copy", true));
   return (
     <div className="cmds-list ext-cmds">
       {commands.map((c) => (

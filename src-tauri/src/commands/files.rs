@@ -23,7 +23,7 @@ pub async fn text_file_open(app: tauri::AppHandle, title: String, extensions: Ve
         if !refs.is_empty() { d = d.add_filter(&title, &refs); }
         let Some(fp) = d.blocking_pick_file() else { return Ok(None) };
         let path = fp.into_path().map_err(|e| Error::Invalid(e.to_string()))?;
-        if std::fs::metadata(&path)?.len() > MAX { return Err(Error::Invalid("That file is too large.".into())); }
+        if std::fs::metadata(&path)?.len() > MAX { return Err(Error::Invalid("That file is too large".into())); }
         let text = std::fs::read_to_string(&path).map_err(|e| Error::Invalid(format!("Could not read that file: {e}")))?;
         Ok(Some(Picked { path: path.to_string_lossy().into_owned(), text }))
     }).await.map_err(|e| Error::Invalid(e.to_string()))?
@@ -32,7 +32,7 @@ pub async fn text_file_open(app: tauri::AppHandle, title: String, extensions: Ve
 /// Ask where to save text and write it there. False when the user cancels.
 #[tauri::command]
 pub async fn text_file_save_as(app: tauri::AppHandle, default_name: String, text: String, extensions: Vec<String>) -> Result<bool> {
-    if text.len() as u64 > MAX { return Err(Error::Invalid("That is too much to save.".into())); }
+    if text.len() as u64 > MAX { return Err(Error::Invalid("Too much to save".into())); }
     let ext = exts(&extensions);
     let name: String = default_name.chars().map(|c| if "<>:\"/\\|?*".contains(c) || c.is_control() { '_' } else { c }).take(120).collect();
     tauri::async_runtime::spawn_blocking(move || {

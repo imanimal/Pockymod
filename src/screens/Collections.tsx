@@ -3,8 +3,8 @@
 import { descriptionLinks, descriptionParts, descriptionText, plural } from "../lib/text";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "../ui/Dialog";
-import { Icon } from "../ui/Icon";
-import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, bytesText, formatCount } from "../ui/pocket";
+import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Veil, bytesText, formatCount } from "../ui/pocket";
+import { useAdult } from "../lib/prefs";
 import {
   collections, descriptionMedia, errorText, nexusPages, nexusUrl, openExternal, pickCollectionFile, pickSavePath, settings,
   type CollectionCard, type CollectionCheck, type CollectionsPage, type LocalCollection,
@@ -31,7 +31,8 @@ export function Collections({ onQueued }: { onQueued: () => void }) {
 
 function NexusCollections({ onQueued }: { onQueued: () => void }) {
   const [text, setText] = useState("");
-  const [q, setQ] = useState({ text: "", gameVersion: null as string | null, sort: "endorsements", includeAdult: false, offset: 0 });
+  const adult = useAdult();
+  const [q, setQ] = useState({ text: "", gameVersion: null as string | null, sort: "endorsements", offset: 0 });
   const [page, setPage] = useState<CollectionsPage | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [open, setOpen] = useState<CollectionCard | null>(null);
@@ -44,7 +45,7 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
     setShown(c);
   };
   useEffect(() => { const t = setTimeout(() => setQ((o) => ({ ...o, text, offset: 0 })), 350); return () => clearTimeout(t); }, [text]);
-  useEffect(() => { collections.browse(q).then((p) => { setPage(p); setErr(null); }).catch((e) => setErr(errorText(e))); }, [q]);
+  useEffect(() => { collections.browse({ ...q, includeAdult: adult !== "hide" }).then((p) => { setPage(p); setErr(null); }).catch((e) => setErr(errorText(e))); }, [q, adult]);
   const versions = Object.entries(page?.facetsData?.gameVersion ?? {}).filter(([v]) => v).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
   useEffect(() => { const b = () => { if (shown) show(null); }; window.addEventListener("pm-back", b); return () => window.removeEventListener("pm-back", b); });
@@ -70,10 +71,10 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
               onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); show(c); } }}>
             <Module icon="collections" title={c.name} count={r ? plural(r.modCount, "mod") : undefined}
               tools={<span className="actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                <Key size="sm" variant="ghost" icon="link" onClick={() => inBrowser(c.slug)} aria-label={`Open ${c.name} in your browser`} title="Open in your own browser: your sign-in, saved passwords and extensions" />
-                <Key size="sm" icon="check" onClick={() => setOpen(c)} title="A quick check: what you have, what is missing, clicks and size">Check</Key>
+                <Key size="sm" variant="ghost" icon="link" onClick={() => inBrowser(c.slug)} aria-label={`Open ${c.name} in your browser`} title="Open in your browser" />
+                <Key size="sm" icon="check" onClick={() => setOpen(c)} title="What you have, what's missing, clicks and size">Check</Key>
               </span>}>
-              {c.tileImage && <img className="hero-img" src={c.tileImage.thumbnailUrl ?? c.tileImage.url} alt="" loading="lazy" />}
+              {c.tileImage && <img className={`hero-img${adult === "blur" && (c.adultContent || r?.adultContent) ? " veiled-img" : ""}`} src={c.tileImage.thumbnailUrl ?? c.tileImage.url} alt="" loading="lazy" />}
               <b className="hi" style={{ display: "block", marginTop: ".5em" }}>{c.name}</b>
               <div className="m-meta"><span>{c.user.name}</span>{c.category && <span>{c.category.name}</span>}</div>
               <p style={{ fontSize: ".88em", margin: ".3em 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.summary}</p>
@@ -117,43 +118,43 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
   const install = async () => {
     if (!c) return;
     setBusy(true);
-    try { await collections.install(c, optional); toast(`${c.name} is queued: ${plural(c.missing, "mod")}.`); onQueued(); } catch (e) { toast(errorText(e), true); setBusy(false); }
+    try { await collections.install(c, optional); toast(`${c.name} queued, ${plural(c.missing, "mod")}`); onQueued(); } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
   const shown = (all ? c?.entries : c?.entries.filter((e) => e.status !== "installed")) ?? [];
   return (
     <>
       {err && <div className="note bad">{err}</div>}
-      {!c && !err && <Empty icon="clock" title="Checking the collection" />}
+      {!c && !err && <Empty icon="clock" title="Checking" />}
       {c && <>
         <div className="lcds">
-          <Lcd size="sm" label="Missing" value={String(c.missing).padStart(2, "0")} sub={`${c.installed} already installed`} />
+          <Lcd size="sm" label="Missing" value={String(c.missing).padStart(2, "0")} sub={`${c.installed} installed`} />
           <Lcd size="sm" label="Needs your click" value={String(c.needsClick).padStart(2, "0")} tone={c.needsClick ? "hot" : "ok"} sub={c.needsClick ? "Free account" : "Automatic"} />
           <Lcd size="sm" label="Unavailable" value={String(c.unavailable).padStart(2, "0")} tone={c.unavailable ? "bad" : "ok"} sub="Removed on Nexus" />
           <Lcd size="sm" label="Download" value={bytesText(c.downloadBytes).split(" ")[0]} unit={bytesText(c.downloadBytes).split(" ")[1]} />
         </div>
         <div className="actions">
-          {c.gameVersionOk === true && <Pill tone="ok">Made for {c.collectionVersions.join(", ")}: matches your {c.currentPatch}</Pill>}
-          {c.gameVersionOk === false && <Pill tone="over">Made for {c.collectionVersions.join(", ")}; you have {c.currentPatch}</Pill>}
-          {c.gameVersionOk === null && <Pill tone="soon">Game version {c.collectionVersions.join(", ") || "not given"}: cannot compare</Pill>}
+          {c.gameVersionOk === true && <Pill tone="ok">Made for {c.collectionVersions.join(", ")}, matches yours</Pill>}
+          {c.gameVersionOk === false && <Pill tone="over">Made for {c.collectionVersions.join(", ")}, you have {c.currentPatch}</Pill>}
+          {c.gameVersionOk === null && <Pill tone="soon">Game version {c.collectionVersions.join(", ") || "unknown"}</Pill>}
         </div>
-        {c.gameVersionOk === false && <div className="note warn">Collections made for another patch often need updated frameworks or break. Check Health after installing.</div>}
+        {c.gameVersionOk === false && <div className="note warn">Made for another patch. Check Health after installing</div>}
         {c.manifest && (c.manifest.withChoices > 0 || c.manifest.wins.length > 0) && (
-          <p className="dim" style={{ fontSize: ".86em" }} title="From the collection's own manifest: the options its curator picked in each mod's installer, and which mod's files win where two want the same ones. Your own choices are never replaced.">
-            <span className="okc">Set up as the curator made it:</span> {c.manifest.withChoices > 0 && <>installer options for {plural(c.manifest.withChoices, "mod")}</>}{c.manifest.withChoices > 0 && c.manifest.wins.length > 0 && ", "}
-            {c.manifest.wins.length > 0 && <>{plural(c.manifest.wins.length, "rule")} for which files win</>}. Nothing to pick.</p>
+          <p className="dim" style={{ fontSize: ".86em" }} title="From the collection's manifest. Your own picks stay">
+            <span className="okc">Curator setup</span> {c.manifest.withChoices > 0 && <>installer options for {plural(c.manifest.withChoices, "mod")}</>}{c.manifest.withChoices > 0 && c.manifest.wins.length > 0 && ", "}
+            {c.manifest.wins.length > 0 && <>{plural(c.manifest.wins.length, "file rule")}</>}</p>
         )}
         {c.manifest && c.manifest.conflicts.length > 0 && (
-          <div className="note warn">The curator marks {plural(c.manifest.conflicts.length, "pair")} of mods as clashing: {c.manifest.conflicts.slice(0, 4).map(([a, b]) => `${nameOf(c, a)} and ${nameOf(c, b)}`).join("; ")}.</div>
+          <div className="note warn">Marked incompatible by the curator {c.manifest.conflicts.slice(0, 4).map(([a, b]) => `${nameOf(c, a)} + ${nameOf(c, b)}`).join(", ")}</div>
         )}
-        {c.needsClick > 20 && <div className="note warn">That is {c.needsClick} clicks on Nexus. Each page opens in turn, and the queue moves on as soon as you click.</div>}
+        {c.needsClick > 20 && <div className="note warn">{c.needsClick} clicks on Nexus, one page at a time</div>}
         <PremiumNote clicks={c.needsClick} />
         <div className="rows" style={all ? undefined : { maxHeight: "16em", overflow: "auto" }}>
           {shown.slice(0, all ? 400 : 80).map((e) => (
             <div key={`${e.modId}-${e.fileId}`} className={`row${e.status === "unavailable" && !e.replacement ? " off" : ""}`}>
               <span className="m-main"><span className="m-t">{e.name}</span>
                 <span className="m-meta"><span>{e.fileName}</span><span>v{e.version}</span>{e.optional && <span>optional</span>}
-                  {e.replacement && <span>file gone: using v{e.replacement[1]}</span>}</span>
-                {c.manifest?.instructions[String(e.modId)] && <span style={{ fontSize: ".82em", whiteSpace: "normal" }} title="The curator's note for this mod">{c.manifest.instructions[String(e.modId)]}</span>}</span>
+                  {e.replacement && <span>file gone, using v{e.replacement[1]}</span>}</span>
+                {c.manifest?.instructions[String(e.modId)] && <span style={{ fontSize: ".82em", whiteSpace: "normal" }} title="Curator's note">{c.manifest.instructions[String(e.modId)]}</span>}</span>
               <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".4em" }}>
                 <span>{bytesText(e.size)}</span>
                 {e.status === "installed" && <Pill tone="ok">You have it</Pill>}
@@ -166,14 +167,14 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
         </div>
         {(c.external?.length ?? 0) > 0 && (
           <div className="note warn">
-            <b>{c.external!.length} {c.external!.length === 1 ? "item comes" : "items come"} from outside Nexus.</b> The app cannot download {c.external!.length === 1 ? "it" : "them"}; get {c.external!.length === 1 ? "it" : "them"} by hand:
+            <b>{c.external!.length} from outside Nexus</b>, download {c.external!.length === 1 ? "it" : "them"} yourself
             <div className="rows" style={{ marginTop: ".4em" }}>
               {c.external!.map((x) => (
                 <div key={x.name} className="row" style={{ cursor: "default" }}>
                   <span className="m-main"><span className="m-t">{x.name}</span>
                     <span className="m-meta">{x.version && <span>v{x.version}</span>}{x.optional && <span>optional</span>}{x.resourceType && <span>{x.resourceType.toLowerCase()}</span>}</span>
                     {x.instructions && <span style={{ fontSize: ".84em", whiteSpace: "normal" }}>{x.instructions}</span>}</span>
-                  {x.resourceUrl && <span className="m-side"><Key size="sm" variant="ghost" icon="web" onClick={() => { void navigator.clipboard?.writeText(x.resourceUrl!); toast("Link copied: open it in your browser."); }}>Copy link</Key></span>}
+                  {x.resourceUrl && <span className="m-side"><Key size="sm" variant="ghost" icon="web" onClick={() => { void navigator.clipboard?.writeText(x.resourceUrl!); toast("Link copied"); }}>Copy link</Key></span>}
                 </div>
               ))}
             </div>
@@ -201,23 +202,25 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
   const links = useMemo(() => descriptionLinks(parts), [parts]);
   const shots = descriptionMedia(raw, null);
   const banner = more?.headerImage ?? c.tileImage?.url ?? null;
+  const [shown, setShown] = useState(false);
+  const veil = { on: useAdult() === "blur" && !!(c.adultContent || r?.adultContent) && !shown, onShow: () => setShown(true) };
   return (
     <div className="mpage-wrap">
       <div className="actions"><Key size="sm" variant="ghost" icon="chevron" className="flip" onClick={onBack}>Back to collections</Key></div>
       <Module icon="collections" title={c.name} count={r ? plural(r.modCount, "mod") : undefined} className="mpage"
         tools={<>
-          <Key size="sm" variant="ghost" icon="web" onClick={() => onNexus(c.slug)} title="The collection's Nexus page, where Settings says pages open" aria-label="Open the Nexus page" />
-          <Key size="sm" variant="ghost" icon="link" onClick={() => inBrowser(c.slug)} title="Open in your own browser: your sign-in, saved passwords and extensions" aria-label="Open in browser" />
+          <Key size="sm" variant="ghost" icon="web" onClick={() => onNexus(c.slug)} title="Nexus page" aria-label="Open the Nexus page" />
+          <Key size="sm" variant="ghost" icon="link" onClick={() => inBrowser(c.slug)} title="Open in your browser" aria-label="Open in browser" />
           <Key size="sm" variant="ghost" icon="x" onClick={onBack} aria-label="Close" />
         </>}>
         <div className="mpage-banner">
-          {banner && <img src={banner} alt="" />}
+          {banner && <img src={banner} alt="" className={veil.on ? "veiled-img" : undefined} />}
           <div className="mpage-head">
             <h2>{c.name}</h2>
             <div className="m-meta"><span>by {c.user.name}</span>{c.category && <span>{c.category.name}</span>}{r && <span>revision {r.revisionNumber}</span>}</div>
             {c.summary && <p>{c.summary}</p>}
             <div className="actions">{r?.gameVersions.map((g) => <Pill key={g.reference}>Game {g.reference}</Pill>)}{(c.adultContent || r?.adultContent) && <Pill tone="over">Adult content</Pill>}
-              <Key size="sm" variant="ghost" icon="web" onClick={() => onNexus(c.slug)} title="The collection's page on Nexus: comments, bugs, revisions and its curator">View on Nexus</Key></div>
+              <Key size="sm" variant="ghost" icon="web" onClick={() => onNexus(c.slug)} title="Comments, bugs and revisions">View on Nexus</Key></div>
           </div>
         </div>
         <div className="mpage-body">
@@ -228,11 +231,10 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
               <Lcd size="sm" label="Endorsed" value={formatCount(c.endorsements)} />
               <Lcd size="sm" label="Downloads" value={formatCount(c.totalDownloads)} />
             </div>
-            {shots.length > 0 && <MediaStage items={shots.map((s) => ({ ...s, caption: c.name }))} />}
+            {shots.length > 0 && <Veil {...veil}><MediaStage items={shots.map((s) => ({ ...s, caption: c.name }))} /></Veil>}
             {links.length > 0 && <Links key={c.slug} list={links} />}
             <div className="sub-h">Description</div>
-            {more === null ? <p className="dim">Loading the description</p> : <div className="desc">{desc ? <DescText parts={parts} /> : <span className="dim">No description.</span>}</div>}
-            {more && !more.description && <p className="dim" style={{ fontSize: ".84em" }}>Only the summary is shown: Nexus did not give the full description here. Open the page for it.</p>}
+            {more === null ? <p className="dim">Loading</p> : <Veil {...veil}><div className="desc">{desc ? <DescText parts={parts} /> : <span className="dim">No description</span>}</div></Veil>}
           </div>
           <aside className="mpage-side">
             <div className="sub-h">Before you install</div>
@@ -257,12 +259,11 @@ function MyCollections({ onQueued }: { onQueued: () => void }) {
   return (
     <div className="grid2" style={{ alignItems: "start" }}>
       <Module icon="share" title="Make a collection" count="from the active profile">
-        <p>Pins each enabled mod's Nexus mod ID, file ID and archive hash, and which mods need which. Share the file; others import it here.</p>
-        <div className="stack" style={{ gap: ".5em", marginTop: ".6em" }}>
+        <div className="stack" style={{ gap: ".5em" }}>
           <label className="fbox" style={{ flex: "none" }}><input className="finput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Collection name" aria-label="Collection name" /></label>
-          <label className="fbox" style={{ flex: "none" }}><input className="finput" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="What it is for (optional)" aria-label="Description" /></label>
+          <label className="fbox" style={{ flex: "none" }}><input className="finput" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description (optional)" aria-label="Description" /></label>
           <div className="actions">
-            <Key icon="collections" disabled={!name.trim() || busy} onClick={() => run(async () => setMade(await collections.createLocal(name, desc)))}>Make it</Key>
+            <Key icon="collections" disabled={!name.trim() || busy} onClick={() => run(async () => setMade(await collections.createLocal(name, desc)))}>Create</Key>
           </div>
         </div>
         {made && <>
@@ -279,26 +280,25 @@ function MyCollections({ onQueued }: { onQueued: () => void }) {
           <div className="actions" style={{ marginTop: ".6em" }}>
             <Key variant="primary" icon="share" disabled={busy} onClick={() => run(async () => {
               const path = await pickSavePath(`${made.name.replace(/[^\w -]/g, "_")}.pmcollection.json`);
-              if (path) { await collections.exportLocal(made, path); toast("Collection saved."); }
+              if (path) { await collections.exportLocal(made, path); toast("Collection saved"); }
             })}>Export</Key>
-            <Key variant="ghost" disabled={!publish} title={publish ? "Experimental" : "Turn on the experiment below first"}
-              onClick={() => toast("Publishing to Nexus is not available: Nexus has not confirmed that other apps may publish collections.", true)}>Publish to Nexus</Key>
+            <Key variant="ghost" disabled={!publish} title={publish ? "Experimental" : "Turn on the experiment below"}
+              onClick={() => toast("Not available yet. Nexus hasn't approved third-party publishing", true)}>Publish to Nexus</Key>
           </div>
         </>}
         <div className="sub-h">Experiments</div>
-        <Switch checked={publish} onChange={(v) => { setPublish(v); settings.set("flags.publishCollections", v ? "1" : "0").catch(() => {}); }}>Publishing collections to Nexus (unconfirmed, does nothing yet)</Switch>
+        <Switch checked={publish} onChange={(v) => { setPublish(v); settings.set("flags.publishCollections", v ? "1" : "0").catch(() => {}); }}>Publish collections to Nexus (does nothing yet)</Switch>
       </Module>
 
       <Module icon="file" title="Import a collection" count={imported ? imported.c.name : undefined}>
-        <p>Open a collection file someone shared. It is checked before anything installs: game version, what you already have, and whether each pinned file is still on Nexus.</p>
-        <div className="actions" style={{ marginTop: ".6em" }}>
+        <div className="actions">
           <Key icon="file" disabled={busy} onClick={() => run(async () => {
             const path = await pickCollectionFile();
             if (path) { const [c, check] = await collections.importLocal(path); setImported({ c, check }); }
           })}>Open a file</Key>
         </div>
         {imported && <CheckDialog title={imported.c.name} load={() => Promise.resolve(imported.check)} onClose={() => setImported(null)} onQueued={() => { setImported(null); onQueued(); }} />}
-        {!imported && <Empty icon="collections" title="Nothing imported"><Icon name="info" size={9} /> Pockymod collection files end in .pmcollection.json.</Empty>}
+        {!imported && <Empty icon="collections" title="Nothing imported">.pmcollection.json files</Empty>}
       </Module>
     </div>
   );

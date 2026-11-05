@@ -4,7 +4,8 @@
 // description, and the files and requirements beside them.
 import { useEffect, useState } from "react";
 import { Icon } from "../../ui/Icon";
-import { Empty, Key, Lcd, Module, Tag, bytesText, formatCount } from "../../ui/pocket";
+import { Empty, Key, Lcd, Module, Tag, Veil, bytesText, formatCount } from "../../ui/pocket";
+import { useAdult } from "../../lib/prefs";
 import {
   FRAMEWORKS, browse, descriptionMedia, endorseMod, errorText, fileBytes, nexusUrl, openExternal, trackMod,
   type CardView, type Classification, type DetailView, type InstallRow, type ModFile, type Update,
@@ -66,13 +67,13 @@ type Parts = { p: DetailProps; d: DetailView; setD: (d: DetailView) => void; fil
 function HeadKeys({ p, d }: { p: DetailProps; d?: DetailView }) {
   const m = d?.detail;
   return <>
-    {m && <Key size="sm" variant="ghost" icon="star" onClick={() => endorseMod(m.modId, m.version).then(() => toast(`Endorsed ${m.name}. Thanks from its author.`)).catch((e) => toast(errorText(e), true))} title="Endorse on Nexus" aria-label="Endorse" />}
-    {m && <Key size="sm" variant="ghost" icon="eye" onClick={() => trackMod(m.modId).then(() => toast(`Tracking ${m.name} on Nexus.`)).catch((e) => toast(errorText(e), true))} title="Track on Nexus: its updates show in your Nexus feed" aria-label="Track" />}
-    <Key size="sm" variant="ghost" icon="web" onClick={() => p.onOpenPage?.(p.card.modId)} title="The Nexus page, where Settings says pages open" aria-label="Open the Nexus page" />
-    <Key size="sm" variant="ghost" icon="link" onClick={() => openExternal(nexusUrl.mod(p.card.modId)).catch((e) => toast(errorText(e), true))} title="Open in your own browser: your sign-in, saved passwords and extensions" aria-label="Open in browser" />
+    {m && <Key size="sm" variant="ghost" icon="star" onClick={() => endorseMod(m.modId, m.version).then(() => toast(`Endorsed ${m.name}`)).catch((e) => toast(errorText(e), true))} title="Endorse on Nexus" aria-label="Endorse" />}
+    {m && <Key size="sm" variant="ghost" icon="eye" onClick={() => trackMod(m.modId).then(() => toast(`Tracking ${m.name}`)).catch((e) => toast(errorText(e), true))} title="Track on Nexus" aria-label="Track" />}
+    <Key size="sm" variant="ghost" icon="web" onClick={() => p.onOpenPage?.(p.card.modId)} title="Nexus page" aria-label="Open the Nexus page" />
+    <Key size="sm" variant="ghost" icon="link" onClick={() => openExternal(nexusUrl.mod(p.card.modId)).catch((e) => toast(errorText(e), true))} title="Open in your browser" aria-label="Open in browser" />
     {p.onWide && (p.wide
-      ? <Key size="sm" variant="ghost" icon="chevron" className="flip" onClick={() => p.onWide?.(false)} title="Back to the list, in the side drawer next time">Drawer</Key>
-      : <Key size="sm" variant="ghost" icon="max" onClick={() => p.onWide?.(true)} title="Expand into a full page: banner, media, description and files">Expand</Key>)}
+      ? <Key size="sm" variant="ghost" icon="chevron" className="flip" onClick={() => p.onWide?.(false)} title="Show in the side drawer">Drawer</Key>
+      : <Key size="sm" variant="ghost" icon="max" onClick={() => p.onWide?.(true)} title="Open as a full page">Expand</Key>)}
     {p.onClose && <Key size="sm" variant="ghost" icon="x" onClick={p.onClose} aria-label="Close" />}
   </>;
 }
@@ -90,7 +91,10 @@ function useParts({ p, d }: Parts) {
   const commands = [...own, ...fromPacks.filter((x) => !own.some((c) => c.command === x.command))];
   const shots = descriptionMedia(m.description, m.pictureUrl);
   const view: CardView = { ...p.card, hidden: d.hidden, ignored: d.ignored };
-  return { m, current, desc, parts, links, commands, shots, view };
+  const [shown, setShown] = useState<number | null>(null);
+  const blur = useAdult() === "blur" && !!m.adultContent && shown !== m.modId;
+  const veil = { on: blur, onShow: () => setShown(m.modId) };
+  return { m, current, desc, parts, links, commands, shots, view, veil };
 }
 
 /** Install, or the installed menu; then hide and ignore. */
@@ -105,9 +109,9 @@ function Actions({ p, d, setD, file, view }: { p: DetailProps; d: DetailView; se
           <ModKey mod={{ modId: m.modId, name: m.name, version: m.version }} rows={have} updates={p.updates} size="lg" onLibrary={p.onLibrary}
             onFlag={(f, on) => { p.onFlag(view, f, on); setD({ ...d, [f]: on }); }} flags={{ hidden: d.hidden, ignored: d.ignored }} />
           {file && !have.some((r) => r.fileId === file.fileId) && !p.updates?.some((u) => u.modId === m.modId && u.fileId === file.fileId) &&
-            <Key icon="install" onClick={() => p.onInstall?.(d, file.fileId)} title="Install the file picked above as well (an optional file, or another variant)">Install this file</Key>}
+            <Key icon="install" onClick={() => p.onInstall?.(d, file.fileId)} title="Install the selected file too">Install this file</Key>}
         </>}
-      <Key variant="ghost" icon="web" onClick={() => p.onOpenPage ? p.onOpenPage(m.modId) : void openExternal(nexusUrl.mod(m.modId)).catch((e) => toast(errorText(e), true))} title="The mod's page on Nexus: posts, bugs, articles and its author">View on Nexus</Key>
+      <Key variant="ghost" icon="web" onClick={() => p.onOpenPage ? p.onOpenPage(m.modId) : void openExternal(nexusUrl.mod(m.modId)).catch((e) => toast(errorText(e), true))} title="Posts, bugs and articles">View on Nexus</Key>
       <Key variant="ghost" icon="hide" onClick={() => { p.onFlag(view, "hidden", !d.hidden); setD({ ...d, hidden: !d.hidden }); }}>{d.hidden ? "Unhide" : "Hide"}</Key>
       <Key variant="ghost" icon="x" onClick={() => { p.onFlag(view, "ignored", !d.ignored); setD({ ...d, ignored: !d.ignored }); }}>{d.ignored ? "Stop ignoring" : "Ignore"}</Key>
     </div>
@@ -115,7 +119,7 @@ function Actions({ p, d, setD, file, view }: { p: DetailProps; d: DetailView; se
 }
 
 function FileRows({ files, fileId, setFileId, have, limit = 8 }: { files: ModFile[]; fileId: number | null; setFileId: (n: number) => void; have: InstallRow[]; limit?: number }) {
-  if (files.length === 0) return <p className="dim">No current files. Nexus may have removed them.</p>;
+  if (files.length === 0) return <p className="dim">No current files</p>;
   return (
     <div className="rows">
       {files.slice(0, limit).map((f) => (
@@ -150,22 +154,22 @@ function ArchiveList({ d }: { d: DetailView }) {
     <div className="sub-h">Files in the archive</div>
     {d.fileList ? (
       <>
-        <p className="dim" style={{ fontSize: ".86em" }}>{d.fileList.length} paths indexed by Nexus{d.classification.typeSource === "files" ? ", used for the type" : ""}.{" "}
+        <p className="dim" style={{ fontSize: ".86em" }}>{d.fileList.length} paths{" "}
           <button type="button" className="linkish" onClick={() => setShow(!show)}>{show ? "Hide" : "Show"}</button></p>
         {show && <div className="log" style={{ maxHeight: "12em" }}>{d.fileList.slice(0, 200).join("\n")}</div>}
       </>
-    ) : <p className="dim" style={{ fontSize: ".86em" }}>Nexus has no file list for this file yet. The type is a guess until it is downloaded.</p>}
+    ) : <p className="dim" style={{ fontSize: ".86em" }}>No file list from Nexus yet</p>}
   </>;
 }
 
 function Drawer(x: Parts) {
   const { p, d, setD, fileId, setFileId } = x;
-  const { m, current, desc, parts, links, commands, shots, view } = useParts(x);
+  const { m, current, desc, parts, links, commands, shots, view, veil } = useParts(x);
   const [full, setFull] = useState(false);
   const file = d.files.find((f) => f.fileId === fileId);
   return (
     <Module icon="library" title={m.name} count={`v${m.version}`} fill className="detail-mod" tools={<HeadKeys p={p} d={d} />}>
-      {shots.length > 0 ? <Gallery items={shots} /> : m.pictureUrl && <img className="hero-img" src={m.pictureUrl} alt="" />}
+      <Veil {...veil}>{shots.length > 0 ? <Gallery items={shots} /> : m.pictureUrl && <img className="hero-img" src={m.pictureUrl} alt="" />}</Veil>
       <div className="m-meta" style={{ marginTop: ".6em" }}><span>{m.author ?? m.uploader?.name}</span><span>{m.category}</span><span>Updated {shortDate(m.updatedAt)}</span></div>
       <p style={{ margin: ".5em 0 .2em", color: "var(--text)" }}>{m.summary}</p>
       <div className="m-tags"><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
@@ -186,7 +190,7 @@ function Drawer(x: Parts) {
       <ArchiveList d={d} />
 
       <div className="sub-h">Description</div>
-      <div className="desc"><DescText parts={parts} limit={full ? undefined : 900} onMod={p.onOpen} />{desc.length > 900 && !full && "…"}</div>
+      <Veil {...veil}><div className="desc"><DescText parts={parts} limit={full ? undefined : 900} onMod={p.onOpen} />{desc.length > 900 && !full && "…"}</div></Veil>
       {desc.length > 900 && <Key size="sm" variant="ghost" onClick={() => setFull(!full)}>{full ? "Less" : "Read more"}</Key>}
     </Module>
   );
@@ -195,14 +199,14 @@ function Drawer(x: Parts) {
 /** The expanded page: the banner across the top, then the media and description beside the files. */
 function Page(x: Parts) {
   const { p, d, setD, fileId, setFileId } = x;
-  const { m, current, desc, parts, links, commands, shots, view } = useParts(x);
+  const { m, current, desc, parts, links, commands, shots, view, veil } = useParts(x);
   const file = d.files.find((f) => f.fileId === fileId);
   const banner = m.pictureUrl ?? shots.find((s) => s.kind === "image")?.url ?? null;
   const archived = d.files.filter((f) => !CURRENT.includes(f.category)).length;
   return (
     <Module icon="library" title={m.name} count={`v${m.version}`} className="mpage" tools={<HeadKeys p={p} d={d} />}>
       <div className="mpage-banner">
-        {banner && <img src={banner} alt="" />}
+        {banner && <img src={banner} alt="" className={veil.on ? "veiled-img" : undefined} />}
         <div className="mpage-head">
           <h2>{m.name}</h2>
           <div className="m-meta"><span>by {m.author ?? m.uploader?.name ?? "unknown"}</span><span>{m.category}</span><span>v{m.version}</span><span>Updated {shortDate(m.updatedAt)}</span>{m.createdAt && <span>Added {shortDate(m.createdAt)}</span>}</div>
@@ -212,11 +216,11 @@ function Page(x: Parts) {
       </div>
       <div className="mpage-body">
         <div className="mpage-main">
-          {shots.length > 0 && <MediaStage items={shots} />}
+          {shots.length > 0 && <Veil {...veil}><MediaStage items={shots} /></Veil>}
           {commands.length > 0 && <Commands list={commands} />}
           {links.length > 0 && <Links key={m.modId} list={links} onMod={p.onOpen} />}
           <div className="sub-h">Description</div>
-          <div className="desc">{desc ? <DescText parts={parts} onMod={p.onOpen} /> : <span className="dim">The author wrote no description.</span>}</div>
+          <Veil {...veil}><div className="desc">{desc ? <DescText parts={parts} onMod={p.onOpen} /> : <span className="dim">No description</span>}</div></Veil>
         </div>
         <aside className="mpage-side">
           <div className="lcds">
@@ -239,7 +243,7 @@ function Page(x: Parts) {
 /** Console commands from the description, at the top of the detail in a dropdown that opens. */
 export function Commands({ list }: { list: Array<{ command: string; generated: boolean; from?: string; label?: string }> }) {
   const [open, setOpen] = useState(list.length <= 3);
-  const copy = (t: string) => navigator.clipboard.writeText(t).then(() => toast("Copied. Paste it in the Cyber Engine Tweaks console in game.")).catch(() => toast("Could not copy.", true));
+  const copy = (t: string) => navigator.clipboard.writeText(t).then(() => toast("Copied")).catch(() => toast("Couldn't copy", true));
   return (
     <div className="cmds">
       <button type="button" className="cmds-h" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -254,7 +258,7 @@ export function Commands({ list }: { list: Array<{ command: string; generated: b
             <div key={c.command} className="cmd">
               <code>{c.command}</code>
               {c.generated && <span className="dim" title="Made from an item ID in the description">from item ID</span>}
-              {c.from && <span className="dim from" title={`From ${c.from}, an extension's command pack`}>{c.label ?? c.from}</span>}
+              {c.from && <span className="dim from" title={`From ${c.from}`}>{c.label ?? c.from}</span>}
               <Key size="sm" variant="ghost" icon="file" aria-label={`Copy ${c.command}`} title="Copy" onClick={() => copy(c.command)} />
             </div>
           ))}

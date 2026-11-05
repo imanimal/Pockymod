@@ -1,4 +1,4 @@
-/* themes/standard.css — Standard, the default theme: a plain modern desktop look on the Pocket kit.
+/* themes/standard.css: Standard, the default theme: a plain modern desktop look on the Pocket kit.
    Dark by default, light on data-scheme="light". Flat keys with 1 px of travel, modules under a darkened band,
    LCDs drawn as status readouts, line icons. Colours: near-black blue-grey surfaces, a hot yellow accent kept for the
    one primary action and the current view, cyan (--sel) for what is selected and for focus.

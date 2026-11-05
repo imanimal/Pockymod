@@ -99,18 +99,18 @@ export function App() {
   }, []);
   // the way out of a theme that hides the app: Ctrl+Alt+Shift+T, wherever the focus is
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); void resetTheme().then(() => toast("Theme reset to Redline.")); } };
+    const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); void resetTheme().then(() => toast("Theme reset to Redline")); } };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, []);
-  useEffect(() => { applyTextSize(); return installZoomKeys((px) => toast(`Text size ${px}px. Ctrl+0 resets it.`)); }, []);
+  useEffect(() => { applyTextSize(); return installZoomKeys((px) => toast(`Text size ${px}px (Ctrl+0 resets)`)); }, []);
   useEffect(() => {
     const offs: Array<() => void> = [];
     queue.get().then(setSnap).catch(() => {});
     queue.onChange(setSnap).then((u) => offs.push(u));
     onToast((m) => toast(m)).then((u) => offs.push(u));
     // a new version is downloaded: one quiet line, never a dialog
-    backgroundApi.onUpdate((u) => { if (u.ready) toast(`Pockymod ${u.version} is ready. It goes in when you close the window.`, false, { label: "Restart now", run: () => { void backgroundApi.installUpdate().catch((e) => toast(errorText(e), true)); } }); }).then((u) => offs.push(u));
+    backgroundApi.onUpdate((u) => { if (u.ready) toast(`Pockymod ${u.version} installs when you close the window`, false, { label: "Restart now", run: () => { void backgroundApi.installUpdate().catch((e) => toast(errorText(e), true)); } }); }).then((u) => offs.push(u));
     nexus.status().then((s) => setPremium(!!s.user?.isPremium)).catch(() => {});
     // the account went Premium (ui/Premium.tsx): installs stop counting clicks
     const upgraded = () => setPremium(true);
@@ -128,7 +128,7 @@ export function App() {
     const t3 = setTimeout(() => {
       Promise.all([handler.status(), settings.get("onboarded"), settings.get("links.other")]).then(([h, ob, other]) => {
         if (ob !== "1" || other === "1" || !h.supported || h.ours || !h.owner) return;
-        toast(`${h.owner} now opens Mod Manager Download links from your browser.`, false, { label: "Take them back", run: () => { void handler.register().then(() => toast("Browser links open in Pockymod again.")).catch((e) => toast(errorText(e), true)); } });
+        toast(`${h.owner} took over Mod Manager Download links`, false, { label: "Take back", run: () => { void handler.register().then(() => toast("Links open in Pockymod")).catch((e) => toast(errorText(e), true)); } });
       }).catch(() => {});
     }, 2500);
     return () => { offs.forEach((f) => f()); clearTimeout(t1); clearInterval(t2); clearTimeout(t3); };
@@ -145,7 +145,7 @@ export function App() {
     try {
       const snap = await queue.add(modId, fileId, p.requirements === "always");
       const n = snap.items.filter((i) => i.state.state === "waiting" || i.state.state === "needsClick").length;
-      toast(`${name} is queued${n > 1 ? ` with ${n - 1} required mods` : ""}.`);
+      toast(`Queued ${name}${n > 1 ? ` and ${n - 1} required` : ""}`);
     } catch (e) { toast(errorText(e), true); }
   };
 
@@ -164,7 +164,7 @@ export function App() {
         <HistoryMenu onRemoved={() => { setView("library"); setTimeout(() => document.getElementById("recently-removed")?.scrollIntoView({ behavior: "smooth" }), 120); }} />
         <ProfileSwitch onManage={() => setView("loadorder")} />
         <Key variant="ghost" size="sm" icon={theme.scheme === "dark" ? "sun" : "moon"}
-          onClick={(e) => { if (!toggleScheme()) { nope(e.currentTarget); toast(`${theme.name} comes in dark only.`); } }}
+          onClick={(e) => { if (!toggleScheme()) { nope(e.currentTarget); toast(`${theme.name} is dark only`); } }}
           aria-label={theme.scheme === "dark" ? "Switch to light" : "Switch to dark"} title={`${theme.name}, ${theme.scheme}`} />
         <span className="winkeys">
           <button type="button" className="wk" aria-label="Minimise" onClick={() => void windowAction("minimize")}><Icon name="minus" size={9} /></button>
@@ -217,7 +217,7 @@ export function App() {
           <div className="keys-list">{SHORTCUTS.map(([k, what]) => <div key={k}><kbd>{k}</kbd><span>{what}</span></div>)}</div>
           <div className="sub-h">Controller</div>
           <div className="keys-list">
-            {[["D-pad, left stick", "Move between keys"], ["A", "Press"], ["B", "Back, close"], ["X", "The focused mod's key: install, or its menu"], ["Y", "Find"],
+            {[["D-pad, left stick", "Move between keys"], ["A", "Press"], ["B", "Back, close"], ["X", "Install, or the mod's menu"], ["Y", "Find"],
               ["LB, RB", "Previous, next view"], ["LT, RT, right stick", "Scroll"], ["View", "This list"], ["Menu", "Go to Play"]].map(([k, what]) => <div key={k}><kbd>{k}</kbd><span>{what}</span></div>)}
           </div>
         </Dialog>
@@ -233,7 +233,7 @@ function Placeholder({ view, icon }: { view: string; icon: IconName }) {
   return (
     <section className="panel">
       <header className="ph"><span className="pt"><Icon name={icon} />{view}</span></header>
-      <div className="pb"><Empty icon={icon} title={`${view} is not built yet`}>It arrives in a later milestone.</Empty></div>
+      <div className="pb"><Empty icon={icon} title={`${view} isn't built yet`} /></div>
     </section>
   );
 }

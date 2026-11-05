@@ -31,7 +31,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         {step === "existing" && <Module icon="folder" title="Mods you already have" band="hot"><ExistingBody compact quiet onDone={() => next()} /><div className="actions" style={{ justifyContent: "flex-end", marginTop: ".4em" }}><Key variant="ghost" onClick={next}>Skip</Key></div></Module>}
         {step === "links" && <LinksStep onNext={next} />}
         {step === "done" && <DoneStep onFinish={finish} />}
-        {step !== "done" && <button type="button" className="linkish onb-skip" onClick={finish}>Skip setup, I will do it in Settings</button>}
+        {step !== "done" && <button type="button" className="linkish onb-skip" onClick={finish} title="Set it up later in Settings">Skip setup</button>}
       </div>
     </div>
   );
@@ -63,12 +63,12 @@ function GameStep({ onNext }: { onNext: () => void }) {
       {p?.gameDir && p.gameLooksRight ? (
         <>
           <p>Cyberpunk 2077 is at <code>{p.gameDir}</code>.</p>
-          <p className="dim" style={{ fontSize: ".88em" }}>Mods are kept in <code>{p.libraryDir}</code> {p.sameVolume ? <Pill tone="ok">same drive: instant, no extra space</Pill> : <Pill tone="soon">another drive</Pill>}</p>
-          {p.inProgramFiles && <div className="note warn">The game is under Program Files, where Windows can block mods. If an install fails, Settings shows the fix.</div>}
+          <p className="dim" style={{ fontSize: ".88em" }}>Mods are kept in <code>{p.libraryDir}</code> {p.sameVolume ? <span title="Hard links, no extra space"><Pill tone="ok">Same drive</Pill></span> : <Pill tone="soon">another drive</Pill>}</p>
+          {p.inProgramFiles && <div className="note warn">Game is under Program Files, where Windows can block mods</div>}
         </>
       ) : found && (
         <div className="stack" style={{ gap: ".4em" }}>
-          <p>{found.length ? "Pick your copy of the game:" : "The game was not found on Steam, GOG or Epic. Choose its folder (the one with bin, archive and r6 inside)."}</p>
+          <p>{found.length ? "Pick your copy" : "Game not found. Choose its folder (with bin, archive and r6)"}</p>
           {found.map((g) => (
             <div key={g.path} className="actions" style={{ flexWrap: "nowrap" }}>
               <Pill tone={g.exists ? "ok" : undefined}>{g.store}</Pill>
@@ -79,7 +79,7 @@ function GameStep({ onNext }: { onNext: () => void }) {
         </div>
       )}
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
-        <Key variant="ghost" icon="folder" onClick={async () => { const d = await pickFolder("The Cyberpunk 2077 folder"); if (d) await use(d); }}>Choose a folder</Key>
+        <Key variant="ghost" icon="folder" onClick={async () => { const d = await pickFolder("Cyberpunk 2077 folder"); if (d) await use(d); }}>Choose a folder</Key>
         <Key variant="dark" icon="chevron" disabled={!p?.gameLooksRight} onClick={onNext}>Next</Key>
       </div>
     </Module>
@@ -99,21 +99,21 @@ function AccountStep({ onNext }: { onNext: () => void }) {
   return (
     <Module icon="key" title="Connect Nexus Mods" band="hot" count="optional">
       {name ? (
-        <p>Connected as <b className="hi">{name}</b> {premium ? <Pill tone="ok">Premium: installs run by themselves</Pill> : <Pill>Free: one click per file on Nexus</Pill>}</p>
+        <p>Connected as <b className="hi">{name}</b> {premium ? <Pill tone="ok">Premium</Pill> : <Pill>Free</Pill>}</p>
       ) : (
         <>
           {ssoReady() ? <>
-            <p>Browsing needs nothing. To download, sign in with your Nexus Mods account. The key it gives Pockymod is kept in Windows Credential Manager.</p>
+            <p>Sign in to download. Browsing works without it</p>
             <NexusSignIn primary onDone={(s) => { setName(s.user?.name ?? "connected"); setPremium(!!s.user?.isPremium); }} />
-            <p className="dim" style={{ fontSize: ".84em", marginTop: ".6em" }}>Or paste a personal API key:</p>
-          </> : <p>Browsing needs nothing. To download, paste your personal API key from Nexus Mods (Site preferences, API keys). It is kept in Windows Credential Manager.</p>}
+            <p className="dim" style={{ fontSize: ".84em", marginTop: ".6em" }}>Or paste an API key</p>
+          </> : <p>Paste your Nexus API key to download. Browsing works without it</p>}
           <div className="actions" style={{ flexWrap: "nowrap", marginTop: ".5em" }}>
             <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Personal API key" aria-label="Nexus API key" onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} /></label>
             <Key icon="check" disabled={!key || busy} onClick={save}>Connect</Key>
           </div>
           <button type="button" className="linkish" style={{ marginTop: ".4em", fontSize: ".86em" }}
-            onClick={() => nexusPages.url(API_KEY_PAGE).then(() => toast("The API key page opens in a Nexus window. Sign in there if asked, then copy the Personal API key.")).catch((e) => toast(errorText(e), true))}>Open the API key page in the app</button>
-          <p className="dim" style={{ fontSize: ".8em", marginTop: ".2em" }}>Or in any browser: nexusmods.com, your avatar, Site preferences, API keys.</p>
+            title="nexusmods.com, your avatar, Site preferences, API keys"
+            onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => toast(errorText(e), true))}>Get my key</button>
         </>
       )}
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
@@ -125,42 +125,39 @@ function AccountStep({ onNext }: { onNext: () => void }) {
 
 function LinksStep({ onNext }: { onNext: () => void }) {
   const [h, setH] = useState<HandlerStatus | null>(null);
-  const [lines, setLines] = useState<ScanLine[]>([{ text: "Reading which app opens nxm:// links (HKEY_CURRENT_USER\\Software\\Classes\\nxm)" }]);
-  const [took, setTook] = useState(false);
+  const [lines, setLines] = useState<ScanLine[]>([{ text: "Checking who opens nxm:// links" }]);
   const say = (text: string) => setLines((l) => [...l.map((x) => ({ ...x, done: true })), { text }]);
   useEffect(() => {
     const started = Date.now();
     const settle = async (r: HandlerStatus) => { await new Promise((ok) => setTimeout(ok, Math.max(0, 900 - (Date.now() - started)))); setLines((l) => l.map((x) => ({ ...x, done: true }))); setH(r); };
     handler.status().then(async (s) => {
-      if (!s.supported) { say("Not on Windows: links are handled by the system"); return settle(s); }
-      if (s.ours) { say("Pockymod already opens them"); return settle(s); }
+      if (!s.supported) { say("Not Windows, the system handles links"); return settle(s); }
+      if (s.ours) { say("Already Pockymod"); return settle(s); }
       // nobody handles nxm:// links: take them without asking; another manager does: ask
       if (!s.owner) {
-        say("No app opens them yet: registering Pockymod");
+        say("No handler yet, registering Pockymod");
         const r = await handler.register().catch(() => s);
-        setTook(r.ours);
         return settle(r);
       }
-      say(`${s.owner} opens them now`);
+      say(`${s.owner} has them`);
       return settle(s);
     }).catch(() => settle({ supported: false, ours: false, owner: null, command: null }));
   }, []);
   const settled = !!h && (!h.supported || h.ours);
   useEffect(() => { if (!settled) return; const t = setTimeout(onNext, 2600); return () => clearTimeout(t); }, [settled, onNext]);
-  if (!h) return <Module icon="link" title="Download links"><Scanner title="Checking browser download links" icon="link" lines={lines} /></Module>;
+  if (!h) return <Module icon="link" title="Download links"><Scanner title="Checking download links" icon="link" lines={lines} /></Module>;
   if (settled) return (
     <Module icon="link" title="Download links" count="done">
-      <p><Icon name="check" size={9} /> {h.supported ? (took ? "Mod Manager Download buttons on nexusmods.com now open in Pockymod." : "Mod Manager Download buttons on nexusmods.com open in Pockymod.") : "Browser links are handled by your system."}</p>
-      <p className="dim" style={{ fontSize: ".86em", marginTop: ".3em" }}>You can test or change this any time in Settings, Download links.</p>
+      <p><Icon name="check" size={9} /> {h.supported ? "Mod Manager Download on Nexus opens in Pockymod" : "Your system handles browser links"}</p>
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}><Key variant="dark" icon="chevron" onClick={onNext}>Next</Key></div>
     </Module>
   );
   return (
-    <Module icon="link" title="Download links from your browser" band="hot">
-      <p>{h.owner} opens "Mod Manager Download" links clicked in a web browser. Pages opened inside Pockymod always come here, whatever you choose.</p>
+    <Module icon="link" title="Download links" band="hot">
+      <p>{h.owner} opens Mod Manager Download links from your browser</p>
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
         <Key variant="ghost" onClick={() => { void settings.set("links.other", "1"); onNext(); }}>Keep {h.owner}</Key>
-        <Key variant="dark" icon="link" onClick={() => handler.register().then(() => { toast("Browser links now open in Pockymod."); onNext(); }).catch((e) => toast(errorText(e), true))}>Use Pockymod</Key>
+        <Key variant="dark" icon="link" onClick={() => handler.register().then(() => { toast("Links open in Pockymod"); onNext(); }).catch((e) => toast(errorText(e), true))}>Use Pockymod</Key>
       </div>
     </Module>
   );
@@ -171,8 +168,7 @@ function DoneStep({ onFinish }: { onFinish: () => void }) {
   useEffect(() => { game.health().then((r) => setProblems(r.problems)).catch(() => setProblems(0)); }, []);
   return (
     <Module icon="check" title="Ready" band="hot">
-      <div className="lcds"><Lcd size="sm" label="Problems" value={problems === null ? "--" : String(problems).padStart(2, "0")} tone={problems ? "bad" : "ok"} sub={problems ? "Health shows the fixes" : "Nothing broken"} /></div>
-      <p style={{ marginTop: ".6em" }}><Icon name="browse" size={9} /> Browse to find mods. Install brings what a mod needs along with it.</p>
+      <div className="lcds"><Lcd size="sm" label="Problems" value={problems === null ? "--" : String(problems).padStart(2, "0")} tone={problems ? "bad" : "ok"} sub={problems ? "See Health" : "All good"} /></div>
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}><Key variant="dark" icon="play" onClick={onFinish}>Start</Key></div>
     </Module>
   );

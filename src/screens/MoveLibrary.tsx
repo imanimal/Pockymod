@@ -10,10 +10,10 @@ export function relinkText(r: RelinkReport): string {
   const parts = [
     r.relinked && `${r.relinked} linked to the library again`,
     r.restored && `${r.restored} put back`,
-    r.copies && `${r.copies} kept as copies (the library is on another drive)`,
+    r.copies && `${r.copies} kept as copies (other drive)`,
     r.changed && `${r.changed} changed in the game, left alone`,
   ].filter(Boolean);
-  return parts.length ? `Mod files in the game: ${parts.join(", ")}.` : `All ${r.checked} mod files in the game are linked to the library.`;
+  return parts.length ? `Game mod files: ${parts.join(", ")}` : `All ${r.checked} game mod files linked`;
 }
 
 export function MoveLibraryDialog({ onClose, onMoved }: { onClose: () => void; onMoved: () => void }) {
@@ -23,7 +23,7 @@ export function MoveLibraryDialog({ onClose, onMoved }: { onClose: () => void; o
   useEffect(() => { let off: (() => void) | undefined; relocate.onProgress(setProgress).then((u) => { off = u; }); return () => off?.(); }, []);
 
   const pick = async () => {
-    const d = await pickFolder("A new folder for the mod library (best on the game's drive)");
+    const d = await pickFolder("New library folder (best on the game's drive)");
     if (!d) return;
     try { setCheck(await relocate.check(d)); } catch (e) { toast(errorText(e), true); }
   };
@@ -35,9 +35,9 @@ export function MoveLibraryDialog({ onClose, onMoved }: { onClose: () => void; o
     setBusy(true);
     try {
       const r = await relocate.move(check.to);
-      toast(r.how === "renamed" ? `The library is now in ${check.to}. Links in the game are unchanged.`
-        : `Copied ${bytesText(r.bytes)} to ${check.to}.${r.relinked ? ` ${r.relinked} game files linked to the new copies.` : ""}${r.copyTurnedOn ? " New mods are copied into the game from now on." : ""}`);
-      if (r.leftBehind) toast(`Some of the old folder could not be deleted: ${r.leftBehind}. Delete it by hand once nothing uses it.`, true);
+      toast(r.how === "renamed" ? `Library moved to ${check.to}`
+        : `Copied ${bytesText(r.bytes)} to ${check.to}${r.relinked ? `, ${r.relinked} game files relinked` : ""}${r.copyTurnedOn ? ". New mods will be copied" : ""}`);
+      if (r.leftBehind) toast(`Couldn't delete part of the old folder: ${r.leftBehind}`, true);
       onMoved(); onClose();
     } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
@@ -46,7 +46,7 @@ export function MoveLibraryDialog({ onClose, onMoved }: { onClose: () => void; o
     <Dialog icon="folder" title="Move the mod library" onClose={busy ? () => {} : onClose} band={check?.problem ? "bad" : !check?.sameDriveAsGame && check ? "hot" : undefined}>
       {!check ? (
         <>
-          <p>Choose a new or empty folder. Staged mods, backups of game files, removed mods and downloads move there, and every mod in the game keeps working.</p>
+          <p>Pick a new or empty folder</p>
           <div className="actions" style={{ justifyContent: "flex-end" }}><Key variant="ghost" onClick={onClose}>Cancel</Key><Key icon="folder" onClick={pick}>Choose a folder</Key></div>
         </>
       ) : (
@@ -57,16 +57,16 @@ export function MoveLibraryDialog({ onClose, onMoved }: { onClose: () => void; o
           </div>
           <div className="lcds" style={{ margin: ".7em 0" }}>
             <Lcd size="sm" label="Files" value={String(check.files)} sub={bytesText(check.bytes)} />
-            <Lcd size="sm" label="Move" value={check.quick ? "FAST" : "COPY"} tone={check.quick ? "ok" : "hot"} sub={check.quick ? "same drive: a rename" : "another drive: a full copy"} />
+            <Lcd size="sm" label="Move" value={check.quick ? "FAST" : "COPY"} tone={check.quick ? "ok" : "hot"} sub={check.quick ? "same drive" : "other drive"} />
             {progress && busy && <Lcd size="sm" label="Copied" value={`${Math.round((progress[0] / Math.max(progress[1], 1)) * 100)}`} unit="%" bar={progress[0] / Math.max(progress[1], 1)} />}
           </div>
           {check.problem ? <div className="note bad">{check.problem}</div>
-            : check.sameDriveAsGame ? <div className="actions"><Pill tone="ok">Game's drive: hard links keep working</Pill></div>
-            : <div className="note warn">This folder is on another drive than the game. Hard links cannot cross drives, so the mods' files stay in the game as copies, and new mods are copied too (using the space twice). Choose a folder on the game's drive to avoid that.</div>}
+            : check.sameDriveAsGame ? <div className="actions"><Pill tone="ok">Same drive as the game</Pill></div>
+            : <div className="note warn">Different drive from the game, so mod files get copied and use twice the space</div>}
           <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".7em" }}>
             <Key variant="ghost" onClick={onClose} disabled={busy}>Cancel</Key>
             <Key variant="ghost" icon="folder" onClick={pick} disabled={busy}>Another folder</Key>
-            <Key variant="primary" icon="folder" onClick={move} disabled={busy || !!check.problem}>{busy ? "Moving…" : check.sameDriveAsGame ? "Move library" : "Move and copy"}</Key>
+            <Key variant="primary" icon="folder" onClick={move} disabled={busy || !!check.problem}>{busy ? "Moving" : check.sameDriveAsGame ? "Move library" : "Move and copy"}</Key>
           </div>
         </>
       )}

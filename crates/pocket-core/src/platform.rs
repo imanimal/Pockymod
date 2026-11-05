@@ -85,9 +85,9 @@ mod imp {
     use super::*;
     pub fn status(_exe: &Path) -> Result<HandlerStatus> { Ok(HandlerStatus { supported: false, ours: false, owner: None, command: None }) }
     pub fn register(_exe: &Path) -> Result<HandlerStatus> {
-        Err(crate::Error::Invalid("Registering the nxm:// handler is only built for Windows so far.".into()))
+        Err(crate::Error::Invalid("The nxm:// handler only works on Windows".into()))
     }
-    pub fn set_autostart(_exe: &Path, _on: bool) -> Result<bool> { Err(crate::Error::Invalid("Starting with the system is only built for Windows so far.".into())) }
+    pub fn set_autostart(_exe: &Path, _on: bool) -> Result<bool> { Err(crate::Error::Invalid("Starting with the system only works on Windows".into())) }
     pub fn autostart(_exe: &Path) -> Result<bool> { Ok(false) }
 }
 

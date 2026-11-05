@@ -32,7 +32,7 @@ pub async fn creator_my_mods(state: State<'_, AppState>, user: Option<String>, r
     let member = match typed {
         Some(t) => mods::resolve_member(&state.nexus, &t).await?,
         None => me.as_ref().map(|u| u.user_id)
-            .ok_or_else(|| Error::Invalid("Add your Nexus API key in Settings, or type your Nexus user name to see your mods.".into()))?,
+            .ok_or_else(|| Error::Invalid("Add your Nexus API key in Settings or type your Nexus user name".into()))?,
     };
     let own = me.is_some_and(|u| u.user_id == member);
     let pins = pinned(&state, member)?;
@@ -55,7 +55,7 @@ pub async fn creator_upload_targets(state: State<'_, AppState>, mod_id: u32) -> 
 /// Add a mod to a member's list by its link or id (a page just made, or one they co-author). Returns the mod id.
 #[tauri::command]
 pub fn creator_pin(state: State<'_, AppState>, member_id: u64, mod_ref: String) -> Result<u32> {
-    let id = mods::mod_ref(&mod_ref).ok_or_else(|| Error::Invalid("Paste the link to the mod's page (nexusmods.com/cyberpunk2077/mods/…) or its number.".into()))?;
+    let id = mods::mod_ref(&mod_ref).ok_or_else(|| Error::Invalid("Paste the mod's page link (nexusmods.com/cyberpunk2077/mods/…) or its number".into()))?;
     let mut list = pinned(&state, member_id)?;
     if !list.contains(&id) { list.push(id); }
     state.db.lock().unwrap().set_setting(&pinned_key(member_id), &serde_json::to_string(&list).unwrap_or_default())?;

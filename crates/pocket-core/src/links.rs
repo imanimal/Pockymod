@@ -127,7 +127,7 @@ pub async fn fetch(http: &reqwest::Client, url: &Url) -> LinkPreview {
     }
     match page(http, url).await {
         Ok(p) => p,
-        Err(Error::Network(_)) => LinkPreview { error: Some("The site did not answer.".into()), ..base },
+        Err(Error::Network(_)) => LinkPreview { error: Some("The site didn't answer".into()), ..base },
         Err(e) => LinkPreview { error: Some(e.to_string()), ..base },
     }
 }
@@ -151,7 +151,7 @@ async fn youtube(http: &reqwest::Client, url: &Url, id: &str) -> Result<LinkPrev
 async fn discord(http: &reqwest::Client, url: &Url, code: &str) -> Result<LinkPreview> {
     let v: serde_json::Value = http.get(format!("https://discord.com/api/v10/invites/{code}?with_counts=true")).send().await?.error_for_status()?.json().await?;
     let g = &v["guild"];
-    let name = g["name"].as_str().ok_or_else(|| Error::Invalid("Not a server invite.".into()))?;
+    let name = g["name"].as_str().ok_or_else(|| Error::Invalid("Not a server invite".into()))?;
     let members = v["approximate_member_count"].as_u64();
     let online = v["approximate_presence_count"].as_u64();
     let counts = match (members, online) {
@@ -199,7 +199,7 @@ async fn page(http: &reqwest::Client, url: &Url) -> Result<LinkPreview> {
     p.site = p.site.or(site);
     p.icon = p.icon.or(base.icon);
     if p.title.is_none() && !status.is_success() {
-        p.error = Some(format!("The site answered {}.", status.as_u16()));
+        p.error = Some(format!("The site answered {}", status.as_u16()));
     }
     Ok(p)
 }

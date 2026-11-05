@@ -25,12 +25,12 @@ export function HistoryMenu({ onRemoved }: { onRemoved: () => void }) {
     <div className="hist" ref={ref}>
       <Key size="sm" variant="ghost" icon="undo" disabled={!h.canUndo} onClick={() => void undo()} aria-label="Undo" title="Undo (Ctrl+Z)" />
       <Key size="sm" variant="ghost" icon="redo" disabled={!h.canRedo} onClick={() => void redo()} aria-label="Redo" title="Redo (Ctrl+Y)" />
-      <Key size="sm" variant="ghost" icon="history" latched={open} onClick={() => setOpen(!open)} aria-label="History" title="What changed" />
+      <Key size="sm" variant="ghost" icon="history" latched={open} onClick={() => setOpen(!open)} aria-label="History" title="History" />
       {open && (
         <div className="pmenu panel hmenu" role="dialog" aria-label="History">
           <div className="ph"><span className="pt"><Icon name="history" />History</span><span className="cnt">{h.entries.length}</span></div>
           <div className="pb">
-            {h.entries.length === 0 && <p className="dim" style={{ padding: ".4em .2em" }}>Changes to your mods show here. Ctrl+Z undoes the last one, Ctrl+Y redoes it.</p>}
+            {h.entries.length === 0 && <p className="dim" style={{ padding: ".4em .2em" }}>No changes yet</p>}
             <div className="rows">
               {h.entries.slice(0, 30).map((e) => (
                 <div key={e.id} className={`row${e.state !== "done" ? " off" : ""}`} style={{ cursor: "default" }}>

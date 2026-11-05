@@ -182,10 +182,10 @@ pub fn plan_install(entries: &[String], mod_name: &str) -> InstallPlan {
     for p in &plan.files { *seen.entry(p.target.to_lowercase()).or_default() += 1; }
     let dupes: Vec<_> = seen.into_iter().filter(|(_, n)| *n > 1).map(|(t, _)| t).collect();
     if !dupes.is_empty() {
-        plan.warnings.push(format!("The archive has {} files that land on the same path (it may hold several variants). Pick one variant before installing.", dupes.len()));
+        plan.warnings.push(format!("{} files land on the same path, so the archive likely holds several variants. Pick one before installing", dupes.len()));
     }
     if !plan.unknown.is_empty() {
-        plan.warnings.push(format!("{} files have no known place in the game folder.", plan.unknown.len()));
+        plan.warnings.push(format!("{} files have no known place in the game folder", plan.unknown.len()));
     }
 
     for p in &plan.files {

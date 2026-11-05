@@ -38,7 +38,7 @@ pub async fn nexus_status(app: tauri::AppHandle, state: State<'_, AppState>, ref
 #[tauri::command]
 pub async fn nexus_set_key(app: tauri::AppHandle, state: State<'_, AppState>, key: String) -> Result<NexusStatus> {
     let key = key.trim().to_owned();
-    if key.len() < 16 || key.chars().any(char::is_whitespace) { return Err(Error::Invalid("That does not look like a Nexus API key.".into())); }
+    if key.len() < 16 || key.chars().any(char::is_whitespace) { return Err(Error::Invalid("That isn't a Nexus API key".into())); }
     let previous = state.keys.get().ok().flatten();
     state.nexus.set_key(Some(Secret::new(key.clone())));
     match state.nexus.validate().await {
@@ -72,7 +72,7 @@ pub async fn mod_endorse(state: State<'_, AppState>, mod_id: u32, version: Strin
     if !state.nexus.has_key() { return Err(Error::NoKey); }
     let r = if on { state.nexus.endorse(mod_id, &version).await } else { state.nexus.abstain(mod_id, &version).await };
     r.map(|_| ()).map_err(|e| match e {
-        Error::Http { status: 403, .. } => Error::Invalid("Nexus accepts endorsements only after you have downloaded the mod (and waited a few minutes).".into()),
+        Error::Http { status: 403, .. } => Error::Invalid("Download the mod first, then wait a few minutes to endorse".into()),
         other => other,
     })
 }
@@ -141,7 +141,7 @@ pub async fn endorse_many(state: State<'_, AppState>, mods: Vec<(u32, String)>) 
     for (id, version) in mods {
         match state.nexus.endorse(id, &version).await {
             Ok(_) => { ok += 1; done.insert(id); }
-            Err(Error::Http { status: 403, .. }) => { first.get_or_insert_with(|| "Nexus takes an endorsement only after you downloaded the mod from it (and a little time has passed).".to_string()); }
+            Err(Error::Http { status: 403, .. }) => { first.get_or_insert_with(|| "Download the mod from Nexus first, then wait a few minutes to endorse".to_string()); }
             Err(e @ Error::Throttled { .. }) => { first.get_or_insert(e.to_string()); break; }
             Err(e) => { first.get_or_insert(e.to_string()); }
         }

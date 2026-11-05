@@ -36,19 +36,19 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
       <div className="lcds">
         <Lcd label="Mods left" value={String(s?.left ?? 0).padStart(2, "0")} sub={s?.running ? "Working" : s?.left ? "Queued" : "Queue is empty"} />
         <Lcd label="Needs your click" value={String(s?.needsClick ?? 0).padStart(2, "0")} tone={s?.waitingOnUser ? "hot" : "ok"}
-          sub={s?.premium ? "Premium: no clicks" : s?.waitingOnUser ? "Waiting for you on Nexus" : "One per file on a free account"} />
+          sub={s?.premium ? "Premium, no clicks" : s?.waitingOnUser ? "Waiting for you on Nexus" : "One per file on free accounts"} />
         <Lcd label="Time left" value={clock(s?.secondsLeft ?? null)} sub={s?.bytesPerSec ? `${bytesText(s.bytesPerSec)}/s · ${bytesText(s.bytesLeft)} to go` : s?.bytesLeft ? `${bytesText(s.bytesLeft)} to go` : "Nothing to download"}
           bar={current && current.state.state === "downloading" && current.state.total ? current.state.received / current.state.total : undefined} />
       </div>
 
       {waiting && (
         <Module icon="downloads" title="Download next" count={waiting.modName} band="hot">
-          <p>Press <b className="hi">Mod Manager Download</b> on the Nexus page for <b className="hi">{waiting.fileName}</b>. The queue goes on by itself when the link arrives.</p>
+          <p>Press <b className="hi">Mod Manager Download</b> on the Nexus page for <b className="hi">{waiting.fileName}</b></p>
           <div className="actions" style={{ marginTop: ".7em" }}>
             <Key variant="dark" icon="web" onClick={() => act(queue.showPage(waiting.id))}>Show the Nexus page</Key>
             <Key variant="ghost" onClick={() => act(queue.remove(waiting.id))}>Skip this mod</Key>
           </div>
-          {waiting.manualOnly && <div className="note warn" style={{ marginTop: ".7em" }}>This file is not a .zip, .7z or .rar, so it cannot be installed for you. Follow the steps on its page.</div>}
+          {waiting.manualOnly && <div className="note warn" style={{ marginTop: ".7em" }}>Not a .zip, .7z or .rar. Install it by hand from its page</div>}
           {!s?.premium && <div style={{ marginTop: ".7em" }}><PremiumNote clicks={s?.needsClick ?? 0} what="the" /></div>}
         </Module>
       )}
@@ -58,7 +58,7 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
           {items.filter((i) => i.state.state === "failed").length > 1 && <Key size="sm" icon="refresh" onClick={() => act((async () => { let s = null; for (const i of items.filter((x) => x.state.state === "failed")) s = await queue.retry(i.id); return s!; })())}>Retry all {items.filter((i) => i.state.state === "failed").length} failed</Key>}
           {items.some((i) => ["done", "failed"].includes(i.state.state)) && <Key size="sm" variant="ghost" onClick={() => act(queue.clearFinished())}>Clear finished</Key>}
         </>}>
-        {items.length === 0 && <Empty icon="downloads" title="Nothing queued">Press Install on a mod in Browse. Its requirements come along.</Empty>}
+        {items.length === 0 && <Empty icon="downloads" title="Nothing queued" />}
         <div className="rows">
           {items.map((i) => <QueueRow key={i.id} i={i} onRetry={() => act(queue.retry(i.id))} onRemove={() => act(queue.remove(i.id))} />)}
         </div>
@@ -83,7 +83,7 @@ function QueueRow({ i, onRetry, onRemove }: { i: QueueItem; onRetry: () => void;
         <Pill tone={l.tone}>{l.text}</Pill>
         {i.state.state === "failed" && <Key size="sm" icon="refresh" onClick={onRetry} aria-label="Retry" title="Retry" />}
         {!busy && i.state.state !== "done" && <Key size="sm" variant="ghost" icon="x" onClick={onRemove} aria-label="Remove" title="Remove" />}
-        {i.state.state === "downloading" && <Key size="sm" variant="ghost" icon="x" onClick={() => void queue.cancel(i.id).catch(() => {})} aria-label="Stop this download" title="Stop (it resumes from here on Retry)" />}
+        {i.state.state === "downloading" && <Key size="sm" variant="ghost" icon="x" onClick={() => void queue.cancel(i.id).catch(() => {})} aria-label="Stop this download" title="Stop. Retry resumes it" />}
         {i.state.state === "installing" && <Icon name="clock" />}
       </span>
     </div>

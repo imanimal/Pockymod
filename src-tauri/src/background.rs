@@ -98,9 +98,9 @@ pub async fn prefetch(app: &AppHandle, mod_id: u32, file_id: u32) -> pocket_core
     if pocket_core::install::downloaded_archive(&st.db.lock().unwrap(), mod_id, file_id)?.is_some() { return Ok(()); }
     let (_, library) = Paths::load(&st.db.lock().unwrap()).require()?;
     let d = pocket_core::browse::detail(&st.nexus, &st.db, mod_id, None).await?;
-    let f = d.files.iter().find(|f| f.file_id == file_id).ok_or_else(|| pocket_core::Error::Invalid("That file is gone from Nexus.".into()))?;
+    let f = d.files.iter().find(|f| f.file_id == file_id).ok_or_else(|| pocket_core::Error::Invalid("That file is gone from Nexus".into()))?;
     let links = st.nexus.download_links(mod_id, file_id, None).await?;
-    let url = links.first().map(|l| l.uri.clone()).ok_or_else(|| pocket_core::Error::Invalid("Nexus gave no download link.".into()))?;
+    let url = links.first().map(|l| l.uri.clone()).ok_or_else(|| pocket_core::Error::Invalid("Nexus gave no download link".into()))?;
     let name = pocket_core::queue::download_name(mod_id, file_id, &f.uri);
     let dl = pocket_core::download::download(st.nexus.download_http(), &url, &library.join("downloads"), &name, |_, _| true).await?;
     pocket_core::install::record_download(&st.db.lock().unwrap(), mod_id, file_id, &f.name, &f.version, &dl.path, dl.size, &dl.md5)?;
@@ -150,7 +150,7 @@ pub async fn background_state(app: AppHandle) -> pocket_core::Result<BackgroundS
 /// Restart into the downloaded version now (the user pressed it).
 #[tauri::command]
 pub async fn app_update_install(app: AppHandle) -> pocket_core::Result<()> {
-    if install_now_with(&app, true) { Ok(()) } else { Err(pocket_core::Error::Invalid("No new version is downloaded yet.".into())) }
+    if install_now_with(&app, true) { Ok(()) } else { Err(pocket_core::Error::Invalid("No new version downloaded yet".into())) }
 }
 
 /// Run the checks now (Settings, Check now).

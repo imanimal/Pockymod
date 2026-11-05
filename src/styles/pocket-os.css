@@ -1,4 +1,4 @@
-/* pocket-os.css — Pocket for Windows (CAPP1 L6 P9 B8 F3 T6 G2 M0 D3 C2), standalone.
+/* pocket-os.css: Pocket for Windows (CAPP1 L6 P9 B8 F3 T6 G2 M0 D3 C2), standalone.
    Built from design/reference/pocket.css (the Collegiapp stylesheet) with that app's theme and core values filled in
    from the build spec, so nothing here depends on themes.js or core.css. Class names follow the reference:
      .btn key · .nv program key · .panel/.ph/.pb module and band · .display LCD inlay · .fbox search field ·
@@ -194,7 +194,7 @@ a { color: var(--acc2); }
 .led.wait { background: var(--warn); }
 .led.bad { background: var(--bad); }
 .led.on { background: var(--accent); }
-/* added: progress along the key's foot, set with --p (0–1) */
+/* added: progress along the key's foot, set with --p (0 to 1) */
 .nv .prog { position: absolute; left: 6px; right: 6px; bottom: 2px; height: 3px; border-radius: 2px; background: color-mix(in srgb, currentColor 14%, transparent); overflow: hidden; }
 .nv .prog::after { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--p, 0) * 100%); background: var(--accent); }
 

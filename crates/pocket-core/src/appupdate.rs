@@ -27,9 +27,9 @@ pub async fn check(http: &reqwest::Client) -> Result<AppUpdate> {
     let current = crate::APP_VERSION.to_string();
     let resp = http.get(RELEASES).header("Accept", "application/vnd.github+json").send().await?;
     if resp.status().as_u16() == 404 {
-        return Ok(AppUpdate { current, latest: None, newer: false, notes: None, url: None, message: "No published release found yet.".into(), installer: None });
+        return Ok(AppUpdate { current, latest: None, newer: false, notes: None, url: None, message: "No release published yet".into(), installer: None });
     }
-    if !resp.status().is_success() { return Err(Error::Http { status: resp.status().as_u16(), message: "GitHub did not answer the update check.".into() }); }
+    if !resp.status().is_success() { return Err(Error::Http { status: resp.status().as_u16(), message: "GitHub didn't answer the update check".into() }); }
     let v: serde_json::Value = resp.json().await?;
     let latest = v["tag_name"].as_str().map(|t| t.trim_start_matches('v').to_string());
     let newer = latest.as_deref().is_some_and(|l| is_newer(l, &current));
@@ -39,7 +39,7 @@ pub async fn check(http: &reqwest::Client) -> Result<AppUpdate> {
         (u.clone(), assets.iter().find(|(m, _)| m.eq_ignore_ascii_case(&format!("{n}.sha256"))).map(|(_, u)| u.clone()))
     });
     Ok(AppUpdate { installer,
-        message: if newer { format!("Pockymod {} is out.", latest.as_deref().unwrap_or("?")) } else { "You have the newest version.".into() },
+        message: if newer { format!("Pockymod {} is out", latest.as_deref().unwrap_or("?")) } else { "You're on the newest version".into() },
         current, newer, notes: v["body"].as_str().map(|s| s.chars().take(4000).collect()), url: v["html_url"].as_str().map(str::to_owned), latest,
     })
 }
@@ -51,8 +51,8 @@ fn from_github(u: &str) -> bool {
 
 /// Download the release's installer into `dir` (once per version) and check its checksum when there is one.
 pub async fn download(http: &reqwest::Client, u: &AppUpdate, dir: &std::path::Path) -> Result<std::path::PathBuf> {
-    let (url, sum) = u.installer.clone().ok_or_else(|| Error::Invalid("This release has no Windows installer.".into()))?;
-    if !from_github(&url) { return Err(Error::Invalid("The installer is not on this project's GitHub releases.".into())); }
+    let (url, sum) = u.installer.clone().ok_or_else(|| Error::Invalid("This release has no Windows installer".into()))?;
+    if !from_github(&url) { return Err(Error::Invalid("The installer isn't on this project's GitHub releases".into())); }
     let version = u.latest.clone().unwrap_or_default();
     let safe: String = version.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '.' || *c == '-').collect();
     std::fs::create_dir_all(dir)?;
@@ -64,7 +64,7 @@ pub async fn download(http: &reqwest::Client, u: &AppUpdate, dir: &std::path::Pa
         let want = http.get(&s).send().await?.error_for_status().map_err(Error::from)?.text().await?;
         let want = want.split_whitespace().next().unwrap_or("").to_ascii_lowercase();
         let got = sha256_hex(&bytes);
-        if want != got { return Err(Error::Invalid("The downloaded installer does not match its checksum, so it was not kept.".into())); }
+        if want != got { return Err(Error::Invalid("The installer failed its checksum and was deleted".into())); }
     }
     let tmp = path.with_extension("part");
     std::fs::write(&tmp, &bytes)?;

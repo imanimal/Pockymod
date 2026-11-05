@@ -83,7 +83,7 @@ pub fn state(app: &AppHandle) -> BrowserState {
 
 /// Open a Nexus page where the user wants pages: the popped-out window when it is open, the pane, or their browser.
 pub fn open(app: &AppHandle, url: &str) -> pocket_core::Result<()> {
-    let bad = || pocket_core::Error::Invalid("That is not a web page the app opens.".into());
+    let bad = || pocket_core::Error::Invalid("The app doesn't open that page".into());
     let u: Url = url.parse().map_err(|_| bad())?;
     if !may_open(&u) || u.scheme() != "https" { return Err(bad()); }
     if let Some(w) = app.get_webview_window(WINDOW) {
@@ -158,7 +158,7 @@ fn open_pane(app: &AppHandle, url: Url) -> pocket_core::Result<()> {
         say(app, BrowserState::at(&url, false, true, true));
         return Ok(());
     }
-    let win = app.get_window("main").ok_or_else(|| pocket_core::Error::Invalid("The main window is gone.".into()))?;
+    let win = app.get_window("main").ok_or_else(|| pocket_core::Error::Invalid("The main window is gone".into()))?;
     // where the page last had it, else the right half until the page says where
     let [x, y, w, h] = app.state::<Browser>().bounds.lock().unwrap().unwrap_or_else(|| {
         let s = win.inner_size().ok().and_then(|s| win.scale_factor().ok().map(|f| s.to_logical::<f64>(f))).unwrap_or(LogicalSize::new(1360.0, 860.0));
@@ -191,7 +191,7 @@ pub fn set_bounds(app: &AppHandle, x: f64, y: f64, w: f64, h: f64, visible: bool
 
 /// Back, forward, reload, or stop the pane or window.
 pub fn nav(app: &AppHandle, action: &str) -> pocket_core::Result<()> {
-    let js = match action { "back" => "history.back()", "forward" => "history.forward()", "stop" => "window.stop()", "reload" => "", _ => return Err(pocket_core::Error::Invalid("Unknown browser action.".into())) };
+    let js = match action { "back" => "history.back()", "forward" => "history.forward()", "stop" => "window.stop()", "reload" => "", _ => return Err(pocket_core::Error::Invalid("Unknown browser action".into())) };
     if let Some(w) = app.get_webview_window(WINDOW) { return if js.is_empty() { w.reload() } else { w.eval(js) }.map_err(err); }
     if let Some(p) = app.get_webview(PANE) { return if js.is_empty() { p.reload() } else { p.eval(js) }.map_err(err); }
     Ok(())

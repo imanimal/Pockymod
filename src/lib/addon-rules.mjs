@@ -9,13 +9,13 @@ export const MARKET_FORMAT = "pocket-mods.marketplace";
 
 /** What a panel may ask the app for. Each one is declared in the manifest and shown to the user before install. */
 export const PERMISSIONS = {
-  "library.read": { title: "See your mod list", detail: "Names, versions, groups, sizes, and which mods are on." },
-  "library.toggle": { title: "Turn your mods on and off", detail: "In the active profile. A note shows each time it does." },
-  "nexus.search": { title: "Search Nexus Mods", detail: "Through the app, at most 30 searches a minute." },
-  "queue.add": { title: "Offer mods to download", detail: "You are asked every time. Nothing is queued unless you say yes." },
-  "toast": { title: "Show short notes", detail: "In the corner of the window, with the extension's name." },
-  "nexus.open": { title: "Open Nexus Mods pages", detail: "In the app's Nexus window." },
-  "storage": { title: "Keep its own notes", detail: "Up to 256 KB, only for this extension, removed with it." },
+  "library.read": { title: "See your mod list", detail: "Names, versions, groups, sizes and on/off" },
+  "library.toggle": { title: "Turn your mods on and off", detail: "In the active profile, with a note each time" },
+  "nexus.search": { title: "Search Nexus Mods", detail: "Up to 30 searches a minute" },
+  "queue.add": { title: "Offer mods to download", detail: "Asks you every time" },
+  "toast": { title: "Show short notes", detail: "Toasts with the extension's name" },
+  "nexus.open": { title: "Open Nexus Mods pages", detail: "In the app's Nexus window" },
+  "storage": { title: "Keep its own notes", detail: "Up to 256 KB, removed with it" },
 };
 
 export const CONTRIBUTIONS = ["shelves", "groupRules", "tools", "launchOptions", "commandPacks", "links", "panels"];

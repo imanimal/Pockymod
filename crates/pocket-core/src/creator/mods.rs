@@ -446,7 +446,7 @@ pub fn assemble(author: Author, month: Option<Month>, mods: Vec<RawModList>, fil
 pub struct RawModList(RawMod, bool);
 
 pub fn manage_from(data: &Value, unique: Option<u64>) -> Result<ModManage> {
-    let m = data.get("mod").filter(|m| !m.is_null()).ok_or_else(|| Error::Invalid("Nexus has no such mod for Cyberpunk 2077, or it is not public yet.".into()))?;
+    let m = data.get("mod").filter(|m| !m.is_null()).ok_or_else(|| Error::Invalid("No such Cyberpunk 2077 mod on Nexus, or it isn't public yet".into()))?;
     let mut files: Vec<AuthorFile> = serde_json::from_value(data.get("modFiles").cloned().unwrap_or(Value::Array(vec![]))).map_err(|e| Error::Decode(e.to_string()))?;
     files.sort_by(|a, b| b.date.cmp(&a.date).then(b.file_id.cmp(&a.file_id)));
     let reqs = |p: &str| -> Result<(Vec<Requirement>, u32)> {
@@ -515,9 +515,9 @@ pub async fn resolve_member(client: &NexusClient, input: &str) -> Result<u64> {
         Some(MemberRef::Name(name)) => {
             let (d, _) = client.graphql_raw(MEMBER_BY_NAME, json!({ "name": name })).await?;
             d.pointer("/userByName/memberId").and_then(Value::as_u64)
-                .ok_or_else(|| Error::Invalid(format!("Nexus has no member called {name}. Check the spelling, or paste the link to your profile.")))
+                .ok_or_else(|| Error::Invalid(format!("No Nexus member called {name}. Check the spelling or paste your profile link")))
         }
-        None => Err(Error::Invalid("Type a Nexus user name, a member ID, or a link to a profile.".into())),
+        None => Err(Error::Invalid("Type a Nexus user name, member ID or profile link".into())),
     }
 }
 
@@ -601,7 +601,7 @@ pub async fn my_mods(client: &NexusClient, db: &Mutex<Db>, member_id: u64, pinne
         let (d, _) = client.graphql_raw(&pinned_query(), json!({ "ids": ids, "count": extra.len() })).await?;
         mods.extend(parse_pinned(&d)?.into_iter().map(|m| RawModList(m, true)));
     }
-    let author = author.ok_or_else(|| Error::Invalid(format!("Nexus has no member {member_id}.")))?;
+    let author = author.ok_or_else(|| Error::Invalid(format!("No Nexus member {member_id}")))?;
     let ids: Vec<u32> = mods.iter().map(|m| m.0.mod_id).collect();
     let mut files = BTreeMap::new();
     for d in fetch_files(client, &ids).await? { files.extend(parse_files(&d)?); }
@@ -623,7 +623,7 @@ pub async fn upload_targets(client: &NexusClient, key: &str, mod_id: u32) -> Res
     let url = format!("{}/mods/{}/files", super::UPLOAD_BASE, mod_uid(u64::from(mod_id)));
     let r = client.http().get(url).header("apikey", key).header("Accept", "application/json").send().await?;
     let status = r.status().as_u16();
-    if status == 401 || status == 403 { return Err(Error::Http { status, message: "Nexus did not list this mod's files for your key. Only the mod's owner and team can upload to it.".into() }); }
+    if status == 401 || status == 403 { return Err(Error::Http { status, message: "Only the mod's owner and team can upload to it".into() }); }
     if !r.status().is_success() { return Err(Error::Http { status, message: r.text().await.unwrap_or_default().chars().take(200).collect() }); }
     let v: Value = r.json().await?;
     let mut targets = parse_upload_targets(&v);

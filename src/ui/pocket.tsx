@@ -20,7 +20,7 @@ export function Key({ variant, size, icon, latched, children, className = "", ..
 
 export type Led = "off" | "run" | "wait" | "bad" | "on";
 
-/** A program key: icon, label, optional LED, count badge and progress along its foot (0–1). */
+/** A program key: icon, label, optional LED, count badge and progress along its foot (0 to 1). */
 export function ProgramKey({ icon, label, on, led, count, countHot, progress, onClick, title }:
   { icon: IconName; label: string; on?: boolean; led?: Led; count?: number; countHot?: boolean; progress?: number; onClick?: () => void; title?: string }) {
   return (
@@ -120,6 +120,17 @@ export function Pill({ tone, children }: { tone?: PillTone; children: ReactNode 
   return <span className={`pill${tone ? ` ${tone}` : ""}`}>{children}</span>;
 }
 
+/** Blurs the pictures inside it until Show is pressed (adult mods, with Settings on Blur). */
+export function Veil({ on, onShow, children }: { on: boolean; onShow: () => void; children: ReactNode }) {
+  if (!on) return <>{children}</>;
+  return (
+    <div className="veil">
+      {children}
+      <button type="button" className="veil-k" onClick={onShow} title="Marked adult on Nexus"><span className="pill over">18+</span> Show</button>
+    </div>
+  );
+}
+
 /** A coloured tag. kind picks a colour from the k-* set (frameworks and mod types). */
 export function Tag({ kind, children, square }: { kind?: string; children: ReactNode; square?: boolean }) {
   return <span className={`cchip${kind ? ` k-${kind}` : " none"}${square ? " sq" : ""}`}>{children}</span>;
@@ -131,7 +142,7 @@ export function SearchField({ value, onChange, placeholder, onEnter, autoFocus }
     <label className="fbox">
       <Icon name="browse" />
       <input className="finput" type="search" value={value} placeholder={placeholder} autoFocus={autoFocus}
-        onChange={(e) => onChange(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") onEnter?.(); }} aria-label={placeholder} />
+        onChange={(e) => onChange(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") onEnter?.(); }} aria-label={placeholder} title="Search (/)" />
       <kbd>/</kbd>
     </label>
   );

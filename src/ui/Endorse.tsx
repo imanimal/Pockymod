@@ -15,7 +15,7 @@ export async function endorseAll(list: EndorseCandidate[]) {
   if (!list.length) return;
   try {
     const [ok, why] = await endorse.many(list);
-    toast(ok ? `Endorsed ${ok} ${ok === 1 ? "mod" : "mods"}. Their authors will see it.${why ? ` Some were not taken: ${why}` : ""}` : `Nothing was endorsed. ${why ?? ""}`, !ok);
+    toast(ok ? `Endorsed ${ok} ${ok === 1 ? "mod" : "mods"}${why ? `. Some failed: ${why}` : ""}` : `Nothing endorsed${why ? `. ${why}` : ""}`, !ok);
   } catch (e) { toast(errorText(e), true); }
 }
 
@@ -44,12 +44,11 @@ export function EndorseStrip() {
   return (
     <div className="endorse-strip" role="note">
       <span className="endorse-star" aria-hidden="true">★</span>
-      <span className="m-main"><b className="hi">{list.length} of your mods {list.length === 1 ? "is" : "are"} not endorsed yet.</b>
-        <span className="dim"> An endorsement tells the author their work is liked, and helps others find it.</span></span>
+      <span className="m-main"><b className="hi">{list.length} {list.length === 1 ? "mod" : "mods"} not endorsed</b></span>
       <Key size="sm" icon="star" disabled={busy} onClick={async () => { setBusy(true); await endorseAll(list); setBusy(false); }}
-        title={`Endorse all ${list.length} on Nexus in one go`}>Endorse all {list.length}</Key>
-      <Key size="sm" variant="ghost" onClick={() => setPicking(true)} title="Choose which ones, or say which are not for you">Pick</Key>
-      <Key size="sm" variant="ghost" onClick={() => { write(SNOOZE, Date.now() + 14 * 86400_000); setSnoozed(true); }} title="Hide this for two weeks">Not now</Key>
+        title={`Endorse all ${list.length} on Nexus`}>Endorse all {list.length}</Key>
+      <Key size="sm" variant="ghost" onClick={() => setPicking(true)} title="Choose which ones">Pick</Key>
+      <Key size="sm" variant="ghost" onClick={() => { write(SNOOZE, Date.now() + 14 * 86400_000); setSnoozed(true); }} title="Hide for two weeks">Not now</Key>
       {picking && <Pick list={list} onClose={() => setPicking(false)} />}
     </div>
   );
@@ -66,7 +65,7 @@ function Pick({ list, onClose }: { list: EndorseCandidate[]; onClose: () => void
         {list.map((m) => (
           <div key={m.modId} className="row" style={{ cursor: "default" }}>
             <span className="m-main"><Switch checked={on.has(m.modId)} onChange={(v) => setOn((s) => { const n = new Set(s); if (v) n.add(m.modId); else n.delete(m.modId); return n; })}>{m.name}</Switch></span>
-            <span className="m-side"><Key size="sm" variant="ghost" onClick={() => void endorse.decline([m.modId]).then(() => toast(`Pockymod will not ask about ${m.name} again.`))} title="Never ask about this one again">Not for me</Key></span>
+            <span className="m-side"><Key size="sm" variant="ghost" onClick={() => void endorse.decline([m.modId]).then(() => toast(`Won't ask about ${m.name} again`))} title="Stop asking about this one">Not for me</Key></span>
           </div>
         ))}
       </div>
@@ -88,7 +87,7 @@ export function useAfterPlayNudge() {
       endorse.status().then((s) => {
         if (!s.hasKey || s.candidates.length === 0) return;
         write(ASKED, Date.now());
-        toast(`Good session? Endorse the ${s.candidates.length} mods you played with.`, false, { label: "Endorse all", run: () => void endorseAll(s.candidates) });
+        toast(`Endorse the ${s.candidates.length} mods you played with?`, false, { label: "Endorse all", run: () => void endorseAll(s.candidates) });
       }).catch(() => {});
     };
     window.addEventListener("focus", h);

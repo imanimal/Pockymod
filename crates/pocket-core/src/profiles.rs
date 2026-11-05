@@ -28,8 +28,8 @@ pub fn list(db: &Db) -> Result<Vec<Profile>> {
 /// A new profile, a copy of another one (its mods, on/off and order) or empty.
 pub fn create(db: &Db, name: &str, copy_from: Option<i64>) -> Result<i64> {
     let name = name.trim();
-    if name.is_empty() { return Err(Error::Invalid("A profile needs a name.".into())); }
-    db.conn.execute("INSERT INTO profiles (name, active) VALUES (?1, 0)", params![name]).map_err(|_| Error::Invalid(format!("There is already a profile called {name}.")))?;
+    if name.is_empty() { return Err(Error::Invalid("A profile needs a name".into())); }
+    db.conn.execute("INSERT INTO profiles (name, active) VALUES (?1, 0)", params![name]).map_err(|_| Error::Invalid(format!("There's already a profile called {name}")))?;
     let id = db.conn.last_insert_rowid();
     match copy_from {
         Some(src) => { db.conn.execute("INSERT INTO profile_mods (profile_id, install_id, enabled, load_order) SELECT ?1, install_id, enabled, load_order FROM profile_mods WHERE profile_id = ?2", params![id, src])?; }
@@ -39,13 +39,13 @@ pub fn create(db: &Db, name: &str, copy_from: Option<i64>) -> Result<i64> {
 }
 
 pub fn rename(db: &Db, id: i64, name: &str) -> Result<()> {
-    db.conn.execute("UPDATE profiles SET name = ?2 WHERE id = ?1", params![id, name.trim()]).map_err(|_| Error::Invalid("That name is taken.".into()))?;
+    db.conn.execute("UPDATE profiles SET name = ?2 WHERE id = ?1", params![id, name.trim()]).map_err(|_| Error::Invalid("That name is taken".into()))?;
     Ok(())
 }
 
 pub fn delete(db: &Db, id: i64) -> Result<()> {
     let active: bool = db.conn.query_row("SELECT active FROM profiles WHERE id = ?1", params![id], |r| r.get(0))?;
-    if active { return Err(Error::Invalid("Switch to another profile before deleting this one.".into())); }
+    if active { return Err(Error::Invalid("Switch to another profile before deleting this one".into())); }
     db.conn.execute("DELETE FROM profile_mods WHERE profile_id = ?1", params![id])?;
     db.conn.execute("DELETE FROM profiles WHERE id = ?1", params![id])?;
     Ok(())
@@ -109,8 +109,8 @@ pub fn memberships(db: &Db, install_id: i64) -> Result<Vec<Membership>> {
 /// switched to; for the active profile use `set_enabled`, which deploys.
 pub fn set_in_profile(db: &Db, profile_id: i64, install_id: i64, on: bool) -> Result<()> {
     let active: bool = db.conn.query_row("SELECT active FROM profiles WHERE id = ?1", params![profile_id], |r| r.get(0))
-        .map_err(|_| Error::Invalid("That profile no longer exists.".into()))?;
-    if active { return Err(Error::Invalid("That is the active profile: turn the mod on or off in Library instead.".into())); }
+        .map_err(|_| Error::Invalid("That profile no longer exists".into()))?;
+    if active { return Err(Error::Invalid("That's the active profile. Turn the mod on or off in Library".into())); }
     db.conn.execute("INSERT INTO profile_mods (profile_id, install_id, enabled, load_order) VALUES (?1, ?2, ?3, (SELECT COALESCE(MAX(load_order), -1) + 1 FROM profile_mods WHERE profile_id = ?1))
                      ON CONFLICT(profile_id, install_id) DO UPDATE SET enabled = ?3", params![profile_id, install_id, on as i32])?;
     Ok(())

@@ -31,7 +31,7 @@ export function ProfileSwitch({ onManage }: { onManage: () => void }) {
   });
   return (
     <div className="pswitch" ref={ref}>
-      <button type="button" className="pswitch-k" onClick={() => setOpen(!open)} aria-expanded={open} title="Profile: which set of mods is on">
+      <button type="button" className="pswitch-k" onClick={() => setOpen(!open)} aria-expanded={open} title="Switch profile">
         <Icon name="user" size={9} /><span className="dim">Profile</span><b>{active?.name ?? "Default"}</b><Icon name="down" size={9} />
       </button>
       {open && (
@@ -41,7 +41,7 @@ export function ProfileSwitch({ onManage }: { onManage: () => void }) {
             {list.map((p) => (
               <button key={p.id} type="button" role="menuitemradio" aria-checked={p.active} className={`row${p.active ? " sel" : ""}`} disabled={busy}
                 onClick={() => p.active ? setOpen(false) : run(async () => { setOpen(false); await ops.switchProfile(active, p); })}>
-                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{plural(p.enabled, "mod")} on</span>{!!p.vortex && <span title="Mods Vortex installed, as Vortex lists them in this profile">{p.vortex} from Vortex</span>}{!!p.unmanaged && <span className="warnc" title="Mods that were already in the game folder, put there by neither Vortex nor Pockymod (by hand, or left behind). Library, Unmanaged mods, cleans them up.">{p.unmanaged} unmanaged</span>}</span></span>
+                <span className="m-main"><span className="m-t">{p.name}</span><span className="m-meta"><span>{plural(p.enabled, "mod")} on</span>{!!p.vortex && <span title="Installed by Vortex">{p.vortex} from Vortex</span>}{!!p.unmanaged && <span className="warnc" title="Added by hand or left behind. Clean up in Library">{p.unmanaged} unmanaged</span>}</span></span>
                 {p.active && <span className="led run" />}
               </button>
             ))}
