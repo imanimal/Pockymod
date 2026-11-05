@@ -1,4 +1,4 @@
-// Settings: version and update check, and the experiments (mod.io read-only browsing).
+// Settings: version and update check, how the app was made, and the experiments (mod.io read-only browsing).
 import { useEffect, useState } from "react";
 import { Key, Module, Pill, Switch } from "../ui/pocket";
 import { errorText, extras, settings, type AppUpdate } from "../lib/api";
@@ -16,7 +16,23 @@ export function About({ onGallery }: { onGallery?: () => void }) {
       </div>
       {u?.newer && u.url && <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}>Get it at <code>{u.url}</code></p>}
       {u?.notes && <div className="desc" style={{ marginTop: ".4em", maxHeight: "10em", overflow: "auto" }}>{u.notes}</div>}
+      <MadeWith />
     </Module>
+  );
+}
+
+/** How the app was made, folded away until asked for. */
+function MadeWith() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: ".6em" }}>
+      <Key size="sm" variant="ghost" icon="chevron" className={open ? "rot-key" : ""} aria-expanded={open} onClick={() => setOpen(!open)}
+        title="How Pockymod was built, and whether it uses AI">How it was made</Key>
+      {open && <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}>
+        Pockymod was built with an AI coding assistant, working from its developer's direction. The app itself has no
+        AI in it: nothing you do here is sent to an AI service.
+      </p>}
+    </div>
   );
 }
 
