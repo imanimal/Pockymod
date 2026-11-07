@@ -187,25 +187,6 @@ export function MediaStage({ items }: { items: Shot[] }) {
   );
 }
 
-/** A strip of thumbnails that opens the viewer. */
-export function Gallery({ items }: { items: Shot[] }) {
-  const [open, setOpen] = useState<number | null>(null);
-  if (items.length === 0) return null;
-  return (
-    <>
-      <div className="gstrip">
-        {items.map((m, n) => (
-          <button key={m.url} type="button" className="gthumb" onClick={() => setOpen(n)} aria-label={m.kind === "video" ? "Play video" : "View picture"}>
-            <img src={m.thumb} alt="" loading="lazy" />
-            {m.kind === "video" && <span className="gplay"><Icon name="play" /></span>}
-          </button>
-        ))}
-      </div>
-      {open !== null && <Lightbox items={items} start={open} onClose={() => setOpen(null)} />}
-    </>
-  );
-}
-
 const toShot = (m: MediaItem): Shot => m.__typename === "Video"
   ? { kind: "video", url: `https://www.youtube-nocookie.com/embed/${(m.link ?? "").match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/)?.[1] ?? ""}`, thumb: m.thumbnailUrl, caption: `${m.title ?? "Video"} · ${m.owner.name}` }
   : { kind: "image", url: m.url ?? m.thumbnailUrl, thumb: m.thumbnailUrl, caption: `${m.title || m.owner.name} · ${formatCount(m.views)} views` };

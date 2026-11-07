@@ -8,14 +8,15 @@ import { Empty, Key, Lcd, Module, Tag, Veil, bytesText, formatCount } from "../.
 import { useAdult } from "../../lib/prefs";
 import { AiTags } from "../../ui/AiTags";
 import {
-  FRAMEWORKS, browse, descriptionMedia, endorseMod, errorText, fileBytes, nexusUrl, openExternal, trackMod,
+  FRAMEWORKS, browse, endorseMod, errorText, fileBytes, nexusUrl, openExternal, trackMod,
   type CardView, type Classification, type DetailView, type InstallRow, type ModFile, type Update,
 } from "../../lib/api";
 import { descriptionLinks, descriptionParts, descriptionText, shortDate } from "../../lib/text";
 import { extractCommands } from "../../lib/commands";
 import { packCommandsFor, useExtensions } from "../../lib/extensions";
 import { toast } from "../../ui/toast";
-import { Gallery, MediaStage } from "./Media";
+import { MediaStage, type Shot } from "./Media";
+import { RichText } from "./RichText";
 import { DescText, Links } from "./Links";
 import { ModKey, mainFile } from "./ModActions";
 
@@ -90,12 +91,13 @@ function useParts({ p, d }: Parts) {
   const fromPacks = packCommandsFor(packs, m.modId);
   const own = extractCommands(desc);
   const commands = [...own, ...fromPacks.filter((x) => !own.some((c) => c.command === x.command))];
-  const shots = descriptionMedia(m.description, m.pictureUrl);
+  // the mod's own picture; the description's pictures and videos stay where they are written in it
+  const shots: Shot[] = m.pictureUrl ? [{ kind: "image", url: m.pictureUrl, thumb: m.pictureUrl, caption: m.name }] : [];
   const view: CardView = { ...p.card, hidden: d.hidden, ignored: d.ignored };
   const [shown, setShown] = useState<number | null>(null);
   const blur = useAdult() === "blur" && !!m.adultContent && shown !== m.modId;
   const veil = { on: blur, onShow: () => setShown(m.modId) };
-  return { m, current, desc, parts, links, commands, shots, view, veil };
+  return { m, current, desc, links, commands, shots, view, veil };
 }
 
 /** Install, or the installed menu; then hide and ignore. */
@@ -165,12 +167,12 @@ function ArchiveList({ d }: { d: DetailView }) {
 
 function Drawer(x: Parts) {
   const { p, d, setD, fileId, setFileId } = x;
-  const { m, current, desc, parts, links, commands, shots, view, veil } = useParts(x);
+  const { m, current, desc, links, commands, shots, view, veil } = useParts(x);
   const [full, setFull] = useState(false);
   const file = d.files.find((f) => f.fileId === fileId);
   return (
     <Module icon="library" title={m.name} count={`v${m.version}`} fill className="detail-mod" tools={<HeadKeys p={p} d={d} />}>
-      <Veil {...veil}>{shots.length > 0 ? <Gallery items={shots} /> : m.pictureUrl && <img className="hero-img" src={m.pictureUrl} alt="" />}</Veil>
+      {shots.length > 0 && <Veil {...veil}><MediaStage items={shots} /></Veil>}
       <div className="m-meta" style={{ marginTop: ".6em" }}><span>{m.author ?? m.uploader?.name}</span><span>{m.category}</span><span>Updated {shortDate(m.updatedAt)}</span></div>
       <p style={{ margin: ".5em 0 .2em", color: "var(--text)" }}>{m.summary}</p>
       <div className="m-tags"><AiTags tags={m.tags} /><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
@@ -191,7 +193,7 @@ function Drawer(x: Parts) {
       <ArchiveList d={d} />
 
       <div className="sub-h">Description</div>
-      <Veil {...veil}><div className="desc"><DescText parts={parts} limit={full ? undefined : 900} onMod={p.onOpen} />{desc.length > 900 && !full && "…"}</div></Veil>
+      <Veil {...veil}><div className={`desc rich${desc.length > 900 && !full ? " clip" : ""}`}><RichText src={m.description} onMod={p.onOpen} /></div></Veil>
       {desc.length > 900 && <Key size="sm" variant="ghost" onClick={() => setFull(!full)}>{full ? "Less" : "Read more"}</Key>}
     </Module>
   );
@@ -200,7 +202,7 @@ function Drawer(x: Parts) {
 /** The expanded page: the banner across the top, then the media and description beside the files. */
 function Page(x: Parts) {
   const { p, d, setD, fileId, setFileId } = x;
-  const { m, current, desc, parts, links, commands, shots, view, veil } = useParts(x);
+  const { m, current, desc, links, commands, shots, view, veil } = useParts(x);
   const file = d.files.find((f) => f.fileId === fileId);
   const banner = m.pictureUrl ?? shots.find((s) => s.kind === "image")?.url ?? null;
   const archived = d.files.filter((f) => !CURRENT.includes(f.category)).length;
@@ -221,7 +223,7 @@ function Page(x: Parts) {
           {commands.length > 0 && <Commands list={commands} />}
           {links.length > 0 && <Links key={m.modId} list={links} onMod={p.onOpen} />}
           <div className="sub-h">Description</div>
-          <Veil {...veil}><div className="desc">{desc ? <DescText parts={parts} onMod={p.onOpen} /> : <span className="dim">No description</span>}</div></Veil>
+          <Veil {...veil}><div className="desc rich">{desc ? <RichText src={m.description} onMod={p.onOpen} /> : <span className="dim">No description</span>}</div></Veil>
         </div>
         <aside className="mpage-side">
           <div className="lcds">

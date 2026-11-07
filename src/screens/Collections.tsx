@@ -6,13 +6,13 @@ import { Dialog } from "../ui/Dialog";
 import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Veil, bytesText, formatCount } from "../ui/pocket";
 import { useAdult } from "../lib/prefs";
 import {
-  collections, descriptionMedia, errorText, nexusPages, nexusUrl, openExternal, pickCollectionFile, pickSavePath, settings,
+  collections, errorText, nexusPages, nexusUrl, openExternal, pickCollectionFile, pickSavePath, settings,
   type CollectionCard, type CollectionCheck, type CollectionsPage, type LocalCollection,
 } from "../lib/api";
 import { toast } from "../ui/toast";
 import { PremiumNote } from "../ui/Premium";
-import { MediaStage } from "./browse/Media";
 import { DescText, Links } from "./browse/Links";
+import { RichText } from "./browse/RichText";
 
 const inBrowser = (slug: string) => openExternal(nexusUrl.collection(slug)).catch((e) => toast(errorText(e), true));
 const onNexus = (slug: string) => nexusPages.url(nexusUrl.collection(slug)).catch((e) => toast(errorText(e), true));
@@ -200,7 +200,6 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
   const parts = useMemo(() => descriptionParts(raw || c.summary || ""), [raw, c.summary]);
   const desc = raw ? descriptionText(raw) : c.summary;
   const links = useMemo(() => descriptionLinks(parts), [parts]);
-  const shots = descriptionMedia(raw, null);
   const banner = more?.headerImage ?? c.tileImage?.url ?? null;
   const [shown, setShown] = useState(false);
   const veil = { on: useAdult() === "blur" && !!(c.adultContent || r?.adultContent) && !shown, onShow: () => setShown(true) };
@@ -231,10 +230,9 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
               <Lcd size="sm" label="Endorsed" value={formatCount(c.endorsements)} />
               <Lcd size="sm" label="Downloads" value={formatCount(c.totalDownloads)} />
             </div>
-            {shots.length > 0 && <Veil {...veil}><MediaStage items={shots.map((s) => ({ ...s, caption: c.name }))} /></Veil>}
             {links.length > 0 && <Links key={c.slug} list={links} />}
             <div className="sub-h">Description</div>
-            {more === null ? <p className="dim">Loading</p> : <Veil {...veil}><div className="desc">{desc ? <DescText parts={parts} /> : <span className="dim">No description</span>}</div></Veil>}
+            {more === null ? <p className="dim">Loading</p> : <Veil {...veil}><div className="desc rich">{desc ? (raw ? <RichText src={raw} /> : <DescText parts={parts} />) : <span className="dim">No description</span>}</div></Veil>}
           </div>
           <aside className="mpage-side">
             <div className="sub-h">Before you install</div>

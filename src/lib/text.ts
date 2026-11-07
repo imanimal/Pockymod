@@ -28,26 +28,14 @@ export function descriptionParts(src: string): DescPart[] {
   s = s.replace(/<a\s[^>]*?href\s*=\s*(["'])([^"']+)\1[^>]*>([\s\S]*?)<\/a>/gi, (_, _q: string, u: string, t: string) => hold(u, t));
   s = s.replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li|h\d)>/gi, "\n");
   s = s.replace(/\[\*\]/g, "\n• ").replace(/<li[^>]*>/gi, "• ");
-  s = s.replace(/\[(img|youtube)\][\s\S]*?\[\/\1\]/gi, "");
+  s = s.replace(/\[\/(td|th)\]|<\/(td|th)>/gi, " ").replace(/\[\/tr\]|<\/tr>/gi, "\n");
+  s = s.replace(/\[(img|youtube)\b[^\]]*\][\s\S]*?\[\/\1\]/gi, "");
   s = s.replace(/\[\/?[a-z*]+(=[^\]]*)?\]/gi, "");
   s = s.replace(/<[^>]+>/g, "");
   s = s.replace(/&(#?\w+);/g, (m, e: string) => ENTITIES[e] ?? (e.startsWith("#") ? String.fromCharCode(Number(e.slice(1)) || 32) : m));
   s = s.split("\n").map((l) => l.replace(/[ \t]+/g, " ").trim()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
   const out: DescPart[] = [];
-  const text = (t: string) => {
-    // bare addresses in the text are links too; a full stop or bracket after one is not part of it
-    let at = 0;
-    for (const m of t.matchAll(BARE)) {
-      const raw = m[0].replace(/[.,;:!?)\]}'"]+$/, "");
-      const u = linkUrl(raw);
-      if (!u) continue;
-      const i = m.index ?? 0;
-      if (i > at) out.push(t.slice(at, i));
-      out.push({ text: raw, url: u });
-      at = i + raw.length;
-    }
-    if (at < t.length) out.push(t.slice(at));
-  };
+  const text = (t: string) => out.push(...bareLinks(t));
   let at = 0;
   for (const m of s.matchAll(LINK)) {
     const i = m.index ?? 0;
@@ -57,6 +45,23 @@ export function descriptionParts(src: string): DescPart[] {
     at = i + m[0].length;
   }
   if (at < s.length) text(s.slice(at));
+  return out;
+}
+
+/** Text with its bare addresses made links; a full stop or bracket after one is not part of it. */
+export function bareLinks(t: string): DescPart[] {
+  const out: DescPart[] = [];
+  let at = 0;
+  for (const m of t.matchAll(BARE)) {
+    const raw = m[0].replace(/[.,;:!?)\]}'"]+$/, "");
+    const u = linkUrl(raw);
+    if (!u) continue;
+    const i = m.index ?? 0;
+    if (i > at) out.push(t.slice(at, i));
+    out.push({ text: raw, url: u });
+    at = i + raw.length;
+  }
+  if (at < t.length) out.push(t.slice(at));
   return out;
 }
 

@@ -396,20 +396,6 @@ export interface MediaItem {
 export interface MediaPage { totalCount: number; nodes: MediaItem[] }
 export const media = { browse: (kind: "image" | "video", sort: "rating" | "views" | "createdAt", offset: number) => call<MediaPage>("media_browse", { kind, sort, offset }) };
 
-/** Images and videos a mod's description shows: [img] tags, <img> tags, and YouTube links. */
-export function descriptionMedia(src: string, picture?: string | null): Array<{ kind: "image" | "video"; url: string; thumb: string }> {
-  const out: Array<{ kind: "image" | "video"; url: string; thumb: string }> = [];
-  const seen = new Set<string>();
-  const add = (kind: "image" | "video", url: string, thumb = url) => { if (!seen.has(url)) { seen.add(url); out.push({ kind, url, thumb }); } };
-  if (picture) add("image", picture);
-  for (const m of src.matchAll(/\[img[^\]]*\]\s*(https?:\/\/[^\s[\]]+?)\s*\[\/img\]/gi)) add("image", m[1]);
-  for (const m of src.matchAll(/<img[^>]+src=["'](https?:\/\/[^"']+)["']/gi)) add("image", m[1]);
-  const yt = (id: string) => add("video", `https://www.youtube-nocookie.com/embed/${id}`, `https://img.youtube.com/vi/${id}/mqdefault.jpg`);
-  for (const m of src.matchAll(/\[youtube\]\s*([A-Za-z0-9_-]{11})\s*\[\/youtube\]/gi)) yt(m[1]);
-  for (const m of src.matchAll(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/gi)) yt(m[1]);
-  return out.slice(0, 40);
-}
-
 // ── existing mods, groups, bulk ──
 
 export interface FoundMod { name: string; kind: ModType; files: string[]; modId: number | null }

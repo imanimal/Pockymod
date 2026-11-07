@@ -18,6 +18,28 @@
 .pager .display { margin: 5px 3px; }
 .hero-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: var(--surface-2); display: block; }
 .desc { white-space: pre-wrap; font-size: .9em; color: var(--text-2); overflow-wrap: anywhere; }
+/* descriptions laid out as their authors wrote them (RichText) */
+.desc.rich { line-height: 1.5; }
+.desc.rich.clip { max-height: 26em; overflow: hidden; mask-image: linear-gradient(#000 70%, transparent); }
+.desc b, .desc .dh { color: var(--text); }
+.desc .dh { font-size: 1.2em; font-weight: 700; margin: .3em 0 .1em; }
+:root[data-scheme="dark"] .desc .dcol { color: var(--dc); }
+.desc .dline { border: 0; border-top: 1px solid var(--line); margin: .8em 0; }
+.desc .dlist { margin: .2em 0; padding-left: 1.4em; }
+.desc .dquote { margin: .4em 0; padding: .3em .8em; border-left: 3px solid var(--line); background: var(--surface-2); border-radius: 0 6px 6px 0; }
+.desc .dspoiler { margin: .4em 0; padding: .3em .6em; border-radius: 6px; background: var(--surface-2); }
+.desc .dspoiler summary { cursor: pointer; color: var(--text-3); font-size: .9em; }
+.desc .dpre { white-space: pre-wrap; font: .85em var(--font-mono); background: var(--surface-2); padding: .5em .7em; border-radius: 6px; margin: .4em 0; }
+.desc .dtable { overflow-x: auto; margin: .4em 0; }
+/* inline, so a table in [center] is centred as on Nexus */
+.desc .dtable table { display: inline-table; border-collapse: collapse; text-align: left; font-size: .95em; line-height: 1.4; }
+.desc .dtable th, .desc .dtable td { border: 1px solid var(--line); padding: .4em .65em; vertical-align: top; }
+.desc .dtable th { text-align: center; color: var(--text); background: var(--surface-2); }
+.desc .dimg { all: unset; position: relative; display: inline-block; max-width: 100%; vertical-align: middle; cursor: zoom-in; border-radius: 4px; }
+.desc a .dimg { cursor: pointer; }
+.desc .dimg img { display: block; max-width: 100%; height: auto; }
+.desc .dimg:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.desc .dvideo img { width: 30em; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; }
 .linkish { all: unset; color: var(--acc2); cursor: pointer; text-decoration: underline; text-underline-offset: .15em; }
 .linkish:focus-visible { outline: 2px solid var(--accent); }
 /* the section a link took you to, shown for a moment (App.tsx, "pm-go") */

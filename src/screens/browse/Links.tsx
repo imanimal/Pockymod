@@ -28,7 +28,7 @@ export function openLink(url: string, onMod?: (modId: number) => void, own = fal
   void linksApi.open(url).catch(fail);
 }
 
-const tipOf = (url: string) =>
+export const tipOf = (url: string) =>
   nexusModId(url) || isNexus(url) ? `${url}\nCtrl+click opens in your browser` : url;
 
 /** A description's text with its links clickable. `limit` cuts it after that many characters. */
