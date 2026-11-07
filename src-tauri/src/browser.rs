@@ -344,7 +344,7 @@ pub async fn use_firefox(app: &AppHandle) -> pocket_core::Result<SignIn> {
     }
     let ok = confirmed || signed_in(&p.view);
     p.done();
-    show_signed_change(app);
+    finish_sign_in(app);
     Ok(SignIn { signed_in: ok, firefox: true })
 }
 
@@ -364,12 +364,21 @@ pub async fn sign_out(app: &AppHandle) -> pocket_core::Result<SignIn> {
     Ok(SignIn { signed_in, firefox })
 }
 
-/// The open pane shows the change: off the sign-in pages to Cyberpunk's Nexus page, else the same page again.
-fn show_signed_change(app: &AppHandle) {
+/// The open pane shows the page again, signed out.
+fn show_signed_change(app: &AppHandle) { if current(app).is_some() { let _ = nav(app, "reload"); } }
+
+/// The site signs in through Nexus's sign-in pages (users.nexusmods.com), which now know the user. On one of those
+/// pages, loading it again carries on to the site signed in; on a site page, its own Log in link does the same
+/// round trip without asking for a password.
+const LOG_IN: &str = r#"(function () {
+  var el = [].slice.call(document.querySelectorAll("a, button")).find(function (e) { return /^log ?in$/i.test((e.textContent || "").trim()); });
+  if (el) el.click(); else location.reload();
+})();"#;
+
+fn finish_sign_in(app: &AppHandle) {
     let Some(u) = current(app) else { return };
-    if u.host_str() != Some("users.nexusmods.com") { let _ = nav(app, "reload"); return; }
-    let to: Url = "https://www.nexusmods.com/cyberpunk2077".parse().unwrap();
-    if let Some(v) = app.get_webview(WINDOW).or_else(|| app.get_webview(PANE)) { let _ = v.navigate(to); }
+    let Some(v) = app.get_webview(WINDOW).or_else(|| app.get_webview(PANE)) else { return };
+    let _ = if u.host_str() == Some("users.nexusmods.com") { v.reload() } else { v.eval(LOG_IN) };
 }
 
 #[cfg(test)]
