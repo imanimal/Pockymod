@@ -40,7 +40,7 @@ pub async fn browser_sign_in(app: AppHandle) -> Result<browser::SignIn> { browse
 #[tauri::command]
 pub async fn browser_use_firefox(app: AppHandle) -> Result<browser::SignIn> { browser::use_firefox(&app).await }
 
-/// Sign the pane out of Nexus and clear what its profile saved.
+/// Sign the pane out of Nexus and forget the passwords it saved.
 #[tauri::command]
 pub async fn browser_sign_out(app: AppHandle) -> Result<browser::SignIn> { browser::sign_out(&app).await }
 

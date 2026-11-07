@@ -159,7 +159,7 @@ function PaneSignInRow() {
       <div className="sub-h">Nexus sign-in in the app</div>
       {s.signedIn ? (
         <div className="actions"><Pill tone="ok">Signed in</Pill>
-          <Key size="sm" variant="ghost" icon="trash" disabled={busy} onClick={out} title="Signs the app's browser out of Nexus and clears what it saved there, passwords included">Sign out</Key></div>
+          <Key size="sm" variant="ghost" icon="trash" disabled={busy} onClick={out} title="Signs the app's browser out of Nexus and forgets the passwords it saved">Sign out</Key></div>
       ) : s.firefox ? (
         <div className="stack" style={{ gap: ".4em" }}>
           <div className="actions"><UseFirefoxKey size="sm" onDone={setS} /></div>

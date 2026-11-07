@@ -245,7 +245,7 @@ export const browserPane = {
   signIn: () => call<PaneSignIn>("browser_sign_in"),
   /** Copy the Nexus sign-in cookies from Firefox into the pane. */
   useFirefox: () => call<PaneSignIn>("browser_use_firefox"),
-  /** Sign the pane out and clear what it saved (cookies, passwords, site data). */
+  /** Sign the pane out of Nexus and forget the passwords it saved. */
   signOut: () => call<PaneSignIn>("browser_sign_out"),
   onChange: (cb: (s: BrowserState) => void) => listen<BrowserState>("browser", cb),
   onTitle: (cb: (t: { label: string; title: string }) => void) => listen<{ label: string; title: string }>("browser-title", cb),
