@@ -22,3 +22,8 @@ tauri-plugin-single-instance = "2"
 tauri-plugin-dialog = "2"
 url = "2"
 rusqlite = "0.32"
+
+[target.'cfg(windows)'.dependencies]
+# the pane's WebView2 settings tauri doesn't expose (saving passwords)
+webview2-com = "0.39"
+windows-core = "0.62"

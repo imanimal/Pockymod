@@ -98,9 +98,8 @@ pub fn open(app: &AppHandle, url: &str) -> pocket_core::Result<()> {
 
 fn err(e: tauri::Error) -> pocket_core::Error { pocket_core::Error::Invalid(e.to_string()) }
 
-/// Settings every pane and window shares: the profile, extensions, downloads into the library, nxm:// links to the
-/// queue, no app pages, and the page state for the pane's bar.
-macro_rules! common {
+/// The profile and extensions. Every webview on the profile needs the same ones, or WebView2 refuses to make it.
+macro_rules! profile {
     ($b:expr, $app:expr) => {{
         let app: &AppHandle = $app;
         let mut b = $b;
@@ -109,6 +108,16 @@ macro_rules! common {
         if let Some(x) = extensions_dir(app).filter(|x| std::fs::read_dir(x).map(|mut r| r.any(|e| e.is_ok_and(|e| e.path().join("manifest.json").exists()))).unwrap_or(false)) {
             b = b.browser_extensions_enabled(true).extensions_path(x);
         }
+        b
+    }};
+}
+
+/// Settings every pane and window shares: the profile, extensions, downloads into the library, nxm:// links to the
+/// queue, no app pages, and the page state for the pane's bar.
+macro_rules! common {
+    ($b:expr, $app:expr) => {{
+        let app: &AppHandle = $app;
+        let b = profile!($b, app);
         let nav = app.clone();
         let dl = app.clone();
         let load = app.clone();
@@ -169,6 +178,7 @@ fn open_pane(app: &AppHandle, url: Url) -> pocket_core::Result<()> {
         .on_document_title_changed(move |w, t| { let _ = title.emit("browser-title", serde_json::json!({ "label": w.label(), "title": t })); })
         .background_color(tauri::window::Color(0x1d, 0x1d, 0x21, 0xff));
     let pane = win.add_child(b, LogicalPosition::new(x, y), LogicalSize::new(w.max(1.0), h.max(1.0))).map_err(err)?;
+    save_passwords(&pane);
     // made blank, then sent to the page: a page given to a new webview can come up without its stylesheets
     pane.navigate(url.clone()).map_err(err)?;
     say(app, BrowserState::at(&url, false, true, true));
@@ -233,11 +243,118 @@ fn open_window(app: &AppHandle, url: Url) -> pocket_core::Result<()> {
         .background_color(tauri::window::Color(0x1d, 0x1d, 0x21, 0xff))
         .on_document_title_changed(|w, t| { let _ = w.set_title(&format!("{t} · Pockymod")); })
         .build().map_err(err)?;
+    if let Some(v) = app.get_webview(WINDOW) { save_passwords(&v); }
     // the window closed by its own close key: the pane's tab goes too (unless it went back into the main window)
     w.on_window_event(move |e| { if let tauri::WindowEvent::Destroyed = e { if closed.get_webview(PANE).is_none() { say(&closed, BrowserState::closed()); } } });
     w.navigate(url.clone()).map_err(err)?;
     say(app, BrowserState::at(&url, true, true, true));
     Ok(())
+}
+
+/// The pane offers to save a password typed into a page and fills it in next time (WebView2 has this off unless
+/// asked, and asks the user before saving each one). Whoever's browser can't hand over its Nexus sign-in then types
+/// the password once.
+fn save_passwords(v: &tauri::Webview) {
+    #[cfg(windows)]
+    let _ = v.with_webview(|w| unsafe {
+        use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings4;
+        use windows_core::Interface;
+        if let Ok(s) = w.controller().CoreWebView2().and_then(|c| c.Settings()).and_then(|s| s.cast::<ICoreWebView2Settings4>()) {
+            let _ = s.SetIsPasswordAutosaveEnabled(true);
+            let _ = s.SetIsGeneralAutofillEnabled(true);
+        }
+    });
+    #[cfg(not(windows))]
+    let _ = v;
+}
+
+// ── the pane's Nexus sign-in ──
+
+/// Whether the pane is signed in to Nexus, and whether Firefox has a sign-in it could copy.
+#[derive(serde::Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SignIn { pub signed_in: bool, pub firefox: bool }
+
+/// A webview on the pane's profile: the pane, its window, or a hidden one made for the call and closed after.
+struct OnProfile { view: tauri::Webview, temp: Option<tauri::WebviewWindow> }
+impl OnProfile {
+    fn get(app: &AppHandle) -> pocket_core::Result<Self> {
+        if let Some(view) = app.get_webview(WINDOW).or_else(|| app.get_webview(PANE)) { return Ok(OnProfile { view, temp: None }); }
+        static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let label = format!("nexus-profile-{}", N.fetch_add(1, std::sync::atomic::Ordering::Relaxed));
+        let w = profile!(tauri::WebviewWindowBuilder::new(app, &label, WebviewUrl::External("about:blank".parse().unwrap())), app)
+            .visible(false).skip_taskbar(true).build().map_err(err)?;
+        let view = app.get_webview(&label).ok_or_else(|| pocket_core::Error::Invalid("The app's browser didn't start".into()))?;
+        Ok(OnProfile { view, temp: Some(w) })
+    }
+    fn done(self) { if let Some(w) = self.temp { let _ = w.destroy(); } }
+}
+
+const NEXUS: &str = "https://www.nexusmods.com/";
+
+fn signed_in(v: &tauri::Webview) -> bool {
+    let now = tauri::webview::cookie::time::OffsetDateTime::now_utc();
+    v.cookies_for_url(NEXUS.parse().unwrap()).is_ok_and(|c| c.iter().any(|c|
+        c.name() == pocket_core::firefox::SIGN_IN_COOKIES[0] && c.expires_datetime().is_none_or(|t| t > now)))
+}
+
+async fn firefox_sign_in() -> pocket_core::Result<Option<Vec<pocket_core::firefox::Cookie>>> {
+    tauri::async_runtime::spawn_blocking(pocket_core::firefox::nexus_sign_in).await.map_err(|e| pocket_core::Error::Invalid(e.to_string()))?
+}
+
+pub async fn sign_in_state(app: &AppHandle) -> pocket_core::Result<SignIn> {
+    let firefox = firefox_sign_in().await.is_ok_and(|c| c.is_some());
+    let p = OnProfile::get(app)?;
+    let signed_in = signed_in(&p.view);
+    p.done();
+    Ok(SignIn { signed_in, firefox })
+}
+
+/// Copy Firefox's two Nexus sign-in cookies into the pane's profile, then show the page signed in.
+pub async fn use_firefox(app: &AppHandle) -> pocket_core::Result<SignIn> {
+    use tauri::webview::cookie::{time::OffsetDateTime, Cookie, SameSite};
+    let cookies = firefox_sign_in().await?
+        .ok_or_else(|| pocket_core::Error::Invalid("Firefox isn't signed in to Nexus".into()))?;
+    let p = OnProfile::get(app)?;
+    for c in &cookies {
+        let mut b = Cookie::build((c.name.clone(), c.value.expose().to_owned()))
+            .domain(c.host.clone()).path(c.path.clone()).secure(c.secure).http_only(c.http_only)
+            .expires(OffsetDateTime::from_unix_timestamp(c.expires).ok());
+        if let Some(s) = c.same_site {
+            b = b.same_site(match s { pocket_core::firefox::SameSite::None => SameSite::None, pocket_core::firefox::SameSite::Lax => SameSite::Lax, pocket_core::firefox::SameSite::Strict => SameSite::Strict });
+        }
+        if let Err(e) = p.view.set_cookie(b.build()) { p.done(); return Err(err(e)); }
+    }
+    let ok = signed_in(&p.view);
+    p.done();
+    show_signed_change(app);
+    Ok(SignIn { signed_in: ok, firefox: true })
+}
+
+/// Sign the pane out of Nexus and forget what its profile saved: cookies, passwords, site data.
+pub async fn sign_out(app: &AppHandle) -> pocket_core::Result<SignIn> {
+    let p = OnProfile::get(app)?;
+    // the Nexus cookies first, one by one, so the sign-in is gone when this returns; the rest clears on its own
+    if let Ok(all) = p.view.cookies() {
+        for c in all.into_iter().filter(|c| c.domain().is_some_and(|d| d.trim_start_matches('.').ends_with("nexusmods.com"))) { let _ = p.view.delete_cookie(c); }
+    }
+    let cleared = p.view.clear_all_browsing_data();
+    // a hidden webview stays a moment so the clearing it started finishes
+    if p.temp.is_some() { tokio::time::sleep(std::time::Duration::from_secs(2)).await; }
+    let signed_in = signed_in(&p.view);
+    p.done();
+    cleared.map_err(err)?;
+    show_signed_change(app);
+    let firefox = firefox_sign_in().await.is_ok_and(|c| c.is_some());
+    Ok(SignIn { signed_in, firefox })
+}
+
+/// The open pane shows the change: off the sign-in pages to Cyberpunk's Nexus page, else the same page again.
+fn show_signed_change(app: &AppHandle) {
+    let Some(u) = current(app) else { return };
+    if u.host_str() != Some("users.nexusmods.com") { let _ = nav(app, "reload"); return; }
+    let to: Url = "https://www.nexusmods.com/cyberpunk2077".parse().unwrap();
+    if let Some(v) = app.get_webview(WINDOW).or_else(|| app.get_webview(PANE)) { let _ = v.navigate(to); }
 }
 
 #[cfg(test)]

@@ -11,6 +11,7 @@ pub mod cyberpunk;
 pub mod db;
 pub mod deploy;
 pub mod download;
+pub mod firefox;
 pub mod fomod;
 pub mod found;
 pub mod health;
