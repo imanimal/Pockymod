@@ -198,6 +198,8 @@ export const queue = {
   retry: (id: number) => call<QueueSnapshot>("queue_retry", { id }),
   clearFinished: () => call<QueueSnapshot>("queue_clear_finished"),
   showPage: (id: number) => call<void>("queue_show_page", { id }),
+  /** Put this item next: a free account's page for it opens now, Premium fetches it after the current one. */
+  start: (id: number) => call<QueueSnapshot>("queue_start", { id }),
   onChange: (cb: (s: QueueSnapshot) => void) => listen<QueueSnapshot>("queue", cb),
 };
 export const paths = {
@@ -247,6 +249,8 @@ export const browserPane = {
   useFirefox: () => call<PaneSignIn>("browser_use_firefox"),
   /** Sign the pane out of Nexus and forget the passwords it saved. */
   signOut: () => call<PaneSignIn>("browser_sign_out"),
+  /** The pane's page signed in or out (said only on a change). */
+  onSignIn: (cb: (s: PaneSignIn) => void) => listen<PaneSignIn>("browser-signin", cb),
   onChange: (cb: (s: BrowserState) => void) => listen<BrowserState>("browser", cb),
   onTitle: (cb: (t: { label: string; title: string }) => void) => listen<{ label: string; title: string }>("browser-title", cb),
 };

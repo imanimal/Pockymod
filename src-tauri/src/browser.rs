@@ -21,8 +21,9 @@ pub const PANE: &str = "nexus-pane";
 pub const WINDOW: &str = "nexus";
 
 /// Where the page last asked the pane to be, so a pane made again opens there.
+/// And whether the pane was last seen signed in to Nexus, so the app hears only of a change.
 #[derive(Default)]
-pub struct Browser { bounds: Mutex<Option<[f64; 4]>> }
+pub struct Browser { bounds: Mutex<Option<[f64; 4]>>, signed: Mutex<Option<bool>> }
 
 /// Pages open in the user's own browser unless Settings says the pane ("nexus.pages" = "pane").
 pub fn in_app(app: &AppHandle) -> bool {
@@ -156,6 +157,9 @@ macro_rules! common {
                 let loading = !matches!(p.event(), tauri::webview::PageLoadEvent::Finished);
                 let popped = w.label() == WINDOW;
                 say(&load, BrowserState::at(p.url(), popped, loading, false));
+                // signing in or out on the page itself: read again once it has loaded (off this thread: reading
+                // cookies from a webview's own event handler deadlocks)
+                if !loading { let a = load.clone(); tauri::async_runtime::spawn(async move { watch_sign_in(&a).await }); }
             })
     }};
 }
@@ -356,7 +360,24 @@ pub async fn sign_in_state(app: &AppHandle) -> pocket_core::Result<SignIn> {
     let p = OnProfile::get(app)?;
     let signed_in = signed_in(&p.view);
     p.done();
+    tell_sign_in(app, signed_in).await;
     Ok(SignIn { signed_in, firefox })
+}
+
+/// After a page loads in the pane or its window: whether the user signed in or out there.
+async fn watch_sign_in(app: &AppHandle) {
+    let Some(v) = app.get_webview(WINDOW).or_else(|| app.get_webview(PANE)) else { return };
+    let now = signed_in(&v);
+    tell_sign_in(app, now).await;
+}
+
+/// Say "browser-signin" when the pane's sign-in changed since last seen (Settings and the pane's notice follow it).
+async fn tell_sign_in(app: &AppHandle, now: bool) {
+    let b = app.state::<Browser>();
+    let changed = { let mut s = b.signed.lock().unwrap(); let c = *s != Some(now); *s = Some(now); c };
+    if !changed { return; }
+    let firefox = !now && firefox_sign_in().await.is_ok_and(|c| c.is_some());
+    let _ = app.emit("browser-signin", SignIn { signed_in: now, firefox });
 }
 
 /// Copy Firefox's two Nexus sign-in cookies into the pane's profile, then show the page signed in.
@@ -373,6 +394,7 @@ pub async fn use_firefox(app: &AppHandle) -> pocket_core::Result<SignIn> {
     if let Err(e) = put_sign_in(&p.view, cookies).await { p.done(); return Err(e); }
     let ok = confirmed || signed_in(&p.view);
     p.done();
+    tell_sign_in(app, ok).await;
     show_signed_change(app);
     Ok(SignIn { signed_in: ok, firefox: true })
 }
@@ -388,6 +410,7 @@ pub async fn sign_out(app: &AppHandle) -> pocket_core::Result<SignIn> {
     let signed_in = signed_in(&p.view);
     p.done();
     out?;
+    tell_sign_in(app, signed_in).await;
     show_signed_change(app);
     let firefox = firefox_sign_in().await.is_ok_and(|c| c.is_some());
     Ok(SignIn { signed_in, firefox })

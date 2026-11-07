@@ -60,25 +60,33 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
         </>}>
         {items.length === 0 && <Empty icon="downloads" title="Nothing queued" />}
         <div className="rows">
-          {items.map((i) => <QueueRow key={i.id} i={i} onRetry={() => act(queue.retry(i.id))} onRemove={() => act(queue.remove(i.id))} />)}
+          {items.map((i) => <QueueRow key={i.id} i={i} premium={!!s?.premium} onStart={() => act(queue.start(i.id))} onShow={() => act(queue.showPage(i.id))}
+            onRetry={() => act(queue.retry(i.id))} onRemove={() => act(queue.remove(i.id))} />)}
         </div>
       </Module>
     </div>
   );
 }
 
-function QueueRow({ i, onRetry, onRemove }: { i: QueueItem; onRetry: () => void; onRemove: () => void }) {
+/** A row. One still to download starts when clicked (Enter or the controller's A too); one waiting on its Nexus
+ *  click shows that page again. */
+function QueueRow({ i, premium, onStart, onShow, onRetry, onRemove }: { i: QueueItem; premium: boolean; onStart: () => void; onShow: () => void; onRetry: () => void; onRemove: () => void }) {
   const l = stateLabel(i.state);
   const busy = i.state.state === "downloading" || i.state.state === "installing";
+  const go = i.state.state === "waiting" || i.state.state === "failed" ? onStart : i.state.state === "needsClick" ? onShow : null;
+  const tip = i.state.state === "needsClick" ? "Show its Nexus page again"
+    : i.state.state === "failed" ? "Try this one again now"
+    : i.state.state === "waiting" ? (premium && !i.manualOnly ? "Download this one next" : "Open its Nexus page now to download it") : undefined;
   return (
-    <div className={`row${i.state.state === "needsClick" ? " sel" : ""}`}>
+    <div className={`row${i.state.state === "needsClick" ? " sel" : ""}`} style={go ? undefined : { cursor: "default" }}
+      {...(go ? { role: "button", tabIndex: 0, title: tip, onClick: go, onKeyDown: (e: React.KeyboardEvent) => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); go(); } } } : {})}>
       <span className="m-main">
         <span className="m-t">{i.modName}</span>
         <span className="m-meta"><span>{i.fileName}</span>{i.version && <span>v{i.version}</span>}{i.requiredBy && <span>needed by {i.requiredBy}</span>}</span>
         {i.state.state === "failed" && <span className="badc" style={{ fontSize: ".84em" }}>{i.state.message}</span>}
         {i.state.state === "done" && i.state.note && <span className="warnc" style={{ fontSize: ".84em" }}>{i.state.note}</span>}
       </span>
-      <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".5em" }}>
+      <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".5em" }} onClick={(e) => { if ((e.target as Element).closest("button")) e.stopPropagation(); }}>
         <span>{i.size ? bytesText(i.size) : ""}</span>
         <Pill tone={l.tone}>{l.text}</Pill>
         {i.state.state === "failed" && <Key size="sm" icon="refresh" onClick={onRetry} aria-label="Retry" title="Retry" />}

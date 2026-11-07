@@ -145,8 +145,11 @@ function PaneSignInRow() {
   useEffect(() => {
     const load = () => browserPane.signIn().then(setS).catch(() => setS(null));
     load();
+    // signing in or out on a Nexus page shows here straight away
+    const offs: Array<() => void> = [];
+    browserPane.onSignIn(setS).then((u) => offs.push(u));
     window.addEventListener(SIGN_IN_CHANGED, load);
-    return () => window.removeEventListener(SIGN_IN_CHANGED, load);
+    return () => { offs.forEach((f) => f()); window.removeEventListener(SIGN_IN_CHANGED, load); };
   }, []);
   if (!s) return null;
   const out = () => {

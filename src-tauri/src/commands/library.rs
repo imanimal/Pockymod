@@ -4,7 +4,7 @@ use crate::state::{AppState, Paths};
 use pocket_core::deploy::{self, DeployOptions, DeployOutcome, UndeployReport};
 use pocket_core::install::{self, InstallOutcome, InstallRequest, InstallRow};
 use pocket_core::platform::{self, HandlerStatus};
-use pocket_core::queue::{self, QueueItem};
+use pocket_core::queue::{self, ItemState, QueueItem};
 use pocket_core::{Error, Result};
 use serde::Serialize;
 use std::path::PathBuf;
@@ -146,6 +146,25 @@ pub fn queue_clear_finished(app: AppHandle, state: State<'_, AppState>) -> Queue
 pub async fn queue_show_page(app: AppHandle, state: State<'_, AppState>, id: u64) -> Result<()> {
     let item = state.queue.lock().unwrap().get(id).cloned().ok_or_else(|| Error::Invalid("That download is no longer queued".into()))?;
     runner::open_nexus(&app, &runner::file_page(item.mod_id, (!item.manual_only).then_some(item.file_id)))
+}
+
+/// The user picked a queued item: it goes next. A free account's page for it opens now (a download already running
+/// carries on, and the link caught there waits its turn); Premium fetches it once the current one is done.
+#[tauri::command]
+pub async fn queue_start(app: AppHandle, state: State<'_, AppState>, id: u64) -> Result<QueueSnapshot> {
+    let click = {
+        let mut q = state.queue.lock().unwrap();
+        if !q.start(id) { return Err(Error::Invalid("That download is already running or done".into())); }
+        let premium = q.premium;
+        let i = q.get(id).cloned().ok_or_else(|| Error::Invalid("That download is no longer queued".into()))?;
+        let click = i.nxm.is_none() && (i.manual_only || !premium);
+        if click { q.set(id, ItemState::NeedsClick); }
+        click.then(|| runner::file_page(i.mod_id, (!i.manual_only).then_some(i.file_id)))
+    };
+    if let Some(url) = click { runner::open_click_page(&app, &url); }
+    state.pump.notify_one();
+    runner::emit(&app);
+    Ok(runner::snapshot(&app))
 }
 
 #[tauri::command]

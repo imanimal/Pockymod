@@ -210,6 +210,7 @@ pub fn run() {
             commands::library::queue_retry,
             commands::library::queue_clear_finished,
             commands::library::queue_show_page,
+            commands::library::queue_start,
             commands::library::open_nexus_page,
             commands::library::open_nexus_url,
             commands::library::nxm_handler_status,

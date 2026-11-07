@@ -205,6 +205,17 @@ export function installDemo() {
     queue_cancel: ({ id }) => { const k = q.findIndex((x) => x.id === id); if (k >= 0) q[k].state = { state: "failed", message: "Cancelled. Retry resumes it" }; pump(); return snapshot(); },
     queue_clear_finished: () => { for (let i = q.length - 1; i >= 0; i--) if (["done", "failed"].includes(q[i].state.state)) q.splice(i, 1); demoEmit("queue", snapshot()); return snapshot(); },
     queue_show_page: () => {},
+    // the picked item goes first among those still waiting
+    queue_start: ({ id }) => {
+      const k = q.findIndex((x) => x.id === id);
+      if (k < 0 || !["waiting", "failed"].includes(q[k].state.state)) return snapshot();
+      const [it] = q.splice(k, 1);
+      it.state = { state: "waiting" };
+      const at = q.findIndex((x) => x.state.state === "waiting");
+      q.splice(at < 0 ? q.length : at, 0, it);
+      pump();
+      return snapshot();
+    },
     // pages open in this browser (a new tab), or in the stand-in pane (the desktop app shows the real page there)
     open_nexus_page: ({ modId, fileId }) => demoOpenPage(`https://www.nexusmods.com/cyberpunk2077/mods/${modId}${fileId ? `?tab=files&file_id=${fileId}&nmm=1` : ""}`),
     open_nexus_url: ({ url }) => demoOpenPage(String(url)),

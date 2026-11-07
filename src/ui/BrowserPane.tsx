@@ -8,7 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { Icon } from "./Icon";
 import { Key } from "./pocket";
 import { toast } from "./toast";
-import { browserPane, errorText, type BrowserState } from "../lib/api";
+import { browserPane, errorText, type BrowserState, type PaneSignIn } from "../lib/api";
 import { inTauri } from "../lib/tauri";
 import { FIREFOX_NOTICE, SIGN_IN_CHANGED, UseFirefoxKey } from "./PaneSignIn";
 
@@ -30,7 +30,6 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
   const sent = useRef("");
   // signed out of Nexus here but signed in in Firefox: offer to copy that sign-in, until it's taken or put off
   const [askFirefox, setAskFirefox] = useState(false);
-  const asked = useRef(0);
   const setMode = (m: Mode) => { setModeState(m); if (m !== "hidden") write(MODE, m); };
 
   useEffect(() => {
@@ -53,17 +52,16 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
   }, []);
 
   const onNexus = !!st.url && /^https:\/\/([a-z0-9-]+\.)*nexusmods\.com\//.test(st.url);
+  // asked once when the pane opens; after that Rust says whenever a page signs in or out ("browser-signin")
   useEffect(() => {
-    const check = (force?: boolean) => {
-      if (read(FF_ASK) === "no" || (!force && Date.now() - asked.current < 20_000)) return;
-      asked.current = Date.now();
-      browserPane.signIn().then((s) => setAskFirefox(!s.signedIn && s.firefox)).catch(() => setAskFirefox(false));
-    };
-    if (st.open && onNexus && !st.loading) check();
-    const again = () => check(true);
-    window.addEventListener(SIGN_IN_CHANGED, again);
-    return () => window.removeEventListener(SIGN_IN_CHANGED, again);
-  }, [st.open, st.url, st.loading, onNexus]);
+    const show = (s: PaneSignIn) => setAskFirefox(read(FF_ASK) !== "no" && !s.signedIn && s.firefox);
+    const check = () => { browserPane.signIn().then(show).catch(() => setAskFirefox(false)); };
+    if (st.open) check();
+    const offs: Array<() => void> = [];
+    browserPane.onSignIn(show).then((u) => offs.push(u));
+    window.addEventListener(SIGN_IN_CHANGED, check);
+    return () => { offs.forEach((f) => f()); window.removeEventListener(SIGN_IN_CHANGED, check); };
+  }, [st.open]);
 
   const docked = st.open && !st.popped;
   const showing = docked && mode !== "hidden";

@@ -121,6 +121,20 @@ impl Queue {
         }
     }
 
+    /// The user picked this item: it goes next, ahead of the others still waiting (a failed one is tried again).
+    /// Another item waiting on a click goes back to waiting; a link caught from its page still finds it. False when
+    /// the item is gone, running or done.
+    pub fn start(&mut self, id: u64) -> bool {
+        self.retry(id);
+        let Some(pos) = self.items.iter().position(|i| i.id == id) else { return false };
+        if !self.items[pos].is_open() || self.items[pos].is_busy() { return false; }
+        for i in self.items.iter_mut().filter(|i| i.id != id && i.state == ItemState::NeedsClick) { i.state = ItemState::Waiting; }
+        let item = self.items.remove(pos);
+        let to = self.items.iter().position(|i| i.is_open() && !i.is_busy()).unwrap_or(self.items.len());
+        self.items.insert(to, item);
+        true
+    }
+
     pub fn summary(&self) -> Summary {
         let open: Vec<&QueueItem> = self.items.iter().filter(|i| i.is_open()).collect();
         let needs_click = if self.premium { open.iter().filter(|i| i.manual_only).count() } else { open.iter().filter(|i| i.nxm.is_none() && !i.is_busy()).count() };
@@ -310,6 +324,30 @@ mod tests {
         assert!(is_archive_name("My.Mod.v1.2"), "dots in a name are not an extension");
         assert_eq!(download_name(1, 2, "4c/ec/e3/4cece3d6"), "1-2-4cece3d6");
         assert_eq!(download_name(1, 2, "A-1.7z"), "A-1.7z");
+    }
+
+    #[test]
+    fn a_picked_item_goes_next() {
+        let mut q = Queue::default();
+        let a = q.add(item(1, 10, "a.zip"));
+        let b = q.add(item(2, 20, "b.zip"));
+        let c = q.add(item(3, 30, "c.zip"));
+        q.set(a, ItemState::NeedsClick);
+        assert!(q.start(c));
+        assert_eq!(q.next_action(), Some(Action::OpenPage(c)));
+        assert_eq!(q.get(a).unwrap().state, ItemState::Waiting, "the page it replaced waits again");
+        // a link from the old page still lands on its item
+        assert_eq!(q.accept_nxm(link(1, 10), |_| unreachable!()), a);
+        // a running or finished item can't be picked
+        q.set(b, ItemState::Downloading { received: 0, total: None });
+        assert!(!q.start(b));
+        q.set(b, ItemState::Done { install_id: None, note: None });
+        assert!(!q.start(b));
+        // a failed one is tried again
+        q.set(c, ItemState::Failed { message: "x".into() });
+        assert!(q.start(c));
+        assert_eq!(q.get(c).unwrap().state, ItemState::Waiting);
+        assert!(!q.start(99));
     }
 
     #[test]

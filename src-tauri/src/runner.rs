@@ -44,7 +44,7 @@ pub fn open_nexus(app: &AppHandle, url: &str) -> pocket_core::Result<()> { crate
 
 /// The page a free account clicks Mod Manager Download on. In the user's own browser that link comes back through
 /// the nxm:// handler, so say when another manager has it.
-fn open_click_page(app: &AppHandle, url: &str) {
+pub(crate) fn open_click_page(app: &AppHandle, url: &str) {
     if !crate::browser::in_app(app) {
         if let Ok(exe) = std::env::current_exe() {
             if let Ok(h) = pocket_core::platform::nxm_handler_status(&exe) {
