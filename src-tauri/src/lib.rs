@@ -103,7 +103,6 @@ pub fn run() {
             commands::browser::browser_external,
             commands::browser::browser_extensions_folder,
             commands::browser::browser_sign_in,
-            commands::browser::browser_use_firefox,
             commands::browser::browser_sign_out,
             commands::nexus::nexus_status,
             commands::nexus::nexus_set_key,

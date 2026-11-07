@@ -231,7 +231,7 @@ export const pagesWhere = {
   set: async (w: PagesWhere) => { await settings.set("nexus.pages", w); window.dispatchEvent(new Event("pm-pages")); },
 };
 export interface BrowserState { open: boolean; popped: boolean; url: string | null; title: string | null; loading: boolean; reveal: boolean }
-export interface PaneSignIn { signedIn: boolean; firefox: boolean }
+export interface PaneSignIn { signedIn: boolean }
 /** The browser pane in the main window (src-tauri/src/browser.rs; the page lays it out, ui/BrowserPane.tsx). */
 export const browserPane = {
   state: () => call<BrowserState>("browser_state"),
@@ -243,10 +243,8 @@ export const browserPane = {
   /** The page the pane shows, in the user's own browser. */
   external: () => call<void>("browser_external"),
   extensionsFolder: (open: boolean) => call<[string, number]>("browser_extensions_folder", { open }),
-  /** Whether the pane is signed in to Nexus, and whether Firefox has a sign-in to copy. */
+  /** Whether the pane is signed in to Nexus. */
   signIn: () => call<PaneSignIn>("browser_sign_in"),
-  /** Copy the Nexus sign-in cookies from Firefox into the pane. */
-  useFirefox: () => call<PaneSignIn>("browser_use_firefox"),
   /** Sign the pane out of Nexus and forget the passwords it saved. */
   signOut: () => call<PaneSignIn>("browser_sign_out"),
   /** The pane's page signed in or out (said only on a change). */

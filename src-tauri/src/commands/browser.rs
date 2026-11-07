@@ -32,13 +32,9 @@ pub async fn browser_external(app: AppHandle) -> Result<()> {
     crate::commands::extensions::open_in_browser(u.as_str())
 }
 
-/// Whether the pane is signed in to Nexus and whether Firefox has a sign-in to copy.
+/// Whether the pane is signed in to Nexus.
 #[tauri::command]
 pub async fn browser_sign_in(app: AppHandle) -> Result<browser::SignIn> { browser::sign_in_state(&app).await }
-
-/// Copy the Nexus sign-in from Firefox into the pane (only its two Nexus sign-in cookies).
-#[tauri::command]
-pub async fn browser_use_firefox(app: AppHandle) -> Result<browser::SignIn> { browser::use_firefox(&app).await }
 
 /// Sign the pane out of Nexus and forget the passwords it saved.
 #[tauri::command]

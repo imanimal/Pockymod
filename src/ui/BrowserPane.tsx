@@ -8,12 +8,11 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { Icon } from "./Icon";
 import { Key } from "./pocket";
 import { toast } from "./toast";
-import { browserPane, errorText, type BrowserState, type PaneSignIn } from "../lib/api";
+import { browserPane, errorText, type BrowserState } from "../lib/api";
 import { inTauri } from "../lib/tauri";
-import { FIREFOX_NOTICE, SIGN_IN_CHANGED, UseFirefoxKey } from "./PaneSignIn";
 
 type Mode = "split" | "full" | "hidden";
-const MODE = "pm.pane.mode", WIDTH = "pm.pane.width", FF_ASK = "pm.pane.firefox";
+const MODE = "pm.pane.mode", WIDTH = "pm.pane.width";
 const read = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const write = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } };
 /** The app's own layers that a native webview would hide. */
@@ -28,8 +27,6 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
   const [off, setOff] = useState(false);
   const view = useRef<HTMLDivElement>(null);
   const sent = useRef("");
-  // signed out of Nexus here but signed in in Firefox: offer to copy that sign-in, until it's taken or put off
-  const [askFirefox, setAskFirefox] = useState(false);
   const setMode = (m: Mode) => { setModeState(m); if (m !== "hidden") write(MODE, m); };
 
   useEffect(() => {
@@ -50,18 +47,6 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
     window.addEventListener("pm-power-off", pw);
     return () => { offs.forEach((f) => f()); window.removeEventListener("pm-power-off", pw); };
   }, []);
-
-  const onNexus = !!st.url && /^https:\/\/([a-z0-9-]+\.)*nexusmods\.com\//.test(st.url);
-  // asked once when the pane opens; after that Rust says whenever a page signs in or out ("browser-signin")
-  useEffect(() => {
-    const show = (s: PaneSignIn) => setAskFirefox(read(FF_ASK) !== "no" && !s.signedIn && s.firefox);
-    const check = () => { browserPane.signIn().then(show).catch(() => setAskFirefox(false)); };
-    if (st.open) check();
-    const offs: Array<() => void> = [];
-    browserPane.onSignIn(show).then((u) => offs.push(u));
-    window.addEventListener(SIGN_IN_CHANGED, check);
-    return () => { offs.forEach((f) => f()); window.removeEventListener(SIGN_IN_CHANGED, check); };
-  }, [st.open]);
 
   const docked = st.open && !st.popped;
   const showing = docked && mode !== "hidden";
@@ -158,15 +143,6 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
         <Key size="sm" variant="ghost" icon="minus" onClick={() => setMode("hidden")} aria-label="Hide" title="Hide behind a tab" />
         <Key size="sm" variant="ghost" icon="x" onClick={() => act(browserPane.close())} aria-label="Close the Nexus pane" title="Close" />
       </div>
-      {askFirefox && onNexus && (
-        <div className="bpane-ask">
-          <p><b>Use your Firefox sign-in?</b> {FIREFOX_NOTICE}</p>
-          <div className="actions">
-            <UseFirefoxKey size="sm" onDone={(s) => setAskFirefox(!s.signedIn)} />
-            <Key size="sm" variant="ghost" onClick={() => { write(FF_ASK, "no"); setAskFirefox(false); }} title="Don't ask here again. Settings, Nexus pages still has it">Not now</Key>
-          </div>
-        </div>
-      )}
       <div className="bpane-view" ref={view}>
         {!inTauri() && <div className="bpane-stub"><Icon name="web" size={27} /><b>{st.url}</b><span className="dim">Shows here in the desktop app</span></div>}
         {inTauri() && covered && <div className="bpane-stub"><Icon name="web" size={27} /><span className="dim">Hidden while this window is open</span></div>}

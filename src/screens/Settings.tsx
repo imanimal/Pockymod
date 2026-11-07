@@ -13,7 +13,6 @@ import { NexusSignIn } from "../ui/SignIn";
 import { ssoReady } from "../lib/sso";
 import { ADULT_OPTIONS, setAdultPref, setAiPref, useAdult, useAiHide, type Adult } from "../lib/prefs";
 import { AI_OPTIONS, type AiHide } from "../lib/ai";
-import { FIREFOX_NOTICE, SIGN_IN_CHANGED, UseFirefoxKey } from "../ui/PaneSignIn";
 import type { PaneSignIn } from "../lib/api";
 
 export function Settings({ onGallery }: { onGallery?: () => void }) {
@@ -138,7 +137,7 @@ function NexusPagesModule() {
   );
 }
 
-/** The app's browser's own Nexus sign-in: copy it from Firefox, or sign out (which clears what the pane saved). */
+/** The app's browser's own Nexus sign-in, and a way to sign out (which clears what the pane saved). */
 function PaneSignInRow() {
   const [s, setS] = useState<PaneSignIn | null>(null);
   const [busy, setBusy] = useState(false);
@@ -148,13 +147,12 @@ function PaneSignInRow() {
     // signing in or out on a Nexus page shows here straight away
     const offs: Array<() => void> = [];
     browserPane.onSignIn(setS).then((u) => offs.push(u));
-    window.addEventListener(SIGN_IN_CHANGED, load);
-    return () => { offs.forEach((f) => f()); window.removeEventListener(SIGN_IN_CHANGED, load); };
+    return () => offs.forEach((f) => f());
   }, []);
   if (!s) return null;
   const out = () => {
     setBusy(true);
-    browserPane.signOut().then((x) => { setS(x); toast("Signed out of Nexus in the app"); window.dispatchEvent(new Event(SIGN_IN_CHANGED)); })
+    browserPane.signOut().then((x) => { setS(x); toast("Signed out of Nexus in the app"); })
       .catch((e) => toast(errorText(e), true)).finally(() => setBusy(false));
   };
   return (
@@ -163,11 +161,6 @@ function PaneSignInRow() {
       {s.signedIn ? (
         <div className="actions"><Pill tone="ok">Signed in</Pill>
           <Key size="sm" variant="ghost" icon="trash" disabled={busy} onClick={out} title="Signs the app's browser out of Nexus and forgets the passwords it saved">Sign out</Key></div>
-      ) : s.firefox ? (
-        <div className="stack" style={{ gap: ".4em" }}>
-          <div className="actions"><UseFirefoxKey size="sm" onDone={setS} /></div>
-          <p className="dim" style={{ fontSize: ".84em" }}>{FIREFOX_NOTICE}</p>
-        </div>
       ) : (
         <p className="dim" style={{ fontSize: ".86em" }}>Sign in on any Nexus page in the pane. It offers to save your password, so you only type it once.</p>
       )}

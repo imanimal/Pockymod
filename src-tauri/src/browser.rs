@@ -159,7 +159,7 @@ macro_rules! common {
                 say(&load, BrowserState::at(p.url(), popped, loading, false));
                 // signing in or out on the page itself: read again once it has loaded (off this thread: reading
                 // cookies from a webview's own event handler deadlocks)
-                if !loading { let a = load.clone(); tauri::async_runtime::spawn(async move { watch_sign_in(&a).await }); }
+                if !loading { let a = load.clone(); tauri::async_runtime::spawn(async move { watch_sign_in(&a) }); }
             })
     }};
 }
@@ -274,10 +274,14 @@ fn save_passwords(v: &tauri::Webview) {
 
 // ── the pane's Nexus sign-in ──
 
-/// Whether the pane is signed in to Nexus, and whether Firefox has a sign-in it could copy.
+/// The cookies that make up a sign-in on nexusmods.com. Nexus hands every visitor a `nexusmods_session`, signed in or
+/// not; only a sign-in also gets the refresh cookie.
+const SIGN_IN_COOKIES: [&str; 2] = ["nexusmods_session", "nexusmods_session_refresh"];
+
+/// Whether the pane is signed in to Nexus.
 #[derive(serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SignIn { pub signed_in: bool, pub firefox: bool }
+pub struct SignIn { pub signed_in: bool }
 
 /// A webview on the pane's profile: the pane, its window, or a hidden one made for the call and closed after.
 struct OnProfile { view: tauri::Webview, temp: Option<tauri::WebviewWindow> }
@@ -294,43 +298,26 @@ impl OnProfile {
     fn done(self) { if let Some(w) = self.temp { let _ = w.destroy(); } }
 }
 
-const NEXUS: &str = "https://www.nexusmods.com/";
-
-/// Signed in: Nexus hands every visitor a `nexusmods_session`, signed in or not, and only a sign-in its refresh cookie.
 fn signed_in(v: &tauri::Webview) -> bool {
     let now = tauri::webview::cookie::time::OffsetDateTime::now_utc();
-    v.cookies_for_url(NEXUS.parse().unwrap()).is_ok_and(|c| c.iter().any(|c|
-        c.name() == pocket_core::firefox::SIGN_IN_COOKIES[1] && c.expires_datetime().is_none_or(|t| t > now)))
+    v.cookies_for_url("https://www.nexusmods.com/".parse().unwrap()).is_ok_and(|c| c.iter().any(|c|
+        c.name() == SIGN_IN_COOKIES[1] && c.expires_datetime().is_none_or(|t| t > now)))
 }
 
-/// Remove the profile's Nexus sign-in cookies, under whatever domain they were saved.
-/// Replace the profile's Nexus sign-in with `cookies` (none: sign out). This goes to WebView2's cookie manager itself:
-/// tauri's cookie calls drop the leading dot of `.nexusmods.com`, which leaves a cookie for nexusmods.com alone that
-/// the sign-in pages and www never get.
+/// Remove the profile's Nexus sign-in, under whatever domain each cookie was saved. This goes to WebView2's cookie
+/// manager itself: tauri's cookie calls drop the leading dot of `.nexusmods.com`, so they miss the real cookies.
 #[cfg(windows)]
-async fn put_sign_in(v: &tauri::Webview, cookies: Vec<pocket_core::firefox::Cookie>) -> pocket_core::Result<()> {
+async fn forget_sign_in(v: &tauri::Webview) -> pocket_core::Result<()> {
     let (tx, rx) = tokio::sync::oneshot::channel();
     v.with_webview(move |w| {
-        use pocket_core::firefox::{SameSite, SIGN_IN_COOKIES};
         use webview2_com::Microsoft::Web::WebView2::Win32::*;
         use windows_core::{Interface, HSTRING};
         let r = (|| unsafe {
             let m = w.controller().CoreWebView2()?.cast::<ICoreWebView2_2>()?.CookieManager()?;
-            // every copy of the two, whatever domain it was saved under (Nexus's own signed-out one included)
             for name in SIGN_IN_COOKIES {
                 for uri in ["https://nexusmods.com/", "https://www.nexusmods.com/", "https://users.nexusmods.com/"] {
                     m.DeleteCookies(&HSTRING::from(name), &HSTRING::from(uri))?;
                 }
-            }
-            for c in &cookies {
-                let k = m.CreateCookie(&HSTRING::from(c.name.as_str()), &HSTRING::from(c.value.expose()), &HSTRING::from(c.host.as_str()), &HSTRING::from(c.path.as_str()))?;
-                k.SetExpires(c.expires as f64)?;
-                k.SetIsSecure(c.secure)?;
-                k.SetIsHttpOnly(c.http_only)?;
-                if let Some(ss) = c.same_site {
-                    k.SetSameSite(match ss { SameSite::None => COREWEBVIEW2_COOKIE_SAME_SITE_KIND_NONE, SameSite::Lax => COREWEBVIEW2_COOKIE_SAME_SITE_KIND_LAX, SameSite::Strict => COREWEBVIEW2_COOKIE_SAME_SITE_KIND_STRICT })?;
-                }
-                m.AddOrUpdateCookie(&k)?;
             }
             windows_core::Result::Ok(())
         })();
@@ -340,80 +327,46 @@ async fn put_sign_in(v: &tauri::Webview, cookies: Vec<pocket_core::firefox::Cook
 }
 
 #[cfg(not(windows))]
-async fn put_sign_in(v: &tauri::Webview, cookies: Vec<pocket_core::firefox::Cookie>) -> pocket_core::Result<()> {
-    use tauri::webview::cookie::{time::OffsetDateTime, Cookie};
-    for c in v.cookies().map_err(err)?.into_iter().filter(|c| pocket_core::firefox::SIGN_IN_COOKIES.contains(&c.name())) { let _ = v.delete_cookie(c); }
-    for c in cookies {
-        let k = Cookie::build((c.name, c.value.expose().to_owned())).domain(c.host).path(c.path).secure(c.secure).http_only(c.http_only)
-            .expires(OffsetDateTime::from_unix_timestamp(c.expires).ok());
-        v.set_cookie(k.build()).map_err(err)?;
-    }
+async fn forget_sign_in(v: &tauri::Webview) -> pocket_core::Result<()> {
+    for c in v.cookies().map_err(err)?.into_iter().filter(|c| SIGN_IN_COOKIES.contains(&c.name())) { let _ = v.delete_cookie(c); }
     Ok(())
 }
 
-async fn firefox_sign_in() -> pocket_core::Result<Option<Vec<pocket_core::firefox::Cookie>>> {
-    tauri::async_runtime::spawn_blocking(pocket_core::firefox::nexus_sign_in).await.map_err(|e| pocket_core::Error::Invalid(e.to_string()))?
-}
-
 pub async fn sign_in_state(app: &AppHandle) -> pocket_core::Result<SignIn> {
-    let firefox = firefox_sign_in().await.is_ok_and(|c| c.is_some());
     let p = OnProfile::get(app)?;
     let signed_in = signed_in(&p.view);
     p.done();
-    tell_sign_in(app, signed_in).await;
-    Ok(SignIn { signed_in, firefox })
+    tell_sign_in(app, signed_in);
+    Ok(SignIn { signed_in })
 }
 
 /// After a page loads in the pane or its window: whether the user signed in or out there.
-async fn watch_sign_in(app: &AppHandle) {
+fn watch_sign_in(app: &AppHandle) {
     let Some(v) = app.get_webview(WINDOW).or_else(|| app.get_webview(PANE)) else { return };
-    let now = signed_in(&v);
-    tell_sign_in(app, now).await;
+    tell_sign_in(app, signed_in(&v));
 }
 
-/// Say "browser-signin" when the pane's sign-in changed since last seen (Settings and the pane's notice follow it).
-async fn tell_sign_in(app: &AppHandle, now: bool) {
+/// Say "browser-signin" when the pane's sign-in changed since last seen (Settings follows it).
+fn tell_sign_in(app: &AppHandle, now: bool) {
     let b = app.state::<Browser>();
     let changed = { let mut s = b.signed.lock().unwrap(); let c = *s != Some(now); *s = Some(now); c };
-    if !changed { return; }
-    let firefox = !now && firefox_sign_in().await.is_ok_and(|c| c.is_some());
-    let _ = app.emit("browser-signin", SignIn { signed_in: now, firefox });
-}
-
-/// Copy Firefox's two Nexus sign-in cookies into the pane's profile, then show the page signed in.
-pub async fn use_firefox(app: &AppHandle) -> pocket_core::Result<SignIn> {
-    let cookies = firefox_sign_in().await?
-        .ok_or_else(|| pocket_core::Error::Invalid("Firefox isn't signed in to Nexus".into()))?;
-    // Nexus says whether it still counts and gives the pane a pair of its own; unasked (offline, Cloudflare), the copy goes ahead
-    let (cookies, confirmed) = match pocket_core::firefox::check(&cookies).await {
-        Ok(Some(fresh)) => (fresh, true),
-        Ok(None) => return Err(pocket_core::Error::Invalid("Nexus has signed Firefox out. Sign in to Nexus in Firefox, or on the page here".into())),
-        Err(_) => (cookies, false),
-    };
-    let p = OnProfile::get(app)?;
-    if let Err(e) = put_sign_in(&p.view, cookies).await { p.done(); return Err(e); }
-    let ok = confirmed || signed_in(&p.view);
-    p.done();
-    tell_sign_in(app, ok).await;
-    show_signed_change(app);
-    Ok(SignIn { signed_in: ok, firefox: true })
+    if changed { let _ = app.emit("browser-signin", SignIn { signed_in: now }); }
 }
 
 /// Sign the pane out of Nexus and forget the passwords it saved. Everything else stays, Cloudflare's clearance
 /// included, so the next Nexus page doesn't stop to check for a bot.
 pub async fn sign_out(app: &AppHandle) -> pocket_core::Result<SignIn> {
     let p = OnProfile::get(app)?;
-    let out = put_sign_in(&p.view, Vec::new()).await;
+    let out = forget_sign_in(&p.view).await;
     forget_passwords(&p.view);
     // a hidden webview stays a moment so the clearing it started finishes
     if p.temp.is_some() { tokio::time::sleep(std::time::Duration::from_secs(2)).await; }
     let signed_in = signed_in(&p.view);
     p.done();
     out?;
-    tell_sign_in(app, signed_in).await;
+    tell_sign_in(app, signed_in);
     show_signed_change(app);
-    let firefox = firefox_sign_in().await.is_ok_and(|c| c.is_some());
-    Ok(SignIn { signed_in, firefox })
+    Ok(SignIn { signed_in })
 }
 
 /// The passwords the pane offered to save (save_passwords). Cleared in the background.
@@ -430,8 +383,7 @@ fn forget_passwords(v: &tauri::Webview) {
     let _ = v.clear_all_browsing_data();
 }
 
-/// The open pane loads its page again, now signed in or out. Nexus's sign-in pages carry on to the site, and the
-/// site's pages pick the sign-in up on a fresh load.
+/// The open pane loads its page again, now signed out.
 fn show_signed_change(app: &AppHandle) { if current(app).is_some() { let _ = nav(app, "reload"); } }
 
 #[cfg(test)]

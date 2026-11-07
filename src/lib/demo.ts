@@ -237,10 +237,9 @@ export function installDemo() {
     browser_pop: ({ out }) => { demoBrowser = { ...demoBrowser, open: true, popped: Boolean(out), reveal: true }; demoEmit("browser", demoBrowser); },
     browser_external: () => { if (demoBrowser.url) window.open(demoBrowser.url, "_blank", "noopener,noreferrer"); },
     browser_extensions_folder: () => ["%APPDATA%\\app.pocketmods.desktop\\browser-extensions", 0],
-    // the pane's Nexus sign-in: Firefox has one to copy
-    browser_sign_in: () => ({ signedIn: store.get("demo.paneSignedIn") === "1", firefox: true }),
-    browser_use_firefox: () => { store.set("demo.paneSignedIn", "1"); return { signedIn: true, firefox: true }; },
-    browser_sign_out: () => { store.set("demo.paneSignedIn", "0"); return { signedIn: false, firefox: true }; },
+    // the pane's Nexus sign-in: signed in until Settings signs it out
+    browser_sign_in: () => ({ signedIn: store.get("demo.paneSignedIn") !== "0" }),
+    browser_sign_out: () => { store.set("demo.paneSignedIn", "0"); return { signedIn: false }; },
     library_list: () => installs,
     library_downloads: () => installs.filter((i) => i.source !== "found").map((i) => ({ modId: i.modId, fileId: i.fileId, name: i.name, version: i.version, path: "", installed: true, md5: "",
       size: (fixture.nodes.find((n) => n.modId === i.modId)?.fileSize ?? 900) * 1024 })),
