@@ -116,8 +116,54 @@ fn query(db: &Path, now: i64) -> Result<Option<Vec<Cookie>>> {
     Ok(cookies.iter().any(|c| c.name == SIGN_IN_COOKIES[0]).then_some(cookies))
 }
 
+/// Ask Nexus's sign-in site whether these cookies are still signed in. A signed-in visit is sent on to the account
+/// pages with a fresh pair of sign-in cookies, which go to the pane, so the pane and Firefox each keep their own.
+/// Some(fresh) when signed in, None when Nexus treats them as signed out, Err when it couldn't be asked (offline, or
+/// Cloudflare turned the request away).
+pub async fn check(cookies: &[Cookie]) -> Result<Option<Vec<Cookie>>> {
+    let http = reqwest::Client::builder()
+        .user_agent(format!("Mozilla/5.0 (Windows NT 10.0; Win64; x64) Pockymod/{}", crate::APP_VERSION))
+        .redirect(reqwest::redirect::Policy::none())
+        .build()?;
+    let header = cookies.iter().map(|c| format!("{}={}", c.name, c.value.expose())).collect::<Vec<_>>().join("; ");
+    let r = http.get("https://users.nexusmods.com/").header(reqwest::header::COOKIE, header).send().await?;
+    let to_account = r.headers().get(reqwest::header::LOCATION).and_then(|l| l.to_str().ok()).is_some_and(|l| l.contains("/account"));
+    if r.status().is_success() { return Ok(None); }
+    if !(r.status().is_redirection() && to_account) { return Err(Error::Http { status: r.status().as_u16(), message: "Nexus sign-in check".into() }); }
+    let now = chrono::Utc::now().timestamp();
+    let mut fresh = cookies.to_vec();
+    for set in r.headers().get_all(reqwest::header::SET_COOKIE).iter().filter_map(|v| v.to_str().ok()) {
+        let Some((name, value, expires)) = parse_set_cookie(set, now) else { continue };
+        if let Some(c) = fresh.iter_mut().find(|c| c.name == name) { c.value = Secret::new(value); if let Some(e) = expires { c.expires = e; } }
+    }
+    Ok(Some(fresh))
+}
+
+/// Name, value and expiry (unix seconds, from Max-Age or Expires) of a Set-Cookie header.
+fn parse_set_cookie(s: &str, now: i64) -> Option<(String, String, Option<i64>)> {
+    let mut parts = s.split(';').map(str::trim);
+    let (name, value) = parts.next()?.split_once('=')?;
+    let mut expires = None;
+    for p in parts {
+        let (k, v) = p.split_once('=').unwrap_or((p, ""));
+        match k.to_ascii_lowercase().as_str() {
+            "max-age" => if let Ok(n) = v.parse::<i64>() { expires = Some(now + n); },
+            "expires" if expires.is_none() => expires = chrono::DateTime::parse_from_rfc2822(v).ok().map(|d| d.timestamp()),
+            _ => {}
+        }
+    }
+    Some((name.to_owned(), value.to_owned(), expires))
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn set_cookie_fields() {
+        let (n, v, e) = super::parse_set_cookie("nexusmods_session=abc=; domain=.nexusmods.com; path=/; expires=Sat, 21 Nov 2026 10:06:26 GMT; secure; HttpOnly", 0).unwrap();
+        assert_eq!((n.as_str(), v.as_str(), e), ("nexusmods_session", "abc=", Some(1_795_255_586)));
+        assert_eq!(super::parse_set_cookie("a=b; Max-Age=60", 100).unwrap().2, Some(160));
+    }
+
     use super::*;
 
     fn profile(root: &Path, dir: &str, rows: &[(&str, &str, &str, i64, &str)]) {

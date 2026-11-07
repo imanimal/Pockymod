@@ -292,10 +292,19 @@ impl OnProfile {
 
 const NEXUS: &str = "https://www.nexusmods.com/";
 
+/// Signed in: Nexus hands every visitor a `nexusmods_session`, signed in or not, and only a sign-in its refresh cookie.
 fn signed_in(v: &tauri::Webview) -> bool {
     let now = tauri::webview::cookie::time::OffsetDateTime::now_utc();
     v.cookies_for_url(NEXUS.parse().unwrap()).is_ok_and(|c| c.iter().any(|c|
-        c.name() == pocket_core::firefox::SIGN_IN_COOKIES[0] && c.expires_datetime().is_none_or(|t| t > now)))
+        c.name() == pocket_core::firefox::SIGN_IN_COOKIES[1] && c.expires_datetime().is_none_or(|t| t > now)))
+}
+
+/// Remove the profile's Nexus sign-in cookies, under whatever domain they were saved.
+fn forget_sign_in(v: &tauri::Webview) {
+    let Ok(all) = v.cookies() else { return };
+    for c in all.into_iter().filter(|c| pocket_core::firefox::SIGN_IN_COOKIES.contains(&c.name()) && c.domain().is_some_and(|d| d.trim_start_matches('.').ends_with("nexusmods.com"))) {
+        let _ = v.delete_cookie(c);
+    }
 }
 
 async fn firefox_sign_in() -> pocket_core::Result<Option<Vec<pocket_core::firefox::Cookie>>> {
@@ -315,7 +324,15 @@ pub async fn use_firefox(app: &AppHandle) -> pocket_core::Result<SignIn> {
     use tauri::webview::cookie::{time::OffsetDateTime, Cookie, SameSite};
     let cookies = firefox_sign_in().await?
         .ok_or_else(|| pocket_core::Error::Invalid("Firefox isn't signed in to Nexus".into()))?;
+    // Nexus says whether it still counts and gives the pane a pair of its own; unasked (offline, Cloudflare), the copy goes ahead
+    let (cookies, confirmed) = match pocket_core::firefox::check(&cookies).await {
+        Ok(Some(fresh)) => (fresh, true),
+        Ok(None) => return Err(pocket_core::Error::Invalid("Nexus has signed Firefox out. Sign in to Nexus in Firefox, or on the page here".into())),
+        Err(_) => (cookies, false),
+    };
     let p = OnProfile::get(app)?;
+    // the signed-out session every visit gets would otherwise sit beside the copy
+    forget_sign_in(&p.view);
     for c in &cookies {
         let mut b = Cookie::build((c.name.clone(), c.value.expose().to_owned()))
             .domain(c.host.clone()).path(c.path.clone()).secure(c.secure).http_only(c.http_only)
@@ -325,7 +342,7 @@ pub async fn use_firefox(app: &AppHandle) -> pocket_core::Result<SignIn> {
         }
         if let Err(e) = p.view.set_cookie(b.build()) { p.done(); return Err(err(e)); }
     }
-    let ok = signed_in(&p.view);
+    let ok = confirmed || signed_in(&p.view);
     p.done();
     show_signed_change(app);
     Ok(SignIn { signed_in: ok, firefox: true })
@@ -334,10 +351,8 @@ pub async fn use_firefox(app: &AppHandle) -> pocket_core::Result<SignIn> {
 /// Sign the pane out of Nexus and forget what its profile saved: cookies, passwords, site data.
 pub async fn sign_out(app: &AppHandle) -> pocket_core::Result<SignIn> {
     let p = OnProfile::get(app)?;
-    // the Nexus cookies first, one by one, so the sign-in is gone when this returns; the rest clears on its own
-    if let Ok(all) = p.view.cookies() {
-        for c in all.into_iter().filter(|c| c.domain().is_some_and(|d| d.trim_start_matches('.').ends_with("nexusmods.com"))) { let _ = p.view.delete_cookie(c); }
-    }
+    // the sign-in cookies first, so the sign-in is gone when this returns; the rest clears on its own
+    forget_sign_in(&p.view);
     let cleared = p.view.clear_all_browsing_data();
     // a hidden webview stays a moment so the clearing it started finishes
     if p.temp.is_some() { tokio::time::sleep(std::time::Duration::from_secs(2)).await; }
