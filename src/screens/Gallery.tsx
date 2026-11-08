@@ -3,6 +3,7 @@
 // It breaks the one-orange-per-screen rule on purpose, to show the orange variants next to the others.
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { Logo } from "../ui/Logo";
 import { ICONS, type IconName } from "../ui/icons";
 import { Chip, Empty, Key, Lcd, LcdLevel, Module, Pill, ProgramKey, SearchField, Seg, Switch, Tag } from "../ui/pocket";
 import { BUILTIN_THEMES, listThemes, setFx, setSchemeChoice, setTheme, useTheme, type ThemeInfo } from "../lib/theme";
@@ -215,7 +216,7 @@ export function Gallery() {
         <Module icon="gallery" title="Window frame" count=".win .mtop .deck">
           <div className="win">
             <div className="mtop">
-              <span className="brandmark"><span className="logo">P</span><span>Pockymod</span></span>
+              <span className="brandmark"><Logo /><span>Pockymod</span></span>
               <span className="crumb"><span className="v">Browse</span><span className="ctx">Cyberpunk 2077 · 2.31</span></span>
               <span className="sp" />
               <span className="winkeys">

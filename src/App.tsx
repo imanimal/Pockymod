@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "./ui/Icon";
+import { Logo } from "./ui/Logo";
 import type { IconName } from "./ui/icons";
 import { Empty, Key, ProgramKey, type Led } from "./ui/pocket";
 import { Gallery } from "./screens/Gallery";
@@ -178,7 +179,7 @@ export function App() {
   return (
     <div className="screen shell">
       <header className="mtop" data-tauri-drag-region onDoubleClick={(e) => { if (e.target === e.currentTarget) void windowAction("toggleMaximize"); }}>
-        <span className="brandmark" data-tauri-drag-region><span className="logo">P</span><span>Pockymod</span></span>
+        <span className="brandmark" data-tauri-drag-region><Logo /><span>Pockymod</span></span>
         <span className="crumb" data-tauri-drag-region><span className="v">{here.label}</span><span className="ctx">Cyberpunk 2077</span></span>
         <span className="sp" data-tauri-drag-region />
         <HistoryMenu onRemoved={() => { setView("library"); setTimeout(() => document.getElementById("recently-removed")?.scrollIntoView({ behavior: "smooth" }), 120); }} />

@@ -1,6 +1,7 @@
 // First run: the app finds the game and sets itself up, asking only what only the user can answer.
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { Logo } from "../ui/Logo";
 import { Key, Lcd, Module, Pill } from "../ui/pocket";
 import { errorText, game, handler, nexus, nexusPages, paths, pickFolder, settings, type GameInstall, type HandlerStatus, type PathsView } from "../lib/api";
 import { ExistingBody } from "./Existing";
@@ -24,7 +25,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   return (
     <div className="ov full onboard">
       <div className="onb">
-        <div className="brandmark" style={{ fontSize: "1.3em" }}><span className="logo">P</span><span>Pockymod</span></div>
+        <div className="brandmark" style={{ fontSize: "1.3em" }}><Logo /><span>Pockymod</span></div>
         <div className="onb-steps">{STEPS.map((s, i) => <span key={s.id} className={`onb-dot${s.id === step ? " on" : STEPS.findIndex((x) => x.id === step) > i ? " done" : ""}`}>{s.label}</span>)}</div>
         {step === "game" && <GameStep onNext={next} />}
         {step === "account" && <AccountStep onNext={next} />}

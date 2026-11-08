@@ -364,12 +364,13 @@ a { color: var(--acc2); }
 .win > .wbody { flex: 1; min-height: 0; padding: 1em; }
 .mtop { display: flex; align-items: center; gap: .7em; min-height: 2.8em; white-space: nowrap; cursor: default; }
 .brandmark { display: flex; align-items: center; gap: .55em; font-weight: 700; font-size: 1.02em; color: var(--text); letter-spacing: -.01em; margin-right: .3em; }
-/* the logo is an LCD; the one place a dot-matrix glyph that is not a number appears */
+/* the logo is an LCD showing the icon's P, drawn as a shape so no font metrics can push it off centre */
 .logo {
-  width: 1.8em; height: 1.8em; flex: none; border-radius: 6px; display: grid; place-items: center; padding-top: .06em;
+  width: 1.8em; height: 1.8em; flex: none; border-radius: 6px; display: grid; place-items: center;
   background: linear-gradient(170deg, color-mix(in srgb, #fff 18%, var(--disp-bg)), var(--disp-bg) 60%);
   color: var(--disp-fg); font: 900 1.2em/1 var(--font-num); box-shadow: inset 0 1px 3px rgba(0, 0, 0, .3), 0 0 0 2px var(--chrome-bg);
 }
+.logo svg { display: block; height: 48%; fill: currentColor; }
 .crumb { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
 .crumb .v { font-size: 1.05em; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
 .crumb .ctx { font-size: .8em; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; }
