@@ -211,6 +211,10 @@ pub fn change_fomod(db: &Db, game: &Path, library: &Path, install_id: i64, choic
     }
 }
 
+/// Removes a folder when dropped (a no-op once it has been moved away).
+struct RemoveOnDrop<'a>(&'a Path);
+impl Drop for RemoveOnDrop<'_> { fn drop(&mut self) { if self.0.exists() { let _ = fs::remove_dir_all(self.0); } } }
+
 pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Result<InstallOutcome> {
     if !game.join("bin/x64").exists() && !game.join("bin").exists() {
         return Err(Error::Invalid(format!("{} isn't the Cyberpunk 2077 folder (no bin\\x64). Set it in Settings", game.display())));
@@ -218,6 +222,8 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
     let entries = archive::list(&req.archive)?;
     let staging = staging_dir(library, req.mod_id, req.file_id);
     let fresh = staging.with_extension("new");
+    // whatever happens below, a half-made extraction does not stay behind (after the swap it is gone anyway)
+    let _scratch = RemoveOnDrop(&fresh);
     let fomod_cfg = crate::fomod::find_config(&entries);
     // no installer, but variants side by side: a one-choice installer of our own
     let synth = if fomod_cfg.is_none() { crate::fomod::variants(&entries, &req.name) } else { None };
@@ -259,7 +265,11 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
     // the same file again; one tracked from Vortex leaves Vortex's manifest properly and becomes ours
     if let Some(id) = existing { undeploy_any(db, game, id)?; }
     let _ = fs::remove_dir_all(&staging);
-    fs::rename(&fresh, &staging)?;
+    if let Err(e) = fs::rename(&fresh, &staging) {
+        // the copy that was in goes back in, from whatever of its files are still there
+        if let Some(id) = existing { let _ = redeploy_any(db, game, library, id, &req.options); }
+        return Err(Error::Invalid(format!("Couldn't move the new files into the library. {}", crate::error::io_text(&e))));
+    }
 
     let frameworks: Vec<&str> = plan.uses.iter().map(|f| crate::cyberpunk::frameworks::info(*f).key).collect();
     let mod_type = plan.mod_type.unwrap_or(ModType::Unknown);

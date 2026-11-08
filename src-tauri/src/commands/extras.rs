@@ -51,13 +51,17 @@ pub async fn creator_check(path: String, name: String) -> Result<pocket_core::cr
     tauri::async_runtime::spawn_blocking(move || pocket_core::creator::check(std::path::Path::new(&path), &name)).await.map_err(|e| Error::Invalid(e.to_string()))?
 }
 
-/// Pack a mod folder into a clean zip next to it.
+/// Pack a mod folder into a clean zip next to it. Progress goes out as `package-progress` events ([bytes, total]).
 #[tauri::command]
-pub async fn creator_package(path: String, name: String, version: String) -> Result<String> {
+pub async fn creator_package(app: tauri::AppHandle, path: String, name: String, version: String) -> Result<String> {
+    use tauri::Emitter;
     tauri::async_runtime::spawn_blocking(move || {
         let p = std::path::PathBuf::from(&path);
         let out = p.parent().map(|d| d.to_path_buf()).unwrap_or_else(|| p.clone());
-        pocket_core::creator::package(&p, &out, &name, &version).map(|f| f.to_string_lossy().into_owned())
+        let mut last = 0u64;
+        pocket_core::creator::package_with(&p, &out, &name, &version, |done, total| {
+            if done >= last + (4 << 20) || done == total { last = done; let _ = app.emit("package-progress", (done, total)); }
+        }).map(|f| f.to_string_lossy().into_owned())
     }).await.map_err(|e| Error::Invalid(e.to_string()))?
 }
 

@@ -10,6 +10,7 @@ import { BUILTIN_THEMES, listThemes, setFx, setSchemeChoice, setTheme, useTheme,
 import { ThemeSample } from "./Appearance";
 import { toast } from "../ui/toast";
 import { nope } from "../ui/motion";
+import { errorText } from "../lib/api";
 
 const TOKENS = ["--bg", "--bg2", "--surface", "--surface-2", "--line", "--text", "--text-2", "--text-3", "--accent", "--on-accent",
   "--accent-ink", "--acc2", "--chrome-bg", "--chrome-fg", "--disp-bg", "--disp-fg", "--disp-hot", "--disp-bad", "--ok", "--warn", "--bad",
@@ -25,7 +26,7 @@ function ThemeStrip() {
       <div className="gal-themes">
         {themes.flatMap((th) => th.schemes.map((s) => (
           <button key={`${th.id}.${s}`} type="button" className={`gal-theme${t.id === th.id && t.scheme === s ? " on" : ""}`}
-            onClick={() => void setTheme(th.id, th.schemes.length > 1 ? s : undefined)} title={`${th.name}, ${s}`}>
+            onClick={() => void setTheme(th.id, th.schemes.length > 1 ? s : undefined).catch((e) => toast(errorText(e), true))} title={`${th.name}, ${s}`}>
             <ThemeSample info={th} scheme={s} />
             <span>{th.name} <span className="dim">{s}</span></span>
           </button>
@@ -44,7 +45,7 @@ function ThemeStrip() {
 
 // The spec's component names and the Pocket class each one is built on.
 const NAMES: Array<[spec: string, pocket: string, note: string]> = [
-  [".k", ".btn", "key: .primary .dark .ghost .sm .lg; .on or aria-pressed latched; .down pressed"],
+  [".k", ".btn", "key: .primary .dark .ghost .sm .lg; .on or aria-pressed latched; .down pressed; .busy working, .busy.fillp with --p progress"],
   [".pk", ".nv", "program key: .on latched, .led, .ct count badge, .prog foot progress"],
   [".mod / .band", ".panel / .ph", "module and label band: .pt title, .cnt count; .panel.hot orange, .panel.bad red"],
   [".lcd", ".display", "LCD inlay: .d-lbl .d-num .d-sub .d-bar; .hot .bad .sm .big"],
@@ -82,7 +83,7 @@ export function Gallery() {
             <Key variant="ghost">Ghost</Key>
             <Key size="sm">Small</Key>
             <Key size="lg" icon="play">Large</Key>
-            <Key icon="refresh" aria-label="Refresh" />
+            <Key icon="refresh" aria-label="Refresh" title="Refresh" />
           </div>
           <div className="sub-h">States</div>
           <div className="actions">
@@ -92,6 +93,8 @@ export function Gallery() {
             <Key latched icon="filter">Latched</Key>
             <Key className="focus">Focus</Key>
             <Key disabled>Disabled</Key>
+            <Key busy icon="install">Busy</Key>
+            <Key busy={0.42} icon="downloads">Progress</Key>
           </div>
           <div className="sub-h">Primary states</div>
           <div className="actions">
@@ -99,6 +102,7 @@ export function Gallery() {
             <Key variant="primary" className="hov">Hover</Key>
             <Key variant="primary" className="down">Pressed</Key>
             <Key variant="primary" className="focus">Focus</Key>
+            <Key variant="primary" busy>Busy</Key>
           </div>
         </Module>
 
@@ -277,7 +281,7 @@ export function Gallery() {
         </div>
       </Module>
 
-      <Module icon="downloads" title="Loading and feedback" count=".skel .nope .boot">
+      <Module icon="downloads" title="Loading and feedback" count=".skel .busy .nope .boot">
         <div className="mgrid">{Array.from({ length: 3 }, (_, i) => <span key={i} className="mcard panel skel" style={{ height: "9em" }} />)}</div>
         <div className="stack" style={{ gap: ".4em", marginTop: ".8em" }}>
           <span className="skel skel-line" style={{ width: "60%" }} />
@@ -288,7 +292,7 @@ export function Gallery() {
 
       <div className="grid2">
         <section className="panel dialog" style={{ width: "auto", animation: "none" }}>
-          <header className="ph"><span className="pt"><Icon name="warn" />Dialog</span><span className="sp" /><Key variant="ghost" size="sm" icon="x" aria-label="Close" /></header>
+          <header className="ph"><span className="pt"><Icon name="warn" />Dialog</span><span className="sp" /><Key variant="ghost" size="sm" icon="x" aria-label="Close" title="Close (Esc)" /></header>
           <div className="pb">
             <p>A module on a solid scrim</p>
             <div className="note warn">Game is under Program Files (x86). Writes may be blocked</div>

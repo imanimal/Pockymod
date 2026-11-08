@@ -19,8 +19,21 @@ pub struct AppUpdate {
     pub installer: Option<(String, Option<String>)>,
 }
 
+/// Numbers first (trailing zeros don't count); with the same numbers a release beats a pre-release ("1.0.0" is newer
+/// than "1.0.0-alpha"), and two pre-releases compare by their suffix.
 pub fn is_newer(latest: &str, current: &str) -> bool {
-    crate::health::version_key(latest) > crate::health::version_key(current)
+    let split = |v: &str| {
+        let v = v.trim().trim_start_matches(['v', 'V']);
+        let (num, pre) = v.split_once('-').map_or((v, None), |(n, p)| (n, Some(p.trim().to_ascii_lowercase()).filter(|p| !p.is_empty())));
+        (crate::health::version_key(num), pre)
+    };
+    let ((ln, lp), (cn, cp)) = (split(latest), split(current));
+    if ln != cn { return ln > cn; }
+    match (lp, cp) {
+        (None, Some(_)) => true,
+        (Some(a), Some(b)) => a > b,
+        _ => false,
+    }
 }
 
 pub async fn check(http: &reqwest::Client) -> Result<AppUpdate> {
@@ -97,6 +110,17 @@ mod dl_tests {
     fn versions() {
         assert!(is_newer("0.2.0", "0.1.0"));
         assert!(!is_newer("0.1.0", "0.1.0"));
+        assert!(!is_newer("v0.1", "0.1.0"));
+    }
+    #[test]
+    fn pre_releases() {
+        assert!(is_newer("1-alpha", "0.1.0"));
+        assert!(!is_newer("1-alpha", "1.0.0-alpha"));
+        assert!(!is_newer("1.0.0-alpha", "1-alpha"));
+        assert!(is_newer("1.0.0", "1.0.0-alpha"));
+        assert!(!is_newer("1.0.0-alpha", "1.0.0"));
+        assert!(is_newer("1.0.0-beta", "1.0.0-alpha"));
+        assert!(is_newer("0.2.0", "0.1.0"));
         assert!(!is_newer("v0.1", "0.1.0"));
     }
 }

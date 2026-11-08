@@ -57,12 +57,16 @@ pub fn run() {
             if let Err(e) = tray::install(app.handle()) { eprintln!("tray: {e}"); }
             background::start(app.handle().clone());
             if background::started_hidden() { if let Some(w) = app.get_webview_window("main") { let _ = w.destroy(); } }
-            // half-finished extractions from a crash (<library>/staging/*.new) are never used again
-            if let Ok((_, lib)) = state::Paths::load(&app.state::<state::AppState>().db.lock().unwrap()).require() {
-                for e in std::fs::read_dir(lib.join("staging")).into_iter().flatten().flatten() {
+            // half-finished extractions from a crash (<library>/staging/*.new) are never used again, and removed mods
+            // past their time go for good; off the main thread, so a big folder never holds the window back
+            let db = app.state::<state::AppState>().db.clone();
+            std::thread::spawn(move || {
+                let lib = state::Paths::load(&db.lock().unwrap()).require().ok().map(|(_, l)| l);
+                for e in lib.iter().flat_map(|l| std::fs::read_dir(l.join("staging")).into_iter().flatten().flatten()) {
                     if e.path().extension().is_some_and(|x| x == "new") { let _ = std::fs::remove_dir_all(e.path()); }
                 }
-            }
+                let _ = pocket_core::install::purge_trash(&db.lock().unwrap(), None);
+            });
             // the app was closed while the game ran without mods: put them back once the game is gone
             let h = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -73,9 +77,10 @@ pub fn run() {
                 }
                 let p = state::Paths::load(&st.db.lock().unwrap());
                 if let Ok((g, l)) = p.require() {
-                    let n = pocket_core::launch::vanilla_restore(&st.db.lock().unwrap(), &g, &l, &p.deploy_options()).unwrap_or(0);
-                    let _ = h.emit("library-changed", ());
-                    let _ = h.emit("vanilla", serde_json::json!({ "state": "restored", "back": n }));
+                    let db = st.db.clone();
+                    let r = tauri::async_runtime::spawn_blocking(move || pocket_core::launch::vanilla_restore(&db.lock().unwrap(), &g, &l, &p.deploy_options())).await
+                        .unwrap_or_else(|e| Err(pocket_core::Error::Invalid(e.to_string())));
+                    commands::game::report_restore(&h, r);
                 }
             });
             // started by Windows for an nxm:// link

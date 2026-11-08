@@ -14,6 +14,7 @@ import {
   updates as updatesApi, type ChoicesNeeded, type InstallRow, type Membership, type ModFile, type QueueSnapshot, type Update,
 } from "../../lib/api";
 import { installPrefs } from "../../lib/prefs";
+import { held } from "../../lib/tauri";
 import { record } from "../../lib/history";
 import * as ops from "../../lib/ops";
 import { FomodDialog } from "../FomodDialog";
@@ -47,8 +48,7 @@ export function useInstalled() {
     load();
     queue.get().then(setSnap).catch(() => {});
     const offs: Array<() => void> = [];
-    library.onChanged(load).then((u) => offs.push(u));
-    queue.onChange(setSnap).then((u) => offs.push(u));
+    offs.push(held(library.onChanged(load)), held(queue.onChange(setSnap)));
     return () => offs.forEach((f) => f());
   }, []);
   const byMod = useMemo(() => { const m = new Map<number, InstallRow[]>(); for (const r of rows) m.set(r.modId, [...(m.get(r.modId) ?? []), r]); return m; }, [rows]);
@@ -80,9 +80,9 @@ export function ModKey({ mod, rows, queued, updates, onDetail, onLibrary, onFlag
     if (queued) return <span className="modkey" onClick={stop}><Key size={size} variant="ghost" icon="clock" disabled title={`${mod.name}: ${queued.toLowerCase()} (Downloads)`}>{queued}</Key></span>;
     return (
       <span className="modkey" onClick={stop} onKeyDown={stop}>
-        <Key size={size} icon="install" disabled={busy} aria-label={`Quick install ${mod.name}`}
+        <Key size={size} icon="install" busy={busy} aria-label={`Quick install ${mod.name}`}
           title="Queue the newest main file and its requirements"
-          onClick={async () => { setBusy(true); await quickInstall(mod.modId, mod.name); setBusy(false); }}>{label ? "Quick install" : busy ? "…" : "Install"}</Key>
+          onClick={async () => { setBusy(true); await quickInstall(mod.modId, mod.name); setBusy(false); }}>{label ? "Quick install" : "Install"}</Key>
       </span>
     );
   }
@@ -90,7 +90,7 @@ export function ModKey({ mod, rows, queued, updates, onDetail, onLibrary, onFlag
   const upd = updates?.some((u) => u.modId === mod.modId);
   return (
     <span className="modkey" ref={ref} onClick={stop} onKeyDown={stop}>
-      <Key size={size} variant={upd ? undefined : "dark"} icon={upd ? "downloads" : on ? "check" : "minus"} latched={open} aria-haspopup="menu" aria-expanded={open}
+      <Key size={size} variant={upd ? undefined : "dark"} icon={upd ? "downloads" : on ? "check" : "minus"} latched={open} busy={busy} aria-haspopup="menu" aria-expanded={open}
         aria-label={`${mod.name}: installed, ${on ? "on" : "off"}. Options`} title="On/off, update, group, profiles, remove"
         onClick={() => setOpen(!open)}>{upd ? "Update" : on ? "Installed" : "Off"}<Icon name="down" size={9} /></Key>
       {open && (
@@ -126,7 +126,9 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
   mod: ModRef; rows: InstallRow[]; updates: Update[]; onClose: () => void; onDetail?: () => void; onLibrary?: () => void;
   onFlag?: (flag: "hidden" | "ignored", on: boolean) => void; flags?: { hidden: boolean; ignored: boolean }; onOptions: (r: InstallRow) => void;
 }) {
-  const [busy, setBusy] = useState(false);
+  // which key's work is running: that key shows it, the others wait
+  const [busy, setBusy] = useState<string | null>(null);
+  const working = busy !== null;
   const [groupList, setGroupList] = useState<{ presets: string[]; custom: string[] }>({ presets: [], custom: [] });
   const [member, setMember] = useState<Map<number, Membership[]>>(new Map());
   const [newGroup, setNewGroup] = useState("");
@@ -135,19 +137,24 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
     Promise.all(rows.map((r) => profiles.memberships(r.id).then((m) => [r.id, m] as const))).then((l) => setMember(new Map(l))).catch(() => {});
   }, [rows]);
   useEffect(() => { load(); }, [load]);
-  const run = async (f: () => Promise<unknown>, closeAfter = false) => {
-    setBusy(true);
-    try { await f(); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); load(); if (closeAfter) onClose(); }
+  const run = async (id: string, f: () => Promise<unknown>, closeAfter = false) => {
+    setBusy(id);
+    try { await f(); } catch (e) { toast(errorText(e), true); } finally { setBusy(null); load(); if (closeAfter) onClose(); }
   };
   const updOf = (r: InstallRow) => updates.find((u) => u.installId === r.id) ?? updates.find((u) => !u.installId && u.modId === r.modId);
   const nexus = mod.modId < 900_000_000;
   const row0 = rows[0];
   const custom = row0.customGroup ? row0.group : null;
-  const setInProfile = (m: Membership, r: InstallRow, v: boolean) => run(async () => {
+  const setInProfile = (m: Membership, r: InstallRow, v: boolean) => run("profile", async () => {
     if (m.active) { await ops.setEnabled([r], v); return; }
     await profiles.setIn(m.profileId, r.id, v);
     record({ label: `Turned ${v ? "on" : "off"} ${r.name} in ${m.name}`, undo: () => profiles.setIn(m.profileId, r.id, !v), redo: () => profiles.setIn(m.profileId, r.id, v) });
   });
+  const addGroup = () => {
+    const g = newGroup.trim();
+    if (!g || working) return;
+    void run("newGroup", async () => { await groupsApi.create(g); await ops.moveToGroup(rows, g); setNewGroup(""); });
+  };
 
   return (
     <>
@@ -160,23 +167,23 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
               <div className="mm-line">
                 <span className="m-main"><span className="m-t">{rows.length > 1 ? (r.name !== mod.name ? r.name : `File ${r.fileId}`) : "This copy"}</span>
                   <span className="m-meta">{r.version && <span>v{r.version}</span>}<span>{SOURCE[r.source]}</span><span>{r.deployedFiles} {r.deployedFiles === 1 ? "file" : "files"} in the game</span></span></span>
-                <Switch checked={r.enabled} disabled={busy} onChange={(v) => run(() => ops.setEnabled([r], v))}>{r.enabled ? "On" : "Off"}</Switch>
+                <Switch checked={r.enabled} disabled={working} onChange={(v) => run("switch", () => ops.setEnabled([r], v))}>{r.enabled ? "On" : "Off"}</Switch>
               </div>
               <div className="actions">
-                {u && nexus && <Key size="sm" icon="downloads" disabled={busy} onClick={() => run(async () => { await (u.fileId ? queue.add(u.modId, u.fileId, true) : queue.add(r.modId, r.fileId, true)); toast(`${r.name} ${u.latest} queued`); }, true)}>Update to {u.latest}</Key>}
-                {u && <Key size="sm" variant="ghost" disabled={busy} title="Do not offer this version again" onClick={() => run(async () => { await updatesApi.skip(u.modId, u.latest); toast(`Skipped ${r.name} ${u.latest}`); })}>Skip {u.latest}</Key>}
-                {r.enabled && r.deployedFiles === 0 && <Key size="sm" icon="install" disabled={busy} onClick={() => run(async () => {
+                {u && nexus && <Key size="sm" icon="downloads" busy={busy === `update${r.id}`} disabled={working} onClick={() => run(`update${r.id}`, async () => { await (u.fileId ? queue.add(u.modId, u.fileId, true) : queue.add(r.modId, r.fileId, true)); toast(`${r.name} ${u.latest} queued`); }, true)}>Update to {u.latest}</Key>}
+                {u && <Key size="sm" variant="ghost" busy={busy === `skip${r.id}`} disabled={working} title="Do not offer this version again" onClick={() => run(`skip${r.id}`, async () => { await updatesApi.skip(u.modId, u.latest); toast(`Skipped ${r.name} ${u.latest}`); })}>Skip {u.latest}</Key>}
+                {r.enabled && r.deployedFiles === 0 && <Key size="sm" icon="install" busy={busy === `deploy${r.id}`} disabled={working} onClick={() => run(`deploy${r.id}`, async () => {
                   const d = await library.deploy(r.id, { takeConflicts: false, allowCopy: false });
                   if (d.outcome === "deployed") toast(`Deployed ${r.name}`); else { toast(`${r.name} ${d.outcome === "conflicts" ? "conflicts with other mods" : "needs copying"}. Sort it out in Library`, true); onLibrary?.(); }
                 })}>Deploy</Key>}
-                {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" disabled={busy} onClick={() => onOptions(r)} title="Pick other installer options, no download">Change options</Key>}
-                <Key size="sm" variant="ghost" icon="trash" disabled={busy} title={r.source === "vortex" ? "Remove from the game, keep in Vortex" : "Goes to Recently removed"} onClick={() => run(() => ops.remove([r]), true)}>Remove</Key>
+                {r.hasOptions && <Key size="sm" variant="ghost" icon="tool" disabled={working} onClick={() => onOptions(r)} title="Pick other installer options, no download">Change options</Key>}
+                <Key size="sm" variant="ghost" icon="trash" busy={busy === `remove${r.id}`} disabled={working} title={r.source === "vortex" ? "Remove from the game, keep in Vortex" : "Goes to Recently removed"} onClick={() => run(`remove${r.id}`, () => ops.remove([r]), true)}>Remove</Key>
               </div>
               {(member.get(r.id)?.length ?? 0) > 1 && (
                 <div className="mm-sec">
                   <span className="sub-h">Profiles</span>
                   {member.get(r.id)!.map((m) => (
-                    <Switch key={m.profileId} checked={m.enabled} disabled={busy} onChange={(v) => setInProfile(m, r, v)}>
+                    <Switch key={m.profileId} checked={m.enabled} disabled={working} onChange={(v) => setInProfile(m, r, v)}>
                       {m.name}{m.active ? <span className="dim"> · active</span> : null}
                     </Switch>
                   ))}
@@ -187,15 +194,15 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
         })}
         <div className="mm-sec">
           <span className="sub-h">Group</span>
-          <select value={custom ?? ""} disabled={busy} aria-label="Group" onChange={(e) => run(() => ops.moveToGroup(rows, e.target.value || null))}>
+          <select value={custom ?? ""} disabled={working} aria-label="Group" onChange={(e) => run("group", () => ops.moveToGroup(rows, e.target.value || null))}>
             <option value="">{custom ? "Default group" : `${row0.group} (default)`}</option>
             {groupList.custom.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
           <div className="fbox" style={{ flex: "none" }}>
             <input className="finput" value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="New group" aria-label="New group name"
-              onKeyDown={(e) => { if (e.key === "Enter" && newGroup.trim()) run(async () => { await groupsApi.create(newGroup.trim()); await ops.moveToGroup(rows, newGroup.trim()); setNewGroup(""); }); }} />
-            <Key size="sm" variant="ghost" icon="plus" disabled={busy || !newGroup.trim()} aria-label="Create group and move here"
-              onClick={() => run(async () => { await groupsApi.create(newGroup.trim()); await ops.moveToGroup(rows, newGroup.trim()); setNewGroup(""); })} />
+              onKeyDown={(e) => { if (e.key === "Enter") addGroup(); }} />
+            <Key size="sm" variant="ghost" icon="plus" busy={busy === "newGroup"} disabled={working || !newGroup.trim()} aria-label="Create group and move here"
+              title="Make this group and move the mod into it (Enter)" onClick={addGroup} />
           </div>
         </div>
         <div className="mm-sec">
@@ -203,10 +210,10 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
           <div className="actions">
             {onDetail && <Key size="sm" variant="ghost" icon="info" onClick={() => { onClose(); onDetail(); }}>Page and other files</Key>}
             {onLibrary && <Key size="sm" variant="ghost" icon="library" onClick={() => { onClose(); onLibrary(); }}>Show in Library</Key>}
-            {nexus && <Key size="sm" variant="ghost" icon="star" disabled={busy} onClick={() => run(async () => { await endorseMod(mod.modId, mod.version ?? row0.version); toast(`Endorsed ${mod.name}`); })}>Endorse</Key>}
-            {nexus && <Key size="sm" variant="ghost" icon="eye" disabled={busy} onClick={() => run(async () => { await trackMod(mod.modId); toast(`Tracking ${mod.name}`); })}>Track</Key>}
-            {nexus && <Key size="sm" variant="ghost" icon="web" onClick={() => run(() => nexusPages.mod(mod.modId), true)} title="Opens where Settings says Nexus pages go">Nexus page</Key>}
-            {nexus && <Key size="sm" variant="ghost" icon="link" onClick={() => run(() => openExternal(nexusUrl.mod(mod.modId)), true)} title="Open in your browser">Open in browser</Key>}
+            {nexus && <Key size="sm" variant="ghost" icon="star" busy={busy === "endorse"} disabled={working} onClick={() => run("endorse", async () => { await endorseMod(mod.modId, mod.version ?? row0.version); toast(`Endorsed ${mod.name}`); })}>Endorse</Key>}
+            {nexus && <Key size="sm" variant="ghost" icon="eye" busy={busy === "track"} disabled={working} onClick={() => run("track", async () => { await trackMod(mod.modId); toast(`Tracking ${mod.name}`); })}>Track</Key>}
+            {nexus && <Key size="sm" variant="ghost" icon="web" busy={busy === "page"} onClick={() => run("page", () => nexusPages.mod(mod.modId), true)} title="Opens where Settings says Nexus pages go">Nexus page</Key>}
+            {nexus && <Key size="sm" variant="ghost" icon="link" busy={busy === "browser"} onClick={() => run("browser", () => openExternal(nexusUrl.mod(mod.modId)), true)} title="Open in your browser">Open in browser</Key>}
             {onFlag && flags && <Key size="sm" variant="ghost" icon="hide" onClick={() => { onFlag("hidden", !flags.hidden); onClose(); }}>{flags.hidden ? "Unhide in Browse" : "Hide in Browse"}</Key>}
             {onFlag && flags && <Key size="sm" variant="ghost" icon="x" onClick={() => { onFlag("ignored", !flags.ignored); onClose(); }}>{flags.ignored ? "Stop ignoring" : "Ignore"}</Key>}
           </div>

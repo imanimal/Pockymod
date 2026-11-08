@@ -162,7 +162,9 @@ pub fn deploy(db: &Db, game: &Path, library: &Path, install_id: i64, staging: &P
                 db.conn.execute("UPDATE deployed_files SET prev_install = ?2 WHERE target = ?1 AND prev_install IS NULL", params![tkey, install_id])?;
                 continue;
             }
-            let size = fs::metadata(&src)?.len();
+            let size = fs::metadata(&src).map_err(|e| if e.kind() == ErrorKind::NotFound {
+                Error::Invalid(format!("{} is missing from the mod's folder in the library. Install the mod again", p.source))
+            } else { e.into() })?.len();
             if let Some(parent) = dst.parent() {
                 fs::create_dir_all(parent).map_err(|e| if e.kind() == ErrorKind::PermissionDenied { permission_error(parent, game) } else { e.into() })?;
             }
@@ -325,6 +327,8 @@ fn remove_file(p: &Path, game: &Path) -> Result<()> {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
         Err(e) if e.kind() == ErrorKind::PermissionDenied => Err(permission_error(p, game)),
+        // ERROR_SHARING_VIOLATION: open in the game or a tool
+        Err(e) if e.raw_os_error() == Some(32) => Err(Error::Invalid(format!("{} is in use. Close the game and any tool using it, then try again", p.display()))),
         Err(e) => Err(e.into()),
     }
 }

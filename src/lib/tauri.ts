@@ -28,10 +28,20 @@ export async function listen<T>(event: string, cb: (payload: T) => void): Promis
     const { listen: l } = await import("@tauri-apps/api/event");
     return l<T>(event, (e) => cb(e.payload));
   }
+  // each listen gets its own entry, like Tauri's, so unlistening one never removes another with the same callback
   const set = demoListeners.get(event) ?? new Set();
-  set.add(cb as (p: unknown) => void);
+  const h = (p: unknown) => cb(p as T);
+  set.add(h);
   demoListeners.set(event, set);
-  return () => set.delete(cb as (p: unknown) => void);
+  return () => set.delete(h);
+}
+
+/** A listener's unlisten, usable before the listener is in place: called early, it removes the listener as soon as
+ *  it arrives (an effect cleaned up before `listen` resolved would otherwise leave it running). */
+export function held(p: Promise<Unlisten>): Unlisten {
+  let gone = false, off: Unlisten | undefined;
+  p.then((u) => { if (gone) u(); else off = u; }).catch(() => {});
+  return () => { gone = true; off?.(); off = undefined; };
 }
 
 /** Demo backend: emit an event to listeners. */

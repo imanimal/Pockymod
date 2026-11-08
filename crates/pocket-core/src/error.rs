@@ -23,11 +23,11 @@ pub enum Error {
     Decode(String),
     #[error("Windows Credential Manager: {0}")]
     Credentials(String),
-    #[error("{0}")]
+    #[error("{}", io_text(.0))]
     Io(#[from] std::io::Error),
     #[error("Local database: {0}")]
     Db(String),
-    #[error("Archive: {0}")]
+    #[error("{0}")]
     Archive(String),
     #[error("{0}")]
     Invalid(String),
@@ -53,6 +53,19 @@ impl Error {
             Error::Invalid(_) => "invalid",
             Error::Conflict(_) => "conflict",
         }
+    }
+}
+
+/// A file error in words a player can act on. Windows' own text is kept where it already says what happened.
+pub(crate) fn io_text(e: &std::io::Error) -> String {
+    use std::io::ErrorKind as K;
+    match (e.raw_os_error(), e.kind()) {
+        // ERROR_SHARING_VIOLATION, ERROR_LOCK_VIOLATION
+        (Some(32 | 33), _) => "A file is in use by another program. Close the game or the tool using it, then try again".into(),
+        (_, K::StorageFull | K::QuotaExceeded) => "The drive is full. Free some space, then try again".into(),
+        (_, K::PermissionDenied) => "Windows didn't allow access to a file. Close the game or the tool using it, then try again".into(),
+        (_, K::InvalidFilename) => format!("A file name isn't allowed on Windows ({e})"),
+        _ => e.to_string(),
     }
 }
 

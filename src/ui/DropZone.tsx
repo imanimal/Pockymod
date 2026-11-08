@@ -14,7 +14,8 @@ export function DropZone({ onChoices }: { onChoices: (c: ChoicesNeeded) => void 
   const install = async (paths: string[]) => {
     const list = paths.filter((p) => ARCHIVE.test(p));
     if (!list.length) { toast("Only .zip, .7z and .rar", true); return; }
-    setBusy(list.length);
+    // a second drop while the first is still going adds to the count
+    setBusy((n) => n + list.length);
     for (const p of list) {
       try {
         const { outcome, request } = await installArchive(p);
@@ -27,20 +28,23 @@ export function DropZone({ onChoices }: { onChoices: (c: ChoicesNeeded) => void 
   useEffect(() => {
     if (!inTauri()) return;
     const offs: Array<() => void> = [];
+    let gone = false;
+    // a listener that arrives after unmount is let go at once
+    const keep = (u: () => void) => { if (gone) u(); else offs.push(u); };
     import("@tauri-apps/api/webview").then(({ getCurrentWebview }) => getCurrentWebview().onDragDropEvent((e) => {
       const t = e.payload.type;
       if (t === "enter" || t === "over") setOver(true);
       else if (t === "leave") setOver(false);
       else if (t === "drop") { setOver(false); void install(e.payload.paths); }
-    })).then((u) => offs.push(u)).catch(() => {});
+    })).then(keep).catch(() => {});
     onManualDownload((e) => {
       if (!e.success || !e.path) { if (!e.success) toast("Download didn't finish", true); return; }
       const path = e.path;
       const name = path.split(/[\\/]/).pop() ?? "the file";
       if (!ARCHIVE.test(path)) { toast(`Downloaded ${name}`); return; }
       toast(`Downloaded ${name}`, false, { label: "Install", run: () => void install([path]) });
-    }).then((u) => offs.push(u));
-    return () => offs.forEach((f) => f());
+    }).then(keep);
+    return () => { gone = true; offs.forEach((f) => f()); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

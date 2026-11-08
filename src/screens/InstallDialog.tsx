@@ -62,7 +62,7 @@ export function InstallDialog({ modId, fileId, name, premium, onClose, onQueued 
         </div>
         <div className="actions" style={{ justifyContent: "flex-end" }}>
           <Key variant="ghost" onClick={onClose}>Cancel</Key>
-          <Key variant="primary" icon="install" onClick={go} disabled={busy}>{chosen.length > 1 ? `Install ${chosen.length} mods` : "Install"}</Key>
+          <Key variant="primary" icon="install" onClick={go} busy={busy}>{chosen.length > 1 ? `Install ${chosen.length} mods` : "Install"}</Key>
         </div>
       </>}
     </Dialog>

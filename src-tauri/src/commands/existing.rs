@@ -78,8 +78,9 @@ pub async fn existing_track(app: AppHandle, state: State<'_, AppState>, vortex_m
     let (game, library) = paths.require()?;
     let mut res = TrackResult { vortex: TrackReport::default(), found: 0, profiles: None };
     if vortex_mods {
-        if let Some(setup) = vortex::find(&game) {
-            let list = vortex::list_mods(&setup, &game);
+        let g = game.clone();
+        let found = blocking(move || Ok(vortex::find(&g).map(|s| { let l = vortex::list_mods(&s, &g); (s, l) }))).await?;
+        if let Some((setup, list)) = found {
             let total = list.len();
             let _ = app.emit("existing-progress", serde_json::json!({ "stage": "matching", "done": 0, "total": total, "name": "" }));
             let app2 = app.clone();
@@ -124,7 +125,11 @@ pub struct VortexProfilesView { pub profiles: Vec<ProfileBrief>, pub imported: b
 
 /// Unmanaged mods sorted for cleaning up: copies of Vortex mods, frameworks put in by hand, and the rest.
 #[tauri::command]
-pub async fn unmanaged_list(state: State<'_, AppState>) -> Result<pocket_core::found::Unmanaged> { pocket_core::found::unmanaged(&state.db.lock().unwrap()) }
+pub async fn unmanaged_list(state: State<'_, AppState>) -> Result<pocket_core::found::Unmanaged> {
+    // reads every Vortex mod's folder
+    let db = state.db.clone();
+    blocking(move || pocket_core::found::unmanaged(&db.lock().unwrap())).await
+}
 
 /// Vortex's profiles, whether they were brought in already, and how many Vortex mods are tracked here.
 #[tauri::command]
@@ -189,6 +194,7 @@ pub async fn group_delete(app: AppHandle, state: State<'_, AppState>, name: Stri
 pub struct BulkReport { pub done: usize, pub failed: Vec<(i64, String)> }
 
 /// Turn many mods on or off, or remove them, in one go. Each is done on its own, so one failure stops nothing.
+/// Progress goes out as `library-bulk` events ([done, total]) when there are several.
 #[tauri::command]
 pub async fn library_bulk(app: AppHandle, state: State<'_, AppState>, install_ids: Vec<i64>, action: String) -> Result<BulkReport> {
     super::not_while_running()?;
@@ -196,10 +202,13 @@ pub async fn library_bulk(app: AppHandle, state: State<'_, AppState>, install_id
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
     let db = state.db.clone();
+    let a = app.clone();
     let rep = blocking(move || {
         let d = db.lock().unwrap();
         let mut rep = BulkReport::default();
-        for id in install_ids {
+        let total = install_ids.len();
+        for (i, id) in install_ids.into_iter().enumerate() {
+            if total > 1 { let _ = a.emit("library-bulk", (i, total)); }
             let r = match action.as_str() {
                 // on, but clashing with mods that are on: say so instead of counting it as done
                 "enable" => match profiles::set_enabled(&d, &game, &library, id, true, &opts) {
@@ -215,6 +224,7 @@ pub async fn library_bulk(app: AppHandle, state: State<'_, AppState>, install_id
             };
             match r { Ok(()) => rep.done += 1, Err(e) => rep.failed.push((id, e.to_string())) }
         }
+        if total > 1 { let _ = a.emit("library-bulk", (total, total)); }
         Ok(rep)
     }).await?;
     let _ = app.emit("library-changed", ());
@@ -229,11 +239,15 @@ pub async fn library_restore_replaced(app: AppHandle, state: State<'_, AppState>
     let db = state.db.clone();
     let n = blocking(move || {
         let d = db.lock().unwrap();
-        let mut n = 0;
-        for id in install_ids { if install::restore_replaced(&d, &game, &library, id).is_ok() { n += 1; } }
-        Ok(n)
-    }).await?;
+        let (mut n, mut first_err) = (0, None);
+        for id in install_ids {
+            match install::restore_replaced(&d, &game, &library, id) { Ok(_) => n += 1, Err(e) => { first_err.get_or_insert(e); } }
+        }
+        // none went back: say why instead of a quiet 0
+        match first_err { Some(e) if n == 0 => Err(e), _ => Ok(n) }
+    }).await;
     let _ = app.emit("library-changed", ());
+    let n = n?;
     Ok(n)
 }
 
@@ -250,16 +264,23 @@ pub async fn library_keep_one(app: AppHandle, state: State<'_, AppState>, keep: 
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
     let db = state.db.clone();
-    blocking(move || {
+    let r = blocking(move || {
         let d = db.lock().unwrap();
         // removing a copy puts back whatever it had set aside, then the kept one takes its files again
         for id in remove.iter().filter(|x| **x != keep) { install::uninstall(&d, &game, *id)?; }
         let on: bool = d.conn.query_row("SELECT COALESCE((SELECT enabled FROM profile_mods WHERE install_id = ?1 AND profile_id = (SELECT id FROM profiles WHERE active = 1 LIMIT 1)), 0)", [keep], |r| r.get(0))?;
-        if on { let _ = install::redeploy_any(&d, &game, &library, keep, &opts); }
+        if on {
+            match install::redeploy_any(&d, &game, &library, keep, &opts) {
+                Ok(pocket_core::deploy::DeployOutcome::Deployed { .. }) => {}
+                Ok(_) => return Err(Error::Invalid("Removed the extra copies, but the one you kept clashes with other mods now. Choose in Library".into())),
+                Err(e) => return Err(Error::Invalid(format!("Removed the extra copies, but the one you kept couldn't go back in the game: {e}"))),
+            }
+        }
         Ok(())
-    }).await?;
+    }).await;
+    // copies may be gone even when the kept one failed
     let _ = app.emit("library-changed", ());
-    Ok(())
+    r
 }
 
 // ── recently removed ──
@@ -291,12 +312,16 @@ pub async fn library_trash_restore(app: AppHandle, state: State<'_, AppState>, t
 /// Delete removed mods for good: one, or (without an id) everything past the time and size limits.
 #[tauri::command]
 pub async fn library_trash_purge(state: State<'_, AppState>, trash_id: Option<i64>, all: Option<bool>) -> Result<usize> {
-    let d = state.db.lock().unwrap();
-    if all.unwrap_or(false) {
-        let ids: Vec<i64> = install::list_trash(&d)?.into_iter().map(|t| t.id).collect();
-        let mut n = 0;
-        for id in ids { n += install::purge_trash(&d, Some(id))?; }
-        return Ok(n);
-    }
-    install::purge_trash(&d, trash_id)
+    // deleting folders can take a while: not on the async runtime
+    let db = state.db.clone();
+    blocking(move || {
+        let d = db.lock().unwrap();
+        if all.unwrap_or(false) {
+            let ids: Vec<i64> = install::list_trash(&d)?.into_iter().map(|t| t.id).collect();
+            let mut n = 0;
+            for id in ids { n += install::purge_trash(&d, Some(id))?; }
+            return Ok(n);
+        }
+        install::purge_trash(&d, trash_id)
+    }).await
 }

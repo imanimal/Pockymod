@@ -81,19 +81,34 @@ pub fn check(path: &Path, name: &str) -> Result<Check> {
 
 /// A .zip with each file at its game path (archive/pc/mod/…, r6/scripts/…). Only folders can be packed.
 pub fn package(folder: &Path, out_dir: &Path, name: &str, version: &str) -> Result<PathBuf> {
+    package_with(folder, out_dir, name, version, |_, _| {})
+}
+
+/// `package`, with `progress(bytes packed, total bytes)` after each file.
+pub fn package_with(folder: &Path, out_dir: &Path, name: &str, version: &str, mut progress: impl FnMut(u64, u64)) -> Result<PathBuf> {
     if !folder.is_dir() { return Err(Error::Invalid("Choose the mod's folder to pack it".into())); }
     let c = check(folder, name)?;
     if c.plan.files.is_empty() { return Err(Error::Invalid("Nothing in that folder installs into the game".into())); }
     fs::create_dir_all(out_dir)?;
     let file = out_dir.join(format!("{}-{}.zip", crate::cyberpunk::layout::safe_folder(name).replace(' ', "_"), version.replace(' ', "")));
-    let mut z = zip::ZipWriter::new(fs::File::create(&file)?);
-    let opts = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-    for p in &c.plan.files {
-        z.start_file(p.target.clone(), opts).map_err(|e| Error::Archive(e.to_string()))?;
-        z.write_all(&fs::read(folder.join(&p.source))?)?;
-    }
-    z.finish().map_err(|e| Error::Archive(e.to_string()))?;
-    Ok(file)
+    let total: u64 = c.plan.files.iter().filter_map(|p| fs::metadata(folder.join(&p.source)).ok()).map(|m| m.len()).sum();
+    let written = (|| -> Result<()> {
+        let mut z = zip::ZipWriter::new(fs::File::create(&file)?);
+        let opts = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+        let mut done = 0u64;
+        for p in &c.plan.files {
+            z.start_file(p.target.clone(), opts).map_err(|e| Error::Archive(format!("Could not write the zip: {e}")))?;
+            let bytes = fs::read(folder.join(&p.source))?;
+            z.write_all(&bytes)?;
+            done += bytes.len() as u64;
+            progress(done, total);
+        }
+        z.finish().map_err(|e| Error::Archive(format!("Could not write the zip: {e}")))?;
+        Ok(())
+    })();
+    // a half-written zip must not look like a finished one
+    if written.is_err() { let _ = fs::remove_file(&file); }
+    written.map(|_| file)
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -117,7 +132,7 @@ pub struct Publish {
 
 /// Upload a new version of a file. `progress(sent, total)` follows the parts.
 pub async fn publish(http: &reqwest::Client, key: &str, p: &Publish, mut progress: impl FnMut(u64, u64)) -> Result<u64> {
-    let size = fs::metadata(&p.file)?.len();
+    let size = fs::metadata(&p.file).map_err(|_| Error::Invalid(format!("{} isn't there any more. Pack it again or pick the file again", p.file.display())))?.len();
     let fname = p.file.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "mod.zip".into());
     let api = |m: reqwest::Method, path: &str| http.request(m, format!("{UPLOAD_BASE}{path}")).header("apikey", key)
         .header("Application-Name", crate::APP_NAME).header("Application-Version", crate::APP_VERSION);
@@ -157,7 +172,12 @@ pub async fn publish(http: &reqwest::Client, key: &str, p: &Publish, mut progres
     loop {
         let r = api(reqwest::Method::GET, &format!("/uploads/{id}")).send().await?;
         let v: serde_json::Value = r.json().await.unwrap_or_default();
-        if v["data"]["state"] == "available" { break; }
+        let state = v["data"]["state"].as_str().unwrap_or("").to_ascii_lowercase();
+        if state == "available" { break; }
+        // UNVERIFIED: the names of the states a refused upload ends in
+        if ["fail", "reject", "error", "infect", "quarantin"].iter().any(|w| state.contains(w)) {
+            return Err(Error::Invalid(format!("Nexus didn't accept the upload (it says {state}). Check the file and try again")));
+        }
         if wait > 120_000 { return Err(Error::Invalid("Nexus is still processing the upload. Check the mod page in a few minutes".into())); }
         tokio::time::sleep(std::time::Duration::from_millis(wait)).await;
         wait = (wait as f64 * 1.5) as u64;
@@ -171,7 +191,8 @@ pub async fn publish(http: &reqwest::Client, key: &str, p: &Publish, mut progres
     let version_id = v["data"]["version"]["id"].as_u64().unwrap_or(0);
     if let (Some(text), Some(mod_id)) = (p.changelog.as_deref().filter(|t| !t.trim().is_empty()), p.mod_id) {
         let uid = mods::mod_uid(mod_id);
-        let _ = api(reqwest::Method::POST, &format!("/mods/{uid}/changelogs")).json(&serde_json::json!({ "version": p.version, "changelog": text })).send().await?;
+        // the version is up by now: a changelog that fails to post must not report the whole publish as failed
+        let _ = api(reqwest::Method::POST, &format!("/mods/{uid}/changelogs")).json(&serde_json::json!({ "version": p.version, "changelog": text })).send().await;
     }
     Ok(version_id)
 }

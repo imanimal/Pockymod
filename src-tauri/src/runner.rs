@@ -173,13 +173,15 @@ pub fn replaced_by_file(db: &pocket_core::db::Db, mod_id: u32, file_id: u32, fil
 
 async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Result<ItemState> {
     let st = app.state::<AppState>();
+    // the library is moving: wait for it, then work in its new place
+    while st.moving.load(std::sync::atomic::Ordering::SeqCst) { tokio::time::sleep(std::time::Duration::from_millis(500)).await; }
     let paths = Paths::load(&st.db.lock().unwrap());
     let (game, library) = paths.require()?;
     // added for another mod, and the user has it by now (from Vortex, by hand, or an earlier install): keep theirs
     let for_another = item.required_by.is_some();
     // a requirement is met by any copy of the mod the user has (turned on if it is off); a collection asks for this
     // file, so only a copy of the same file counts
-    if for_another && !item.from_collection && crate::commands::library::present_mod_ids(&st.db)?.contains(&item.mod_id) {
+    if for_another && !item.from_collection && crate::commands::library::present_ids(&st.db).await?.contains(&item.mod_id) {
         let off: Option<i64> = {
             let d = st.db.lock().unwrap();
             let active = install::active_profile(&d)?;
@@ -190,15 +192,25 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         if let Some(id) = off {
             let db = st.db.clone();
             let (g, l, o) = (game.clone(), library.clone(), paths.deploy_options());
-            let _ = tauri::async_runtime::spawn_blocking(move || pocket_core::profiles::set_enabled(&db.lock().unwrap(), &g, &l, id, true, &o)).await;
+            let on = tauri::async_runtime::spawn_blocking(move || pocket_core::profiles::set_enabled(&db.lock().unwrap(), &g, &l, id, true, &o)).await
+                .map_err(|e| Error::Invalid(e.to_string()))?;
             let _ = app.emit("library-changed", ());
-            return Ok(ItemState::Done { install_id: Some(id), note: Some(format!("You already have {}. Turned it on", item.mod_name)) });
+            let note = match on {
+                Ok(Some(pocket_core::deploy::DeployOutcome::Deployed { .. })) => format!("You already have {}. Turned it on", item.mod_name),
+                Ok(Some(pocket_core::deploy::DeployOutcome::Conflicts { .. })) => format!("You already have {}, but it clashes with other mods. Choose in Library", item.mod_name),
+                Ok(Some(pocket_core::deploy::DeployOutcome::NeedsCopy { reason })) => format!("You already have {}, but it isn't in the game. {reason}", item.mod_name),
+                Ok(None) => format!("You already have {}", item.mod_name),
+                Err(e) => format!("You already have {}, but it couldn't be turned on: {e}", item.mod_name),
+            };
+            return Ok(ItemState::Done { install_id: Some(id), note: Some(note) });
         }
         return Ok(ItemState::Done { install_id: None, note: Some(format!("You already have {}", item.mod_name)) });
     }
     st.queue.lock().unwrap().set(item.id, ItemState::Downloading { received: 0, total: Some(item.size) });
     emit(app);
 
+    // a background prefetch is getting this very file: wait for it rather than write the same file twice
+    while st.fetching.lock().unwrap().contains(&(item.mod_id, item.file_id)) { tokio::time::sleep(std::time::Duration::from_millis(500)).await; }
     // already downloaded and intact: skip the download
     let have = install::downloaded_archive(&st.db.lock().unwrap(), item.mod_id, item.file_id)?;
     let archive = match have {
@@ -262,8 +274,14 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         ids.into_iter().find(|i| replace_only.contains(i))
     } else { None };
     // installer options are asked through the normal path, so the Vortex in-place update is for plain archives
-    let has_options = pocket_core::archive::list(&archive).map(|e| pocket_core::fomod::find_config(&e).is_some() || pocket_core::fomod::variants(&e, &item.mod_name).is_some()).unwrap_or(false);
-    if let (Some(vid), Some(setup), false) = (vortex_id, pocket_core::vortex::find(&game), has_options) {
+    let (has_options, setup) = {
+        let (a, g, name, look) = (archive.clone(), game.clone(), item.mod_name.clone(), vortex_id.is_some());
+        tauri::async_runtime::spawn_blocking(move || {
+            let opts = pocket_core::archive::list(&a).map(|e| pocket_core::fomod::find_config(&e).is_some() || pocket_core::fomod::variants(&e, &name).is_some()).unwrap_or(false);
+            (opts, if look { pocket_core::vortex::find(&g) } else { None })
+        }).await.map_err(|e| Error::Invalid(e.to_string()))?
+    };
+    if let (Some(vid), Some(setup), false) = (vortex_id, setup, has_options) {
         let db = st.db.clone();
         let (g, l, a, uri, fid, ver) = (game.clone(), library.clone(), archive.clone(), pocket_core::queue::download_name(item.mod_id, item.file_id, &item.uri), item.file_id, item.version.clone());
         let out = tauri::async_runtime::spawn_blocking(move || pocket_core::vortex::update_in_place(&db.lock().unwrap(), &g, &l, &setup, vid, &a, &uri, fid, &ver)).await
@@ -280,8 +298,15 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
         same_file_only: item.from_collection };
     let db = st.db.clone();
     let (g2, l2, req2) = (game.clone(), library.clone(), req.clone());
-    let mut out = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &g2, &l2, &req2)).await
-        .map_err(|e| Error::Invalid(e.to_string()))??;
+    let mut out = match tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &g2, &l2, &req2)).await
+        .map_err(|e| Error::Invalid(e.to_string()))? {
+        // a download that arrived broken: drop it, so Retry downloads it again instead of failing the same way
+        Err(Error::Archive(m)) if m.starts_with(pocket_core::archive::DAMAGED) => {
+            let _ = std::fs::remove_file(&archive_for_choices);
+            return Err(Error::Archive(format!("{}. Press Retry to download it again", m.trim_end_matches(". Download it again"))));
+        }
+        r => r?,
+    };
     // a collection's curator picked this mod's installer options: use them instead of asking
     if let InstallOutcome::NeedsChoices { fomod, .. } = &out {
         let picks = pocket_core::collection_manifest::choices_for(&st.db.lock().unwrap(), item.mod_id, item.file_id);

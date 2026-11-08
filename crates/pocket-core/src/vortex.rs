@@ -145,6 +145,8 @@ pub fn track(db: &Db, game: &Path, setup: &Setup, mods: &[Resolved]) -> Result<T
     let mut rep = TrackReport::default();
     let staging = setup.staging.clone().unwrap_or_default();
     let profile = install::active_profile(db)?;
+    // only records (the files are Vortex's and stay where they are): one transaction, not one per file
+    let tx = db.conn.unchecked_transaction()?;
     for r in mods {
         let exists: Option<i64> = db.conn.query_row("SELECT id FROM installs WHERE source = 'vortex' AND external = ?1", params![r.vortex.folder], |x| x.get(0)).optional()?;
         if exists.is_some() { rep.already += 1; continue; }
@@ -174,6 +176,7 @@ pub fn track(db: &Db, game: &Path, setup: &Setup, mods: &[Resolved]) -> Result<T
         rep.tracked += 1;
         rep.install_ids.push(id);
     }
+    tx.commit()?;
     Ok(rep)
 }
 
@@ -249,17 +252,41 @@ pub fn update_in_place(db: &Db, game: &Path, library: &Path, setup: &Setup, inst
     let old = staging_root.join(format!("__pocket_old_{folder}"));
     let extracted = staging_root.join(format!("__pocket_x_{folder}"));
     for p in [&fresh, &old, &extracted] { let _ = fs::remove_dir_all(p); }
-    archive::extract(archive_path, &extracted)?;
-    for p in &plan.files {
-        let to = fresh.join(&p.target);
-        if let Some(parent) = to.parent() { fs::create_dir_all(parent)?; }
-        fs::rename(extracted.join(&p.source), &to).or_else(|_| fs::copy(extracted.join(&p.source), &to).map(|_| ()))?;
-    }
+    let built = (|| -> Result<()> {
+        archive::extract(archive_path, &extracted)?;
+        for p in &plan.files {
+            let to = fresh.join(&p.target);
+            if let Some(parent) = to.parent() { fs::create_dir_all(parent)?; }
+            fs::rename(extracted.join(&p.source), &to).or_else(|_| fs::copy(extracted.join(&p.source), &to).map(|_| ()))?;
+        }
+        Ok(())
+    })();
     let _ = fs::remove_dir_all(&extracted);
+    // nothing half-made is left in Vortex's folder, where Vortex would take it for a mod
+    if let Err(e) = built { let _ = fs::remove_dir_all(&fresh); return Err(e); }
 
-    deploy::undeploy(db, game, install_id)?;
-    if dir.exists() { fs::rename(&dir, &old)?; }
-    fs::rename(&fresh, &dir)?;
+    // the old version back in the game, from Vortex's folder as it is now
+    let put_back = || -> Result<bool> {
+        let back = install::staged_plan(&dir, &name);
+        let out = deploy::deploy(db, game, library, install_id, &dir, &back.files, &DeployOptions { allow_copy: true, take_conflicts: false, no_manifest: true });
+        db.conn.execute("UPDATE deployed_files SET method = 'vortex' WHERE install_id = ?1", params![install_id])?;
+        Ok(matches!(out, Ok(DeployOutcome::Deployed { .. })))
+    };
+    if let Err(e) = deploy::undeploy(db, game, install_id) {
+        let _ = fs::remove_dir_all(&fresh);
+        let _ = put_back();
+        return Err(e);
+    }
+    let swapped = (|| -> std::io::Result<()> {
+        if dir.exists() { fs::rename(&dir, &old)?; }
+        if let Err(e) = fs::rename(&fresh, &dir) { if old.exists() { let _ = fs::rename(&old, &dir); } return Err(e); }
+        Ok(())
+    })();
+    if let Err(e) = swapped {
+        let _ = fs::remove_dir_all(&fresh);
+        let _ = put_back();
+        return Err(Error::Invalid(format!("Couldn't swap the new files into Vortex's mods folder. {} Close Vortex and try again", crate::error::io_text(&e))));
+    }
     let staged = install::staged_plan(&dir, &name);
     let vopts = DeployOptions { no_manifest: true, ..Default::default() };
     let outcome = deploy::deploy(db, game, library, install_id, &dir, &staged.files, &vopts);
@@ -281,9 +308,9 @@ pub fn update_in_place(db: &Db, game: &Path, library: &Path, setup: &Setup, inst
             // put Vortex's folder back as it was and redeploy it
             let _ = fs::remove_dir_all(&dir);
             if old.exists() { fs::rename(&old, &dir)?; }
-            let back = install::staged_plan(&dir, &name);
-            let _ = deploy::deploy(db, game, library, install_id, &dir, &back.files, &DeployOptions { allow_copy: true, take_conflicts: false, no_manifest: true });
-            db.conn.execute("UPDATE deployed_files SET method = 'vortex' WHERE install_id = ?1", params![install_id])?;
+            if !put_back()? {
+                return Err(Error::Invalid(format!("{name} wasn't updated, and the old version couldn't go back in the game. Turn it on again in Library")));
+            }
         }
     }
     outcome

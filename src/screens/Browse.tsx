@@ -19,6 +19,7 @@ import { ModKey, useInstalled } from "./browse/ModActions";
 import { ADULT_OPTIONS, setAdultPref, setAiPref, useAdult, useAiHide, type Adult } from "../lib/prefs";
 import { AI_OPTIONS, aiHideText, withAiHidden, type AiHide } from "../lib/ai";
 import { AiTags } from "../ui/AiTags";
+import { toast } from "../ui/toast";
 
 /** What the cards need to show their key: the user's copies of each mod, the queue, updates and the flag setter. */
 interface CardCtx { byMod: Map<number, InstallRow[]>; queued: Map<number, string>; updates: Update[]; onLibrary?: () => void; onFlag: (c: CardView, f: "hidden" | "ignored", on: boolean) => void }
@@ -161,14 +162,26 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
     || since !== "any" || dl !== "any" || size !== "any" || local.downloaded !== null || local.showHidden || explore || view !== "discover");
 
   const seq = useRef(0);
+  const lastKey = useRef("");
+  // what the list is, apart from its offset; built from the choices, not `effective`, whose dates move with the clock
+  const listKey = JSON.stringify([{ ...q, offset: 0 }, adult !== "hide", aiHide, since, dl, size, patch?.at ?? null, q.sort === "random" ? seed : null, view, local]);
+  // more: this search adds the next page under the list (Show more) rather than starting it again
+  const [more, setMore] = useState(false);
   useEffect(() => {
     const n = ++seq.current;
-    setBusy(true); setErr(null);
+    // a change to anything but the offset (a filter, the patch, the adult setting) starts the list from the top:
+    // the offset goes back to 0 and this runs again
+    const next = effective.offset > 0 && listKey === lastKey.current;
+    lastKey.current = listKey;
+    if (effective.offset > 0 && !next) { setQ((old) => ({ ...old, offset: 0 })); return; }
+    setBusy(true); setMore(next); setErr(null);
     browse.search(effective, local)
-      .then((r) => { if (n !== seq.current) return; setRes(r); setResults((old) => r.offset > 0 ? [...old, ...r.nodes.filter((x) => !old.some((o) => o.modId === x.modId))] : r.nodes); })
+      .then((r) => { if (n !== seq.current) return; setRes(r); setResults((old) => next ? [...old, ...r.nodes.filter((x) => !old.some((o) => o.modId === x.modId))] : r.nodes); })
       .catch((e) => { if (n === seq.current) setErr(errorText(e)); })
       .finally(() => { if (n === seq.current) setBusy(false); });
-  }, [effective, local]);
+  }, [effective, local, listKey]);
+  // the same query again (the same page, if Show more failed)
+  const retry = () => setQ((old) => ({ ...old }));
 
   const set = (patchQ: Partial<BrowseQuery>) => setQ((old) => ({ ...old, ...patchQ, offset: patchQ.offset ?? 0 }));
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -176,13 +189,15 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
   const clearAll = () => { setQ({ ...emptyQuery(), text }); setSince("any"); setDl("any"); setSize("any"); setLocal({ showHidden: false, downloaded: null }); setExplore(false); setView("discover"); };
 
   const flag = useCallback(async (c: CardView, which: "hidden" | "ignored", on: boolean) => {
-    await browse.setFlag(c.modId, which, on);
+    try { await browse.setFlag(c.modId, which, on); } catch (e) { toast(errorText(e), true); return false; }
     setResults((r) => r.map((n) => n.modId === c.modId ? { ...n, [which]: on } : n).filter((n) => local.showHidden || !n.hidden));
     if (which === "hidden" && on && !wide) setSel(null);
+    return true;
   }, [local.showHidden, wide]);
   const cards = useMemo<CardCtx>(() => ({ byMod: inst.byMod, queued: inst.queued, updates: updates ?? [], onLibrary, onFlag: (c, f, on) => void flag(c, f, on) }), [inst.byMod, inst.queued, updates, onLibrary, flag]);
 
-  const openShelf = (sq: Partial<BrowseQuery>) => { set({ ...sq }); setExplore(true); if (sq.compatibleSince === undefined) setPatchSel("any"); };
+  // a shelf's own patch is the one the front page showed it for (yours when the dropdown says any)
+  const openShelf = (sq: Partial<BrowseQuery>) => { set({ ...sq }); setExplore(true); if (sq.compatibleSince === undefined) setPatchSel("any"); else if (!patch) setPatchSel("auto"); };
 
   // active filters as removable chips
   const active: Array<{ label: string; off: () => void }> = [
@@ -191,7 +206,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
     ...q.categories.map((c) => ({ label: c, off: () => set({ categories: q.categories.filter((x) => x !== c) }) })),
     ...q.tags.map((t) => ({ label: `#${t}`, off: () => set({ tags: q.tags.filter((x) => x !== t) }) })),
     ...q.excludeTags.map((t) => ({ label: `not #${t}`, off: () => set({ excludeTags: q.excludeTags.filter((x) => x !== t) }) })),
-    ...(aiHide !== "show" ? [{ label: aiHideText(aiHide), off: () => void setAiPref("show").catch((e) => setErr(errorText(e))) }] : []),
+    ...(aiHide !== "show" ? [{ label: aiHideText(aiHide), off: () => void setAiPref("show").catch((e) => toast(errorText(e), true)) }] : []),
     ...(since !== "any" ? [{ label: `Updated in the last ${since === "7" ? "week" : since === "30" ? "month" : "year"}`, off: () => setSince("any") }] : []),
     ...(dl !== "any" ? [{ label: `${formatCount(Number(dl))}+ downloads`, off: () => setDl("any") }] : []),
     ...(size !== "any" ? [{ label: `Under ${size === "1024" ? "1 GB" : `${size} MB`}`, off: () => setSize("any") }] : []),
@@ -254,7 +269,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
       {view === "media" ? <MediaWall /> : <div className={`disc-body${drawer ? " with-drawer" : ""}`}>
         {drawer && (
           <Module icon="filter" title="Filters" count={active.length ? `${active.length} on` : undefined} className="filters"
-            tools={<Key size="sm" variant="ghost" icon="x" onClick={() => setDrawer(false)} aria-label="Close filters" />}>
+            tools={<Key size="sm" variant="ghost" icon="x" onClick={() => setDrawer(false)} aria-label="Close filters" title="Close filters" />}>
             <div className="sub-h">Needs framework</div>
             <div className="chips">
               {FRAMEWORKS.map((f) => <Chip key={f.key} on={q.frameworks.includes(f.key)} count={derived.get(`fw_${f.key}`)} onClick={() => { set({ frameworks: toggle(q.frameworks, f.key) }); setExplore(true); }} title={f.name}>{f.short}</Chip>)}
@@ -287,21 +302,21 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
               <Switch checked={local.showHidden} onChange={(v) => setLocal({ ...local, showHidden: v })}>Show mods I hid</Switch>
             </div>
             <div className="sub-h">Adult</div>
-            <Seg<Adult> label="Adult content" value={adult} onChange={(x) => void setAdultPref(x).catch((e) => setErr(errorText(e)))} options={ADULT_OPTIONS} />
+            <Seg<Adult> label="Adult content" value={adult} onChange={(x) => void setAdultPref(x).catch((e) => toast(errorText(e), true))} options={ADULT_OPTIONS} />
             <div className="sub-h">AI <span className="dim">· by Nexus's AI tags</span></div>
-            <Seg<AiHide> label="AI-tagged mods" value={aiHide} onChange={(x) => void setAiPref(x).catch((e) => setErr(errorText(e)))} options={AI_OPTIONS} />
+            <Seg<AiHide> label="AI-tagged mods" value={aiHide} onChange={(x) => void setAiPref(x).catch((e) => toast(errorText(e), true))} options={AI_OPTIONS} />
           </Module>
         )}
 
         <div className="disc-main">
-          {err && <div className="note bad">{err}</div>}
+          {err && <div className="note bad">{err} <button type="button" className="linkish" onClick={retry}>Try again</button></div>}
           {!filtering ? (
             <FrontPage patch={patch ?? yours} seed={seed} onReshuffle={() => setSeed((s) => s + 1)} onOpen={open} onSeeAll={openShelf}
-              categories={res?.facets.categories ?? []} onCategory={(c) => { set({ categories: [c] }); setExplore(true); }} includeAdult={adult !== "hide"} />
+              categories={res?.facets.categories ?? []} loading={busy && !res} onCategory={(c) => { set({ categories: [c] }); setExplore(true); }} includeAdult={adult !== "hide"} />
           ) : (
             <>
               <div className="results-bar">
-                <b className="hi">{res ? `${formatCount(res.total)} mods` : "Searching"}</b>
+                <b className="hi">{res && !(busy && !more) ? `${formatCount(res.total)} mods` : "Searching"}</b>
                 {res?.fromCache && <span className="dim">· from the cache</span>}
                 {active.map((a) => <button key={a.label} type="button" className="chip on" onClick={a.off}>{a.label}<span className="x">×</span></button>)}
                 {active.length > 1 && <Key size="sm" variant="ghost" onClick={clearAll}>Clear all</Key>}
@@ -311,7 +326,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
                 </select>
                 {q.sort === "random" && <Key size="sm" icon="refresh" onClick={() => setSeed((s) => s + 1)}>Shuffle again</Key>}
               </div>
-              {!busy && results.length === 0 && <Empty icon="browse" title="No mods match">Try fewer filters or another game version</Empty>}
+              {!busy && !err && results.length === 0 && <Empty icon="browse" title="No mods match">Try fewer filters or another game version</Empty>}
               {(view === "trending" || view === "popular") && active.length === 0 && results.length > 2 && (
                 <div className="hero2">{results.slice(0, 2).map((c) => <HeroCard key={c.modId} c={c} onOpen={() => open(c)} />)}</div>
               )}
@@ -321,7 +336,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
               </div>
               {res && results.length < res.total && (
                 <div className="actions" style={{ justifyContent: "center", margin: "1em 0" }}>
-                  <Key icon="down" disabled={busy} onClick={() => set({ offset: results.length })}>{busy ? "Loading" : `Show more (${formatCount(res.total - results.length)} left)`}</Key>
+                  <Key icon="down" busy={busy && more} disabled={busy} onClick={() => set({ offset: results.length })}>Show more ({formatCount(res.total - results.length)} left)</Key>
                 </div>
               )}
             </>
@@ -368,9 +383,9 @@ export function ModCard({ c, onOpen, compact }: { c: CardView; onOpen: () => voi
   );
 }
 
-function FrontPage({ patch, seed, onReshuffle, onOpen, onSeeAll, categories, onCategory, includeAdult }: {
+function FrontPage({ patch, seed, onReshuffle, onOpen, onSeeAll, categories, loading, onCategory, includeAdult }: {
   patch: PatchOpt | null; seed: number; onReshuffle: () => void; onOpen: (c: CardView) => void; onSeeAll: (q: Partial<BrowseQuery>) => void;
-  categories: Array<[string, number]>; onCategory: (c: string) => void; includeAdult: boolean;
+  categories: Array<[string, number]>; loading?: boolean; onCategory: (c: string) => void; includeAdult: boolean;
 }) {
   // shelves from extensions come after the first two of the app's own
   const fromAddons = useExtensions().active.shelves.map((s) => ({ id: `ext:${s.extId}:${s.id}`, title: s.title, icon: (s.icon && s.icon in ICONS ? s.icon : "addons") as IconName,
@@ -379,10 +394,11 @@ function FrontPage({ patch, seed, onReshuffle, onOpen, onSeeAll, categories, onC
   const list = [...base.slice(0, 2), ...fromAddons, ...base.slice(2)];
   return (
     <div className="stack">
-      {categories.length > 0 && (
+      {(categories.length > 0 || loading) && (
         <section>
-          <div className="grp" style={{ paddingTop: 0 }}>Categories <span>{categories.length}</span></div>
+          <div className="grp" style={{ paddingTop: 0 }}>Categories {categories.length > 0 && <span>{categories.length}</span>}</div>
           <div className="cat-tiles">
+            {categories.length === 0 && Array.from({ length: 7 }, (_, i) => <span key={i} className="skel" style={{ height: "3.1em" }} aria-hidden="true" />)}
             {categories.slice(0, 14).map(([name, n]) => (
               <button key={name} type="button" className="cat" onClick={() => onCategory(name)}><b>{name}</b><span>{formatCount(n)}</span></button>
             ))}
@@ -403,11 +419,12 @@ function Shelf({ title, icon, hint, q: asked, onOpen, onSeeAll, extra }: { title
   const empty = r !== null && r.nodes.length === 0;
   useEffect(() => {
     let live = true;
+    setErr(null);
     browse.search(q, { showHidden: false, downloaded: null, skipCounts: true }).then((x) => live && setR(x)).catch((e) => live && setErr(errorText(e)));
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
-  if (empty) return null;
+  if (empty && !err) return null;
   return (
     <section className="shelf">
       <div className="shelf-h">
@@ -419,7 +436,8 @@ function Shelf({ title, icon, hint, q: asked, onOpen, onSeeAll, extra }: { title
       </div>
       {err && <p className="dim">{err}</p>}
       <div className="shelf-row">
-        {r ? r.nodes.map((c) => <ModCard key={c.modId} c={c} compact onOpen={() => onOpen(c)} />) : Array.from({ length: 6 }, (_, i) => <span key={i} className="mcard panel compact skel" />)}
+        {r ? r.nodes.map((c) => <ModCard key={c.modId} c={c} compact onOpen={() => onOpen(c)} />)
+          : !err && Array.from({ length: 6 }, (_, i) => <span key={i} className="mcard panel compact skel" aria-hidden="true" />)}
       </div>
     </section>
   );
@@ -435,7 +453,7 @@ function HeroCard({ c, onOpen }: { c: CardView; onOpen: () => void }) {
         {c.thumbnailUrl && <img src={c.thumbnailUrl.replace("/thumbnails/", "/")} alt="" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = c.thumbnailUrl!; }} />}
         <span className="hero-txt">
           <b>{c.name}</b>
-          <span>by {c.author ?? c.uploader?.name} · ↓ {formatCount(c.downloads)}</span>
+          <span>by {c.author ?? c.uploader?.name ?? "unknown"} · ↓ {formatCount(c.downloads)}</span>
           <span className="hero-sum">{c.summary}</span>
           <span className="m-tags"><AiTags tags={c.tags} /></span>
         </span>

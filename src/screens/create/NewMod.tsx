@@ -3,8 +3,8 @@
 // My mods.
 import { useEffect, useState, type ReactNode } from "react";
 import { Icon } from "../../ui/Icon";
-import { Key, Module, Pill, Tag } from "../../ui/pocket";
-import { authoring, browse, errorText, settings, type MyMods } from "../../lib/api";
+import { Key, Module, Pill, Tag, useBusy } from "../../ui/pocket";
+import { authoring, browse, settings, type MyMods } from "../../lib/api";
 import { shortDate } from "../../lib/text";
 import { toast } from "../../ui/toast";
 import { CheckModule, PackModule } from "./Pack";
@@ -16,17 +16,24 @@ const blank = (): Draft => ({ summary: "", category: "", done: [], startedAt: Ma
 
 export function NewMod({ pack, mine, onRefresh, onOpenMine }: { pack: Pack; mine: MyMods | null; onRefresh: () => Promise<void>; onOpenMine: () => void }) {
   const [draft, setDraft] = useState<Draft>(blank);
-  const [cats, setCats] = useState<string[]>([]);
+  // null while loading; the list comes from Nexus, so it can fail offline
+  const [cats, setCats] = useState<string[] | null>(null);
+  const [catsFailed, setCatsFailed] = useState(false);
   const [link, setLink] = useState("");
-  const [looking, setLooking] = useState(false);
+  const [looking, look] = useBusy();
+  const [adding, add] = useBusy();
   useEffect(() => {
-    settings.get(DRAFT_KEY).then((v) => { if (v) try { setDraft({ ...blank(), ...JSON.parse(v) }); } catch { /* start over */ } }).catch(() => {});
+    let live = true;
+    settings.get(DRAFT_KEY).then((v) => { if (v && live) try { setDraft({ ...blank(), ...JSON.parse(v) }); } catch { /* start over */ } }).catch(() => {});
     browse.search({ categories: [], tags: [], excludeTags: [], sort: "downloads", ascending: false, includeAdult: false, frameworks: [], offset: 0, count: 1 },
       { showHidden: false, downloaded: null, skipCounts: true })
-      .then((r) => setCats(r.facets.categories.map(([c]) => c).sort((a, b) => a.localeCompare(b)))).catch(() => {});
+      .then((r) => { if (live) setCats(r.facets.categories.map(([c]) => c).sort((a, b) => a.localeCompare(b))); })
+      .catch(() => { if (live) { setCats([]); setCatsFailed(true); } });
+    return () => { live = false; };
   }, []);
   const save = (d: Draft) => { setDraft(d); settings.set(DRAFT_KEY, JSON.stringify(d)).catch(() => {}); };
   const tick = (id: string, on: boolean) => save({ ...draft, done: on ? [...new Set([...draft.done, id])] : draft.done.filter((x) => x !== id) });
+  const startOver = () => { const was = draft; save(blank()); toast("Checklist cleared", false, { label: "Undo", run: () => save(was) }); };
 
   const needs = pack.check?.needs ?? [];
   const zip = pack.zip;
@@ -34,10 +41,14 @@ export function NewMod({ pack, mine, onRefresh, onOpenMine }: { pack: Pack; mine
   const fresh = newest.filter((m) => Date.parse(m.createdAt) / 1000 >= draft.startedAt - 86400);
   const step = !zip ? 1 : draft.done.length < ITEMS.length ? 2 : 3;
 
-  const addLink = async () => {
+  const addLink = () => add(async () => {
     if (!mine) return;
-    try { await authoring.pin(mine.author.memberId, link); setLink(""); await onRefresh(); toast("Added to My mods"); onOpenMine(); } catch (e) { toast(errorText(e), true); }
-  };
+    await authoring.pin(mine.author.memberId, link);
+    setLink("");
+    await onRefresh();
+    toast("Added to My mods");
+    onOpenMine();
+  });
 
   const row = (id: string, title: string, body: ReactNode, tools?: ReactNode) => (
     <div className={`cr-check${draft.done.includes(id) ? " done" : ""}`} key={id}>
@@ -67,7 +78,7 @@ export function NewMod({ pack, mine, onRefresh, onOpenMine }: { pack: Pack; mine
         <Module icon="web" title="Make the page on Nexus" count={`${draft.done.length} of ${ITEMS.length} done`}>
           <div className="actions">
             <Key variant="primary" icon="web" onClick={() => openNexus(mine?.links.addMod ?? "https://www.nexusmods.com/cyberpunk2077/mods/add")}>Open Add a mod on Nexus</Key>
-            {draft.done.length > 0 && <Key size="sm" variant="ghost" onClick={() => save(blank())}>Start over</Key>}
+            {draft.done.length > 0 && <Key size="sm" variant="ghost" onClick={startOver} title="Clears the ticks and the summary">Start over</Key>}
           </div>
           <div className="cr-checks">
             {row("name", "Name", pack.name ? <span className="mono">{pack.name}</span> : <span className="dim">Set it in Pack it</span>,
@@ -77,9 +88,12 @@ export function NewMod({ pack, mine, onRefresh, onOpenMine }: { pack: Pack; mine
               <span className="dim cr-count">{draft.summary.length} characters</span>
             </>, draft.summary && <Key size="sm" variant="ghost" icon="file" onClick={() => copy(draft.summary)} aria-label="Copy the summary" title="Copy" />)}
             {row("category", "Category", (
-              <select value={draft.category} onChange={(e) => save({ ...draft, category: e.target.value })} aria-label="Category">
-                <option value="">Pick one</option>
-                {cats.map((c) => <option key={c} value={c}>{c}</option>)}
+              <select value={draft.category} onChange={(e) => save({ ...draft, category: e.target.value })} aria-label="Category"
+                title={catsFailed ? "Couldn't get the categories from Nexus. Pick it on the website's form" : undefined}>
+                <option value="">{!cats ? "Loading" : catsFailed ? "Couldn't load the list" : "Pick one"}</option>
+                {/* a category saved in the draft stays pickable while the list loads or if it fails */}
+                {draft.category && !cats?.includes(draft.category) && <option value={draft.category}>{draft.category}</option>}
+                {(cats ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             ), draft.category && <Key size="sm" variant="ghost" icon="file" onClick={() => copy(draft.category)} aria-label="Copy the category" title="Copy" />)}
             {row("file", "The file", zip ? <>Upload <span className="mono hi">{fileName(zip)}</span> as the Main file, version <span className="mono">{pack.version}</span>, with mod manager downloads on</> : <span className="dim">Pack your folder first</span>,
@@ -102,7 +116,7 @@ export function NewMod({ pack, mine, onRefresh, onOpenMine }: { pack: Pack; mine
           <Key icon="user" onClick={onOpenMine}>Go to My mods</Key>
         </div> : <>
           <div className="actions">
-            <Key icon="refresh" disabled={looking} onClick={async () => { setLooking(true); try { await onRefresh(); } finally { setLooking(false); } }}>{looking ? "Looking" : "Look for it"}</Key>
+            <Key icon="refresh" busy={looking} onClick={() => void look(onRefresh)}>Look for it</Key>
           </div>
           {newest.length > 0 && <>
             <div className="sub-h">Your newest mods</div>
@@ -115,9 +129,9 @@ export function NewMod({ pack, mine, onRefresh, onOpenMine }: { pack: Pack; mine
               ))}
             </div>
           </>}
-          <form className="cr-who" style={{ marginTop: ".7em" }} onSubmit={(e) => { e.preventDefault(); void addLink(); }}>
+          <form className="cr-who" style={{ marginTop: ".7em" }} onSubmit={(e) => { e.preventDefault(); if (link.trim() && !adding) void addLink(); }}>
             <label className="fbox"><Icon name="link" /><input className="finput" value={link} onChange={(e) => setLink(e.target.value)} placeholder="Mod page link or ID" aria-label="New mod link or number" /></label>
-            <Key type="submit" icon="plus" disabled={!link.trim()}>Add to My mods</Key>
+            <Key type="submit" icon="plus" busy={adding} disabled={!link.trim()}>Add to My mods</Key>
           </form>
         </>}
       </Module>

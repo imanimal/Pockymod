@@ -19,6 +19,10 @@ pub struct AppState {
     pub pump: Arc<Notify>,
     /// Queue items whose running download the user cancelled.
     pub cancel: Arc<Mutex<std::collections::HashSet<u64>>>,
+    /// The library is being moved: the queue waits, so nothing is written to the old place meanwhile.
+    pub moving: std::sync::atomic::AtomicBool,
+    /// Files (mod, file) a background prefetch is downloading, so the queue never writes the same file at once.
+    pub fetching: Mutex<std::collections::HashSet<(u32, u32)>>,
 }
 
 impl AppState {
@@ -29,11 +33,11 @@ impl AppState {
         let db = Db::open(&data_dir.join("pocket-mods.sqlite"))?;
         // old pages are useless once their TTL has passed; keep the file small
         let _ = db.cache_prune(pocket_core::db::now() - 7 * 86400);
-        // removed mods past their time (or past the size limit) go for good
-        let _ = pocket_core::install::purge_trash(&db, None);
+        // (removed mods past their time are purged after start, off the main thread: lib.rs)
         Ok(AppState {
             nexus: Arc::new(NexusClient::new(key)?), keys, user: RwLock::new(None), db: Arc::new(Mutex::new(db)),
             queue: Arc::new(Mutex::new(Queue::default())), pump: Arc::new(Notify::new()), cancel: Arc::new(Mutex::new(Default::default())),
+            moving: Default::default(), fetching: Default::default(),
         })
     }
 }

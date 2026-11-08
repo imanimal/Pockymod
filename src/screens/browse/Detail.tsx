@@ -2,13 +2,13 @@
 // screen's one orange key, Install (or, once it is installed, the menu of what the app can do to it). It shows in a
 // drawer, or expanded as a page laid out like the mod's Nexus page: the banner, the media on a big stage, the
 // description, and the files and requirements beside them.
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Icon } from "../../ui/Icon";
-import { Empty, Key, Lcd, Module, Tag, Veil, bytesText, formatCount } from "../../ui/pocket";
+import { Key, Lcd, Module, Tag, Veil, bytesText, formatCount, useBusy } from "../../ui/pocket";
 import { useAdult } from "../../lib/prefs";
 import { AiTags } from "../../ui/AiTags";
 import {
-  FRAMEWORKS, browse, endorseMod, errorText, fileBytes, nexusUrl, openExternal, trackMod,
+  FRAMEWORKS, browse, endorseMod, errorText, fileBytes, links as linksApi, nexusUrl, openExternal, trackMod,
   type CardView, type Classification, type DetailView, type InstallRow, type ModFile, type Update,
 } from "../../lib/api";
 import { descriptionLinks, descriptionParts, descriptionText, shortDate } from "../../lib/text";
@@ -32,7 +32,9 @@ export function FrameworkTags({ c }: { c: Classification }) {
 const CURRENT = ["MAIN", "OPTIONAL", "UPDATE", "MISCELLANEOUS"];
 
 export interface DetailProps {
-  card: CardView; onFlag: (c: CardView, f: "hidden" | "ignored", on: boolean) => void;
+  card: CardView;
+  /** Hide or ignore; resolving false means it did not save (the caller has said why). */
+  onFlag: (c: CardView, f: "hidden" | "ignored", on: boolean) => void | Promise<boolean>;
   onInstall?: (d: DetailView, fileId: number) => void; onOpenPage?: (modId: number) => void; onOpen: (modId: number) => void; onClose?: () => void;
   /** Shown as a page (true) or in the drawer; onWide switches. */
   wide?: boolean; onWide?: (wide: boolean) => void;
@@ -45,6 +47,7 @@ export function Detail(p: DetailProps) {
   const [d, setD] = useState<DetailView | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [fileId, setFileId] = useState<number | null>(null);
+  const [tries, setTries] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -55,28 +58,44 @@ export function Detail(p: DetailProps) {
       setFileId(mainFile(v.files)?.fileId ?? null);
     }).catch((e) => live && setErr(errorText(e)));
     return () => { live = false; };
-  }, [card.modId, card.updatedAt]);
+  }, [card.modId, card.updatedAt, tries]);
 
   const title = d?.detail.name || card.name || "Mod";
-  if (err) return <Module icon="warn" title={title} band="bad" fill tools={<HeadKeys p={p} />}><div className="note bad">{err}</div></Module>;
-  if (!d) return <Module icon="info" title={title} count="loading" fill tools={<HeadKeys p={p} />}><Empty icon="clock" title="Loading" /></Module>;
+  if (err) return (
+    <Module icon="warn" title={title} band="bad" fill tools={<HeadKeys p={p} />}>
+      <div className="note bad">{err}</div>
+      <div className="actions" style={{ marginTop: ".6em" }}><Key size="sm" icon="refresh" onClick={() => setTries((n) => n + 1)}>Try again</Key></div>
+    </Module>
+  );
+  if (!d) return (
+    <Module icon="info" title={title} count="loading" fill tools={<HeadKeys p={p} />}>
+      <div className="stack" style={{ gap: ".55em" }} aria-hidden="true">
+        <span className="skel" style={{ height: "11em" }} />
+        <span className="skel skel-line" style={{ width: "45%" }} />
+        <span className="skel skel-line" style={{ width: "90%" }} />
+        <span className="skel skel-line" style={{ width: "70%" }} />
+      </div>
+    </Module>
+  );
   return p.wide ? <Page p={p} d={d} setD={setD} fileId={fileId} setFileId={setFileId} /> : <Drawer p={p} d={d} setD={setD} fileId={fileId} setFileId={setFileId} />;
 }
 
-type Parts = { p: DetailProps; d: DetailView; setD: (d: DetailView) => void; fileId: number | null; setFileId: (n: number) => void };
+type Parts = { p: DetailProps; d: DetailView; setD: Dispatch<SetStateAction<DetailView | null>>; fileId: number | null; setFileId: (n: number) => void };
 
 /** The keys in the band: endorse, track, the Nexus page (here or in your browser), expand or back, close. */
 function HeadKeys({ p, d }: { p: DetailProps; d?: DetailView }) {
   const m = d?.detail;
+  const [endorsing, endorse] = useBusy();
+  const [tracking, track] = useBusy();
   return <>
-    {m && <Key size="sm" variant="ghost" icon="star" onClick={() => endorseMod(m.modId, m.version).then(() => toast(`Endorsed ${m.name}`)).catch((e) => toast(errorText(e), true))} title="Endorse on Nexus" aria-label="Endorse" />}
-    {m && <Key size="sm" variant="ghost" icon="eye" onClick={() => trackMod(m.modId).then(() => toast(`Tracking ${m.name}`)).catch((e) => toast(errorText(e), true))} title="Track on Nexus" aria-label="Track" />}
-    <Key size="sm" variant="ghost" icon="web" onClick={() => p.onOpenPage?.(p.card.modId)} title="Nexus page" aria-label="Open the Nexus page" />
+    {m && <Key size="sm" variant="ghost" icon="star" busy={endorsing} onClick={() => endorse(async () => { await endorseMod(m.modId, m.version); toast(`Endorsed ${m.name}`); })} title="Endorse on Nexus" aria-label="Endorse" />}
+    {m && <Key size="sm" variant="ghost" icon="eye" busy={tracking} onClick={() => track(async () => { await trackMod(m.modId); toast(`Tracking ${m.name}`); })} title="Track on Nexus" aria-label="Track" />}
+    <Key size="sm" variant="ghost" icon="web" onClick={() => p.onOpenPage ? p.onOpenPage(p.card.modId) : void openExternal(nexusUrl.mod(p.card.modId)).catch((e) => toast(errorText(e), true))} title="Nexus page" aria-label="Open the Nexus page" />
     <Key size="sm" variant="ghost" icon="link" onClick={() => openExternal(nexusUrl.mod(p.card.modId)).catch((e) => toast(errorText(e), true))} title="Open in your browser" aria-label="Open in browser" />
     {p.onWide && (p.wide
       ? <Key size="sm" variant="ghost" icon="chevron" className="flip" onClick={() => p.onWide?.(false)} title="Show in the side drawer">Drawer</Key>
       : <Key size="sm" variant="ghost" icon="max" onClick={() => p.onWide?.(true)} title="Open as a full page">Expand</Key>)}
-    {p.onClose && <Key size="sm" variant="ghost" icon="x" onClick={p.onClose} aria-label="Close" />}
+    {p.onClose && <Key size="sm" variant="ghost" icon="x" onClick={p.onClose} aria-label="Close" title="Close (Esc)" />}
   </>;
 }
 
@@ -101,27 +120,31 @@ function useParts({ p, d }: Parts) {
 }
 
 /** Install, or the installed menu; then hide and ignore. */
-function Actions({ p, d, setD, file, view }: { p: DetailProps; d: DetailView; setD: (d: DetailView) => void; file?: ModFile; view: CardView }) {
+function Actions({ p, d, setD, file, view }: { p: DetailProps; d: DetailView; setD: Parts["setD"]; file?: ModFile; view: CardView }) {
   const m = d.detail;
   const have = p.installed ?? [];
+  // the page shows the new state once it is saved
+  const flag = (f: "hidden" | "ignored", on: boolean) =>
+    void Promise.resolve(p.onFlag(view, f, on)).then((ok) => { if (ok !== false) setD((x) => x && { ...x, [f]: on }); });
   return (
     <div className="actions">
       {have.length === 0
-        ? <Key variant="primary" size="lg" icon="install" disabled={!file || !!p.queued} onClick={() => file && p.onInstall?.(d, file.fileId)}>{p.queued ?? "Install"}</Key>
+        ? <Key variant="primary" size="lg" icon="install" disabled={!file || !!p.queued} onClick={() => file && p.onInstall?.(d, file.fileId)}
+          title={p.queued ? "In Downloads already" : !file ? "No current file on Nexus to install" : undefined}>{p.queued ?? "Install"}</Key>
         : <>
           <ModKey mod={{ modId: m.modId, name: m.name, version: m.version }} rows={have} updates={p.updates} size="lg" onLibrary={p.onLibrary}
-            onFlag={(f, on) => { p.onFlag(view, f, on); setD({ ...d, [f]: on }); }} flags={{ hidden: d.hidden, ignored: d.ignored }} />
+            onFlag={flag} flags={{ hidden: d.hidden, ignored: d.ignored }} />
           {file && !have.some((r) => r.fileId === file.fileId) && !p.updates?.some((u) => u.modId === m.modId && u.fileId === file.fileId) &&
             <Key icon="install" onClick={() => p.onInstall?.(d, file.fileId)} title="Install the selected file too">Install this file</Key>}
         </>}
       <Key variant="ghost" icon="web" onClick={() => p.onOpenPage ? p.onOpenPage(m.modId) : void openExternal(nexusUrl.mod(m.modId)).catch((e) => toast(errorText(e), true))} title="Posts, bugs and articles">View on Nexus</Key>
-      <Key variant="ghost" icon="hide" onClick={() => { p.onFlag(view, "hidden", !d.hidden); setD({ ...d, hidden: !d.hidden }); }}>{d.hidden ? "Unhide" : "Hide"}</Key>
-      <Key variant="ghost" icon="x" onClick={() => { p.onFlag(view, "ignored", !d.ignored); setD({ ...d, ignored: !d.ignored }); }}>{d.ignored ? "Stop ignoring" : "Ignore"}</Key>
+      <Key variant="ghost" icon="hide" onClick={() => flag("hidden", !d.hidden)}>{d.hidden ? "Unhide" : "Hide"}</Key>
+      <Key variant="ghost" icon="x" onClick={() => flag("ignored", !d.ignored)}>{d.ignored ? "Stop ignoring" : "Ignore"}</Key>
     </div>
   );
 }
 
-function FileRows({ files, fileId, setFileId, have, limit = 8 }: { files: ModFile[]; fileId: number | null; setFileId: (n: number) => void; have: InstallRow[]; limit?: number }) {
+function FileRows({ files, fileId, setFileId, have, limit = 8, onMore }: { files: ModFile[]; fileId: number | null; setFileId: (n: number) => void; have: InstallRow[]; limit?: number; onMore?: () => void }) {
   if (files.length === 0) return <p className="dim">No current files</p>;
   return (
     <div className="rows">
@@ -131,6 +154,8 @@ function FileRows({ files, fileId, setFileId, have, limit = 8 }: { files: ModFil
           <span className="m-side"><span>{bytesText(fileBytes(f))}</span></span>
         </button>
       ))}
+      {files.length > limit && <p className="dim" style={{ fontSize: ".86em", padding: ".3em .2em" }}>{files.length - limit} more{" "}
+        {onMore && <button type="button" className="linkish" onClick={onMore}>Show them all</button>}</p>}
     </div>
   );
 }
@@ -142,7 +167,10 @@ function Requires({ d, onOpen }: { d: DetailView; onOpen: (id: number) => void }
     <div className="sub-h">Requires</div>
     <div className="rows">
       {r.nodes.map((x) => (
-        <button key={`${x.modId}-${x.modName}`} type="button" className="row" onClick={() => !x.externalRequirement && onOpen(x.modId)} disabled={x.externalRequirement}>
+        // one off Nexus opens its link in your browser, when the author gave one
+        <button key={`${x.modId}-${x.modName}`} type="button" className="row" disabled={x.externalRequirement && !x.url}
+          onClick={() => x.externalRequirement ? x.url && void linksApi.open(x.url).catch((e) => toast(errorText(e), true)) : onOpen(x.modId)}
+          title={x.externalRequirement ? (x.url ? `${x.url}\nOpens in your browser` : "Not on Nexus, and no link given") : undefined}>
           <span className="m-main"><span className="m-t">{x.modName}</span>{x.notes && <span className="m-meta"><span>{x.notes}</span></span>}</span>
           <span className="m-side">{x.externalRequirement ? <span>Off Nexus</span> : <Icon name="chevron" size={9} />}</span>
         </button>
@@ -159,7 +187,7 @@ function ArchiveList({ d }: { d: DetailView }) {
       <>
         <p className="dim" style={{ fontSize: ".86em" }}>{d.fileList.length} paths{" "}
           <button type="button" className="linkish" onClick={() => setShow(!show)}>{show ? "Hide" : "Show"}</button></p>
-        {show && <div className="log" style={{ maxHeight: "12em" }}>{d.fileList.slice(0, 200).join("\n")}</div>}
+        {show && <div className="log" style={{ maxHeight: "12em" }}>{d.fileList.slice(0, 200).join("\n")}{d.fileList.length > 200 ? `\nand ${d.fileList.length - 200} more` : ""}</div>}
       </>
     ) : <p className="dim" style={{ fontSize: ".86em" }}>No file list from Nexus yet</p>}
   </>;
@@ -186,7 +214,7 @@ function Drawer(x: Parts) {
       </div>
 
       <div className="sub-h">File</div>
-      <FileRows files={current} fileId={fileId} setFileId={setFileId} have={p.installed ?? []} />
+      <FileRows files={current} fileId={fileId} setFileId={setFileId} have={p.installed ?? []} onMore={p.onWide && (() => p.onWide?.(true))} />
       <div style={{ marginTop: ".8em" }}><Actions p={p} d={d} setD={setD} file={file} view={view} /></div>
 
       <Requires d={d} onOpen={p.onOpen} />

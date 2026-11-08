@@ -149,7 +149,13 @@ pub async fn library_move_check(state: State<'_, AppState>, to: String) -> Resul
 /// Move the library. Progress goes out as `library-move` events ([bytes copied, total]) when it has to copy.
 #[tauri::command]
 pub async fn library_move(app: AppHandle, state: State<'_, AppState>, to: String) -> Result<MoveReport> {
+    use std::sync::atomic::Ordering;
     crate::commands::not_while_running()?;
+    // the queue holds off while the library moves (runner.rs), so no download lands in the old place
+    if state.moving.swap(true, Ordering::SeqCst) { return Err(Error::Invalid("The library is already moving".into())); }
+    struct Done<'a>(&'a std::sync::atomic::AtomicBool);
+    impl Drop for Done<'_> { fn drop(&mut self) { self.0.store(false, Ordering::SeqCst); } }
+    let _done = Done(&state.moving);
     if state.queue.lock().unwrap().summary().running { return Err(Error::Invalid("Wait for downloads and installs to finish first".into())); }
     let (game, library) = Paths::load(&state.db.lock().unwrap()).require()?;
     let db = state.db.clone();
@@ -168,10 +174,20 @@ pub async fn library_move(app: AppHandle, state: State<'_, AppState>, to: String
 #[serde(rename_all = "camelCase")]
 pub struct GameFolderSet { pub paths: crate::commands::library::PathsView, pub relink: Option<RelinkReport> }
 
+/// `relocate::relink_game` with `relink-progress` events ([files done, files]), a few a second.
+fn relink_reporting(app: AppHandle, d: &pocket_core::db::Db, game: &std::path::Path, allow_copy: bool) -> Result<RelinkReport> {
+    let mut last = std::time::Instant::now();
+    let r = relocate::relink_game_with(d, game, allow_copy, |done, total| {
+        if last.elapsed().as_millis() >= 200 { last = std::time::Instant::now(); let _ = app.emit("relink-progress", (done, total)); }
+    });
+    if let Ok(rep) = &r { let _ = app.emit("relink-progress", (rep.checked, rep.checked)); }
+    r
+}
+
 /// Set the game folder. When the new one is a moved or copied game with the mods' files in it, they are linked to
-/// the library again.
+/// the library again (progress as `relink-progress` events).
 #[tauri::command]
-pub async fn game_folder_set(state: State<'_, AppState>, dir: String) -> Result<GameFolderSet> {
+pub async fn game_folder_set(app: AppHandle, state: State<'_, AppState>, dir: String) -> Result<GameFolderSet> {
     let new = PathBuf::from(dir.trim());
     let old = Paths::load(&state.db.lock().unwrap()).game_dir;
     state.db.lock().unwrap().set_setting("game.dir", dir.trim())?;
@@ -183,20 +199,21 @@ pub async fn game_folder_set(state: State<'_, AppState>, dir: String) -> Result<
         let db = state.db.clone();
         relink = blocking(move || {
             let d = db.lock().unwrap();
-            if relocate::looks_like_moved_copy(&d, &new)? { Ok(Some(relocate::relink_game(&d, &new, allow_copy)?)) } else { Ok(None) }
+            if relocate::looks_like_moved_copy(&d, &new)? { Ok(Some(relink_reporting(app, &d, &new, allow_copy)?)) } else { Ok(None) }
         }).await?;
     }
     Ok(GameFolderSet { paths: crate::commands::library::paths_get(state).await?, relink })
 }
 
-/// Link the game's mod files to the library again (the Settings key).
+/// Link the game's mod files to the library again (the Settings key). Progress as `relink-progress` events.
 #[tauri::command]
 pub async fn game_relink(app: AppHandle, state: State<'_, AppState>) -> Result<RelinkReport> {
     crate::commands::not_while_running()?;
     let p = Paths::load(&state.db.lock().unwrap());
     let (game, _) = p.require()?;
     let db = state.db.clone();
-    let r = blocking(move || relocate::relink_game(&db.lock().unwrap(), &game, p.allow_copy)).await?;
+    let a = app.clone();
+    let r = blocking(move || relink_reporting(a, &db.lock().unwrap(), &game, p.allow_copy)).await?;
     let _ = app.emit("library-changed", ());
     Ok(r)
 }

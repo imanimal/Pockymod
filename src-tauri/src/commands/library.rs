@@ -50,9 +50,10 @@ pub async fn library_uninstall(app: AppHandle, state: State<'_, AppState>, insta
     crate::commands::not_while_running()?;
     let (game, _) = Paths::load(&state.db.lock().unwrap()).require()?;
     let db = state.db.clone();
-    let r = tauri::async_runtime::spawn_blocking(move || install::uninstall(&db.lock().unwrap(), &game, install_id)).await.map_err(|e| Error::Invalid(e.to_string()))??;
+    let r = tauri::async_runtime::spawn_blocking(move || install::uninstall(&db.lock().unwrap(), &game, install_id)).await.map_err(|e| Error::Invalid(e.to_string()))?;
+    // also after a failure: part of it may have happened
     let _ = app.emit("library-changed", ());
-    Ok(r)
+    r
 }
 
 /// Deploy a staged install after the user decided on conflicts or the copy fallback.
@@ -61,21 +62,25 @@ pub async fn library_deploy(app: AppHandle, state: State<'_, AppState>, install_
     crate::commands::not_while_running()?;
     let (game, library) = Paths::load(&state.db.lock().unwrap()).require()?;
     let db = state.db.clone();
-    let r = tauri::async_runtime::spawn_blocking(move || install::redeploy_any(&db.lock().unwrap(), &game, &library, install_id, &options)).await.map_err(|e| Error::Invalid(e.to_string()))??;
+    let r = tauri::async_runtime::spawn_blocking(move || install::redeploy_any(&db.lock().unwrap(), &game, &library, install_id, &options)).await.map_err(|e| Error::Invalid(e.to_string()))?;
+    // also after a failure: part of it may have happened
     let _ = app.emit("library-changed", ());
-    Ok(r)
+    r
 }
 
 /// Install an archive from disk: a manual download, or a queued download that needed review.
 #[tauri::command]
 pub async fn library_install_file(app: AppHandle, state: State<'_, AppState>, mut request: InstallRequest) -> Result<InstallOutcome> {
+    // the game locks its files (as for the queue's installs)
+    crate::commands::not_while_running()?;
     if request.replace_only.is_none() { request.replace_only = Some(runner::replaced_by_file(&state.db.lock().unwrap(), request.mod_id, request.file_id, request.file_name.as_deref())); }
     let paths = Paths::load(&state.db.lock().unwrap());
     let (game, library) = paths.require()?;
     let db = state.db.clone();
-    let r = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &game, &library, &request)).await.map_err(|e| Error::Invalid(e.to_string()))??;
+    let r = tauri::async_runtime::spawn_blocking(move || install::install(&db.lock().unwrap(), &game, &library, &request)).await.map_err(|e| Error::Invalid(e.to_string()))?;
+    // also after a failure: part of it may have happened
     let _ = app.emit("library-changed", ());
-    Ok(r)
+    r
 }
 
 #[derive(Serialize)]
@@ -98,13 +103,13 @@ pub fn queue_get(app: AppHandle) -> QueueSnapshot { runner::snapshot(&app) }
 /// The files a mod install needs (the mod and its missing requirements), without queueing them: the cost up front.
 #[tauri::command]
 pub async fn queue_plan(state: State<'_, AppState>, mod_id: u32, file_id: u32) -> Result<Vec<QueueItem>> {
-    let already = installed_or_present(&state)?;
+    let already = installed_or_present(&state).await?;
     queue::with_dependencies(&state.nexus, &state.db, mod_id, file_id, &already).await
 }
 
 #[tauri::command]
 pub async fn queue_add(app: AppHandle, state: State<'_, AppState>, mod_id: u32, file_id: u32, with_dependencies: bool) -> Result<QueueSnapshot> {
-    let already = installed_or_present(&state)?;
+    let already = installed_or_present(&state).await?;
     let mut items = queue::with_dependencies(&state.nexus, &state.db, mod_id, file_id, &already).await?;
     if !with_dependencies { items.retain(|i| i.mod_id == mod_id); }
     {
@@ -180,7 +185,13 @@ pub async fn open_nexus_url(app: AppHandle, url: String) -> Result<()> {
     runner::open_nexus(&app, &url)
 }
 
-fn installed_or_present(state: &State<'_, AppState>) -> Result<std::collections::BTreeSet<u32>> { present_mod_ids(&state.db) }
+async fn installed_or_present(state: &State<'_, AppState>) -> Result<std::collections::BTreeSet<u32>> { present_ids(&state.db).await }
+
+/// `present_mod_ids` off the async runtime: it reads the game folder and Vortex's folders.
+pub async fn present_ids(db: &std::sync::Arc<std::sync::Mutex<pocket_core::db::Db>>) -> Result<std::collections::BTreeSet<u32>> {
+    let db = db.clone();
+    tauri::async_runtime::spawn_blocking(move || present_mod_ids(&db)).await.map_err(|e| Error::Invalid(e.to_string()))?
+}
 
 /// Nexus mods the user already has in any form: installed or tracked here, a framework whose files are in the game
 /// folder (whoever put them there), or a mod Vortex has deployed. Requirements in this set are never downloaded.

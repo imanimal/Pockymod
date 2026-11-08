@@ -1,7 +1,7 @@
 // Health: modules by area; a band turns red when something in it is broken. The most serious fixable issue gets
 // the screen's one orange key; other fixes are dark keys.
 import { plural } from "../lib/text";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Tag } from "../ui/pocket";
 import type { IconName } from "../ui/icons";
 import { archives, errorText, game, library, queueMod, resetScripts, type Fix, type HealthReport, type Issue } from "../lib/api";
@@ -20,13 +20,22 @@ const AREAS: Array<{ id: Issue["area"]; title: string; icon: IconName }> = [
 
 export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "settings" | "loadorder" | "downloads") => void; onIssues?: (n: number) => void }) {
   const [r, setR] = useState<HealthReport | null>(null);
-  const [busy, setBusy] = useState(false);
+  // the key at work: "check" for Check again, "all" or "frameworks" for the Fix all keys, an issue's id for its fix
+  const [working, setWorking] = useState<string | null>(null);
+  const busy = working !== null;
   const [err, setErr] = useState<string | null>(null);
   const [stamp, setStamp] = useState(0);
+  // only the newest check's answer counts; a failed check keeps the last report on screen
+  const seq = useRef(0);
+  const have = useRef(false);
   const load = useCallback((refresh = false) => {
-    setBusy(true);
-    setStamp((n) => n + 1);
-    game.health(refresh).then((x) => { setR(x); setErr(null); onIssues?.(x.problems); }).catch((e) => setErr(errorText(e))).finally(() => setBusy(false));
+    const n = ++seq.current;
+    setWorking("check");
+    setStamp((k) => k + 1);
+    game.health(refresh)
+      .then((x) => { if (n !== seq.current) return; have.current = true; setR(x); setErr(null); onIssues?.(x.problems); })
+      .catch((e) => { if (n !== seq.current) return; if (have.current) toast(errorText(e), true); else setErr(errorText(e)); })
+      .finally(() => { if (n === seq.current) setWorking(null); });
   }, [onIssues]);
   useEffect(() => { load(); }, [load]);
 
@@ -44,6 +53,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
       case "turnOff": {
         const row = (await library.list()).find((x) => x.id === f.installId);
         if (row) await ops.setEnabled([row], false);
+        else toast(`${f.name} is no longer installed`);
         return true;
       }
       case "disableModlist": { const done = await archives.disableModlist(); if (!quiet) toast(done ? "modlist.txt renamed to modlist.txt.off" : "No modlist.txt"); return true; }
@@ -53,8 +63,8 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
   /** Every fix the app can do by itself, in order: downloads first, files next, the REDmod deploy last (and only
    *  when nothing was queued, since Play deploys again once the queue has installed). Turning a mod off and the
    *  fixes that only open a screen are left to you. */
-  const fixAll = async (list: Fix[]) => {
-    setBusy(true);
+  const fixAll = async (list: Fix[], key: string) => {
+    setWorking(key);
     const order: Fix["kind"][] = ["installMod", "updateMod", "redeploy", "resetScripts", "disableModlist", "runRedmodDeploy"];
     const todo = [...list].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
     let ok = 0, failed = 0, queued = 0;
@@ -67,16 +77,21 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
     if (queued) onNavigate("downloads");
   };
 
-  const fix = async (f: Fix) => {
+  const fix = async (i: Issue & { fix: Fix }) => {
+    const f = i.fix;
     if (f.kind === "openLibrary") return onNavigate("library");
     if (f.kind === "openSettings") return onNavigate("settings");
-    setBusy(true);
-    try { await run(f); if (f.kind !== "installMod" && f.kind !== "updateMod") load(); else setBusy(false); }
-    catch (e) { toast(errorText(e), true); setBusy(false); }
+    setWorking(i.id);
+    try { await run(f); if (f.kind !== "installMod" && f.kind !== "updateMod") load(); else setWorking(null); }
+    catch (e) { toast(errorText(e), true); setWorking(null); }
   };
 
-
-  if (err) return <Module icon="health" title="Health" band="bad"><div className="note bad">{err}</div></Module>;
+  if (err) return (
+    <Module icon="health" title="Health" band="bad"
+      tools={<Key size="sm" icon="refresh" busy={working === "check"} onClick={() => load(true)}>Check again</Key>}>
+      <div className="note bad">{err}</div>
+    </Module>
+  );
   if (!r) return <Module icon="health" title="Health" count="checking"><Empty icon="clock" title="Checking the game" /></Module>;
   const auto = (i: Issue): i is Issue & { fix: Fix } => !!i.fix && AUTO.includes(i.fix.kind) && i.area !== "logs";
   const fixable = unique(r.issues.filter((i) => auto(i) && i.severity !== "info").map((i) => i.fix!));
@@ -93,9 +108,9 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         <Lcd label="Game patch" value={r.patch ?? "?"} sub={r.patchSource === "detected" ? "From the game" : r.patchSource === "settings" ? "Set in Settings" : "Guessed, set it in Settings"} tone={r.patchSource === "assumed" ? "hot" : "ok"} />
       </div>
       <div className="actions span">
-        {fixable.length > 1 && <Key variant="primary" icon="check" onClick={() => fixAll(fixable)} disabled={busy}
+        {fixable.length > 1 && <Key variant="primary" icon="check" onClick={() => fixAll(fixable, "all")} disabled={busy} busy={working === "all"}
           title="Run every automatic fix">Fix all {fixable.length}</Key>}
-        <Key size="sm" icon="refresh" onClick={() => load(true)} disabled={busy}>Check again</Key>
+        <Key size="sm" icon="refresh" onClick={() => load(true)} disabled={busy} busy={working === "check"}>Check again</Key>
         {g?.version && <span className="dim mono" style={{ fontSize: ".8em" }}>Cyberpunk2077.exe {g.version.productString ?? g.version.product}</span>}
       </div>
 
@@ -106,7 +121,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         const bad = list.some((i) => i.severity === "problem");
         return (
           <Module key={a.id} icon={a.icon} title={a.title} band={bad ? "bad" : undefined} count={list.length ? `${list.length} ${list.length === 1 ? "item" : "items"}` : "ok"}
-            tools={a.id === "frameworks" && fwFixes.length > 1 ? <Key size="sm" variant="dark" icon="downloads" disabled={busy} onClick={() => fixAll(fwFixes)}
+            tools={a.id === "frameworks" && fwFixes.length > 1 ? <Key size="sm" variant="dark" icon="downloads" disabled={busy} busy={working === "frameworks"} onClick={() => fixAll(fwFixes, "frameworks")}
               title="Queue missing and outdated frameworks">{fwFixes.every((f) => f.kind === "updateMod") ? `Update all ${fwFixes.length}` : `Install and update all ${fwFixes.length}`}</Key> : undefined}>
             {a.id === "frameworks" && <FrameworkTable r={r} />}
             {list.length === 0 && a.id !== "frameworks" && <p className="dim">{a.id === "redmod" ? (g?.redmodAvailable ? "Up to date" : "No REDmods") : "All good"}</p>}
@@ -119,7 +134,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
                   </span>
                   <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".5em" }}>
                     <Pill tone={i.severity === "problem" ? "over" : i.severity === "warning" ? "soon" : undefined}>{i.severity === "problem" ? "Problem" : i.severity === "warning" ? "Warning" : "Note"}</Pill>
-                    {i.fix && <Key size="sm" variant={i === first ? "primary" : "dark"} onClick={() => fix(i.fix!)} disabled={busy}>{fixLabel(i.fix)}</Key>}
+                    {i.fix && <Key size="sm" variant={i === first ? "primary" : "dark"} onClick={() => fix(i as Issue & { fix: Fix })} disabled={busy} busy={working === i.id}>{fixLabel(i.fix)}</Key>}
                   </span>
                 </div>
               ))}

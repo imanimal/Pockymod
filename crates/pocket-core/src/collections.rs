@@ -400,12 +400,20 @@ pub fn check_local(db: &Db, c: &LocalCollection, patch: Option<String>, premium:
 
 /// For entries not installed, check the pinned file still exists on Nexus; if not, pick the mod's newest main file.
 /// One detail request per mod checked, so it runs only for small lists or the entries the user is about to install.
-pub async fn resolve_files(client: &NexusClient, db: &Mutex<Db>, check: &mut Check, limit: usize, premium: bool) -> Result<()> {
+/// `progress(checked, to check)` follows along.
+pub async fn resolve_files(client: &NexusClient, db: &Mutex<Db>, check: &mut Check, limit: usize, premium: bool, mut progress: impl FnMut(usize, usize)) -> Result<()> {
     let mut done = 0;
+    let total = check.entries.iter().filter(|e| e.status != "installed").count().min(limit);
     for e in check.entries.iter_mut().filter(|e| e.status != "installed") {
         if done >= limit { break; }
         done += 1;
-        let Ok(d) = crate::browse::detail(client, db, e.mod_id, None).await else { e.status = "unavailable".into(); continue };
+        progress(done, total);
+        let d = match crate::browse::detail(client, db, e.mod_id, None).await {
+            Ok(d) => d,
+            // Nexus can't be asked right now: that says nothing about the file, so stop rather than call them all gone
+            Err(err @ (Error::Throttled { .. } | Error::Network(_) | Error::NoKey | Error::BadKey)) => return Err(err),
+            Err(_) => { e.status = "unavailable".into(); continue }
+        };
         let pinned = d.files.iter().find(|f| f.file_id == e.file_id);
         match pinned {
             Some(f) if f.is_current() || f.category == "OLD_VERSION" => { if e.uri.is_empty() { e.uri = f.uri.clone(); } if e.size == 0 { e.size = f.bytes(); } }

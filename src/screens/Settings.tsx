@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Key, Lcd, Module, Pill, Seg } from "../ui/pocket";
-import { background, browserPane, errorText, handler, nexus, nexusPages, pagesWhere, settings, type BackgroundState, type HandlerStatus, type NexusStatus, type PagesWhere } from "../lib/api";
+import { background, browserPane, errorText, handler, nexus, nexusPages, pagesWhere, settings, updates, type BackgroundState, type HandlerStatus, type NexusStatus, type PagesWhere } from "../lib/api";
 import { Switch } from "../ui/pocket";
 import { toast } from "../ui/toast";
 import { API_KEY_PAGE } from "./Onboarding";
@@ -35,27 +35,32 @@ export function Settings({ onGallery }: { onGallery?: () => void }) {
 function NexusAccount() {
   const [st, setSt] = useState<NexusStatus | null>(null);
   const [key, setKey] = useState("");
-  const [busy, setBusy] = useState(false);
+  // the key whose work is running
+  const [busy, setBusy] = useState<"save" | "clear" | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => { nexus.status().then(setSt).catch((e) => setErr(errorText(e))); }, []);
+  useEffect(() => { nexus.status().then(setSt).catch((e) => setErr(errorText(e))).finally(() => setLoaded(true)); }, []);
 
   const save = async () => {
-    setBusy(true); setErr(null);
-    try { setSt(await nexus.setKey(key)); setKey(""); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
+    if (!key || busy) return;
+    setBusy("save"); setErr(null);
+    try { setSt(await nexus.setKey(key)); setKey(""); toast("Key saved"); } catch (e) { setErr(errorText(e)); } finally { setBusy(null); }
   };
   const clear = async () => {
-    setBusy(true); setErr(null);
-    try { setSt(await nexus.clearKey()); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
+    setBusy("clear"); setErr(null);
+    try { setSt(await nexus.clearKey()); toast("Key removed"); } catch (e) { setErr(errorText(e)); } finally { setBusy(null); }
   };
   const user = st?.user;
   const rl = st?.rateLimit;
 
   return (
-    <Module icon="key" title="Nexus account" count={user ? user.name : st?.hasKey ? "key saved" : "not connected"}>
+    <Module icon="key" title="Nexus account" count={user ? user.name : st?.hasKey ? "key saved" : loaded ? "not connected" : undefined}>
       <div className="grid2" style={{ alignItems: "start" }}>
         <div className="stack" style={{ gap: ".7em" }}>
-          {user ? (
+          {!loaded ? (
+            <span className="skel skel-line" style={{ width: "60%" }} aria-hidden="true" />
+          ) : user ? (
             <div className="actions">
               <b className="hi">{user.name}</b>
               {user.isPremium ? <Pill tone="ok">Premium</Pill> : <Pill>Free account</Pill>}
@@ -64,15 +69,15 @@ function NexusAccount() {
           ) : (
             <p>{ssoReady() ? "Sign in or paste an API key" : "Paste an API key"} to download, endorse and track</p>
           )}
-          {!user && <NexusSignIn onDone={setSt} />}
+          {loaded && !user && <NexusSignIn onDone={setSt} />}
           <label className="fbox" style={{ flex: "none" }}>
             <input className="finput" type="password" autoComplete="off" spellCheck={false} placeholder={st?.hasKey ? "Replace saved key" : "Personal API key"}
               value={key} onChange={(e) => setKey(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} aria-label="Nexus API key" />
           </label>
           <div className="actions">
-            <Key icon="check" onClick={save} disabled={busy || !key} title="Saved in Windows Credential Manager">Save</Key>
+            <Key icon="check" onClick={save} disabled={!!busy || !key} busy={busy === "save"} title={key ? "Saved in Windows Credential Manager" : "Paste a key first"}>Save</Key>
             {!st?.hasKey && <Key variant="ghost" icon="web" onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => setErr(errorText(e)))} title="Nexus, Site preferences, API keys">Get my key</Key>}
-            {st?.hasKey && <Key variant="ghost" icon="trash" onClick={clear} disabled={busy}>Remove key</Key>}
+            {st?.hasKey && <Key variant="ghost" icon="trash" onClick={clear} disabled={!!busy} busy={busy === "clear"} title="Forget the key saved in Windows Credential Manager">Remove key</Key>}
           </div>
           {err && <div className="note bad">{err}</div>}
           {user && !user.isPremium && <PremiumTips />}
@@ -108,6 +113,7 @@ function NexusPagesModule() {
   const [where, setWhere] = useState<PagesWhere | null>(null);
   const [h, setH] = useState<HandlerStatus | null>(null);
   const [ext, setExt] = useState<[string, number] | null>(null);
+  const [linking, setLinking] = useState(false);
   useEffect(() => {
     pagesWhere.get().then(setWhere).catch(() => setWhere("browser"));
     handler.status().then(setH).catch(() => {});
@@ -115,7 +121,10 @@ function NexusPagesModule() {
   }, []);
   if (!where) return null;
   const pick = (w: PagesWhere) => { setWhere(w); void pagesWhere.set(w).catch((e) => toast(errorText(e), true)); };
-  const takeBack = () => handler.register().then((x) => { setH(x); toast("Download links open in Pockymod"); }).catch((e) => toast(errorText(e), true));
+  const takeBack = () => {
+    setLinking(true);
+    handler.register().then((x) => { setH(x); toast("Download links open in Pockymod"); }).catch((e) => toast(errorText(e), true)).finally(() => setLinking(false));
+  };
   return (
     <Module icon="web" title="Nexus pages" count={where === "browser" ? "in your browser" : "in the app"}>
       <span title={where === "browser" ? "Your sign-in, passwords and extensions" : "A pane beside your mods. Drag its edge to resize"}>
@@ -124,7 +133,7 @@ function NexusPagesModule() {
       {h?.supported && (h.ours
         ? <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}><Pill tone="ok">Linked</Pill> Download links come here</p>
         : <div className="note warn" style={{ marginTop: ".5em" }}>Download links go to {h.owner ?? "another program"}
-            <div className="actions" style={{ marginTop: ".4em" }}><Key size="sm" icon="link" onClick={takeBack}>Use Pockymod</Key></div></div>)}
+            <div className="actions" style={{ marginTop: ".4em" }}><Key size="sm" icon="link" busy={linking} onClick={takeBack}>Use Pockymod</Key></div></div>)}
       {where === "pane" && <PaneSignInRow />}
       {where === "pane" && ext && (
         <>
@@ -142,12 +151,12 @@ function PaneSignInRow() {
   const [s, setS] = useState<PaneSignIn | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    const load = () => browserPane.signIn().then(setS).catch(() => setS(null));
-    load();
+    // an event that lands first is newer than the first reading
+    browserPane.signIn().then((x) => setS((cur) => cur ?? x)).catch(() => {});
     // signing in or out on a Nexus page shows here straight away
-    const offs: Array<() => void> = [];
-    browserPane.onSignIn(setS).then((u) => offs.push(u));
-    return () => offs.forEach((f) => f());
+    let off: (() => void) | undefined, gone = false;
+    browserPane.onSignIn(setS).then((u) => { if (gone) u(); else off = u; });
+    return () => { gone = true; off?.(); };
   }, []);
   if (!s) return null;
   const out = () => {
@@ -160,7 +169,7 @@ function PaneSignInRow() {
       <div className="sub-h">Nexus sign-in in the app</div>
       {s.signedIn ? (
         <div className="actions"><Pill tone="ok">Signed in</Pill>
-          <Key size="sm" variant="ghost" icon="trash" disabled={busy} onClick={out} title="Signs the app's browser out of Nexus and forgets the passwords it saved">Sign out</Key></div>
+          <Key size="sm" variant="ghost" icon="trash" busy={busy} onClick={out} title="Signs the app's browser out of Nexus and forgets the passwords it saved">Sign out</Key></div>
       ) : (
         <p className="dim" style={{ fontSize: ".86em" }}>Sign in on any Nexus page in the pane. It offers to save your password, so you only type it once.</p>
       )}
@@ -174,7 +183,7 @@ function BackgroundModule() {
   const [v, setV] = useState<Record<string, string> | null>(null);
   const [auto, setAuto] = useState(false);
   const [st, setSt] = useState<BackgroundState | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"check" | "restart" | null>(null);
   const KEYS = { bg: "app.background", up: "app.updates", mods: "mods.background", pre: "mods.prefetch", inst: "mods.autoInstall" } as const;
   useEffect(() => {
     Promise.all(Object.values(KEYS).map((k) => settings.get(k).catch(() => null))).then(([bg, up, mods, pre, inst]) =>
@@ -185,6 +194,17 @@ function BackgroundModule() {
   }, []);
   if (!v) return null;
   const put = (k: keyof typeof KEYS, val: string) => { setV({ ...v, [k]: val }); void settings.set(KEYS[k], val).catch((e) => toast(errorText(e), true)); };
+  // a check that finds nothing still says so
+  const check = async () => {
+    setBusy("check");
+    try {
+      const s = await background.check();
+      setSt(s);
+      const n = (await updates.last().catch(() => [])).length;
+      toast(n ? `${n} mod ${n === 1 ? "update" : "updates"}, listed in Library` : "No mod updates");
+    } catch (e) { toast(errorText(e), true); } finally { setBusy(null); }
+  };
+  const restart = () => { setBusy("restart"); background.installUpdate().catch((e) => { toast(errorText(e), true); setBusy(null); }); };
   return (
     <Module icon="power" title="Background" count={v.bg === "1" ? "on" : "off"}>
       <div className="stack" style={{ gap: ".55em" }}>
@@ -210,9 +230,9 @@ function BackgroundModule() {
           </Switch>
         </>}
         <div className="actions" style={{ marginTop: ".3em" }}>
-          <Key size="sm" icon="refresh" disabled={busy} onClick={() => { setBusy(true); background.check().then(setSt).catch((e) => toast(errorText(e), true)).finally(() => setBusy(false)); }}
+          <Key size="sm" icon="refresh" disabled={!!busy} busy={busy === "check"} onClick={check}
             title="Mod updates and app updates">Check now</Key>
-          {st?.readyVersion && <Key size="sm" variant="dark" icon="power" onClick={() => background.installUpdate().catch((e) => toast(errorText(e), true))}
+          {st?.readyVersion && <Key size="sm" variant="dark" icon="power" disabled={!!busy} busy={busy === "restart"} onClick={restart}
             title="Close, install and reopen">Restart into {st.readyVersion}</Key>}
           {st && st.modsReady > 0 && <span className="dim" style={{ fontSize: ".84em" }}>{st.modsReady} {st.modsReady === 1 ? "update" : "updates"} ready</span>}
         </div>

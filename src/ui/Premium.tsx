@@ -19,24 +19,30 @@ const MIN_CLICKS = 2;
 const read = (k: string) => { try { return Number(localStorage.getItem(k)) || 0; } catch { return 0; } };
 const write = (k: string, v: number) => { try { localStorage.setItem(k, String(v)); } catch { /* storage unavailable */ } };
 
+/** The check from the last Get Premium, so pressing it again does not add another. */
+let watching: (() => void) | null = null;
+
 /** Open the Premium page where Settings says Nexus pages open, then look at the account again each time the window
  *  comes back (at most every 30 seconds, for an hour): once it is Premium, say so and let the app know. */
 export function getPremium(from: string) {
   nexusPages.url(premiumUrl(from)).catch((e) => toast(errorText(e), true));
+  watching?.();
   const until = Date.now() + 3600_000;
   let last = 0;
+  const stop = () => { window.removeEventListener("focus", h); if (watching === stop) watching = null; };
   const h = () => {
-    if (Date.now() > until) { window.removeEventListener("focus", h); return; }
+    if (Date.now() > until) { stop(); return; }
     if (Date.now() - last < 30_000) return;
     last = Date.now();
     nexus.status(true).then((s) => {
       if (!s.user?.isPremium) return;
-      window.removeEventListener("focus", h);
+      stop();
       window.dispatchEvent(new Event("pm-premium"));
       toast("Premium is on");
     }).catch(() => {});
   };
   window.addEventListener("focus", h);
+  watching = stop;
 }
 
 /** The strip, for `clicks` Nexus pages a free account is about to click through. Renders nothing for Premium,

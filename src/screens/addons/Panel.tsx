@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "../../ui/Dialog";
 import { Icon } from "../../ui/Icon";
-import { Key, Module, bytesText } from "../../ui/pocket";
+import { Key, Module, bytesText, useBusy } from "../../ui/pocket";
 import { toast } from "../../ui/toast";
 import { browse, errorText, fileBytes, queue, type DetailView } from "../../lib/api";
 import { inTauri } from "../../lib/tauri";
@@ -25,18 +25,20 @@ async function panelUrl(p: Panel): Promise<string> {
 export function PanelHost({ panel }: { panel: Panel }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [src, setSrc] = useState<string | null>(null);
+  const [srcErr, setSrcErr] = useState<string | null>(null);
   const [ask, setAsk] = useState<{ modId: number; fileId: number | null; done: (yes: boolean | "block") => void } | null>(null);
   const [stopped, setStopped] = useState(false);
   const [showPerms, setShowPerms] = useState(false);
   const info: PanelInfo = useMemo(() => ({ extId: panel.extId, extName: panel.extName, release: panel.release, panelId: panel.id, title: panel.title, permissions: panel.permissions }),
     [panel.extId, panel.extName, panel.release, panel.id, panel.title, panel.permissions]);
 
-  useEffect(() => { if (inTauri()) panelUrl(panel).then(setSrc).catch(() => setSrc(null)); }, [panel]);
+  useEffect(() => { if (inTauri()) panelUrl(panel).then((u) => { setSrc(u); setSrcErr(null); }).catch((e) => setSrcErr(errorText(e))); }, [panel]);
 
   useEffect(() => {
     const handle = makeBridge(info, {
       toast,
-      confirmQueue: (modId, fileId) => new Promise<boolean | "block">((done) => setAsk({ modId, fileId, done })),
+      // a newer question replaces one still open, which then counts as a no, so the panel never waits forever
+      confirmQueue: (modId, fileId) => new Promise<boolean | "block">((done) => setAsk((was) => { was?.done(false); return { modId, fileId, done }; })),
     });
     let flood = 0;
     const post = (msg: unknown) => frame.current?.contentWindow?.postMessage(msg, "*");
@@ -76,6 +78,7 @@ export function PanelHost({ panel }: { panel: Panel }) {
         </div>
       )}
       {stopped && <div className="note warn" style={{ margin: ".8em" }}>Stopped, too many requests</div>}
+      {srcErr && !src && <div className="note bad" style={{ margin: ".8em" }}>Couldn't open this panel ({srcErr})</div>}
       {!stopped && (src || demoDoc !== undefined) && (
         <iframe ref={frame} className="ext-frame" title={`${panel.title} (${panel.extName})`} sandbox="allow-scripts" referrerPolicy="no-referrer" allow=""
           src={src ?? undefined} srcDoc={demoDoc} />
@@ -89,18 +92,30 @@ export function PanelHost({ panel }: { panel: Panel }) {
 function QueueAsk({ extName, modId, fileId, onClose }: { extName: string; modId: number; fileId: number | null; onClose: (yes: boolean | "block") => void }) {
   const [d, setD] = useState<DetailView | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => { browse.detail(modId).then(setD).catch((e) => setErr(errorText(e))); }, [modId]);
+  const [busy, run] = useBusy();
+  useEffect(() => {
+    let live = true;
+    setD(null); setErr(null);
+    browse.detail(modId).then((v) => { if (live) setD(v); }).catch((e) => { if (live) setErr(errorText(e)); });
+    return () => { live = false; };
+  }, [modId]);
   const file = d ? (fileId ? d.files.find((f) => f.fileId === fileId) : d.files.filter((f) => f.category === "MAIN").sort((a, b) => b.date - a.date)[0] ?? d.files[0]) : undefined;
-  const yes = async () => {
+  const yes = () => run(async () => {
     if (!d || !file) return;
-    setBusy(true);
-    try { await queue.add(modId, file.fileId); toast(`${d.detail.name} queued`); onClose(true); } catch (e) { toast(errorText(e), true); onClose(false); } finally { setBusy(false); }
-  };
+    await queue.add(modId, file.fileId);
+    toast(`${d.detail.name} queued`);
+    onClose(true);
+  });
   return (
     <Dialog icon="downloads" title="Add to the download queue?" onClose={() => onClose(false)}>
       <p><b className="hi">{extName}</b> wants to add a mod to your downloads</p>
       {err && <div className="note bad">{err}</div>}
+      {!d && !err && (
+        <div className="ext-ask" aria-hidden="true">
+          <span className="skel" style={{ width: "2.2em", height: "2.2em", flex: "none" }} />
+          <span className="m-main" style={{ flex: 1, gap: ".35em" }}><span className="skel skel-line" style={{ width: "60%" }} /><span className="skel skel-line" style={{ width: "85%" }} /></span>
+        </div>
+      )}
       {d && (
         <div className="ext-ask">
           <AddonGlyph icon="downloads" size={27} />
@@ -114,7 +129,8 @@ function QueueAsk({ extName, modId, fileId, onClose }: { extName: string; modId:
       <div className="actions" style={{ justifyContent: "flex-end" }}>
         <Key variant="ghost" onClick={() => onClose("block")} title="Until Pockymod restarts">Block its requests</Key>
         <Key variant="ghost" onClick={() => onClose(false)}>No</Key>
-        <Key variant="primary" icon="downloads" disabled={!file || busy} onClick={yes}>Add to downloads</Key>
+        <Key variant="primary" icon="downloads" busy={busy} disabled={!file} onClick={() => void yes()}
+          title={file ? undefined : d ? "This mod has no file to download" : err ? "Couldn't read the mod from Nexus" : undefined}>Add to downloads</Key>
       </div>
     </Dialog>
   );

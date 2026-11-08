@@ -6,7 +6,13 @@ use rusqlite::{params, Connection, OptionalExtension};
 use std::path::Path;
 
 impl From<rusqlite::Error> for Error {
-    fn from(e: rusqlite::Error) -> Self { Error::Db(e.to_string()) }
+    fn from(e: rusqlite::Error) -> Self {
+        match e {
+            // a mod, profile or file the screen still showed was removed meanwhile
+            rusqlite::Error::QueryReturnedNoRows => Error::Invalid("That's no longer there. It may have just been removed".into()),
+            e => Error::Db(e.to_string()),
+        }
+    }
 }
 
 /// Schema steps, applied in order and recorded in `user_version`. Never edit a released step; add one.

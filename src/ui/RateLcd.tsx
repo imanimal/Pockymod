@@ -6,10 +6,11 @@ import { LcdLevel } from "./pocket";
 export function RateLcd() {
   const [r, setR] = useState<RateDisplay | null>(null);
   useEffect(() => {
-    let off: (() => void) | undefined;
-    nexus.rateLimit().then(setR).catch(() => {});
-    nexus.onRateLimit(setR).then((u) => { off = u; });
-    return () => off?.();
+    let off: (() => void) | undefined, gone = false;
+    // an event that lands first is newer than the first reading
+    nexus.rateLimit().then((x) => setR((cur) => cur ?? x)).catch(() => {});
+    nexus.onRateLimit(setR).then((u) => { if (gone) u(); else off = u; });
+    return () => { gone = true; off?.(); };
   }, []);
   if (!r) return null;
   const tone = r.level === "throttled" ? " bad" : r.level === "low" ? " hot" : "";

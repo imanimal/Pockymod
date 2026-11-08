@@ -1,6 +1,6 @@
 // Add-ons: themes and extensions from the marketplace (a folder in this project's GitHub repository), the ones you
 // installed, their panels, and how to make and share your own. See docs/marketplace.md and docs/extensions.md.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { View } from "../App";
 import { Dialog } from "../ui/Dialog";
 import { Icon } from "../ui/Icon";
@@ -36,11 +36,17 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
   const setTab = (t: Tab) => { setTabState(t); try { localStorage.setItem(TAB_KEY, t); } catch { /* storage unavailable */ } };
   const [ix, setIx] = useState<LoadedIndex | null>(null);
   const [ixErr, setIxErr] = useState<string | null>(null);
-  const [themes, setThemes] = useState<InstalledTheme[]>([]);
+  const [ixBusy, setIxBusy] = useState(false);
+  const ixSeq = useRef(0);
+  // null until the first read, so Installed doesn't flash "Nothing installed yet"
+  const [themesRead, setThemes] = useState<InstalledTheme[] | null>(null);
+  const themes = themesRead ?? [];
   const [versions, setVersions] = useState<Record<string, string>>({});
   const [text, setText] = useState("");
   const [sort, setSort] = useState<Sort>("updated");
-  const [busy, setBusy] = useState<string | null>(null);
+  // every add-on being installed, updated or removed: each card shows its own, and several can run at once
+  const [busy, setBusy] = useState<ReadonlySet<string>>(() => new Set());
+  const [allP, setAllP] = useState<number | null>(null);
   const [review, setReview] = useState<Review | null>(null);
   const [share, setShare] = useState<{ kind: "theme" | "extension"; text: string } | null>(null);
   const [make, setMake] = useState(false);
@@ -49,11 +55,19 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
   const [fileErrors, setFileErrors] = useState<{ kind: "theme" | "extension"; errors: string[] } | null>(null);
 
   const loadMarket = useCallback((fresh = false) => {
-    setIxErr(null);
-    loadIndex(fresh).then(setIx).catch((e) => setIxErr(errorText(e)));
+    const n = ++ixSeq.current;
+    setIxErr(null); setIxBusy(true);
+    loadIndex(fresh)
+      .then((x) => {
+        if (n !== ixSeq.current) return;
+        setIx(x);
+        if (fresh && (x.source === "offline" || x.source === "bundled")) toast("Still offline");
+      })
+      .catch((e) => { if (n === ixSeq.current) setIxErr(errorText(e)); })
+      .finally(() => { if (n === ixSeq.current) setIxBusy(false); });
   }, []);
   const loadLocal = useCallback(() => {
-    installedThemes().then(setThemes).catch(() => {});
+    installedThemes().then(setThemes).catch(() => setThemes((t) => t ?? []));
     marketVersions().then(setVersions).catch(() => {});
   }, []);
   useEffect(() => { loadMarket(); loadLocal(); void reloadExtensions(); }, [loadMarket, loadLocal]);
@@ -67,15 +81,16 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
   const installedVersion = (e: MarketEntry) => (e.kind === "theme" ? themeVersion(e.id) : extOf(e.id)?.manifest?.release ?? (extOf(e.id) ? "" : undefined));
   const updates = [...(ix?.index.themes ?? []), ...(ix?.index.extensions ?? [])].filter((e) => isNewer(e, installedVersion(e)));
 
-  const run = async (key: string, f: () => Promise<void>) => { setBusy(key); try { await f(); } catch (e) { toast(errorText(e), true); } finally { setBusy(null); loadLocal(); } };
+  const mark = (key: string, on: boolean) => setBusy((s) => { const n = new Set(s); if (on) n.add(key); else n.delete(key); return n; });
+  const run = async (key: string, f: () => Promise<void>) => { mark(key, true); try { await f(); } catch (e) { toast(errorText(e), true); } finally { mark(key, false); loadLocal(); } };
 
-  const installEntry = (e: MarketEntry) => run(`${e.kind}:${e.id}`, async () => {
+  // a marketplace entry installed or updated: what to say about it, or the review it needs first
+  const install = async (e: MarketEntry): Promise<string | Review> => {
     const pkg = await fetchPackage(e);
     if (e.kind === "theme") {
       const was = themeVersion(e.id);
       const r = await installTheme(pkg, e);
-      toast(was !== undefined ? `${r.name} updated to ${e.version}` : `${r.name} installed. Pick it in Settings, Appearance`);
-      return;
+      return was !== undefined ? `${r.name} updated to ${e.version}` : `${r.name} installed. Pick it in Settings, Appearance`;
     }
     const c = checkExtensionText(pkg);
     if (!c.manifest) throw new Error(`${e.name} does not check out: ${c.errors[0]}`);
@@ -83,27 +98,47 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
     if (have && have.manifest && newApprovals(c.manifest, have.state).length === 0 && have.state.approvedRelease) {
       await installExtension(pkg, { approve: false, fromMarket: true });
       await recordVersion("extension", e.id, c.manifest.release);
-      toast(`${c.manifest.name} updated to ${c.manifest.release}`);
-      return;
+      return `${c.manifest.name} updated to ${c.manifest.release}`;
     }
-    setReview({ manifest: c.manifest, text: pkg, mode: have ? "update" : "install", fromMarket: true, warnings: c.warnings });
-  });
+    return { manifest: c.manifest, text: pkg, mode: have ? "update" : "install", fromMarket: true, warnings: c.warnings };
+  };
+  const installEntry = (e: MarketEntry) => run(`${e.kind}:${e.id}`, async () => { const r = await install(e); if (typeof r === "string") toast(r); else setReview(r); });
 
-  const fromFile = () => run("file", async () => {
-    const f = await pickTextFile("Install a theme or extension", ["json"]);
-    if (!f) return;
+  // one after another; an update that needs the user's OK waits, so one review shows at the end instead of each
+  // replacing the last
+  const updateAll = async () => {
+    const list = updates;
+    const done: string[] = [];
+    let ask: Review | null = null;
+    for (let i = 0; i < list.length; i++) {
+      const u = list[i], key = `${u.kind}:${u.id}`;
+      setAllP(i / list.length); mark(key, true);
+      try { const r = await install(u); if (typeof r === "string") done.push(r); else ask ??= r; } catch (e) { toast(errorText(e), true); } finally { mark(key, false); }
+    }
+    setAllP(null); loadLocal();
+    if (done.length) toast(done.length === 1 ? done[0] : `${done.length} add-ons updated`);
+    if (ask) setReview(ask);
+  };
+
+  // the key shows busy once a file is picked: choosing one is the user's time, not work
+  const fromFile = async () => {
+    let f: { text: string } | null;
+    try { f = await pickTextFile("Install a theme or extension", ["json"]); } catch (e) { toast(errorText(e), true); return; }
+    if (f) await installFile(f.text);
+  };
+  const installFile = (raw: string) => run("file", async () => {
     let format: unknown;
-    try { format = (JSON.parse(f.text) as { format?: unknown }).format; } catch { throw new Error("Not valid JSON"); }
+    try { format = (JSON.parse(raw) as { format?: unknown }).format; } catch { throw new Error("Not valid JSON"); }
     if (format === "pocket-mods.theme") {
-      const c = checkThemeText(f.text);
+      const c = checkThemeText(raw);
       if (!c.pkg) { setFileErrors({ kind: "theme", errors: c.errors }); return; }
-      const r = await installTheme(f.text);
+      const r = await installTheme(raw);
       toast(`${r.name} installed. Pick it in Settings, Appearance`);
       setTab("installed");
     } else if (format === "pocket-mods.extension") {
-      const c = checkExtensionText(f.text);
+      const c = checkExtensionText(raw);
       if (!c.manifest) { setFileErrors({ kind: "extension", errors: c.errors }); return; }
-      setReview({ manifest: c.manifest, text: f.text, mode: extOf(c.manifest.id) ? "update" : "install", fromMarket: false, warnings: c.warnings });
+      setReview({ manifest: c.manifest, text: raw, mode: extOf(c.manifest.id) ? "update" : "install", fromMarket: false, warnings: c.warnings });
     } else throw new Error("Not a Pockymod theme or extension");
   });
 
@@ -123,7 +158,7 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
         <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort">
           <option value="updated">Recently updated</option><option value="name">Name</option><option value="author">Author</option>
         </select>
-        <Key size="sm" icon="file" onClick={fromFile} disabled={busy === "file"}>Install from file</Key>
+        <Key size="sm" icon="file" onClick={() => void fromFile()} busy={busy.has("file")}>Install from file</Key>
         <Key size="sm" icon="plus" variant="ghost" onClick={() => setMake(true)}>Make your own</Key>
       </div>
 
@@ -139,25 +174,27 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
         ))}
       </div>
 
-      {!panel && ixErr && <div className="note bad">Couldn't load the marketplace ({ixErr}) <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>}
+      {!panel && ixErr && <div className="note bad">Couldn't load the marketplace ({ixErr}) <Key size="sm" variant="ghost" icon="refresh" busy={ixBusy} onClick={() => loadMarket(true)}>Try again</Key></div>}
       {!panel && ix?.source === "offline" && (tab === "themes" || tab === "extensions") && (
-        <div className="note warn">Offline, showing the last saved copy <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>
+        <div className="note warn">Offline, showing the last saved copy <Key size="sm" variant="ghost" icon="refresh" busy={ixBusy} onClick={() => loadMarket(true)}>Try again</Key></div>
       )}
       {!panel && ix?.source === "bundled" && (tab === "themes" || tab === "extensions") && (
-        <div className="note">Offline, showing the built-in copy <Key size="sm" variant="ghost" icon="refresh" onClick={() => loadMarket(true)}>Try again</Key></div>
+        <div className="note">Offline, showing the built-in copy <Key size="sm" variant="ghost" icon="refresh" busy={ixBusy} onClick={() => loadMarket(true)}>Try again</Key></div>
       )}
 
       {panel ? <PanelHost key={`${panel.extId}/${panel.id}/${panel.release}`} panel={panel} />
         : tab === "installed" ? (
-          <Installed ext={ext.list} themes={themes} versions={versions} index={ix?.index ?? null} updates={updates} busy={busy}
+          <Installed loaded={ext.loaded && themesRead !== null} ext={ext.list} themes={themes} versions={versions} index={ix?.index ?? null} updates={updates} busy={busy}
+            allP={allP} onUpdateAll={() => void updateAll()}
             onUpdate={installEntry} onShare={setShare} onRemoveExt={setRemoving} onCommands={setCmds} onNavigate={onNavigate}
             onOpenPanel={(id) => setTab(`panel:${id}`)} onReview={(x) => x.manifest && setReview({ manifest: x.manifest, text: x.text, mode: "review", fromMarket: x.state.fromMarket, warnings: x.warnings })}
-            onRemoveTheme={(t) => run(`theme:${t.id}`, async () => { await removeTheme(t.id); toast(`${t.pkg.name} removed`); })}
+            onRemoveTheme={(t) => run(`rm:theme:${t.id}`, async () => { await removeTheme(t.id); toast(`${t.pkg.name} removed`); })}
             onBrowse={() => setTab("extensions")} />
-        ) : (
-          <MarketGrid kind={tab === "themes" ? "theme" : "extension"} entries={list(tab === "themes" ? "themes" : "extensions")} loaded={!!ix || !!ixErr}
+        ) : !ix && ixErr ? null : (
+          // with no index at all, the note above says why; an empty "No themes yet" under it would read as a bug
+          <MarketGrid kind={tab === "themes" ? "theme" : "extension"} entries={list(tab === "themes" ? "themes" : "extensions")} loaded={!!ix}
             installedVersion={installedVersion} busy={busy} onInstall={installEntry} searching={!!text.trim()} onMake={() => setMake(true)}
-            onRemove={(e) => e.kind === "theme" ? run(`theme:${e.id}`, async () => { await removeTheme(e.id); toast(`${e.name} removed`); }) : setRemoving(extOf(e.id) ?? null)} />
+            onRemove={(e) => e.kind === "theme" ? run(`rm:theme:${e.id}`, async () => { await removeTheme(e.id); toast(`${e.name} removed`); }) : setRemoving(extOf(e.id) ?? null)} />
         )}
 
       {review && <ReviewDialog manifest={review.manifest} text={review.text} mode={review.mode} fromMarket={review.fromMarket} warnings={review.warnings}
@@ -177,7 +214,7 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
           <p>Its notes are deleted too. Mods it grouped stay put</p>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
             <Key variant="ghost" onClick={() => setRemoving(null)}>Cancel</Key>
-            <Key icon="trash" onClick={() => { const x = removing; setRemoving(null); void run(`extension:${x.id}`, async () => { await removeExtension(x.id); await recordVersion("extension", x.id, null); toast(`${x.manifest?.name ?? x.id} removed`); }); }}>Remove</Key>
+            <Key icon="trash" onClick={() => { const x = removing; setRemoving(null); void run(`rm:extension:${x.id}`, async () => { await removeExtension(x.id); await recordVersion("extension", x.id, null); toast(`${x.manifest?.name ?? x.id} removed`); }); }}>Remove</Key>
           </div>
         </Dialog>
       )}
@@ -198,10 +235,10 @@ export function Addons({ onNavigate }: { onNavigate?: (v: View) => void }) {
 }
 
 function MarketGrid({ kind, entries, loaded, installedVersion, busy, onInstall, onRemove, searching, onMake }: {
-  kind: "theme" | "extension"; entries: MarketEntry[]; loaded: boolean; installedVersion: (e: MarketEntry) => string | undefined; busy: string | null;
+  kind: "theme" | "extension"; entries: MarketEntry[]; loaded: boolean; installedVersion: (e: MarketEntry) => string | undefined; busy: ReadonlySet<string>;
   onInstall: (e: MarketEntry) => void; onRemove: (e: MarketEntry) => void; searching: boolean; onMake: () => void;
 }) {
-  if (!loaded) return <div className="agrid">{Array.from({ length: 4 }, (_, i) => <span key={i} className="acard panel skel" />)}</div>;
+  if (!loaded) return <div className="agrid" aria-hidden="true">{Array.from({ length: 4 }, (_, i) => <span key={i} className="acard panel skel" />)}</div>;
   if (!entries.length) return (
     <Module icon="addons" title={kind === "theme" ? "Themes" : "Extensions"}>
       <Empty icon="addons" title={searching ? "Nothing matches" : `No ${kind}s yet`} actions={<Key icon="plus" onClick={onMake}>Make your own</Key>} />
@@ -213,7 +250,7 @@ function MarketGrid({ kind, entries, loaded, installedVersion, busy, onInstall, 
         {entries.map((e) => {
           const have = installedVersion(e);
           const upd = isNewer(e, have);
-          const working = busy === `${e.kind}:${e.id}`;
+          const working = busy.has(`${e.kind}:${e.id}`), dropping = busy.has(`rm:${e.kind}:${e.id}`);
           return (
             <article key={e.id} className="acard panel">
               <header className="ph"><span className="pt"><Icon name={e.kind === "theme" ? "sun" : "addons"} size={9} />{e.kind === "theme" ? "Theme" : "Extension"}</span><span className="sp" /><span className="cnt">v{e.version}</span></header>
@@ -235,11 +272,11 @@ function MarketGrid({ kind, entries, loaded, installedVersion, busy, onInstall, 
                 )}
                 {(e.tags?.length ?? 0) > 0 && <span className="m-tags">{e.tags!.map((t) => <Tag key={t}>{t}</Tag>)}</span>}
                 <span className="acard-f">
-                  {have === undefined ? <Key size="sm" icon="install" disabled={working} onClick={() => onInstall(e)}>{working ? "Installing" : "Install"}</Key>
-                    : upd ? <Key size="sm" icon="downloads" disabled={working} onClick={() => onInstall(e)}>{working ? "Updating" : `Update to ${e.version}`}</Key>
+                  {have === undefined ? <Key size="sm" icon="install" busy={working} disabled={dropping} onClick={() => onInstall(e)}>Install</Key>
+                    : upd ? <Key size="sm" icon="downloads" busy={working} disabled={dropping} onClick={() => onInstall(e)}>Update to {e.version}</Key>
                       : <span className="dim acard-have"><Icon name="check" size={9} /> v{have || e.version} installed</span>}
                   <span className="sp" />
-                  {have !== undefined && <Key size="sm" variant="ghost" icon="trash" disabled={working} onClick={() => onRemove(e)} aria-label={`Remove ${e.name}`} title="Remove" />}
+                  {have !== undefined && <Key size="sm" variant="ghost" icon="trash" busy={dropping} disabled={working} onClick={() => onRemove(e)} aria-label={`Remove ${e.name}`} title="Remove" />}
                 </span>
               </div>
             </article>
@@ -254,18 +291,36 @@ const STATUS: Record<InstalledExtension["status"], { tone?: "ok" | "soon" | "ove
   on: { tone: "ok", label: "On" }, off: { label: "Off" }, review: { tone: "soon", label: "Needs your OK" }, broken: { tone: "over", label: "Broken" },
 };
 
-function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onShare, onRemoveExt, onRemoveTheme, onReview, onCommands, onOpenPanel, onNavigate, onBrowse }: {
-  ext: InstalledExtension[]; themes: InstalledTheme[]; versions: Record<string, string>; index: LoadedIndex["index"] | null; updates: MarketEntry[]; busy: string | null;
-  onUpdate: (e: MarketEntry) => Promise<void>; onShare: (s: { kind: "theme" | "extension"; text: string }) => void; onRemoveExt: (x: InstalledExtension) => void;
+function Installed({ loaded, ext, themes, versions, index, updates, busy, allP, onUpdate, onUpdateAll, onShare, onRemoveExt, onRemoveTheme, onReview, onCommands, onOpenPanel, onNavigate, onBrowse }: {
+  loaded: boolean; ext: InstalledExtension[]; themes: InstalledTheme[]; versions: Record<string, string>; index: LoadedIndex["index"] | null; updates: MarketEntry[];
+  busy: ReadonlySet<string>; allP: number | null;
+  onUpdate: (e: MarketEntry) => Promise<void>; onUpdateAll: () => void; onShare: (s: { kind: "theme" | "extension"; text: string }) => void; onRemoveExt: (x: InstalledExtension) => void;
   onRemoveTheme: (t: InstalledTheme) => void; onReview: (x: InstalledExtension) => void; onCommands: (x: InstalledExtension) => void; onOpenPanel: (id: string) => void;
   onNavigate?: (v: View) => void; onBrowse: () => void;
 }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
   const entry = (kind: "theme" | "extension", id: string) => (kind === "theme" ? index?.themes : index?.extensions)?.find((e) => e.id === id);
   const updateFor = (kind: "theme" | "extension", id: string) => updates.find((u) => u.kind === kind && u.id === id);
-  const exportText = (kind: "theme" | "extension", id: string, text: string) => saveTextAs(packageFileName(kind, id), text, ["json"]).catch((e) => toast(errorText(e), true));
+  const exportText = (kind: "theme" | "extension", id: string, text: string) => {
+    const file = packageFileName(kind, id);
+    return saveTextAs(file, text, ["json"]).then((ok) => { if (ok) toast(`Saved ${file}`); }).catch((e) => toast(errorText(e), true));
+  };
   const toggleOpen = (id: string) => setOpen((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const pickTool = async (x: InstalledExtension, t: { id: string; name: string; pick?: { title?: string; file?: string } }) => {
+    try {
+      const p = await pickProgram(t.pick?.title ?? `Find ${t.pick?.file ?? t.name}`);
+      if (p) { await setToolPath(x.id, t.id, p); toast(`${t.name} set`); }
+    } catch (e) { toast(errorText(e), true); }
+  };
+  const working = busy.size > 0;
 
+  if (!loaded) return (
+    <Module icon="addons" title="Installed">
+      <div className="stack" style={{ gap: ".5em" }} aria-hidden="true">
+        {[55, 80, 40, 70].map((w) => <span key={w} className="skel skel-line" style={{ width: `${w}%` }} />)}
+      </div>
+    </Module>
+  );
   if (!ext.length && !themes.length) return (
     <Module icon="addons" title="Installed">
       <Empty icon="addons" title="Nothing installed yet" actions={<Key icon="addons" onClick={onBrowse}>See extensions</Key>} />
@@ -276,12 +331,12 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
     <div className="stack addons-inst">
       {updates.length > 0 && (
         <Module icon="downloads" title="Updates" count={updates.length} band="hot"
-          tools={<Key size="sm" icon="downloads" disabled={!!busy} onClick={async () => { for (const u of updates) await onUpdate(u); }}>Update all</Key>}>
+          tools={<Key size="sm" icon="downloads" busy={allP ?? undefined} disabled={working} onClick={onUpdateAll}>Update all</Key>}>
           <div className="rows">
             {updates.map((u) => (
               <div key={`${u.kind}:${u.id}`} className="row" style={{ cursor: "default" }}>
                 <span className="m-main"><span className="m-t">{u.name}</span><span className="m-meta"><span>{u.kind === "theme" ? "Theme" : "Extension"}</span><span>to v{u.version}</span><span>{shortDate(`${u.updated}T12:00:00Z`)}</span></span></span>
-                <Key size="sm" icon="downloads" disabled={busy === `${u.kind}:${u.id}`} onClick={() => onUpdate(u)}>Update</Key>
+                <Key size="sm" icon="downloads" busy={busy.has(`${u.kind}:${u.id}`)} disabled={allP !== null} onClick={() => void onUpdate(u)}>Update</Key>
               </div>
             ))}
           </div>
@@ -313,7 +368,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
                   </span>
                   <span className="ext-row-k">
                     {x.status === "review" && <Key size="sm" icon="check" onClick={() => onReview(x)}>Review</Key>}
-                    {(x.status === "on" || x.status === "off") && <Switch checked={x.status === "on"} disabled={busy !== null}
+                    {(x.status === "on" || x.status === "off") && <Switch checked={x.status === "on"} disabled={working}
                       onChange={(v) => setExtensionEnabled(x.id, v).then(() => toast(`${m?.name} ${v ? "on" : "off"}`)).catch((e) => toast(errorText(e), true))}>
                       <span className="sr-only">{m?.name} on</span></Switch>}
                     <Key size="sm" variant="ghost" icon="chevron" className={isOpen ? "rot-key" : ""} onClick={() => toggleOpen(x.id)} aria-expanded={isOpen}>Details</Key>
@@ -331,9 +386,9 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
                         <div key={t.id} className="ext-pick">
                           <span className="m-main"><span className="m-t">{t.name}</span>
                             <span className="dim mono ext-path">{t.path ? `Game folder\\${t.path.replace(/\//g, "\\")}` : x.state.toolPaths[t.id] ?? "Not chosen yet"}</span></span>
-                          {t.pick && <Key size="sm" icon="folder" onClick={async () => { const p = await pickProgram(t.pick?.title ?? `Find ${t.pick?.file ?? t.name}`); if (p) setToolPath(x.id, t.id, p).then(() => toast(`${t.name} set`)).catch((e) => toast(errorText(e), true)); }}>
+                          {t.pick && <Key size="sm" icon="folder" onClick={() => void pickTool(x, t)}>
                             {x.state.toolPaths[t.id] ? "Change" : `Choose ${t.pick.file ?? "program"}`}</Key>}
-                          {t.download && <Key size="sm" variant="ghost" icon="web" disabled={x.status !== "on"} title={t.download} onClick={() => extensionsApi.openLink(x.id, `tool:${t.id}`).catch((e) => { if (!("__TAURI_INTERNALS__" in window)) window.open(t.download, "_blank", "noopener,noreferrer"); else toast(errorText(e), true); })}>Get it</Key>}
+                          {t.download && <Key size="sm" variant="ghost" icon="web" disabled={x.status !== "on"} title={x.status === "on" ? t.download : "Turn the extension on to open its links"} onClick={() => extensionsApi.openLink(x.id, `tool:${t.id}`).catch((e) => { if (!("__TAURI_INTERNALS__" in window)) window.open(t.download, "_blank", "noopener,noreferrer"); else toast(errorText(e), true); })}>Get it</Key>}
                         </div>
                       ))}
                     </>}
@@ -343,7 +398,7 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
                     </>}
                     {(k.links ?? []).length > 0 && <>
                       <div className="sub-h">Links</div>
-                      <div className="actions">{k.links!.map((l) => <Key key={l.id} size="sm" variant="ghost" icon="web" disabled={x.status !== "on"} title={l.url}
+                      <div className="actions">{k.links!.map((l) => <Key key={l.id} size="sm" variant="ghost" icon="web" disabled={x.status !== "on"} title={x.status === "on" ? l.url : "Turn the extension on to open its links"}
                         onClick={() => extensionsApi.openLink(x.id, l.id).catch((e) => { if (!("__TAURI_INTERNALS__" in window)) window.open(l.url, "_blank", "noopener,noreferrer"); else toast(errorText(e), true); })}>{l.title} <span className="dim">· {hostOf(l.url)}</span></Key>)}</div>
                     </>}
                     {(k.commandPacks ?? []).length > 0 && <div className="actions"><Key size="sm" icon="file" onClick={() => onCommands(x)}>Console commands ({k.commandPacks!.reduce((a, p) => a + p.commands.length, 0)})</Key></div>}
@@ -351,10 +406,11 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
                   </div>
                 )}
                 <div className="actions ext-row-f">
-                  {upd && <Key size="sm" icon="downloads" disabled={busy === `extension:${x.id}`} onClick={() => onUpdate(upd)}>Update to {upd.version}</Key>}
+                  {upd && <Key size="sm" icon="downloads" busy={busy.has(`extension:${x.id}`)} disabled={allP !== null} onClick={() => void onUpdate(upd)}>Update to {upd.version}</Key>}
                   {m && <Key size="sm" variant="ghost" icon="share" onClick={() => onShare({ kind: "extension", text: x.text })}>Share</Key>}
                   {m && <Key size="sm" variant="ghost" icon="file" onClick={() => void exportText("extension", x.id, x.text)}>Save as file</Key>}
-                  <Key size="sm" variant="ghost" icon="trash" disabled={x.id === "unknown"} onClick={() => onRemoveExt(x)}>Remove</Key>
+                  <Key size="sm" variant="ghost" icon="trash" busy={busy.has(`rm:extension:${x.id}`)} disabled={x.id === "unknown"}
+                    title={x.id === "unknown" ? "Its file has no id, so it can't be removed from here" : undefined} onClick={() => onRemoveExt(x)}>Remove</Key>
                   {!entry("extension", x.id) && m && <span className="dim ext-fine">Not on the marketplace</span>}
                 </div>
               </div>
@@ -379,10 +435,10 @@ function Installed({ ext, themes, versions, index, updates, busy, onUpdate, onSh
                   {t.pkg.description && <span className="ext-sum">{t.pkg.description}</span>}
                 </span>
                 <span className="actions">
-                  {upd && <Key size="sm" icon="downloads" disabled={busy === `theme:${t.id}`} onClick={() => onUpdate(upd)}>Update</Key>}
+                  {upd && <Key size="sm" icon="downloads" busy={busy.has(`theme:${t.id}`)} disabled={allP !== null || busy.has(`rm:theme:${t.id}`)} onClick={() => void onUpdate(upd)}>Update</Key>}
                   <Key size="sm" variant="ghost" icon="share" onClick={() => onShare({ kind: "theme", text: t.text })}>Share</Key>
                   <Key size="sm" variant="ghost" icon="file" onClick={() => void exportText("theme", t.id, t.text)} aria-label={`Save ${t.pkg.name} as a file`} title="Save as file" />
-                  <Key size="sm" variant="ghost" icon="trash" disabled={busy === `theme:${t.id}`} onClick={() => onRemoveTheme(t)} aria-label={`Remove ${t.pkg.name}`} title="Remove" />
+                  <Key size="sm" variant="ghost" icon="trash" busy={busy.has(`rm:theme:${t.id}`)} disabled={busy.has(`theme:${t.id}`)} onClick={() => onRemoveTheme(t)} aria-label={`Remove ${t.pkg.name}`} title="Remove" />
                 </span>
               </div>
             );

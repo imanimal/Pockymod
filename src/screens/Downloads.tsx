@@ -2,7 +2,7 @@
 // When it waits for a click, the orange band and key point at the one thing to do next.
 import { plural } from "../lib/text";
 import { Icon } from "../ui/Icon";
-import { Empty, Key, Lcd, Module, Pill, bytesText, type PillTone } from "../ui/pocket";
+import { Empty, Key, Lcd, Module, Pill, bytesText, useBusy, type PillTone } from "../ui/pocket";
 import { errorText, queue, type ItemState, type QueueItem, type QueueSnapshot } from "../lib/api";
 import { toast } from "../ui/toast";
 import { PremiumNote } from "../ui/Premium";
@@ -30,6 +30,11 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
   const current = items.find((i) => i.state.state === "downloading");
   const waiting = items.find((i) => i.state.state === "needsClick");
   const act = (p: Promise<unknown>) => p.catch((e) => toast(errorText(e), true));
+  const failed = items.filter((i) => i.state.state === "failed");
+  const [showing, runShow] = useBusy();
+  const [skipping, runSkip] = useBusy();
+  const [retrying, runRetry] = useBusy();
+  const [clearing, runClear] = useBusy();
 
   return (
     <div className="stack">
@@ -45,8 +50,8 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
         <Module icon="downloads" title="Download next" count={waiting.modName} band="hot">
           <p>Press <b className="hi">Mod Manager Download</b> on the Nexus page for <b className="hi">{waiting.fileName}</b></p>
           <div className="actions" style={{ marginTop: ".7em" }}>
-            <Key variant="dark" icon="web" onClick={() => act(queue.showPage(waiting.id))}>Show the Nexus page</Key>
-            <Key variant="ghost" onClick={() => act(queue.remove(waiting.id))}>Skip this mod</Key>
+            <Key variant="dark" icon="web" busy={showing} onClick={() => runShow(() => queue.showPage(waiting.id))}>Show the Nexus page</Key>
+            <Key variant="ghost" busy={skipping} onClick={() => runSkip(() => queue.remove(waiting.id))} title="Take it out of the queue">Skip this mod</Key>
           </div>
           {waiting.manualOnly && <div className="note warn" style={{ marginTop: ".7em" }}>Not a .zip, .7z or .rar. Install it by hand from its page</div>}
           {!s?.premium && <div style={{ marginTop: ".7em" }}><PremiumNote clicks={s?.needsClick ?? 0} what="the" from="downloads" /></div>}
@@ -55,10 +60,15 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
 
       <Module icon="downloads" title="Queue" count={items.length ? plural(items.length, "item") : undefined} bodyClass="list"
         tools={<>
-          {items.filter((i) => i.state.state === "failed").length > 1 && <Key size="sm" icon="refresh" onClick={() => act((async () => { let s = null; for (const i of items.filter((x) => x.state.state === "failed")) s = await queue.retry(i.id); return s!; })())}>Retry all {items.filter((i) => i.state.state === "failed").length} failed</Key>}
-          {items.some((i) => ["done", "failed"].includes(i.state.state)) && <Key size="sm" variant="ghost" onClick={() => act(queue.clearFinished())}>Clear finished</Key>}
+          {failed.length > 1 && <Key size="sm" icon="refresh" busy={retrying}
+            onClick={() => runRetry(async () => { for (const i of failed) await queue.retry(i.id); })}>Retry all {failed.length} failed</Key>}
+          {items.some((i) => ["done", "failed"].includes(i.state.state)) && <Key size="sm" variant="ghost" busy={clearing} onClick={() => runClear(() => queue.clearFinished())}
+            title="Take finished and failed downloads off the list">Clear finished</Key>}
         </>}>
-        {items.length === 0 && <Empty icon="downloads" title="Nothing queued" />}
+        {!snap && <div className="stack" style={{ gap: ".55em", padding: ".8em" }} aria-hidden="true">
+          {Array.from({ length: 3 }, (_, i) => <span key={i} className="skel skel-line" style={{ width: `${80 - i * 15}%` }} />)}
+        </div>}
+        {snap && items.length === 0 && <Empty icon="downloads" title="Nothing queued" />}
         <div className="rows">
           {items.map((i) => <QueueRow key={i.id} i={i} premium={!!s?.premium} onStart={() => act(queue.start(i.id))} onShow={() => act(queue.showPage(i.id))}
             onRetry={() => act(queue.retry(i.id))} onRemove={() => act(queue.remove(i.id))} />)}
@@ -91,7 +101,7 @@ function QueueRow({ i, premium, onStart, onShow, onRetry, onRemove }: { i: Queue
         <Pill tone={l.tone}>{l.text}</Pill>
         {i.state.state === "failed" && <Key size="sm" icon="refresh" onClick={onRetry} aria-label="Retry" title="Retry" />}
         {!busy && i.state.state !== "done" && <Key size="sm" variant="ghost" icon="x" onClick={onRemove} aria-label="Remove" title="Remove" />}
-        {i.state.state === "downloading" && <Key size="sm" variant="ghost" icon="x" onClick={() => void queue.cancel(i.id).catch(() => {})} aria-label="Stop this download" title="Stop. Retry resumes it" />}
+        {i.state.state === "downloading" && <Key size="sm" variant="ghost" icon="x" onClick={() => void queue.cancel(i.id).catch((e) => toast(errorText(e), true))} aria-label="Stop this download" title="Stop. Retry resumes it" />}
         {i.state.state === "installing" && <Icon name="clock" />}
       </span>
     </div>

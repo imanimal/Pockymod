@@ -1,21 +1,55 @@
 // Thin React wrappers over pocket-os.css. They only emit the Pocket classes; all styling lives in the stylesheet.
-import type { ReactNode, ButtonHTMLAttributes } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from "react";
 import { Icon } from "./Icon";
 import type { IconName } from "./icons";
 import { useOneShot } from "./motion";
+import { toast } from "./toast";
+import { errorText } from "../lib/api";
+import { held } from "../lib/tauri";
 
 type KeyVariant = "primary" | "dark" | "ghost";
 type KeySize = "sm" | "lg";
 
-export function Key({ variant, size, icon, latched, children, className = "", ...rest }:
-  { variant?: KeyVariant; size?: KeySize; icon?: IconName; latched?: boolean; children?: ReactNode } & ButtonHTMLAttributes<HTMLButtonElement>) {
-  const cls = ["btn", variant, size, !children && icon ? "icon" : "", className].filter(Boolean).join(" ");
+/** A key. busy: the key is working on what it was pressed for and takes no more presses; true sweeps a fill across it,
+ *  a number from 0 to 1 fills it that far. */
+export function Key({ variant, size, icon, latched, busy, children, className = "", style, disabled, ...rest }:
+  { variant?: KeyVariant; size?: KeySize; icon?: IconName; latched?: boolean; busy?: boolean | number; children?: ReactNode } & ButtonHTMLAttributes<HTMLButtonElement>) {
+  const working = busy !== undefined && busy !== false;
+  const cls = ["btn", variant, size, !children && icon ? "icon" : "", working ? (busy === true ? "busy" : "busy fillp") : "", className].filter(Boolean).join(" ");
+  const st = typeof busy === "number" ? { ...style, ["--p" as string]: String(Math.max(0, Math.min(1, busy))) } : style;
   return (
-    <button type="button" className={cls} aria-pressed={latched === undefined ? undefined : latched} {...rest}>
+    <button type="button" className={cls} style={st} disabled={disabled || working} aria-busy={working || undefined}
+      aria-pressed={latched === undefined ? undefined : latched} {...rest}>
       {icon && <Icon name={icon} />}
       {children}
     </button>
   );
+}
+
+/** How far a job is (0 to 1) from its [done, total] progress event, while `on`; null until the first one arrives.
+ *  A key passes it as `busy={p ?? true}`, so it sweeps until there is something to fill. */
+export function useProgress(on: boolean, sub: (cb: (p: [number, number]) => void) => Promise<() => void>): number | null {
+  const [p, setP] = useState<number | null>(null);
+  useEffect(() => {
+    setP(null);
+    if (!on) return;
+    return held(sub(([done, total]) => setP(total > 0 ? done / total : null)));
+    // the subscription is a fixed API call; only `on` changes it
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [on]);
+  return on ? p : null;
+}
+
+/** Runs an async job while a key shows busy, and turns a failure into a toast. Returns [busy, run]. */
+export function useBusy(): [boolean, (job: () => Promise<unknown>) => Promise<void>] {
+  const [busy, setBusy] = useState(false);
+  const live = useRef(true);
+  useEffect(() => () => { live.current = false; }, []);
+  const run = useCallback(async (job: () => Promise<unknown>) => {
+    setBusy(true);
+    try { await job(); } catch (e) { toast(errorText(e), true); } finally { if (live.current) setBusy(false); }
+  }, []);
+  return [busy, run];
 }
 
 export type Led = "off" | "run" | "wait" | "bad" | "on";

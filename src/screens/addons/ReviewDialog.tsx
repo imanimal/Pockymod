@@ -4,7 +4,7 @@ import { suspendUserCss } from "../../lib/theme";
 import { useState, useEffect } from "react";
 import { Dialog } from "../../ui/Dialog";
 import { Icon } from "../../ui/Icon";
-import { Key } from "../../ui/pocket";
+import { Key, useBusy } from "../../ui/pocket";
 import { toast } from "../../ui/toast";
 import { errorText, pickProgram, type ExtState } from "../../lib/api";
 import { approveExtension, installExtension, newApprovals, type ExtensionManifest } from "../../lib/extensions";
@@ -20,26 +20,26 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
   // a theme's own css stays out of this dialog, so nothing it shows can be hidden
   useEffect(() => { suspendUserCss(true); return () => suspendUserCss(false); }, []);
   const [paths, setPaths] = useState<Record<string, string>>(state?.toolPaths ?? {});
-  const [busy, setBusy] = useState(false);
+  const [busy, run] = useBusy();
   const fresh = mode === "install" ? undefined : newApprovals(m, state);
   const picks = (m.contributes.tools ?? []).filter((t) => t.pick);
   const hasPanels = (m.contributes.panels ?? []).length > 0;
 
   const choose = async (toolId: string, title: string) => {
-    const p = await pickProgram(title);
-    if (p) setPaths((x) => ({ ...x, [toolId]: p }));
-  };
-  const go = async () => {
-    setBusy(true);
     try {
-      if (mode === "review") await approveExtension(m.id, paths);
-      else await installExtension(text, { approve: true, fromMarket, toolPaths: paths });
-      if (fromMarket) await recordVersion("extension", m.id, m.release).catch(() => {});
-      toast(mode === "update" ? `${m.name} updated to ${m.release}` : `${m.name} on${(m.contributes.tools?.length || m.contributes.launchOptions?.length) ? ". Tools are in the Play menu" : ""}`);
-      onDone?.(m);
-      onClose();
-    } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
+      const p = await pickProgram(title);
+      if (p) setPaths((x) => ({ ...x, [toolId]: p }));
+    } catch (e) { toast(errorText(e), true); }
   };
+  const go = () => run(async () => {
+    if (mode === "review") await approveExtension(m.id, paths);
+    else await installExtension(text, { approve: true, fromMarket, toolPaths: paths });
+    // the version note only drives the "update available" badge, so a failure here is not worth a message
+    if (fromMarket) await recordVersion("extension", m.id, m.release).catch(() => {});
+    toast(mode === "update" ? `${m.name} updated to ${m.release}` : `${m.name} on${(m.contributes.tools?.length || m.contributes.launchOptions?.length) ? ". Tools are in the Play menu" : ""}`);
+    onDone?.(m);
+    onClose();
+  });
 
   const title = mode === "install" ? "Install this extension?" : mode === "update" ? "This update needs your OK" : "Turn this extension on?";
   return (
@@ -79,7 +79,7 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
 
       <div className="actions" style={{ justifyContent: "flex-end" }}>
         <Key variant="ghost" onClick={onClose} disabled={busy}>{mode === "update" ? "Not now" : "Cancel"}</Key>
-        <Key variant="primary" icon="check" onClick={go} disabled={busy}>{mode === "install" ? "Install and turn on" : mode === "update" ? "Allow and update" : "Allow and turn on"}</Key>
+        <Key variant="primary" icon="check" onClick={() => void go()} busy={busy}>{mode === "install" ? "Install and turn on" : mode === "update" ? "Allow and update" : "Allow and turn on"}</Key>
       </div>
     </Dialog>
   );

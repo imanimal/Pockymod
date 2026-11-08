@@ -367,6 +367,8 @@ export const collections = {
   createLocal: (name: string, description: string) => call<LocalCollection>("local_collection_create", { name, description }),
   exportLocal: (collection: LocalCollection, path: string) => call<void>("local_collection_export", { collection, path }),
   importLocal: (path: string) => call<[LocalCollection, CollectionCheck]>("local_collection_import", { path }),
+  /** [checked, total] while a check or an import looks the files up on Nexus. */
+  onProgress: (cb: (p: [number, number]) => void) => listen<[number, number]>("collection-progress", cb),
 };
 export async function pickSavePath(defaultName: string): Promise<string | null> {
   if (!("__TAURI_INTERNALS__" in window)) return window.prompt("Save as", defaultName) || null;
@@ -429,6 +431,8 @@ export const groups = {
   remove: (name: string) => call<void>("group_delete", { name }),
 };
 export const bulk = (installIds: number[], action: "enable" | "enable-win" | "disable" | "uninstall") => call<{ done: number; failed: Array<[number, string]> }>("library_bulk", { installIds, action });
+/** [done, total] while a bulk change runs on more than one mod. */
+export const onBulkProgress = (cb: (p: [number, number]) => void) => listen<[number, number]>("library-bulk", cb);
 
 export const launchGame = () => call<{ started: boolean; modded?: boolean; redmod?: RedmodResult | null }>("game_launch");
 /** Start without mods: they come out of the game and go back when it closes. */
@@ -467,6 +471,8 @@ export const creator = {
   pack: (path: string, name: string, version: string) => call<string>("creator_package", { path, name, version }),
   publish: (request: PublishRequest) => call<number>("creator_publish", { request }),
   onProgress: (cb: (p: [number, number]) => void) => listen<[number, number]>("publish-progress", cb),
+  /** [bytes done, bytes] while a clean zip is packed. */
+  onPack: (cb: (p: [number, number]) => void) => listen<[number, number]>("package-progress", cb),
 };
 
 // ── text files the user picks ──
@@ -479,7 +485,9 @@ export async function pickTextFile(title: string, extensions: string[]): Promise
       const input = document.createElement("input");
       input.type = "file";
       input.accept = extensions.map((e) => `.${e}`).join(",");
-      input.onchange = () => { const f = input.files?.[0]; if (!f) return resolve(null); f.text().then((text) => resolve({ path: null, text })); };
+      input.onchange = () => { const f = input.files?.[0]; if (!f) return resolve(null); f.text().then((text) => resolve({ path: null, text }), () => resolve(null)); };
+      // closing the picker without a file answers too, so nothing waits on it
+      input.oncancel = () => resolve(null);
       input.click();
     });
   }
@@ -630,4 +638,6 @@ export const relocate = {
   /** Set the game folder; a moved copy of the game has its mod files linked to the library again. */
   setGame: (dir: string) => call<{ paths: PathsView; relink: RelinkReport | null }>("game_folder_set", { dir }),
   relinkGame: () => call<RelinkReport>("game_relink"),
+  /** [files done, files] while the game's mod files are linked again. */
+  onRelink: (cb: (p: [number, number]) => void) => listen<[number, number]>("relink-progress", cb),
 };

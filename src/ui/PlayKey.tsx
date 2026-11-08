@@ -39,13 +39,13 @@ export function PlayKey({ onHealth }: { onHealth: () => void }) {
   };
   return (
     <span className="playkey">
-      <Key variant="dark" icon="play" className="play-key" onClick={() => void check()} disabled={busy} title="Check for problems and start the game">{busy ? "Starting" : "Play"}</Key>
+      <Key variant="dark" icon="play" className="play-key" onClick={() => void check()} busy={busy && !problems} disabled={busy} title="Check for problems and start the game">Play</Key>
       <PlayMenu onLaunch={(o) => void check(o)} disabled={busy} />
       {problems && (
         <Dialog icon="warn" title="Before you play" count={plural(problems.length, "problem")} band="bad" onClose={() => setProblems(null)}>
           <div className="rows">{problems.slice(0, 5).map((p) => <div key={p.id} className="row" style={{ cursor: "default" }}><span className="m-main"><span className="m-t" style={{ whiteSpace: "normal" }}>{p.title}</span><span style={{ fontSize: ".86em" }}>{p.detail}</span></span></div>)}</div>
           <div className="actions" style={{ justifyContent: "flex-end" }}>
-            <Key variant="ghost" disabled={busy} onClick={() => void start(pending)}>Play anyway</Key>
+            <Key variant="ghost" busy={busy} onClick={() => void start(pending)}>Play anyway</Key>
             <Key onClick={() => { setProblems(null); onHealth(); }}>Fix them first</Key>
           </div>
         </Dialog>

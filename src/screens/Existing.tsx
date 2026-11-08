@@ -1,5 +1,5 @@
 // "Find existing mods": what Vortex installed and what is already in the game folder, tracked in one click.
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Dialog } from "../ui/Dialog";
 import { Empty, Key, Lcd, Switch } from "../ui/pocket";
 import { Scanner, type ScanLine } from "../ui/Scanner";
@@ -11,15 +11,15 @@ function useProgress() {
   const [lines, setLines] = useState<ScanLine[]>([]);
   const [p, setP] = useState<ExistingProgress | null>(null);
   useEffect(() => {
-    let off: (() => void) | undefined;
+    let off: (() => void) | undefined, gone = false;
     onExistingProgress((e) => {
       setP(e);
       const text = e.stage === "vortex" ? `Vortex: ${e.name}` : e.stage === "folder" ? e.name
         : e.stage === "matching" ? (e.name ? `Matched ${e.name}` : "Matching Vortex mods on Nexus")
         : e.stage === "tracking" ? "Adding to your library" : e.stage === "profiles" ? "Bringing in Vortex profiles" : "Linking hand-installed mods";
       setLines((l) => [...l.map((x) => ({ ...x, done: true })), { text }].slice(-40));
-    }).then((u) => { off = u; });
-    return () => off?.();
+    }).then((u) => { if (gone) u(); else off = u; });
+    return () => { gone = true; off?.(); };
   }, []);
   return { lines, p, reset: () => { setLines([]); setP(null); } };
 }
@@ -32,8 +32,17 @@ export function ExistingBody({ onDone, compact, quiet }: { onDone: (tracked: num
   const [px, setPx] = useState(true);
   const [busy, setBusy] = useState(false);
   const prog = useProgress();
-  useEffect(() => { existing.scan().then(setScan).catch((e) => setErr(errorText(e))); }, []);
-  if (err) return <div className="note bad">{err}</div>;
+  // closed or skipped while bringing mods in: the toast still says what happened, but nothing moves on twice
+  const live = useRef(true);
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  const look = useCallback(() => { setErr(null); existing.scan().then(setScan).catch((e) => setErr(errorText(e))); }, []);
+  useEffect(() => { look(); }, [look]);
+  if (err) return (
+    <>
+      <div className="note bad">{err}</div>
+      <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".6em" }}><Key icon="refresh" onClick={() => { prog.reset(); look(); }}>Look again</Key></div>
+    </>
+  );
   if (!scan) return <Scanner title="Looking for your mods" icon="folder" lines={prog.lines} sub="Read only" />;
   if (busy) {
     const matching = prog.p?.stage === "matching";
@@ -53,10 +62,11 @@ export function ExistingBody({ onDone, compact, quiet }: { onDone: (tracked: num
       void updates.check().catch(() => {});
       toast(`Added ${n} ${n === 1 ? "mod" : "mods"}${r.vortex.tracked ? `, ${r.vortex.matchedOnNexus} matched on Nexus` : ""}`);
       if (r.profiles) toast(profilesText(r.profiles));
-      onDone(n);
+      if (live.current) onDone(n);
     } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
   if (nothing) return <><Empty icon="check" title="Nothing new to bring in" />{!compact && <div className="actions" style={{ justifyContent: "flex-end" }}><Key onClick={() => onDone(0)}>Done</Key></div>}</>;
+  const none = !(vx && newVortex > 0) && !(fd && scan.found.length > 0);
   return (
     <>
       <div className="lcds">
@@ -76,7 +86,7 @@ export function ExistingBody({ onDone, compact, quiet }: { onDone: (tracked: num
       </>}
       <div className="actions" style={{ justifyContent: "flex-end" }}>
         {!compact && <Key variant="ghost" onClick={() => onDone(0)}>Not now</Key>}
-        <Key variant={quiet ? "dark" : "primary"} icon="library" disabled={busy || (!vx && !fd)} onClick={go}>{busy ? "Bringing them in" : "Bring them in"}</Key>
+        <Key variant={quiet ? "dark" : "primary"} icon="library" disabled={none} onClick={go} title={none ? "Turn on one of the switches above" : undefined}>Bring them in</Key>
       </div>
     </>
   );

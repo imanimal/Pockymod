@@ -2,17 +2,22 @@
 import { useEffect, useState } from "react";
 import { Module, Seg, Switch } from "../ui/pocket";
 import { installPrefs, setInstallPrefs, type InstallPrefs as Prefs, type Requirements } from "../lib/prefs";
+import { errorText } from "../lib/api";
+import { toast } from "../ui/toast";
+
+const load = (set: (p: Prefs) => void) => installPrefs().then(set).catch(() => {});
 
 export function InstallPrefs() {
   const [p, setP] = useState<Prefs | null>(null);
   useEffect(() => {
-    const load = () => installPrefs().then(setP).catch(() => {});
-    load();
-    window.addEventListener("pm-prefs", load);
-    return () => window.removeEventListener("pm-prefs", load);
+    const h = () => load(setP);
+    h();
+    window.addEventListener("pm-prefs", h);
+    return () => window.removeEventListener("pm-prefs", h);
   }, []);
   if (!p) return null;
-  const save = (x: Partial<Prefs>) => { setP({ ...p, ...x }); void setInstallPrefs(x); };
+  // shown at once; if it does not save, say so and show what is saved
+  const save = (x: Partial<Prefs>) => { setP({ ...p, ...x }); setInstallPrefs(x).catch((e) => { toast(errorText(e), true); void load(setP); }); };
   return (
     <Module icon="install" title="Installing" count={p.confirm ? "shows plan" : "one click"}>
       <div className="fgrid">

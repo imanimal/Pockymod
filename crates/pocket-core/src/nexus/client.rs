@@ -166,8 +166,14 @@ fn snapshot(status: u16, h: &HeaderMap) -> HeaderSnapshot {
 }
 
 async fn message_of(resp: reqwest::Response) -> String {
+    let status = resp.status();
     let text = resp.text().await.unwrap_or_default();
-    serde_json::from_str::<Value>(&text).ok()
-        .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(str::to_owned))
-        .unwrap_or_else(|| text.chars().take(200).collect())
+    if let Some(m) = serde_json::from_str::<Value>(&text).ok().and_then(|v| v.get("message").and_then(|m| m.as_str()).map(str::to_owned)) { return m; }
+    // an error page (Cloudflare, maintenance) or nothing at all: no use showing its markup
+    if text.trim().is_empty() || text.trim_start().starts_with('<') {
+        return if status.is_server_error() { "Nexus is having trouble right now. Try again in a few minutes".into() }
+            else if status.as_u16() == 404 { "Not found on Nexus. It may have been removed or hidden".into() }
+            else { status.canonical_reason().unwrap_or("No answer").into() };
+    }
+    text.chars().take(200).collect()
 }

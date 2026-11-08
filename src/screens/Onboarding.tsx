@@ -42,22 +42,30 @@ function GameStep({ onNext }: { onNext: () => void }) {
   const [found, setFound] = useState<GameInstall[] | null>(null);
   const [p, setP] = useState<PathsView | null>(null);
   const [lines, setLines] = useState<ScanLine[]>([]);
+  // the key whose work is running: a found copy's path, or "pick"
+  const [working, setWorking] = useState<string | null>(null);
   useEffect(() => {
+    let live = true;
     // the stores are read in one quick call; the lines say what it looks at
     const where = ["Steam: libraryfolders.vdf in every Steam library", "GOG Galaxy: the GOG.com registry entries", "Epic Games: the launcher's install manifests"];
-    where.forEach((w, i) => setTimeout(() => setLines((l) => [...l.map((x) => ({ ...x, done: true })), { text: w }]), i * 220));
+    const timers = where.map((w, i) => setTimeout(() => setLines((l) => [...l.map((x) => ({ ...x, done: true })), { text: w }]), i * 220));
     const started = Date.now();
     game.detect().then(async (list) => {
       await new Promise((r) => setTimeout(r, Math.max(0, 700 - (Date.now() - started))));
+      if (!live) return;
       setFound(list);
       const cur = await paths.get();
       // one install found and nothing set yet: just use it
       const real = list.filter((g) => g.exists);
-      if (!cur.gameDir && real.length === 1) setP(await paths.set({ gameDir: real[0].path }));
-      else setP(cur);
-    }).catch((e) => { toast(errorText(e), true); setFound([]); });
+      const next = !cur.gameDir && real.length === 1 ? await paths.set({ gameDir: real[0].path }) : cur;
+      if (live) setP(next);
+    }).catch((e) => { if (!live) return; toast(errorText(e), true); setFound((f) => f ?? []); });
+    return () => { live = false; timers.forEach(clearTimeout); };
   }, []);
-  const use = async (dir: string) => setP(await paths.set({ gameDir: dir }));
+  const use = async (key: string, dir: () => Promise<string | null>) => {
+    setWorking(key);
+    try { const d = await dir(); if (d) setP(await paths.set({ gameDir: d })); } catch (e) { toast(errorText(e), true); } finally { setWorking(null); }
+  };
   return (
     <Module icon="play" title="Find the game" band="hot" count={p?.gameLooksRight ? "found" : undefined}>
       {!found && <Scanner title="Looking for Cyberpunk 2077" icon="play" lines={lines} />}
@@ -69,19 +77,21 @@ function GameStep({ onNext }: { onNext: () => void }) {
         </>
       ) : found && (
         <div className="stack" style={{ gap: ".4em" }}>
+          {p?.gameDir && <div className="note bad">No bin\x64 in <code>{p.gameDir}</code>. Pick the folder with bin, archive and r6</div>}
           <p>{found.length ? "Pick your copy" : "Game not found. Choose its folder (with bin, archive and r6)"}</p>
           {found.map((g) => (
             <div key={g.path} className="actions" style={{ flexWrap: "nowrap" }}>
               <Pill tone={g.exists ? "ok" : undefined}>{g.store}</Pill>
               <code style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.path}</code>
-              <Key size="sm" disabled={!g.exists} onClick={() => use(g.path)}>Use</Key>
+              <Key size="sm" disabled={!g.exists || working !== null} busy={working === g.path} title={g.exists ? undefined : "That folder is gone"}
+                onClick={() => use(g.path, async () => g.path)}>Use</Key>
             </div>
           ))}
         </div>
       )}
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
-        <Key variant="ghost" icon="folder" onClick={async () => { const d = await pickFolder("Cyberpunk 2077 folder"); if (d) await use(d); }}>Choose a folder</Key>
-        <Key variant="dark" icon="chevron" disabled={!p?.gameLooksRight} onClick={onNext}>Next</Key>
+        <Key variant="ghost" icon="folder" disabled={working !== null} busy={working === "pick"} onClick={() => use("pick", () => pickFolder("Cyberpunk 2077 folder"))}>Choose a folder</Key>
+        <Key variant="dark" icon="chevron" disabled={!p?.gameLooksRight} onClick={onNext} title={p?.gameLooksRight ? undefined : "Find or choose the game folder first"}>Next</Key>
       </div>
     </Module>
   );
@@ -94,6 +104,7 @@ function AccountStep({ onNext }: { onNext: () => void }) {
   const [busy, setBusy] = useState(false);
   useEffect(() => { nexus.status().then((s) => { if (s.user) { setName(s.user.name); setPremium(s.user.isPremium); } }).catch(() => {}); }, []);
   const save = async () => {
+    if (!key || busy) return;
     setBusy(true);
     try { const s = await nexus.setKey(key); setName(s.user?.name ?? "connected"); setPremium(!!s.user?.isPremium); setKey(""); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
   };
@@ -109,8 +120,8 @@ function AccountStep({ onNext }: { onNext: () => void }) {
             <p className="dim" style={{ fontSize: ".84em", marginTop: ".6em" }}>Or paste an API key</p>
           </> : <p>Paste your Nexus API key to download. Browsing works without it</p>}
           <div className="actions" style={{ flexWrap: "nowrap", marginTop: ".5em" }}>
-            <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Personal API key" aria-label="Nexus API key" onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} /></label>
-            <Key icon="check" disabled={!key || busy} onClick={save}>Connect</Key>
+            <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Personal API key" aria-label="Nexus API key" onKeyDown={(e) => { if (e.key === "Enter") void save(); }} /></label>
+            <Key icon="check" disabled={!key} busy={busy} onClick={save} title={key ? "Saved in Windows Credential Manager" : "Paste a key first"}>Connect</Key>
           </div>
           <button type="button" className="linkish" style={{ marginTop: ".4em", fontSize: ".86em" }}
             title="nexusmods.com, your avatar, Site preferences, API keys"
@@ -128,9 +139,11 @@ function LinksStep({ onNext }: { onNext: () => void }) {
   const [h, setH] = useState<HandlerStatus | null>(null);
   const [lines, setLines] = useState<ScanLine[]>([{ text: "Checking who opens nxm:// links" }]);
   const say = (text: string) => setLines((l) => [...l.map((x) => ({ ...x, done: true })), { text }]);
+  const [linking, setLinking] = useState(false);
   useEffect(() => {
+    let live = true;
     const started = Date.now();
-    const settle = async (r: HandlerStatus) => { await new Promise((ok) => setTimeout(ok, Math.max(0, 900 - (Date.now() - started)))); setLines((l) => l.map((x) => ({ ...x, done: true }))); setH(r); };
+    const settle = async (r: HandlerStatus) => { await new Promise((ok) => setTimeout(ok, Math.max(0, 900 - (Date.now() - started)))); if (!live) return; setLines((l) => l.map((x) => ({ ...x, done: true }))); setH(r); };
     handler.status().then(async (s) => {
       if (!s.supported) { say("Not Windows, the system handles links"); return settle(s); }
       if (s.ours) { say("Already Pockymod"); return settle(s); }
@@ -143,6 +156,7 @@ function LinksStep({ onNext }: { onNext: () => void }) {
       say(`${s.owner} has them`);
       return settle(s);
     }).catch(() => settle({ supported: false, ours: false, owner: null, command: null }));
+    return () => { live = false; };
   }, []);
   const settled = !!h && (!h.supported || h.ours);
   useEffect(() => { if (!settled) return; const t = setTimeout(onNext, 2600); return () => clearTimeout(t); }, [settled, onNext]);
@@ -153,12 +167,18 @@ function LinksStep({ onNext }: { onNext: () => void }) {
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}><Key variant="dark" icon="chevron" onClick={onNext}>Next</Key></div>
     </Module>
   );
+  const register = () => {
+    setLinking(true);
+    handler.register().then(() => { toast("Links open in Pockymod"); onNext(); }).catch((e) => { toast(errorText(e), true); setLinking(false); });
+  };
+  // another manager has the links: ask. No owner here means registering by itself failed: offer it again
   return (
     <Module icon="link" title="Download links" band="hot">
-      <p>{h.owner} opens Mod Manager Download links from your browser</p>
+      <p>{h.owner ? `${h.owner} opens Mod Manager Download links from your browser` : "Couldn't set Pockymod to open Mod Manager Download links"}</p>
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
-        <Key variant="ghost" onClick={() => { void settings.set("links.other", "1"); onNext(); }}>Keep {h.owner}</Key>
-        <Key variant="dark" icon="link" onClick={() => handler.register().then(() => { toast("Links open in Pockymod"); onNext(); }).catch((e) => toast(errorText(e), true))}>Use Pockymod</Key>
+        {h.owner ? <Key variant="ghost" disabled={linking} onClick={() => { void settings.set("links.other", "1").catch(() => {}); onNext(); }}>Keep {h.owner}</Key>
+          : <Key variant="ghost" disabled={linking} onClick={onNext} title="Set it up later in Settings, Game and mod folders">Later</Key>}
+        <Key variant="dark" icon="link" busy={linking} onClick={register}>{h.owner ? "Use Pockymod" : "Try again"}</Key>
       </div>
     </Module>
   );
@@ -166,10 +186,12 @@ function LinksStep({ onNext }: { onNext: () => void }) {
 
 function DoneStep({ onFinish }: { onFinish: () => void }) {
   const [problems, setProblems] = useState<number | null>(null);
-  useEffect(() => { game.health().then((r) => setProblems(r.problems)).catch(() => setProblems(0)); }, []);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { game.health().then((r) => setProblems(r.problems)).catch(() => setFailed(true)); }, []);
   return (
     <Module icon="check" title="Ready" band="hot">
-      <div className="lcds"><Lcd size="sm" label="Problems" value={problems === null ? "--" : String(problems).padStart(2, "0")} tone={problems ? "bad" : "ok"} sub={problems ? "See Health" : "All good"} /></div>
+      <div className="lcds"><Lcd size="sm" label="Problems" value={problems === null ? "--" : String(problems).padStart(2, "0")} tone={problems ? "bad" : "ok"}
+        sub={problems === 0 ? "All good" : problems || failed ? "See Health" : "Checking"} /></div>
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}><Key variant="dark" icon="play" onClick={onFinish}>Start</Key></div>
     </Module>
   );

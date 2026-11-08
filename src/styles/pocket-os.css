@@ -162,6 +162,17 @@ a { color: var(--acc2); }
 .btn.sm { font-size: .82em; padding: .32em .62em; }
 .btn.icon { padding-inline: .55em; }
 .btn.sm.icon { padding-inline: .4em; }
+/* added: a key at work (Key busy). It keeps its colour, takes no presses, and a fill runs through it: a band that
+   sweeps across while the length is unknown, or a fill to --p (0 to 1) when it is known. */
+.btn.busy[disabled] { opacity: 1; cursor: progress; }
+.btn.busy { overflow: hidden; }
+.btn.busy::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(to right, transparent, color-mix(in srgb, currentColor 22%, transparent) 40% 60%, transparent) 0 0 / 40% 100% no-repeat;
+  animation: busySweep calc(var(--m) * 1100ms + 1ms) steps(14, end) infinite;
+}
+.btn.busy.fillp::after { background: color-mix(in srgb, currentColor 18%, transparent); right: auto; width: calc(var(--p, 0) * 100%); animation: none; transition: width calc(var(--m) * 300ms) steps(6, end); }
+@keyframes busySweep { from { background-position: -70% 0; } to { background-position: 170% 0; } }
 .actions { display: flex; flex-wrap: wrap; gap: .5em; align-items: center; }
 
 /* ───────────── program keys (views) ─────────────

@@ -49,7 +49,7 @@ async fn collections_browse_revision_and_check() {
     assert!(!rev.mod_files.is_empty());
     let mut check = collections::check_revision(&db.lock().unwrap(), &rev, Some("2.5".into()), false).unwrap();
     assert_eq!(check.installed, 0);
-    collections::resolve_files(&client, &db, &mut check, 3, false).await.unwrap();
+    collections::resolve_files(&client, &db, &mut check, 3, false, |_, _| {}).await.unwrap();
     println!("{}: {} mods, {} missing, {} unavailable, {} clicks, game ok {:?}", check.name, check.entries.len(), check.missing, check.unavailable, check.needs_click, check.game_version_ok);
 }
 

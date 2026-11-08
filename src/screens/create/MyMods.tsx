@@ -3,7 +3,7 @@
 // requirement lists. Read-only without a key.
 import { useEffect, useState } from "react";
 import { Icon } from "../../ui/Icon";
-import { Empty, Key, Lcd, Module, Pill, Seg, bytesText, formatCount } from "../../ui/pocket";
+import { Empty, Key, Lcd, Module, Pill, Seg, bytesText, formatCount, useBusy } from "../../ui/pocket";
 import { authoring, errorText, fileLink, nexusPages, type AuthorFile, type ModManage, type MyMod, type MyMods as MyModsData, type NexusUser } from "../../lib/api";
 import { shortDate } from "../../lib/text";
 import { toast } from "../../ui/toast";
@@ -24,41 +24,63 @@ export function MyMods({ mine, loading, error, me, who, onLoad, onPublish, onNew
   const [other, setOther] = useState(false);
   const [open, setOpen] = useState<MyMod | null>(null);
   const [pin, setPin] = useState("");
+  const [pinning, runPin] = useBusy();
+  // which key started the current load, so only that one shows it working
+  const [pressed, setPressed] = useState<"show" | "mine" | "refresh" | null>(null);
+  // mods taken off the "not listed yet" list, hidden at once instead of after the refresh from Nexus
+  const [dropped, setDropped] = useState<number[]>([]);
   useEffect(() => setText(who), [who]);
+  const go = (k: "show" | "mine" | "refresh", user: string, refresh?: boolean) => { setPressed(k); onLoad(user, refresh); };
 
   const lookup = (
-    <form className="cr-who" onSubmit={(e) => { e.preventDefault(); onLoad(text.trim()); }}>
+    <form className="cr-who" onSubmit={(e) => { e.preventDefault(); if (text.trim() && !loading) go("show", text.trim()); }}>
       <label className="fbox">
         <Icon name="user" />
         <input className="finput" value={text} onChange={(e) => setText(e.target.value)} placeholder="Nexus user name, member ID or profile link" aria-label="Nexus user name or member ID" />
       </label>
-      <Key type="submit" icon="browse" disabled={!text.trim() || loading}>Show mods</Key>
-      {me && <Key variant="ghost" onClick={() => { setOther(false); setText(""); onLoad(""); }}>Back to mine</Key>}
+      <Key type="submit" icon="browse" busy={loading && pressed === "show"} disabled={!text.trim() || loading}>Show mods</Key>
+      {me && <Key variant="ghost" busy={loading && pressed === "mine"} disabled={loading} onClick={() => { setOther(false); setText(""); go("mine", ""); }}>Back to mine</Key>}
     </form>
   );
 
+  // the first look-up: a sketch of the page instead of a blank one
+  if (!mine && loading && !pressed) return (
+    <div className="stack" aria-busy="true">
+      <Module icon="user" title="My mods" count="loading">
+        <div className="stack" style={{ gap: ".5em" }} aria-hidden="true">
+          <span className="skel skel-line" style={{ width: "35%" }} />
+          <span className="skel skel-line" style={{ width: "60%" }} />
+        </div>
+      </Module>
+      <div className="cr-grid" aria-hidden="true">{Array.from({ length: 2 }, (_, i) => <span key={i} className="panel skel" style={{ height: "22em" }} />)}</div>
+    </div>
+  );
+
   if (!mine) return (
-    <Module icon="user" title="My mods" count={loading ? "loading" : undefined}>
-      {loading ? <Empty icon="clock" title="Loading your mods" /> : <>
-        <div>{lookup}</div>
-        {error && <div className="note warn" style={{ marginTop: ".6em" }}>{error}</div>}
-        <p className="dim hint">Read-only without an API key</p>
-      </>}
+    <Module icon="user" title="My mods">
+      <div>{lookup}</div>
+      {error && <div className="note warn" style={{ marginTop: ".6em" }}>{error}</div>}
+      <p className="dim hint">Read-only without an API key</p>
     </Module>
   );
 
   const a = mine.author;
   const t = mine.totals;
   const month = mine.thisMonth;
-  const addPin = async () => {
-    try { await authoring.pin(a.memberId, pin); setPin(""); toast("Added. Shows once Nexus lists it"); onChanged(); } catch (e) { toast(errorText(e), true); }
-  };
+  const missing = mine.missingPinned.filter((x) => !dropped.includes(x.modId));
+  const addPin = () => runPin(async () => {
+    const id = await authoring.pin(a.memberId, pin);
+    setPin(""); setDropped((d) => d.filter((x) => x !== id)); toast("Added. Shows once Nexus lists it"); onChanged();
+  });
+  const unpin = (modId: number) => authoring.unpin(a.memberId, modId)
+    .then(() => { setDropped((d) => [...d, modId]); onChanged(); return true; })
+    .catch((e) => { toast(errorText(e), true); return false; });
 
   return (
     <div className="stack">
       <Module icon="user" title={mine.own ? "My mods" : "Mods by"} count={a.name}
         tools={<>
-          <Key size="sm" variant="ghost" icon="refresh" disabled={loading} onClick={() => onLoad(who, true)} aria-label="Refresh from Nexus" title="Refresh from Nexus" />
+          <Key size="sm" variant="ghost" icon="refresh" busy={loading && pressed === "refresh"} disabled={loading} onClick={() => go("refresh", who, true)} aria-label="Refresh from Nexus" title="Refresh from Nexus" />
           <Key size="sm" variant="ghost" icon="web" onClick={() => openNexus(mine.links.profile)} title="Profile on Nexus" aria-label="Profile on Nexus" />
         </>}>
         <div className="cr-head">
@@ -79,7 +101,7 @@ export function MyMods({ mine, loading, error, me, who, onLoad, onPublish, onNew
           {month && <Lcd label={`This month`} value={formatCount(month.downloads)} sub={`downloads, all games`} />}
         </div>
         <div className="actions" style={{ marginTop: ".7em" }}>
-          <Key variant="primary" icon="share" disabled={mine.mods.length === 0} onClick={() => onPublish(null)}>Publish a version</Key>
+          <Key variant="primary" icon="share" disabled={mine.mods.length === 0} title={mine.mods.length === 0 ? "No mod to publish a version of yet" : undefined} onClick={() => onPublish(null)}>Publish a version</Key>
           <Key icon="plus" onClick={onNew}>Upload a new mod</Key>
           <span className="sp" style={{ flex: 1 }} />
           {!other ? <Key variant="ghost" size="sm" icon="browse" onClick={() => setOther(true)}>Look up another member</Key> : null}
@@ -101,22 +123,22 @@ export function MyMods({ mine, loading, error, me, who, onLoad, onPublish, onNew
         </div>
       )}
 
-      <Module icon="link" title="Add a mod by its link" count={mine.missingPinned.length ? `${mine.missingPinned.length} not listed yet` : undefined}>
-        <form className="cr-who" onSubmit={(e) => { e.preventDefault(); void addPin(); }}>
+      <Module icon="link" title="Add a mod by its link" count={missing.length ? `${missing.length} not listed yet` : undefined}>
+        <form className="cr-who" onSubmit={(e) => { e.preventDefault(); if (pin.trim() && !pinning) void addPin(); }}>
           <label className="fbox"><Icon name="link" /><input className="finput" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="nexusmods.com/cyberpunk2077/mods/…" aria-label="Mod link or number" /></label>
-          <Key type="submit" icon="plus" disabled={!pin.trim()}>Add</Key>
+          <Key type="submit" icon="plus" busy={pinning} disabled={!pin.trim()}>Add</Key>
         </form>
-        {mine.missingPinned.map((x) => (
+        {missing.map((x) => (
           <div key={x.modId} className="note cr-missing">
             <span title="Nexus lists a mod once it's published and scanned">Mod {x.modId} isn't listed yet</span>
             <Key size="sm" variant="ghost" icon="web" onClick={() => openNexus(x.links.edit)}>Edit page</Key>
-            <Key size="sm" variant="ghost" icon="x" onClick={() => authoring.unpin(a.memberId, x.modId).then(onChanged).catch((e) => toast(errorText(e), true))}>Remove</Key>
+            <Key size="sm" variant="ghost" icon="x" onClick={() => void unpin(x.modId)}>Remove</Key>
           </div>
         ))}
       </Module>
 
       {open && <Manage m={open} canPublish={mine.own} onPublish={(p) => { setOpen(null); onPublish(p); }} onClose={() => setOpen(null)}
-        onUnpin={open.pinned ? () => authoring.unpin(a.memberId, open.modId).then(() => { setOpen(null); onChanged(); }).catch((e) => toast(errorText(e), true)) : undefined} />}
+        onUnpin={open.pinned ? () => void unpin(open.modId).then((ok) => { if (ok) setOpen(null); }) : undefined} />}
     </div>
   );
 }
@@ -201,6 +223,11 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
   }, [onClose]);
 
   const list = d ? (files === "current" ? d.files.filter((f) => ["MAIN", "UPDATE", "OPTIONAL", "MISCELLANEOUS"].includes(f.category)) : d.files) : m.files;
+  const skel = (
+    <div className="stack" style={{ gap: ".4em", margin: ".2em 0 .4em" }} aria-hidden="true">
+      <span className="skel skel-line" style={{ width: "45%" }} /><span className="skel skel-line" style={{ width: "75%" }} />
+    </div>
+  );
   const main = m.files.find((f) => f.category === "MAIN") ?? m.files[0];
   const links = m.links;
 
@@ -208,7 +235,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
     <div className="drawer-ov" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="drawer" role="dialog" aria-modal="true" aria-label={`Manage ${m.name}`}>
         <Module icon="settings" title={m.name} count={`v${m.version}`} fill className="cr-drawer"
-          tools={<Key size="sm" variant="ghost" icon="x" onClick={onClose} aria-label="Close" />}>
+          tools={<Key size="sm" variant="ghost" icon="x" onClick={onClose} aria-label="Close" title="Close (Esc)" />}>
           {m.pictureUrl && <img className="hero-img" src={m.pictureUrl} alt="" />}
           <div className="actions" style={{ marginTop: ".6em" }}><StatusPill status={m.status} /><span className="dim" style={{ fontSize: ".86em" }}>Created {shortDate(m.createdAt)} · updated {shortDate(m.updatedAt)}</span></div>
           <div className="lcds" style={{ marginTop: ".6em" }}>
@@ -259,7 +286,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
           </div>
 
           <div className="sub-h">Changelog</div>
-          {!d ? <p className="dim">Loading</p> : d.changelog.length === 0 ? <p className="dim" style={{ fontSize: ".9em" }}>No changelog yet</p> : (
+          {!d ? (err ? <p className="dim" style={{ fontSize: ".9em" }}>Couldn't load it</p> : skel) : d.changelog.length === 0 ? <p className="dim" style={{ fontSize: ".9em" }}>No changelog yet</p> : (
             <div className="cr-log">
               {d.changelog.map((c) => (
                 <div key={c.version} className="cr-log-v">
@@ -271,6 +298,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
           )}
 
           <div className="sub-h">Requires <span className="dim mono">{d?.requirementsTotal ?? m.requirements}</span></div>
+          {!d && !err && skel}
           {d && d.requirements.length === 0 && d.dlc.length === 0 && <p className="dim" style={{ fontSize: ".9em" }}>None</p>}
           {d && <div className="rows">
             {d.dlc.map((x) => <div key={x} className="row"><span className="m-main"><span className="m-t">{x}</span><span className="m-meta"><span>DLC</span></span></span></div>)}
@@ -283,6 +311,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
           </div>}
 
           <div className="sub-h">Required by <span className="dim mono">{formatCount(d?.requiredByTotal ?? m.requiredBy)}</span></div>
+          {!d && !err && skel}
           {d && d.requiredBy.length === 0 && <p className="dim" style={{ fontSize: ".9em" }}>None yet</p>}
           {d && <div className="rows">
             {(allBy ? d.requiredBy : d.requiredBy.slice(0, 8)).map((r) => (

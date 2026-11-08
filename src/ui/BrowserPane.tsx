@@ -9,7 +9,7 @@ import { Icon } from "./Icon";
 import { Key } from "./pocket";
 import { toast } from "./toast";
 import { browserPane, errorText, type BrowserState } from "../lib/api";
-import { inTauri } from "../lib/tauri";
+import { held, inTauri } from "../lib/tauri";
 
 type Mode = "split" | "full" | "hidden";
 const MODE = "pm.pane.mode", WIDTH = "pm.pane.width";
@@ -32,13 +32,12 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
   useEffect(() => {
     const offs: Array<() => void> = [];
     browserPane.state().then(setSt).catch(() => {});
-    browserPane.onChange((s) => {
+    offs.push(held(browserPane.onChange((s) => {
       setSt(s);
       if (!s.open) setTitle(null);
       // a page the app opened (one waiting for your click) brings a hidden pane back
       if (s.reveal && !s.popped) setModeState((m) => (m === "hidden" ? ((read(MODE) as Mode | null) === "full" ? "full" : "split") : m));
-    }).then((u) => offs.push(u));
-    browserPane.onTitle((t) => setTitle(t.title)).then((u) => offs.push(u));
+    })), held(browserPane.onTitle((t) => setTitle(t.title))));
     const pw = () => setOff(true);
     // Ctrl+B: hide or show the pane
     const toggle = () => setModeState((m) => (m === "hidden" ? ((read(MODE) as Mode | null) === "full" ? "full" : "split") : "hidden"));
@@ -131,7 +130,7 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
         <Key size="sm" variant="ghost" icon="chevron" onClick={() => act(browserPane.nav("forward"))} aria-label="Forward" title="Forward" />
         <Key size="sm" variant="ghost" icon="refresh" onClick={() => act(browserPane.nav(st.loading ? "stop" : "reload"))} aria-label={st.loading ? "Stop" : "Reload"} title={st.loading ? "Stop" : "Reload"} />
         <button type="button" className="bpane-url" title={st.url ? `${st.url} (click to copy)` : undefined}
-          onClick={() => st.url && navigator.clipboard?.writeText(st.url).then(() => toast("Address copied")).catch(() => {})}>
+          onClick={() => st.url && navigator.clipboard?.writeText(st.url).then(() => toast("Address copied")).catch(() => toast("Couldn't copy", true))}>
           {st.loading && <span className="led run" aria-label="Loading" />}
           <b>{title || host || "Nexus Mods"}</b>{host && <span className="dim">{host}</span>}
         </button>

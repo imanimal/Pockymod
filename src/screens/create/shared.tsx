@@ -1,6 +1,6 @@
 // Parts the Create tabs share: the folder or archive being checked and packed, the hand-off to the publish form,
 // and small helpers for copying and opening Nexus pages.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Pill } from "../../ui/pocket";
 import { creator, errorText, nexusPages, pickArchive, pickFolder, type CreatorCheck } from "../../lib/api";
 import { toast } from "../../ui/toast";
@@ -14,7 +14,9 @@ export const categoryOf = (c: string): FileCategory => c === "OPTIONAL" ? "optio
 export const fileCategoryText = (c: string) => c.toLowerCase().replace(/_/g, " ");
 export const unixDate = (s: number) => new Date(s * 1000).toISOString();
 
-export interface PackState { path: string | null; isFolder: boolean; name: string; version: string; check: CreatorCheck | null; zip: string | null; busy: boolean }
+/** What is running: checking a picked folder or archive, or packing. Null when idle. */
+export type PackBusy = "folder" | "archive" | "pack" | null;
+export interface PackState { path: string | null; isFolder: boolean; name: string; version: string; check: CreatorCheck | null; zip: string | null; busy: PackBusy }
 export type Pack = PackState & {
   set: (p: Partial<PackState>) => void;
   pick: (folder: boolean) => Promise<void>;
@@ -23,20 +25,27 @@ export type Pack = PackState & {
 
 /** The mod being prepared: picked folder or archive, its check, and the clean zip once packed. */
 export function usePack(): Pack {
-  const [s, setS] = useState<PackState>({ path: null, isFolder: false, name: "", version: "1.0.0", check: null, zip: null, busy: false });
+  const [s, setS] = useState<PackState>({ path: null, isFolder: false, name: "", version: "1.0.0", check: null, zip: null, busy: null });
+  // the Pack and Publish tabs can both pick: only the latest pick's check or pack lands
+  const seq = useRef(0);
   const set = (p: Partial<PackState>) => setS((x) => ({ ...x, ...p }));
   const pick = async (folder: boolean) => {
-    const p = folder ? await pickFolder("Your mod's folder") : await pickArchive();
+    let p: string | null;
+    try { p = folder ? await pickFolder("Your mod's folder") : await pickArchive(); } catch (e) { toast(errorText(e), true); return; }
     if (!p) return;
+    const n = ++seq.current;
     const guess = p.split(/[\\/]/).pop()?.replace(/\.(zip|7z|rar)$/i, "") ?? "My mod";
     const name = s.name || guess;
-    set({ path: p, isFolder: folder, zip: folder ? null : p, name, check: null, busy: true });
-    try { set({ check: await creator.check(p, name), busy: false }); } catch (e) { set({ busy: false }); toast(errorText(e), true); }
+    set({ path: p, isFolder: folder, zip: folder ? null : p, name, check: null, busy: folder ? "folder" : "archive" });
+    try { const c = await creator.check(p, name); if (n === seq.current) set({ check: c, busy: null }); }
+    catch (e) { if (n === seq.current) { set({ busy: null }); toast(errorText(e), true); } }
   };
   const pack = async () => {
     if (!s.path) return;
-    set({ busy: true });
-    try { const z = await creator.pack(s.path, s.name, s.version); set({ zip: z, busy: false }); toast("Packed"); } catch (e) { set({ busy: false }); toast(errorText(e), true); }
+    const n = ++seq.current;
+    set({ busy: "pack" });
+    try { const z = await creator.pack(s.path, s.name, s.version); if (n === seq.current) { set({ zip: z, busy: null }); toast("Packed"); } }
+    catch (e) { if (n === seq.current) { set({ busy: null }); toast(errorText(e), true); } }
   };
   return { ...s, set, pick, pack };
 }

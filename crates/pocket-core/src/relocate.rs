@@ -248,14 +248,19 @@ pub fn looks_like_moved_copy(db: &Db, game: &Path) -> Result<bool> {
 }
 
 /// Link the game's mod files to the library again (after the game folder moved). Vortex's files are Vortex's.
-pub fn relink_game(db: &Db, game: &Path, allow_copy: bool) -> Result<RelinkReport> {
+pub fn relink_game(db: &Db, game: &Path, allow_copy: bool) -> Result<RelinkReport> { relink_game_with(db, game, allow_copy, |_, _| {}) }
+
+/// `relink_game`, with `progress(files done, files)`.
+pub fn relink_game_with(db: &Db, game: &Path, allow_copy: bool, mut progress: impl FnMut(usize, usize)) -> Result<RelinkReport> {
     let rows: Vec<(String, String, String, i64)> = {
         let mut st = db.conn.prepare("SELECT target, target_path, source, size FROM deployed_files WHERE method != 'vortex'")?;
         let v = st.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?.collect::<std::result::Result<_, _>>()?;
         v
     };
     let mut rep = RelinkReport::default();
-    for (target, target_path, source, size) in rows {
+    let total = rows.len();
+    for (i, (target, target_path, source, size)) in rows.into_iter().enumerate() {
+        progress(i, total);
         let (src, dst) = (PathBuf::from(&source), game.join(&target_path));
         if !src.is_file() { continue; }
         rep.checked += 1;

@@ -189,11 +189,26 @@ pub async fn game_launch_vanilla(app: tauri::AppHandle, state: State<'_, AppStat
         }
         let st = app2.state::<AppState>();
         let db = st.db.clone();
-        let n = tauri::async_runtime::spawn_blocking(move || pocket_core::launch::vanilla_restore(&db.lock().unwrap(), &game, &library, &opts)).await.ok().and_then(|r| r.ok()).unwrap_or(0);
-        let _ = app2.emit("library-changed", ());
-        let _ = app2.emit("vanilla", serde_json::json!({ "state": "restored", "back": n }));
+        let r = blocking(move || pocket_core::launch::vanilla_restore(&db.lock().unwrap(), &game, &library, &opts)).await;
+        report_restore(&app2, r);
     });
     Ok(serde_json::json!({ "out": out, "untracked": left }))
+}
+
+/// Tell the page how putting mods back after a start without mods went. When some are still out (a file in use,
+/// a mod that clashes now), say so and keep "Put mods back" showing, instead of reporting them all back.
+pub(crate) fn report_restore(app: &AppHandle, r: Result<usize>) {
+    use tauri::Manager;
+    let pending = app.state::<AppState>().db.lock().unwrap().setting(pocket_core::launch::VANILLA_KEY).ok().flatten().is_some();
+    let _ = app.emit("library-changed", ());
+    match (r, pending) {
+        (Ok(n), false) => { let _ = app.emit("vanilla", serde_json::json!({ "state": "restored", "back": n })); }
+        (r, _) => {
+            let why = r.err().map(|e| format!(": {e}")).unwrap_or_default();
+            let _ = app.emit("toast", format!("Some mods couldn't go back in the game{why}. Close anything using the game's files and press Put mods back"));
+            if pending { let _ = app.emit("vanilla", serde_json::json!({ "state": "running" })); }
+        }
+    }
 }
 
 /// Put mods back now (the game closed while the app was not watching, or the user asks).
@@ -203,8 +218,13 @@ pub async fn game_vanilla_restore(app: tauri::AppHandle, state: State<'_, AppSta
     let (game, library) = p.require()?;
     let opts = p.deploy_options();
     let db = state.db.clone();
-    let n = blocking(move || pocket_core::launch::vanilla_restore(&db.lock().unwrap(), &game, &library, &opts)).await?;
+    let n = blocking(move || pocket_core::launch::vanilla_restore(&db.lock().unwrap(), &game, &library, &opts)).await;
     let _ = app.emit("library-changed", ());
+    let n = n?;
+    // some are still out: say so, so the key stays for another try
+    if state.db.lock().unwrap().setting(pocket_core::launch::VANILLA_KEY)?.is_some() {
+        return Err(Error::Invalid(format!("{n} back in, but some mods couldn't go back. Close the game and anything using its files, then try again")));
+    }
     Ok(n)
 }
 

@@ -91,9 +91,10 @@ pub struct Queue {
 }
 
 impl Queue {
-    /// Add an item unless the same file is already queued and not failed. Returns its id.
+    /// Add an item unless the same file is already queued and not finished (a done or failed one is replaced, so the
+    /// same file can go in again after it was removed). Returns its id.
     pub fn add(&mut self, mut item: QueueItem) -> u64 {
-        if let Some(i) = self.items.iter().find(|i| i.mod_id == item.mod_id && i.file_id == item.file_id && !matches!(i.state, ItemState::Failed { .. })) {
+        if let Some(i) = self.items.iter().find(|i| i.mod_id == item.mod_id && i.file_id == item.file_id && i.is_open()) {
             return i.id;
         }
         self.items.retain(|i| !(i.mod_id == item.mod_id && i.file_id == item.file_id));
@@ -227,7 +228,12 @@ pub async fn with_dependencies(client: &NexusClient, db: &Mutex<Db>, mod_id: u32
     let mut todo: VecDeque<(u32, Option<u32>, Option<String>, u32)> = VecDeque::from([(mod_id, Some(file_id), None, 0)]);
     while let Some((id, fid, required_by, depth)) = todo.pop_front() {
         if !seen.insert(id) { continue; }
-        let d = browse::detail(client, db, id, None).await?;
+        let d = match browse::detail(client, db, id, None).await {
+            Ok(d) => d,
+            // a requirement that is gone from Nexus (removed or hidden) must not stop the mod itself
+            Err(crate::Error::Http { .. } | crate::Error::GraphQl(_) | crate::Error::Decode(_)) if depth > 0 => continue,
+            Err(e) => return Err(e),
+        };
         let file = match fid { Some(f) => d.files.iter().find(|x| x.file_id == f), None => main_file(&d.files) };
         let Some(file) = file else { continue };
         out.push(QueueItem {
@@ -348,6 +354,21 @@ mod tests {
         assert!(q.start(c));
         assert_eq!(q.get(c).unwrap().state, ItemState::Waiting);
         assert!(!q.start(99));
+    }
+
+    #[test]
+    fn a_finished_file_can_be_queued_again() {
+        let mut q = Queue::default();
+        let a = q.add(item(1, 10, "a.zip"));
+        q.set(a, ItemState::Done { install_id: Some(1), note: None });
+        let b = q.add(item(1, 10, "a.zip"));
+        assert_ne!(a, b);
+        assert_eq!(q.items.len(), 1);
+        assert_eq!(q.next_action(), Some(Action::OpenPage(b)));
+        // a link for it from Nexus queues it too, instead of landing on the finished one
+        q.set(b, ItemState::Done { install_id: Some(1), note: None });
+        let c = q.accept_nxm(link(1, 10), |l| item(l.mod_id, l.file_id, "a.zip"));
+        assert_eq!(q.next_action(), Some(Action::DownloadWith(c)));
     }
 
     #[test]

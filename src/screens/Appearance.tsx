@@ -9,7 +9,7 @@ import { nope, saved } from "../ui/motion";
 import { errorText, pickTextFile, saveTextAs } from "../lib/api";
 import {
   BUILTIN_THEMES, COLOR_TOKENS, PALETTES, SIMPLE, customFor, setCustom, exportTheme, installThemePackage, listThemes, previewDraft, previewScheme, readTokens, setFx, setMotion,
-  setSchemeChoice, setTheme, themeInfo, toHex, uninstallTheme, useTheme, type FxLevel, type Scheme, type SchemeChoice, type ThemeInfo, type ThemePackage,
+  setSchemeChoice, setTheme, themeInfo, themeState, toHex, uninstallTheme, useTheme, type FxLevel, type Scheme, type SchemeChoice, type ThemeInfo, type ThemePackage,
 } from "../lib/theme";
 import "./Appearance.css";
 
@@ -20,6 +20,13 @@ const FX_HINT: Record<FxLevel, string> = {
 };
 
 const SCHEME_NAME: Record<Scheme, string> = { dark: "Dark", light: "Light" };
+
+// the installed theme being tried, and the one to go back to. Kept outside the screen so leaving Settings doesn't
+// skip the revert, and one at a time so trying a second theme can't bring back the first.
+type Trial = { id: string; before: string; timer: number };
+let trial: Trial | null = null;
+// the toast with Keep lasts 9s, so the revert waits that long and not longer
+const TRIAL_MS = 9_000;
 
 export function Appearance() {
   const t = useTheme();
@@ -33,13 +40,26 @@ export function Appearance() {
 
   // an installed theme could make the app unreadable: it stays only when kept, else the last one comes back
   const pick = (id: string) => {
-    const before = t.id;
+    const before = trial?.before ?? t.id;
+    if (trial) { clearTimeout(trial.timer); trial = null; }
     const builtin = BUILTIN_THEMES.some((b) => b.id === id);
     setTheme(id).then(() => {
       if (builtin || before === id) return;
-      let kept = false;
-      toast("Keep this theme? Reverts in 12s (Ctrl+Alt+Shift+T resets to Redline)", false, { label: "Keep", run: () => { kept = true; toast("Theme kept"); } });
-      setTimeout(() => { if (!kept) void setTheme(before).then(() => toast("Theme reverted")); }, 12_000);
+      const me: Trial = {
+        id, before,
+        timer: window.setTimeout(() => {
+          if (trial !== me) return;
+          trial = null;
+          if (themeState().id === id) void setTheme(before).then(() => toast("Theme reverted"));
+        }, TRIAL_MS),
+      };
+      trial = me;
+      toast(`Keep this theme? Reverts in ${TRIAL_MS / 1000}s (Ctrl+Alt+Shift+T resets to Redline)`, false, { label: "Keep", run: () => {
+        if (trial === me) { clearTimeout(me.timer); trial = null; }
+        // a toast held open by the mouse can outlast the timer: Keep still means keep
+        else if (themeState().id === me.before) void setTheme(me.id);
+        toast("Theme kept");
+      } });
     }).catch((e) => toast(errorText(e), true));
   };
 
@@ -47,15 +67,12 @@ export function Appearance() {
     let f: { text: string } | null = null;
     try { f = await pickTextFile("Import a theme", ["json"]); } catch (e) { toast(errorText(e), true); return; }
     if (!f) return;
-    try {
-      const r = await installThemePackage(f.text);
-      await reload();
-      await setTheme(r.id);
-      toast(`${r.name} installed`);
-    } catch (e) {
-      nope(key);
-      toast(`Theme not installed. ${errorText(e)}`, true);
-    }
+    let r: { id: string; name: string };
+    try { r = await installThemePackage(f.text); } catch (e) { nope(key); toast(`Theme not installed. ${errorText(e)}`, true); return; }
+    await reload();
+    toast(`${r.name} installed`);
+    // tried like any installed theme: it stays only when kept
+    pick(r.id);
   };
 
   const doExport = async () => {

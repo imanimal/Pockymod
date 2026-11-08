@@ -61,9 +61,9 @@ export function Lightbox({ items, start, onClose }: { items: Shot[]; start: numb
           </div>
         : <ZoomImage key={it.url} src={it.url} alt={it.caption ?? ""} controls={zoom} onChange={setZ} onBackdrop={onClose} />}
       <div className="lb-bar">
-        {items.length > 1 && <Key size="sm" variant="dark" icon="chevron" className="flip" onClick={() => setI((i - 1 + items.length) % items.length)} aria-label="Previous" />}
+        {items.length > 1 && <Key size="sm" variant="dark" icon="chevron" className="flip" onClick={() => setI((i - 1 + items.length) % items.length)} aria-label="Previous" title="Previous (Left arrow)" />}
         <span className="display sm inline"><span className="d-num">{String(i + 1).padStart(2, "0")}<small>/{items.length}</small></span></span>
-        {items.length > 1 && <Key size="sm" variant="dark" icon="chevron" onClick={() => setI((i + 1) % items.length)} aria-label="Next" />}
+        {items.length > 1 && <Key size="sm" variant="dark" icon="chevron" onClick={() => setI((i + 1) % items.length)} aria-label="Next" title="Next (Right arrow)" />}
         {it.caption && <span className="lb-cap">{it.caption}</span>}
         {it.kind === "image" && <span className="lb-zoom">
           <Key size="sm" variant="dark" icon="minus" onClick={() => zoom.current?.step(-1)} disabled={z.fit} aria-label="Zoom out" title="Zoom out (-)" />
@@ -73,7 +73,7 @@ export function Lightbox({ items, start, onClose }: { items: Shot[]; start: numb
           <Key size="sm" variant="dark" onClick={() => zoom.current?.actual()} title="Actual size (1)">1:1</Key>
         </span>}
         {it.kind === "video" && <Key size="sm" variant="dark" icon="link" onClick={() => watch(it)} title="Watch in your browser">YouTube</Key>}
-        <Key size="sm" variant="dark" icon="x" onClick={onClose} aria-label="Close" />
+        <Key size="sm" variant="dark" icon="x" onClick={onClose} aria-label="Close" title="Close (Esc)" />
       </div>
     </div>, host);
 }
@@ -171,8 +171,8 @@ export function MediaStage({ items }: { items: Shot[] }) {
         <span className="mstage-hint"><Icon name="max" size={9} /> Full window</span>
       </button>
       {items.length > 1 && <>
-        <Key size="sm" variant="dark" icon="chevron" className="flip mstage-prev" onClick={() => setI((i - 1 + items.length) % items.length)} aria-label="Previous picture" />
-        <Key size="sm" variant="dark" icon="chevron" className="mstage-next" onClick={() => setI((i + 1) % items.length)} aria-label="Next picture" />
+        <Key size="sm" variant="dark" icon="chevron" className="flip mstage-prev" onClick={() => setI((i - 1 + items.length) % items.length)} aria-label="Previous picture" title="Previous picture" />
+        <Key size="sm" variant="dark" icon="chevron" className="mstage-next" onClick={() => setI((i + 1) % items.length)} aria-label="Next picture" title="Next picture" />
         <div className="gstrip">
           {items.map((m, n) => (
             <button key={m.url} type="button" className={`gthumb${n === i ? " on" : ""}`} onClick={() => setI(n)} aria-label={`${m.kind === "video" ? "Video" : "Picture"} ${n + 1}`} aria-pressed={n === i}>
@@ -200,10 +200,13 @@ export function MediaWall() {
   const [err, setErr] = useState<string | null>(null);
   const [open, setOpen] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  // only the newest request lands: switching kind or sort mid-load drops the older answer
+  const seq = useRef(0);
   const load = (offset: number) => {
+    const n = ++seq.current;
     setBusy(true);
-    media.browse(kind, sort, offset).then((p) => { setTotal(p.totalCount); setItems((old) => offset ? [...old, ...p.nodes] : p.nodes); setErr(null); })
-      .catch((e) => setErr(errorText(e))).finally(() => setBusy(false));
+    media.browse(kind, sort, offset).then((p) => { if (n !== seq.current) return; setTotal(p.totalCount); setItems((old) => offset ? [...old, ...p.nodes] : p.nodes); setErr(null); })
+      .catch((e) => { if (n === seq.current) setErr(errorText(e)); }).finally(() => { if (n === seq.current) setBusy(false); });
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setItems([]); load(0); }, [kind, sort]);
@@ -225,8 +228,9 @@ export function MediaWall() {
             <span className="mtile-cap">{m.caption}</span>
           </button>
         ))}
+        {busy && items.length === 0 && Array.from({ length: 8 }, (_, n) => <span key={n} className="skel" style={{ aspectRatio: "16 / 10.5" }} aria-hidden="true" />)}
       </div>
-      {items.length < total && <div className="actions" style={{ justifyContent: "center" }}><Key icon="down" disabled={busy} onClick={() => load(items.length)}>Show more</Key></div>}
+      {items.length > 0 && items.length < total && <div className="actions" style={{ justifyContent: "center" }}><Key icon="down" busy={busy} onClick={() => load(items.length)}>Show more</Key></div>}
       {open !== null && <Lightbox items={shots} start={open} onClose={() => setOpen(null)} />}
     </div>
   );

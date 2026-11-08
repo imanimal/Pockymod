@@ -1,6 +1,6 @@
 // Health's Logs module: the tools' newest logs (RED4ext, its plugins, ArchiveXL, TweakXL, Codeware, redscript,
 // CET and its mods), the last start's errors grouped by the mod they point at, and a report to paste on a forum.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Key, Lcd, Module, Pill } from "../ui/pocket";
 import { errorText, library, logs, type LogEntry, type LogReport, type ModErrors } from "../lib/api";
 import { toast } from "../ui/toast";
@@ -30,46 +30,53 @@ async function copyText(text: string) {
   t.value = text;
   document.body.appendChild(t);
   t.select();
-  document.execCommand("copy");
+  const ok = document.execCommand("copy");
   t.remove();
+  if (!ok) throw new Error("Couldn't copy to the clipboard");
 }
 
 /** `stamp` changes when Health checks again, so the logs are read again too. */
 export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () => void }) {
   const [r, setR] = useState<LogReport | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  // the key at work: "all", "copy", "reload", or the install id of the mod being turned off
+  const [busy, setBusy] = useState<string | number | null>(null);
   const [open, setOpen] = useState<Set<number>>(new Set());
   const [showOther, setShowOther] = useState(false);
-  const load = useCallback(() => { logs.scan().then((x) => { setR(x); setErr(null); }).catch((e) => setErr(errorText(e))); }, []);
-  useEffect(() => { load(); }, [load, stamp]);
+  // only the newest read counts (Health checking again and a mod turned off can both start one)
+  const seq = useRef(0);
+  const load = useCallback(() => {
+    const n = ++seq.current;
+    return logs.scan().then((x) => { if (n === seq.current) { setR(x); setErr(null); } }).catch((e) => { if (n === seq.current) setErr(errorText(e)); });
+  }, []);
+  useEffect(() => { void load(); }, [load, stamp]);
 
+  const work = async (key: string | number, job: () => Promise<void>) => {
+    setBusy(key);
+    try { await job(); } catch (e) { toast(errorText(e), true); } finally { setBusy(null); }
+  };
   const openLog = (path: string) => logs.open(path).catch((e) => toast(errorText(e), true));
-  const turnOff = async (m: ModErrors) => {
-    setBusy(true);
-    try {
-      const row = (await library.list()).find((x) => x.id === m.installId);
-      if (!row) throw new Error(`${m.name} is no longer installed`);
-      await ops.setEnabled([row], false);
-      load(); onChanged();
-    } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
-  };
-  // every mod with errors in the last start, turned off in one go (one undo puts them all back)
-  const turnOffAll = async (list: ModErrors[]) => {
-    setBusy(true);
-    try {
-      const rows = (await library.list()).filter((x) => list.some((m) => m.installId === x.id));
-      await ops.setEnabled(rows, false);
-      toast(`Turned off ${plural(rows.length, "mod")}`);
-      load(); onChanged();
-    } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
-  };
-  const copyReport = async () => {
-    try { await copyText(await logs.report()); toast("Report copied"); }
-    catch (e) { toast(errorText(e), true); }
-  };
+  const turnOff = (m: ModErrors) => work(m.installId, async () => {
+    const row = (await library.list()).find((x) => x.id === m.installId);
+    if (!row) throw new Error(`${m.name} is no longer installed`);
+    await ops.setEnabled([row], false);
+    void load(); onChanged();
+  });
+  // every mod with errors in the last start, turned off in one go (one undo puts them all back; its toast says so)
+  const turnOffAll = (list: ModErrors[]) => work("all", async () => {
+    const rows = (await library.list()).filter((x) => list.some((m) => m.installId === x.id));
+    if (!rows.length) throw new Error("Those mods are no longer installed");
+    await ops.setEnabled(rows, false);
+    void load(); onChanged();
+  });
+  const copyReport = () => work("copy", async () => { await copyText(await logs.report()); toast("Report copied"); });
 
-  if (err) return <Module icon="file" title="Logs" className="span"><div className="note bad">{err}</div></Module>;
+  if (err) return (
+    <Module icon="file" title="Logs" className="span"
+      tools={<Key size="sm" variant="ghost" icon="refresh" busy={busy === "reload"} onClick={() => work("reload", load)} aria-label="Read the logs again" title="Read the logs again" />}>
+      <div className="note bad">{err}</div>
+    </Module>
+  );
   if (!r) return <Module icon="file" title="Logs" count="reading" className="span"><p className="dim">Reading logs</p></Module>;
   const current = r.logs.filter((l) => l.current);
   const older = r.logs.length - current.length;
@@ -78,10 +85,11 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
     <Module icon="file" title="Logs" className="span logs-mod" band={r.errors ? "bad" : undefined}
       count={r.logs.length ? `${plural(r.logs.length, "log")}${older ? `, ${older} older` : ""}` : "none yet"}
       tools={<>
-        {r.mods.filter((m) => m.enabled && m.errors > 0).length > 1 && <Key size="sm" variant="dark" icon="power" disabled={busy}
+        {r.mods.filter((m) => m.enabled && m.errors > 0).length > 1 && <Key size="sm" variant="dark" icon="power" disabled={busy !== null} busy={busy === "all"}
           onClick={() => turnOffAll(r.mods.filter((m) => m.enabled && m.errors > 0))} title="Ctrl+Z turns them back on">
           Turn off all {r.mods.filter((m) => m.enabled && m.errors > 0).length} with errors</Key>}
-        <Key size="sm" icon="share" onClick={copyReport} disabled={!r.logs.length} title="Plain-text summary for a forum post">Copy report</Key>
+        <Key size="sm" icon="share" onClick={copyReport} disabled={!r.logs.length} busy={busy === "copy"}
+          title={r.logs.length ? "Plain-text summary for a forum post" : "No logs yet. Start the game once"}>Copy report</Key>
       </>}>
       {r.logs.length === 0 ? (
         <p className="dim">No logs yet. Start the game once</p>
@@ -115,9 +123,9 @@ export function LogsModule({ stamp, onChanged }: { stamp: number; onChanged: () 
                       {isOpen && <div className="log" style={{ margin: ".4em 0 .2em" }}>{m.entries.map(entryText).join("\n\n")}</div>}
                     </span>
                     <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".3em" }}>
-                      {m.enabled && <Key size="sm" variant={m.errors ? "dark" : "ghost"} icon="power" disabled={busy} onClick={() => turnOff(m)}>Turn this mod off</Key>}
+                      {m.enabled && <Key size="sm" variant={m.errors ? "dark" : "ghost"} icon="power" disabled={busy !== null} busy={busy === m.installId} onClick={() => turnOff(m)} title="Ctrl+Z turns it back on">Turn this mod off</Key>}
                       {first && <Key size="sm" variant="ghost" icon="file" onClick={() => openLog(first.log)} title={first.log}>Open log</Key>}
-                      <Key size="sm" variant="ghost" icon="chevron" className={isOpen ? "rot-key" : ""} aria-label={isOpen ? "Hide lines" : "Show lines"}
+                      <Key size="sm" variant="ghost" icon="chevron" className={isOpen ? "rot-key" : ""} aria-label={isOpen ? "Hide lines" : "Show lines"} title={isOpen ? "Hide lines" : "Show lines"} aria-expanded={isOpen}
                         onClick={() => setOpen((s) => { const n = new Set(s); n.has(m.installId) ? n.delete(m.installId) : n.add(m.installId); return n; })} />
                     </span>
                   </div>

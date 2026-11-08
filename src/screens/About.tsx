@@ -10,7 +10,7 @@ export function About({ onGallery }: { onGallery?: () => void }) {
   return (
     <Module icon="info" title="About" count={u ? `v${u.current}` : undefined}>
       <div className="actions">
-        <Key size="sm" icon="refresh" disabled={busy} onClick={async () => { setBusy(true); try { setU(await extras.appUpdate()); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); } }}>Check for updates</Key>
+        <Key size="sm" icon="refresh" busy={busy} onClick={async () => { setBusy(true); try { setU(await extras.appUpdate()); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); } }}>Check for updates</Key>
         {u && <Pill tone={u.newer ? "soon" : "ok"}>{u.message}</Pill>}
         {onGallery && <Key size="sm" variant="ghost" icon="gallery" onClick={onGallery} title="Every UI part in the current theme">Design gallery</Key>}
       </div>
@@ -40,23 +40,30 @@ export function Experiments({ onModio }: { onModio?: (on: boolean) => void }) {
   const [on, setOn] = useState(false);
   const [has, setHas] = useState(false);
   const [key, setKey] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"save" | "clear" | null>(null);
   useEffect(() => {
     settings.get("flags.modio").then((v) => setOn(v === "1")).catch(() => {});
     extras.modioHasKey().then(setHas).catch(() => {});
   }, []);
+  const save = async () => {
+    if (!key || busy) return;
+    setBusy("save");
+    try { const g = await extras.modioSetKey(key); setHas(true); setKey(""); toast(g ? `Key saved, found ${g.name}` : "Key saved, but Cyberpunk 2077 isn't on mod.io"); }
+    catch (e) { toast(errorText(e), true); } finally { setBusy(null); }
+  };
+  const clear = () => {
+    setBusy("clear");
+    extras.modioClearKey().then(() => { setHas(false); toast("mod.io key removed"); }).catch((e) => toast(errorText(e), true)).finally(() => setBusy(null));
+  };
   return (
     <Module icon="web" title="Experiments" count={on ? "on" : "off"}>
-      <Switch checked={on} onChange={(v) => { setOn(v); onModio?.(v); settings.set("flags.modio", v ? "1" : "0").then(() => window.dispatchEvent(new Event("pm-flags"))).catch(() => {}); }}><span title="Read-only. mod.io mods install from the game's Mods menu">mod.io in Browse</span></Switch>
+      <Switch checked={on} onChange={(v) => { setOn(v); onModio?.(v); settings.set("flags.modio", v ? "1" : "0").then(() => window.dispatchEvent(new Event("pm-flags"))).catch((e) => toast(errorText(e), true)); }}><span title="Read-only. mod.io mods install from the game's Mods menu">mod.io in Browse</span></Switch>
       {on && <>
         <div className="actions" style={{ flexWrap: "nowrap", marginTop: ".5em" }}>
-          <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder={has ? "Replace mod.io key" : "mod.io API key"} aria-label="mod.io API key" /></label>
-          <Key size="sm" icon="check" disabled={!key || busy} onClick={async () => {
-            setBusy(true);
-            try { const g = await extras.modioSetKey(key); setHas(true); setKey(""); toast(g ? `Key saved, found ${g.name}` : "Key saved, but Cyberpunk 2077 isn't on mod.io"); }
-            catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
-          }}>Check and save</Key>
-          {has && <Key size="sm" variant="ghost" icon="trash" aria-label="Remove mod.io key" title="Remove key" onClick={() => extras.modioClearKey().then(() => setHas(false))} />}
+          <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder={has ? "Replace mod.io key" : "mod.io API key"} aria-label="mod.io API key"
+            onKeyDown={(e) => { if (e.key === "Enter") void save(); }} /></label>
+          <Key size="sm" icon="check" disabled={!key || !!busy} busy={busy === "save"} onClick={save} title={key ? undefined : "Paste a mod.io key first"}>Check and save</Key>
+          {has && <Key size="sm" variant="ghost" icon="trash" aria-label="Remove mod.io key" title="Remove key" disabled={!!busy} busy={busy === "clear"} onClick={clear} />}
         </div>
       </>}
     </Module>

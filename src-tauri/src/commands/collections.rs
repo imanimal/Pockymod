@@ -3,7 +3,7 @@ use crate::runner::{self, QueueSnapshot};
 use crate::state::AppState;
 use pocket_core::collections::{self, Check, CollectionQuery, CollectionsPage, LocalCollection, Revision};
 use pocket_core::{Error, Result};
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Emitter, State};
 
 async fn patch_and_premium(state: &State<'_, AppState>) -> (Option<String>, bool) {
     let premium = state.user.read().await.as_ref().is_some_and(|u| u.is_premium);
@@ -35,9 +35,11 @@ pub async fn collection_check(app: AppHandle, state: State<'_, AppState>, slug: 
     let rev = collections::revision(&state.nexus, &slug, revision).await?;
     let (patch, premium) = patch_and_premium(&state).await;
     let mut c = collections::check_revision(&state.db.lock().unwrap(), &rev, patch, premium)?;
-    // archived and removed files: look for the mod's current file
+    // archived and removed files: look for the mod's current file (one request each, so say how far along)
     let gone: Vec<usize> = c.entries.iter().enumerate().filter(|(_, e)| e.status == "unavailable").map(|(i, _)| i).take(40).collect();
-    for i in gone {
+    let total = gone.len();
+    for (n, i) in gone.into_iter().enumerate() {
+        let _ = app.emit("collection-progress", (n + 1, total));
         if let Ok(d) = pocket_core::browse::detail(&state.nexus, &state.db, c.entries[i].mod_id, None).await {
             if let Some(f) = pocket_core::browse::main_file(&d.files) {
                 let e = &mut c.entries[i];
@@ -91,13 +93,14 @@ pub fn local_collection_export(collection: LocalCollection, path: String) -> Res
     Ok(())
 }
 
+/// Progress goes out as `collection-progress` events ([checked, to check]) while files are looked up on Nexus.
 #[tauri::command]
-pub async fn local_collection_import(state: State<'_, AppState>, path: String) -> Result<(LocalCollection, Check)> {
-    let text = std::fs::read_to_string(&path)?;
+pub async fn local_collection_import(app: AppHandle, state: State<'_, AppState>, path: String) -> Result<(LocalCollection, Check)> {
+    let text = std::fs::read_to_string(&path).map_err(|e| Error::Invalid(format!("Couldn't open that file. {e}")))?;
     let c = collections::parse_local(&text)?;
     let (patch, premium) = patch_and_premium(&state).await;
     let mut check = collections::check_local(&state.db.lock().unwrap(), &c, patch, premium)?;
-    collections::resolve_files(&state.nexus, &state.db, &mut check, 60, premium).await?;
+    collections::resolve_files(&state.nexus, &state.db, &mut check, 60, premium, |done, total| { let _ = app.emit("collection-progress", (done, total)); }).await?;
     Ok((c, check))
 }
 

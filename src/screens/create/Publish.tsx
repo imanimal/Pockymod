@@ -1,7 +1,7 @@
 // Publish a new version of a file that is already on Nexus, through the Upload API. The file is picked from the
 // author's own mods (and, with a key, from the list Nexus keeps for uploads), so nobody has to look up an ID.
 import { useEffect, useState } from "react";
-import { Empty, Key, Lcd, Module, Pill, Seg, Switch, bytesText } from "../../ui/pocket";
+import { Empty, Key, Lcd, Module, Pill, Seg, Switch, bytesText, useBusy } from "../../ui/pocket";
 import { authoring, creator, errorText, type MyMods, type UploadTarget } from "../../lib/api";
 import { shortDate } from "../../lib/text";
 import { toast } from "../../ui/toast";
@@ -23,11 +23,16 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
   const [changelog, setChangelog] = useState("");
   const [archiveOld, setArchiveOld] = useState(true);
   const [bumpVersion, setBumpVersion] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [busy, run] = useBusy();
   const [prog, setProg] = useState<[number, number] | null>(null);
   const [targets, setTargets] = useState<UploadTarget[] | null>(null);
   const [targetsErr, setTargetsErr] = useState<string | null>(null);
-  useEffect(() => { let off: (() => void) | undefined; creator.onProgress(setProg).then((u) => { off = u; }); return () => off?.(); }, []);
+  useEffect(() => {
+    // the listener can arrive after the tab has closed: drop it then instead of leaking it
+    let off: (() => void) | undefined, gone = false;
+    creator.onProgress(setProg).then((u) => { if (gone) u(); else off = u; }).catch(() => {});
+    return () => { gone = true; off?.(); };
+  }, []);
 
   const choose = (p: PublishPrefill) => {
     setModId(String(p.modId)); setFileId(p.fileId); setDisplay(p.fileName); setCategory(p.category); setCurrent(p.currentVersion); setByHand(false);
@@ -56,19 +61,21 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
 
   const mod = own?.mods.find((m) => String(m.modId) === modId) ?? null;
   const listed = !!targets?.some((t) => t.id === fileId);
+  // asking Nexus for the upload targets: hold the "not listed" warning until it answers
+  const asking = hasKey && !!modId && !byHand && targets === null && !targetsErr;
   const next = current ? bump(current) : null;
   const zip = pack.zip;
-  const ready = !!zip && !!fileId && !!pack.version && hasKey && !busy;
+  const why = !hasKey ? "Needs your Nexus API key" : !zip ? "Pack your folder or choose an archive first" : !fileId ? "Pick the file this is a new version of"
+    : !pack.version ? "Set the version" : pack.busy === "pack" ? "Wait for the zip to finish packing" : null;
 
-  const publish = async () => {
-    setBusy(true); setProg(null);
-    try {
-      const id = await creator.publish({ file: zip!, fileId: /^\d+$/.test(fileId) ? Number(fileId) : fileId, modId: modId ? Number(modId) : null, version: pack.version,
-        displayName: display || pack.name || null, category, changelog: changelog || null, archiveExisting: archiveOld, updateModVersion: bumpVersion });
-      toast(`Published ${pack.version}${id ? ` (version ${id})` : ""}. Nexus scans it first`);
-      onPublished();
-    } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
-  };
+  const publish = () => run(async () => {
+    if (!zip) return;
+    setProg(null);
+    const id = await creator.publish({ file: zip, fileId: /^\d+$/.test(fileId) ? Number(fileId) : fileId, modId: modId ? Number(modId) : null, version: pack.version,
+      displayName: display || pack.name || null, category, changelog: changelog || null, archiveExisting: archiveOld, updateModVersion: bumpVersion });
+    toast(`Published ${pack.version}${id ? ` (version ${id})` : ""}. Nexus scans it first`);
+    onPublished();
+  });
 
   return (
     <div className="grid2 cr-publish" style={{ alignItems: "start" }}>
@@ -111,7 +118,7 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
             </div>
           </>}
           {targetsErr && <p className="dim hint">Nexus didn't list upload targets ({targetsErr}). Using the file's update chain ID</p>}
-          <p className="dim hint">File ID <span className="mono hi">{fileId || "none"}</span>{fileId && (listed ? "" : " (update chain, check Files tab, Advanced if refused)")}</p>
+          <p className="dim hint">File ID <span className="mono hi">{fileId || "none"}</span>{fileId && !asking && (listed ? "" : " (update chain, check Files tab, Advanced if refused)")}</p>
           <Key size="sm" variant="ghost" onClick={() => setByHand(true)}>Enter IDs manually</Key>
         </> : <>
           <div className="fgrid">
@@ -126,8 +133,9 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
       <Module icon="file" title="The new version" count={zip ? fileName(zip) : "no archive yet"}>
         {!zip ? <Empty icon="file" title="Pack your folder or choose an archive" actions={<>
           <Key icon="install" onClick={onPack}>Check and pack a folder</Key>
-          <Key variant="ghost" icon="file" onClick={() => void pack.pick(false)}>Choose an archive</Key>
-        </>} /> : <div className="actions"><Pill tone="ok">{fileName(zip)}</Pill><Key size="sm" variant="ghost" onClick={() => void pack.pick(false)}>Another archive</Key></div>}
+          <Key variant="ghost" icon="file" busy={pack.busy === "archive"} disabled={!!pack.busy || busy} onClick={() => void pack.pick(false)}>Choose an archive</Key>
+        </>} /> : <div className="actions"><Pill tone="ok">{fileName(zip)}</Pill>
+          <Key size="sm" variant="ghost" busy={pack.busy === "archive"} disabled={!!pack.busy || busy} onClick={() => void pack.pick(false)}>Another archive</Key></div>}
         <div className="fgrid" style={{ marginTop: ".7em" }}>
           <span className="lab">Version</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={pack.version} onChange={(e) => pack.set({ version: e.target.value })} aria-label="Version" /></label>
           <span className="lab">Name</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={display} onChange={(e) => setDisplay(e.target.value)} placeholder={pack.name || "File name on Nexus"} aria-label="File name on Nexus" /></label>
@@ -144,7 +152,8 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
         {prog && <Lcd size="sm" label="Uploaded" value={bytesText(prog[0]).split(" ")[0]} unit={`${bytesText(prog[0]).split(" ")[1]} / ${bytesText(prog[1])}`} bar={prog[1] ? prog[0] / prog[1] : 0} />}
         <p className="dim hint" style={{ marginTop: ".6em" }}>If this version adds parts made with AI, update the AI statement on the mod's Nexus page{mod && <> (<button type="button" className="linkish" onClick={() => openNexus(mod.links.edit)} title="The mod's edit page on Nexus">edit the page</button>)</>}. Nexus asks for it whenever an update adds AI-made parts.</p>
         <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".6em" }}>
-          <Key variant="dark" icon="share" disabled={!ready} onClick={() => void publish()}>{busy ? "Publishing" : "Publish"}</Key>
+          <Key variant="dark" icon="share" busy={busy ? (prog && prog[1] ? prog[0] / prog[1] : true) : undefined} disabled={!!why} title={why ?? undefined}
+            onClick={() => void publish()}>Publish</Key>
         </div>
       </Module>
     </div>

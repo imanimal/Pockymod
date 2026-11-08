@@ -83,7 +83,7 @@ const STARTER = {
 };
 
 export function MakeDialog({ onClose }: { onClose: () => void }) {
-  const save = (name: string, text: string) => saveTextAs(name, text, ["json"]).catch((e) => toast(errorText(e), true));
+  const save = (name: string, text: string) => saveTextAs(name, text, ["json"]).then((ok) => { if (ok) toast(`Saved ${name}`); }).catch((e) => toast(errorText(e), true));
   return (
     <Dialog icon="plus" title="Make your own" onClose={onClose}>
       <div className="grid2 ext-make">

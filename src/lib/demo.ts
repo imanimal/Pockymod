@@ -159,7 +159,7 @@ function search(q: BrowseQuery, local: LocalFilter): BrowseResult {
     random: (n) => ((n.modId * 2654435761 + (q.seed ?? 1) * 40503) >>> 0) % 1000,
   };
   nodes.sort((a, b) => (key[q.sort](a) - key[q.sort](b)) * (q.ascending ? 1 : -1));
-  return { ...fixture, total: nodes.length, offset: 0, nodes: nodes.slice(q.offset, q.offset + q.count), filteredOnPage: before - nodes.length, fromCache: false };
+  return { ...fixture, total: nodes.length, offset: q.offset, nodes: nodes.slice(q.offset, q.offset + q.count), filteredOnPage: before - nodes.length, fromCache: false };
 }
 
 export function installDemo() {
@@ -198,7 +198,7 @@ export function installDemo() {
       return snapshot();
     },
     queue_remove: ({ id }) => { const i = q.findIndex((x) => x.id === id); if (i >= 0) q.splice(i, 1); pump(); return snapshot(); },
-    queue_retry: () => snapshot(),
+    queue_retry: ({ id }) => { const k = q.findIndex((x) => x.id === id); if (k >= 0 && q[k].state.state === "failed") q[k].state = { state: "waiting" }; pump(); return snapshot(); },
     mod_endorse: () => { if (!status.hasKey) throw { kind: "no_key", message: "Add your Nexus API key in Settings first" }; },
     mod_track: () => { if (!status.hasKey) throw { kind: "no_key", message: "Add your Nexus API key in Settings first" }; },
     updates_skip: () => { demoEmit("updates", []); return []; },
@@ -318,7 +318,7 @@ export function installDemo() {
     },
     game_vanilla_restore: () => 0,
     game_open_folder: () => { throw { kind: "demo", message: "Opening folders needs the desktop app" }; },
-    app_update_check: () => ({ current: "0.1.0", latest: null, newer: false, notes: null, url: null, message: "No published release found yet" }),
+    app_update_check: () => ({ current: "1.0.0-alpha", latest: null, newer: false, notes: null, url: null, message: "No published release found yet" }),
     modio_has_key: () => false,
     modio_set_key: () => { throw { kind: "demo", message: "mod.io needs the desktop app" }; },
     modio_clear_key: () => {},
@@ -544,7 +544,7 @@ function installTroubleshootDemo() {
     logs_scan: () => new Promise((ok) => setTimeout(() => ok(demoLogs()), 150)),
     logs_report: () => {
       const l = demoLogs();
-      return [`Pockymod 0.1.0 report`, `Game: Cyberpunk 2077 patch 2.5 (exe 3.0.80.0)`, `Frameworks: Cyber Engine Tweaks 1.37.1, RED4ext 1.31.0, ArchiveXL 1.28.6`,
+      return [`Pockymod 1.0.0-alpha report`, `Game: Cyberpunk 2077 patch 2.5 (exe 3.0.80.0)`, `Frameworks: Cyber Engine Tweaks 1.37.1, RED4ext 1.31.0, ArchiveXL 1.28.6`,
         `Mods: ${installs.filter((i) => i.enabled).length} on of ${installs.length} installed`, `Errors: ${l.errors}, warnings: ${l.warnings}`,
         ...l.mods.flatMap((m) => [``, `${m.name} (${m.enabled ? "on" : "off"}): ${m.errors} errors, ${m.warnings} warnings`, ...m.entries.map((e) => `  [${e.tool}] ${e.level}: ${e.text.split("\n").slice(0, 2).join(" / ")}`)])].join("\n");
     },

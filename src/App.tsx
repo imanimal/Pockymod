@@ -29,7 +29,7 @@ import { background as backgroundApi, errorText, game, handler, nexus, nexusPage
 import { resetTheme, toggleScheme, useTheme, watchSystemTheme } from "./lib/theme";
 import { channel, powerOff, powerOn } from "./ui/fx";
 import { nope } from "./ui/motion";
-import { call, inTauri, listen, windowAction } from "./lib/tauri";
+import { call, held, inTauri, listen, windowAction } from "./lib/tauri";
 import { RateLcd } from "./ui/RateLcd";
 import { BrowserPane } from "./ui/BrowserPane";
 import { useAfterPlayNudge } from "./ui/Endorse";
@@ -65,7 +65,7 @@ export function App() {
   const [existingOpen, setExistingOpen] = useState(false);
   const [onboard, setOnboard] = useState(false);
   const [choices, setChoices] = useState<ChoicesNeeded | null>(null);
-  useEffect(() => { let off: (() => void) | undefined; onChoicesNeeded(setChoices).then((u) => { off = u; }); return () => off?.(); }, []);
+  useEffect(() => held(onChoicesNeeded(setChoices)), []);
   useEffect(() => { settings.get("onboarded").then((v) => setOnboard(v !== "1")).catch(() => {}); }, []);
 
   useEffect(() => watchSystemTheme(() => {}), []);
@@ -79,9 +79,7 @@ export function App() {
   }, [view]);
   // closing the window: the picture turns off like a tube, then the app quits (src-tauri/src/power.rs)
   useEffect(() => {
-    let off: (() => void) | undefined;
-    listen<{ seq: number }>("power-off", (p) => powerOff(() => { void call("power_done", { seq: p.seq }).catch(() => {}); })).then((u) => { off = u; });
-    return () => off?.();
+    return held(listen<{ seq: number }>("power-off", (p) => powerOff(() => { void call("power_done", { seq: p.seq }).catch(() => {}); })));
   }, []);
   useEffect(() => installUndoKeys(), []);
   useAfterPlayNudge();
@@ -128,10 +126,9 @@ export function App() {
   useEffect(() => {
     const offs: Array<() => void> = [];
     queue.get().then(setSnap).catch(() => {});
-    queue.onChange(setSnap).then((u) => offs.push(u));
-    onToast((m) => toast(m)).then((u) => offs.push(u));
+    offs.push(held(queue.onChange(setSnap)), held(onToast((m) => toast(m))));
     // a new version is downloaded: one quiet line, never a dialog
-    backgroundApi.onUpdate((u) => { if (u.ready) toast(`Pockymod ${u.version} installs when you close the window`, false, { label: "Restart now", run: () => { void backgroundApi.installUpdate().catch((e) => toast(errorText(e), true)); } }); }).then((u) => offs.push(u));
+    offs.push(held(backgroundApi.onUpdate((u) => { if (u.ready) toast(`Pockymod ${u.version} installs when you close the window`, false, { label: "Restart now", run: () => { void backgroundApi.installUpdate().catch((e) => toast(errorText(e), true)); } }); })));
     nexus.status().then((s) => setPremium(!!s.user?.isPremium)).catch(() => {});
     // the account went Premium (ui/Premium.tsx): installs stop counting clicks
     const upgraded = () => setPremium(true);
@@ -140,7 +137,7 @@ export function App() {
     // update badges: the last result now and a fresh check shortly after the window opens; every six hours only
     // when the user turned that on (Settings, Background), since Nexus has a key used only for what the user starts
     updatesApi.last().then(setUpdates).catch(() => {});
-    updatesApi.onChange(setUpdates).then((u) => offs.push(u));
+    offs.push(held(updatesApi.onChange(setUpdates)));
     const check = () => updatesApi.check().catch(() => {});
     const t1 = setTimeout(check, 4000);
     const t2 = setInterval(() => { settings.get("mods.background").then((v) => { if (v === "1") void check(); }).catch(() => {}); }, 6 * 3600 * 1000);
@@ -188,9 +185,9 @@ export function App() {
           onClick={(e) => { if (!toggleScheme()) { nope(e.currentTarget); toast(`${theme.name} is dark only`); } }}
           aria-label={theme.scheme === "dark" ? "Switch to light" : "Switch to dark"} title={`${theme.name}, ${theme.scheme}`} />
         <span className="winkeys">
-          <button type="button" className="wk" aria-label="Minimise" onClick={() => void windowAction("minimize")}><Icon name="minus" size={9} /></button>
-          <button type="button" className="wk" aria-label="Maximise" onClick={() => void windowAction("toggleMaximize")}><Icon name="max" size={9} /></button>
-          <button type="button" className="wk wk-x" aria-label="Close" onClick={() => { if (inTauri()) void windowAction("close"); else powerOff(() => setTimeout(() => powerOn(), 700)); }}><Icon name="x" size={9} /></button>
+          <button type="button" className="wk" aria-label="Minimise" title="Minimise" onClick={() => void windowAction("minimize")}><Icon name="minus" size={9} /></button>
+          <button type="button" className="wk" aria-label="Maximise" title="Maximise" onClick={() => void windowAction("toggleMaximize")}><Icon name="max" size={9} /></button>
+          <button type="button" className="wk wk-x" aria-label="Close" title="Close" onClick={() => { if (inTauri()) void windowAction("close"); else powerOff(() => setTimeout(() => powerOn(), 700)); }}><Icon name="x" size={9} /></button>
         </span>
       </header>
 

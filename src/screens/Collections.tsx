@@ -3,10 +3,11 @@
 import { descriptionLinks, descriptionParts, descriptionText, plural } from "../lib/text";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "../ui/Dialog";
-import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Veil, bytesText, formatCount } from "../ui/pocket";
+import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Veil, bytesText, formatCount, useBusy, useProgress } from "../ui/pocket";
+import { held } from "../lib/tauri";
 import { useAdult } from "../lib/prefs";
 import {
-  collections, errorText, nexusPages, nexusUrl, openExternal, pickCollectionFile, pickSavePath, settings,
+  collections, errorText, links as linksApi, nexusPages, nexusUrl, openExternal, pickCollectionFile, pickSavePath, settings,
   type CollectionCard, type CollectionCheck, type CollectionsPage, type LocalCollection,
 } from "../lib/api";
 import { toast } from "../ui/toast";
@@ -35,6 +36,10 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
   const [q, setQ] = useState({ text: "", gameVersion: null as string | null, sort: "endorsements", offset: 0 });
   const [page, setPage] = useState<CollectionsPage | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  // the pager key that asked for the page on its way, and a new try after a failure
+  const [paging, setPaging] = useState<"prev" | "next" | null>(null);
+  const [tries, setTries] = useState(0);
   const [open, setOpen] = useState<CollectionCard | null>(null);
   const [shown, setShown] = useState<CollectionCard | null>(null);
   const listTop = useRef(0);
@@ -45,7 +50,23 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
     setShown(c);
   };
   useEffect(() => { const t = setTimeout(() => setQ((o) => ({ ...o, text, offset: 0 })), 350); return () => clearTimeout(t); }, [text]);
-  useEffect(() => { collections.browse({ ...q, includeAdult: adult !== "hide" }).then((p) => { setPage(p); setErr(null); }).catch((e) => setErr(errorText(e))); }, [q, adult]);
+  useEffect(() => {
+    // only the newest request lands, so a slow page never replaces a newer search
+    let live = true;
+    setLoading(true);
+    collections.browse({ ...q, includeAdult: adult !== "hide" })
+      .then((p) => {
+        if (!live) return;
+        setPage(p); setErr(null);
+        // a new page starts at its top, not where the pager was
+        if (paging) viewEl()?.scrollTo({ top: 0 });
+      })
+      .catch((e) => { if (live) setErr(errorText(e)); })
+      .finally(() => { if (live) { setLoading(false); setPaging(null); } });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, adult, tries]);
+  const turn = (dir: "prev" | "next") => { setPaging(dir); setQ({ ...q, offset: dir === "prev" ? Math.max(0, q.offset - 24) : q.offset + 24 }); };
   const versions = Object.entries(page?.facetsData?.gameVersion ?? {}).filter(([v]) => v).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
   useEffect(() => { const b = () => { if (shown) show(null); }; window.addEventListener("pm-back", b); return () => window.removeEventListener("pm-back", b); });
@@ -61,9 +82,10 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
         <span className="dim" style={{ fontSize: ".82em", alignSelf: "center" }}>Game version</span>
         {versions.map(([v, n]) => <Chip key={v} on={q.gameVersion === v} count={n} onClick={() => setQ({ ...q, gameVersion: q.gameVersion === v ? null : v, offset: 0 })}>{v}</Chip>)}
       </div>
-      {err && <div className="note bad">{err}</div>}
-      {page && page.nodes.length === 0 && <Empty icon="collections" title="No collections match" />}
+      {err && <div className="note bad">{err} <button type="button" className="linkish" onClick={() => setTries((n) => n + 1)}>Try again</button></div>}
+      {page && !err && page.nodes.length === 0 && <Empty icon="collections" title="No collections match" />}
       <div className="grid3">
+        {!page && loading && Array.from({ length: 6 }, (_, i) => <span key={i} className="skel" style={{ height: "17em" }} aria-hidden="true" />)}
         {page?.nodes.map((c) => {
           const r = c.latestPublishedRevision;
           return (
@@ -89,9 +111,9 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
       </div>
       {page && page.totalCount > 24 && (
         <div className="pager">
-          <Key size="sm" icon="up" disabled={q.offset === 0} onClick={() => setQ({ ...q, offset: Math.max(0, q.offset - 24) })} aria-label="Previous page" />
+          <Key size="sm" icon="up" busy={paging === "prev"} disabled={q.offset === 0 || loading} onClick={() => turn("prev")} aria-label="Previous page" title="Previous page" />
           <div className="display sm inline"><span className="d-lbl">Page</span><span className="d-num">{String(q.offset / 24 + 1).padStart(2, "0")}<small>/{Math.ceil(page.totalCount / 24)}</small></span></div>
-          <Key size="sm" icon="down" disabled={q.offset + 24 >= page.totalCount} onClick={() => setQ({ ...q, offset: q.offset + 24 })} aria-label="Next page" />
+          <Key size="sm" icon="down" busy={paging === "next"} disabled={q.offset + 24 >= page.totalCount || loading} onClick={() => turn("next")} aria-label="Next page" title="Next page" />
         </div>
       )}
       {open && <CheckDialog title={open.name} load={() => collections.check(open.slug)} onClose={() => setOpen(null)} onQueued={() => { setOpen(null); onQueued(); }} />}
@@ -112,19 +134,29 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
   const [err, setErr] = useState<string | null>(null);
   const [optional, setOptional] = useState(false);
   const [busy, setBusy] = useState(false);
-  // load once when opened (the caller passes a new function each render)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load().then(setC).catch((e) => setErr(errorText(e))); }, []);
+  const [tries, setTries] = useState(0);
+  // how many of its files have been looked up on Nexus so far
+  const [prog, setProg] = useState<[number, number] | null>(null);
+  useEffect(() => (c ? undefined : held(collections.onProgress(setProg))), [c]);
+  // load when opened, and again on Try again (the caller passes a new function each render)
+  useEffect(() => {
+    let live = true;
+    setErr(null);
+    load().then((x) => { if (live) setC(x); }).catch((e) => { if (live) setErr(errorText(e)); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tries]);
   const install = async () => {
     if (!c) return;
     setBusy(true);
     try { await collections.install(c, optional); toast(`${c.name} queued, ${plural(c.missing, "mod")}`); onQueued(); } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
+  const copy = (url: string) => navigator.clipboard.writeText(url).then(() => toast("Link copied")).catch(() => toast("Couldn't copy", true));
   const shown = (all ? c?.entries : c?.entries.filter((e) => e.status !== "installed")) ?? [];
   return (
     <>
-      {err && <div className="note bad">{err}</div>}
-      {!c && !err && <Empty icon="clock" title="Checking" />}
+      {err && <div className="note bad">{err} <button type="button" className="linkish" onClick={() => setTries((n) => n + 1)}>Try again</button></div>}
+      {!c && !err && <Empty icon="clock" title="Checking">{prog && prog[1] > 0 ? `${prog[0]} of ${prog[1]} files` : undefined}</Empty>}
       {c && <>
         <div className="lcds">
           <Lcd size="sm" label="Missing" value={String(c.missing).padStart(2, "0")} sub={`${c.installed} installed`} />
@@ -174,7 +206,10 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
                   <span className="m-main"><span className="m-t">{x.name}</span>
                     <span className="m-meta">{x.version && <span>v{x.version}</span>}{x.optional && <span>optional</span>}{x.resourceType && <span>{x.resourceType.toLowerCase()}</span>}</span>
                     {x.instructions && <span style={{ fontSize: ".84em", whiteSpace: "normal" }}>{x.instructions}</span>}</span>
-                  {x.resourceUrl && <span className="m-side"><Key size="sm" variant="ghost" icon="web" onClick={() => { void navigator.clipboard?.writeText(x.resourceUrl!); toast("Link copied"); }}>Copy link</Key></span>}
+                  {x.resourceUrl && <span className="m-side" style={{ flexDirection: "row", gap: ".3em" }}>
+                    <Key size="sm" variant="ghost" icon="web" onClick={() => void linksApi.open(x.resourceUrl!).catch((e) => toast(errorText(e), true))} title={`${x.resourceUrl}\nOpens in your browser`}>Open</Key>
+                    <Key size="sm" variant="ghost" icon="file" onClick={() => void copy(x.resourceUrl!)} aria-label={`Copy ${x.resourceUrl}`} title="Copy link" />
+                  </span>}
                 </div>
               ))}
             </div>
@@ -183,7 +218,7 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
         <div className="actions" style={{ justifyContent: "flex-end" }}>
           {c.entries.some((e) => e.optional) && <Switch checked={optional} onChange={setOptional}>Include optional mods</Switch>}
           {onClose && <Key variant="ghost" onClick={onClose}>Cancel</Key>}
-          <Key variant="primary" icon="install" disabled={busy || c.missing === 0} onClick={install}>{c.missing ? `Install ${plural(c.missing, "mod")}` : "All installed"}</Key>
+          <Key variant="primary" icon="install" busy={busy} disabled={c.missing === 0} onClick={install}>{c.missing ? `Install ${plural(c.missing, "mod")}` : "All installed"}</Key>
         </div>
       </>}
     </>
@@ -194,7 +229,19 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
  *  beside them every mod in it against what you have, with Install. */
 function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: () => void; onQueued: () => void }) {
   const [more, setMore] = useState<{ description: string | null; headerImage: string | null } | null>(null);
-  useEffect(() => { collections.detail(c.slug).then(setMore).catch(() => setMore({ description: null, headerImage: null })); }, [c.slug]);
+  // without the full description the summary stands in for it, so a failure here needs no message
+  useEffect(() => {
+    let live = true;
+    setMore(null);
+    collections.detail(c.slug).then((x) => { if (live) setMore(x); }).catch(() => { if (live) setMore({ description: null, headerImage: null }); });
+    return () => { live = false; };
+  }, [c.slug]);
+  // Escape goes back to the list, unless a viewer or a dialog is open over the page
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector(".lightbox, .ov, .pmenu.popover")) onBack(); };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [onBack]);
   const r = c.latestPublishedRevision;
   const raw = more?.description ?? "";
   const parts = useMemo(() => descriptionParts(raw || c.summary || ""), [raw, c.summary]);
@@ -210,7 +257,7 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
         tools={<>
           <Key size="sm" variant="ghost" icon="web" onClick={() => onNexus(c.slug)} title="Nexus page" aria-label="Open the Nexus page" />
           <Key size="sm" variant="ghost" icon="link" onClick={() => inBrowser(c.slug)} title="Open in your browser" aria-label="Open in browser" />
-          <Key size="sm" variant="ghost" icon="x" onClick={onBack} aria-label="Close" />
+          <Key size="sm" variant="ghost" icon="x" onClick={onBack} aria-label="Close" title="Back to collections (Esc)" />
         </>}>
         <div className="mpage-banner">
           {banner && <img src={banner} alt="" className={veil.on ? "veiled-img" : undefined} />}
@@ -232,7 +279,14 @@ function CollectionPage({ c, onBack, onQueued }: { c: CollectionCard; onBack: ()
             </div>
             {links.length > 0 && <Links key={c.slug} list={links} />}
             <div className="sub-h">Description</div>
-            {more === null ? <p className="dim">Loading</p> : <Veil {...veil}><div className="desc rich">{desc ? (raw ? <RichText src={raw} /> : <DescText parts={parts} />) : <span className="dim">No description</span>}</div></Veil>}
+            {more === null ? (
+              <div className="stack" style={{ gap: ".55em" }} aria-hidden="true">
+                <span className="skel skel-line" style={{ width: "92%" }} />
+                <span className="skel skel-line" style={{ width: "80%" }} />
+                <span className="skel skel-line" style={{ width: "86%" }} />
+                <span className="skel skel-line" style={{ width: "40%" }} />
+              </div>
+            ) : <Veil {...veil}><div className="desc rich">{desc ? (raw ? <RichText src={raw} /> : <DescText parts={parts} />) : <span className="dim">No description</span>}</div></Veil>}
           </div>
           <aside className="mpage-side">
             <div className="sub-h">Before you install</div>
@@ -250,18 +304,23 @@ function MyCollections({ onQueued }: { onQueued: () => void }) {
   const [made, setMade] = useState<LocalCollection | null>(null);
   const [imported, setImported] = useState<{ c: LocalCollection; check: CollectionCheck } | null>(null);
   const [publish, setPublish] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [creating, runCreate] = useBusy();
+  const [exporting, runExport] = useBusy();
+  const [opening, runOpen] = useBusy();
+  const importP = useProgress(opening, collections.onProgress);
   useEffect(() => { settings.get("flags.publishCollections").then((v) => setPublish(v === "1")).catch(() => {}); }, []);
-  const run = async (f: () => Promise<void>) => { setBusy(true); try { await f(); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); } };
+  const create = () => { if (name.trim() && !creating) void runCreate(async () => setMade(await collections.createLocal(name, desc))); };
+  const enter = (e: React.KeyboardEvent) => { if (e.key === "Enter") create(); };
 
   return (
     <div className="grid2" style={{ alignItems: "start" }}>
       <Module icon="share" title="Make a collection" count="from the active profile">
         <div className="stack" style={{ gap: ".5em" }}>
-          <label className="fbox" style={{ flex: "none" }}><input className="finput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Collection name" aria-label="Collection name" /></label>
-          <label className="fbox" style={{ flex: "none" }}><input className="finput" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description (optional)" aria-label="Description" /></label>
+          <label className="fbox" style={{ flex: "none" }}><input className="finput" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={enter} placeholder="Collection name" aria-label="Collection name" /></label>
+          <label className="fbox" style={{ flex: "none" }}><input className="finput" value={desc} onChange={(e) => setDesc(e.target.value)} onKeyDown={enter} placeholder="Description (optional)" aria-label="Description" /></label>
           <div className="actions">
-            <Key icon="collections" disabled={!name.trim() || busy} onClick={() => run(async () => setMade(await collections.createLocal(name, desc)))}>Create</Key>
+            <Key icon="collections" busy={creating} disabled={!name.trim()} title={name.trim() ? "Collects the mods that are on in the active profile" : "Give it a name first"}
+              onClick={create}>Create</Key>
           </div>
         </div>
         {made && <>
@@ -276,7 +335,7 @@ function MyCollections({ onQueued }: { onQueued: () => void }) {
             ))}
           </div>
           <div className="actions" style={{ marginTop: ".6em" }}>
-            <Key variant="primary" icon="share" disabled={busy} onClick={() => run(async () => {
+            <Key variant="primary" icon="share" busy={exporting} onClick={() => runExport(async () => {
               const path = await pickSavePath(`${made.name.replace(/[^\w -]/g, "_")}.pmcollection.json`);
               if (path) { await collections.exportLocal(made, path); toast("Collection saved"); }
             })}>Export</Key>
@@ -285,12 +344,12 @@ function MyCollections({ onQueued }: { onQueued: () => void }) {
           </div>
         </>}
         <div className="sub-h">Experiments</div>
-        <Switch checked={publish} onChange={(v) => { setPublish(v); settings.set("flags.publishCollections", v ? "1" : "0").catch(() => {}); }}>Publish collections to Nexus (does nothing yet)</Switch>
+        <Switch checked={publish} onChange={(v) => { setPublish(v); settings.set("flags.publishCollections", v ? "1" : "0").catch((e) => { setPublish(!v); toast(errorText(e), true); }); }}>Publish collections to Nexus (does nothing yet)</Switch>
       </Module>
 
       <Module icon="file" title="Import a collection" count={imported ? imported.c.name : undefined}>
         <div className="actions">
-          <Key icon="file" disabled={busy} onClick={() => run(async () => {
+          <Key icon="file" busy={opening && (importP ?? true)} onClick={() => runOpen(async () => {
             const path = await pickCollectionFile();
             if (path) { const [c, check] = await collections.importLocal(path); setImported({ c, check }); }
           })}>Open a file</Key>

@@ -46,6 +46,18 @@ pub fn safe_relative(name: &str) -> Option<PathBuf> {
     (!out.as_os_str().is_empty()).then_some(out)
 }
 
+/// How a damaged archive's error starts, so a caller can tell it from others (and fetch the file again).
+pub const DAMAGED: &str = "The archive is damaged or incomplete";
+
+/// What a reader's error means for the player: the file is broken or cut short (a download that stopped early).
+fn damaged(e: impl std::fmt::Display) -> Error { Error::Archive(format!("{DAMAGED} ({e}). Download it again")) }
+
+/// An error from writing the extracted files (not from reading the archive).
+fn writing(e: &io::Error) -> bool {
+    use io::ErrorKind as K;
+    matches!(e.kind(), K::StorageFull | K::QuotaExceeded | K::PermissionDenied | K::InvalidFilename) || matches!(e.raw_os_error(), Some(32 | 33))
+}
+
 fn rel_string(p: &Path) -> String { p.components().map(|c| c.as_os_str().to_string_lossy()).collect::<Vec<_>>().join("/") }
 
 /// The file paths in an archive (directories left out), without extracting.
@@ -53,22 +65,22 @@ pub fn list(path: &Path) -> Result<Vec<String>> {
     let mut out = Vec::new();
     match detect(path)? {
         Format::Zip => {
-            let mut z = zip::ZipArchive::new(File::open(path)?).map_err(|e| Error::Archive(e.to_string()))?;
+            let mut z = zip::ZipArchive::new(File::open(path)?).map_err(damaged)?;
             for i in 0..z.len() {
-                let f = z.by_index_raw(i).map_err(|e| Error::Archive(e.to_string()))?;
+                let f = z.by_index_raw(i).map_err(damaged)?;
                 if f.is_file() { if let Some(p) = safe_relative(f.name()) { out.push(rel_string(&p)); } }
             }
         }
         Format::SevenZ => {
-            let a = sevenz_rust2::Archive::open(path).map_err(|e| Error::Archive(e.to_string()))?;
+            let a = sevenz_rust2::Archive::open(path).map_err(damaged)?;
             for e in &a.files {
                 if !e.is_directory() && e.has_stream() { if let Some(p) = safe_relative(e.name()) { out.push(rel_string(&p)); } }
             }
         }
         Format::Rar => {
-            let arch = unrar::Archive::new(path).open_for_listing().map_err(|e| Error::Archive(e.to_string()))?;
+            let arch = unrar::Archive::new(path).open_for_listing().map_err(damaged)?;
             for e in arch {
-                let e = e.map_err(|e| Error::Archive(e.to_string()))?;
+                let e = e.map_err(damaged)?;
                 if e.is_file() { if let Some(p) = safe_relative(&e.filename.to_string_lossy()) { out.push(rel_string(&p)); } }
             }
         }
@@ -87,18 +99,18 @@ pub fn extract(path: &Path, dest: &Path) -> Result<Vec<String>> {
     };
     match detect(path)? {
         Format::Zip => {
-            let mut z = zip::ZipArchive::new(File::open(path)?).map_err(|e| Error::Archive(e.to_string()))?;
+            let mut z = zip::ZipArchive::new(File::open(path)?).map_err(damaged)?;
             for i in 0..z.len() {
-                let mut f = z.by_index(i).map_err(|e| Error::Archive(e.to_string()))?;
+                let mut f = z.by_index(i).map_err(damaged)?;
                 if !f.is_file() { continue; }
                 let Some(rel) = safe_relative(f.name()) else { continue };
                 let mut out = File::create(target(&rel)?)?;
-                io::copy(&mut f, &mut out)?;
+                io::copy(&mut f, &mut out).map_err(|e| if !writing(&e) && matches!(e.kind(), io::ErrorKind::InvalidData | io::ErrorKind::UnexpectedEof) { damaged(e) } else { e.into() })?;
                 written.push(rel_string(&rel));
             }
         }
         Format::SevenZ => {
-            let mut r = sevenz_rust2::ArchiveReader::open(path, sevenz_rust2::Password::empty()).map_err(|e| Error::Archive(e.to_string()))?;
+            let mut r = sevenz_rust2::ArchiveReader::open(path, sevenz_rust2::Password::empty()).map_err(damaged)?;
             let mut err: Option<Error> = None;
             r.for_each_entries(|entry, reader| {
                 if entry.is_directory() || !entry.has_stream() { return Ok(true); }
@@ -108,15 +120,20 @@ pub fn extract(path: &Path, dest: &Path) -> Result<Vec<String>> {
                     return Ok(true);
                 };
                 match target(&rel).and_then(|t| File::create(t).map_err(Error::from)) {
-                    Ok(mut out) => { io::copy(reader, &mut out)?; written.push(rel_string(&rel)); Ok(true) }
+                    Ok(mut out) => match io::copy(reader, &mut out) {
+                        Ok(_) => { written.push(rel_string(&rel)); Ok(true) }
+                        // a full drive is not a damaged archive
+                        Err(e) if writing(&e) => { err = Some(e.into()); Ok(false) }
+                        Err(e) => Err(e.into()),
+                    },
                     Err(e) => { err = Some(e); Ok(false) }
                 }
-            }).map_err(|e| Error::Archive(e.to_string()))?;
+            }).map_err(damaged)?;
             if let Some(e) = err { return Err(e); }
         }
         Format::Rar => {
-            let mut arch = unrar::Archive::new(path).open_for_processing().map_err(|e| Error::Archive(e.to_string()))?;
-            while let Some(header) = arch.read_header().map_err(|e| Error::Archive(e.to_string()))? {
+            let mut arch = unrar::Archive::new(path).open_for_processing().map_err(damaged)?;
+            while let Some(header) = arch.read_header().map_err(damaged)? {
                 let entry = header.entry();
                 let rel = entry.is_file().then(|| safe_relative(&entry.filename.to_string_lossy())).flatten();
                 // read the entry and write it ourselves, as for zip and 7z: UnRAR's own extraction would follow
@@ -124,12 +141,12 @@ pub fn extract(path: &Path, dest: &Path) -> Result<Vec<String>> {
                 arch = match rel {
                     Some(rel) => {
                         let t = target(&rel)?;
-                        let (data, next) = header.read().map_err(|e| Error::Archive(e.to_string()))?;
+                        let (data, next) = header.read().map_err(damaged)?;
                         std::fs::write(&t, data)?;
                         written.push(rel_string(&rel));
                         next
                     }
-                    None => header.skip().map_err(|e| Error::Archive(e.to_string()))?,
+                    None => header.skip().map_err(damaged)?,
                 };
             }
         }

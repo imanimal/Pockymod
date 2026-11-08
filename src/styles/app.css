@@ -222,6 +222,9 @@
 .pswitch-k { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: .45em; padding: .4em .7em; border-radius: 9px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 2px 0 var(--line); font-size: .86em; color: var(--text); }
 .pswitch-k .dim { font-size: .9em; }
 .pswitch-k:focus-visible { outline: 2px solid var(--accent); }
+/* switching profiles: the key says it's at work until the switch is done */
+.pswitch-k[aria-busy="true"] { cursor: progress; animation: pswBusy calc(var(--m) * 1100ms + 1ms) ease-in-out infinite; }
+@keyframes pswBusy { 50% { opacity: .6; } }
 .pmenu { position: absolute; right: 0; top: calc(100% + .5em); width: 19em; z-index: 60; box-shadow: var(--drop); }
 .pmenu .pb { display: flex; flex-direction: column; gap: 2px; }
 

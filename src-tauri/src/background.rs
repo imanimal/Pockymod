@@ -45,7 +45,7 @@ pub fn start(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(Duration::from_secs(60)).await;
         loop {
-            round(&app, false).await;
+            let _ = round(&app, false).await;
             tokio::time::sleep(EVERY).await;
         }
     });
@@ -54,11 +54,15 @@ pub fn start(app: AppHandle) {
 /// Mod updates are looked for on the timer only when the user turned that on (Settings, Background).
 pub fn mod_checks_on(app: &AppHandle) -> bool { setting(app, "mods.background").as_deref() == Some("1") }
 
-/// One quiet round of checks; `asked` when the user pressed Check now.
-pub async fn round(app: &AppHandle, asked: bool) {
+/// One quiet round of checks; `asked` when the user pressed Check now. The mod update check's error is returned
+/// (the timer ignores it; Check now shows it).
+pub async fn round(app: &AppHandle, asked: bool) -> pocket_core::Result<()> {
     let st = app.state::<AppState>();
     // mod updates
-    let list = if asked || mod_checks_on(app) { pocket_core::updates::check(&st.nexus, &st.db).await.ok() } else { None };
+    let mut failed = None;
+    let list = if asked || mod_checks_on(app) {
+        match pocket_core::updates::check(&st.nexus, &st.db).await { Ok(l) => Some(l), Err(e) => { failed = Some(e); None } }
+    } else { None };
     if let Some(list) = list {
         let _ = app.emit("updates", &list);
         let premium = st.user.read().await.as_ref().is_some_and(|u| u.is_premium);
@@ -77,6 +81,12 @@ pub async fn round(app: &AppHandle, asked: bool) {
         }
     }
     // a new version of the app
+    app_round(app).await;
+    failed.map_or(Ok(()), Err)
+}
+
+async fn app_round(app: &AppHandle) {
+    let st = app.state::<AppState>();
     let mode = app_updates(app);
     if mode == "off" { return; }
     let Ok(u) = pocket_core::appupdate::check(st.nexus.http()).await else { return };
@@ -96,6 +106,17 @@ pub async fn round(app: &AppHandle, asked: bool) {
 pub async fn prefetch(app: &AppHandle, mod_id: u32, file_id: u32) -> pocket_core::Result<()> {
     let st = app.state::<AppState>();
     if pocket_core::install::downloaded_archive(&st.db.lock().unwrap(), mod_id, file_id)?.is_some() { return Ok(()); }
+    // the queue has it (it downloads it itself), or the library is moving
+    let queued = st.queue.lock().unwrap().items.iter().any(|i| i.is_open() && i.mod_id == mod_id && i.file_id == file_id);
+    if queued || st.moving.load(std::sync::atomic::Ordering::SeqCst) { return Err(pocket_core::Error::Invalid("Busy with it already".into())); }
+    if !st.fetching.lock().unwrap().insert((mod_id, file_id)) { return Err(pocket_core::Error::Invalid("Busy with it already".into())); }
+    let r = fetch(app, mod_id, file_id).await;
+    st.fetching.lock().unwrap().remove(&(mod_id, file_id));
+    r
+}
+
+async fn fetch(app: &AppHandle, mod_id: u32, file_id: u32) -> pocket_core::Result<()> {
+    let st = app.state::<AppState>();
     let (_, library) = Paths::load(&st.db.lock().unwrap()).require()?;
     let d = pocket_core::browse::detail(&st.nexus, &st.db, mod_id, None).await?;
     let f = d.files.iter().find(|f| f.file_id == file_id).ok_or_else(|| pocket_core::Error::Invalid("That file is gone from Nexus".into()))?;
@@ -156,7 +177,7 @@ pub async fn app_update_install(app: AppHandle) -> pocket_core::Result<()> {
 /// Run the checks now (Settings, Background, Check now).
 #[tauri::command]
 pub async fn background_check(app: AppHandle) -> pocket_core::Result<BackgroundState> {
-    round(&app, true).await;
+    round(&app, true).await?;
     background_state(app).await
 }
 

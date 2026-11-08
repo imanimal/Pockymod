@@ -5,7 +5,7 @@ use crate::db::{now, Db};
 use crate::deploy::{DeployOptions, DeployOutcome};
 use crate::error::{Error, Result};
 use crate::install::{self, staged_plan};
-use rusqlite::params;
+use rusqlite::{params, OptionalExtension};
 use serde::Serialize;
 use std::path::Path;
 
@@ -87,10 +87,16 @@ pub fn activate(db: &Db, game: &Path, library: &Path, id: i64, opts: &DeployOpti
 /// Turn a mod on or off in the active profile, deploying or undeploying it.
 pub fn set_enabled(db: &Db, game: &Path, library: &Path, install_id: i64, on: bool, opts: &DeployOptions) -> Result<Option<DeployOutcome>> {
     let p = install::active_profile(db)?;
+    let was: Option<bool> = db.conn.query_row("SELECT enabled FROM profile_mods WHERE profile_id = ?1 AND install_id = ?2", params![p, install_id], |r| r.get(0)).optional()?;
     db.conn.execute("INSERT INTO profile_mods (profile_id, install_id, enabled, load_order) VALUES (?1, ?2, ?3, (SELECT COALESCE(MAX(load_order), -1) + 1 FROM profile_mods WHERE profile_id = ?1))
                      ON CONFLICT(profile_id, install_id) DO UPDATE SET enabled = ?3", params![p, install_id, on as i32])?;
     db.set_setting("loadorder.changedAt", &now().to_string())?;
-    if on { Ok(Some(install::redeploy_any(db, game, library, install_id, opts)?)) } else { install::undeploy_any(db, game, install_id)?; Ok(None) }
+    let r = if on { install::redeploy_any(db, game, library, install_id, opts).map(Some) } else { install::undeploy_any(db, game, install_id).map(|_| None) };
+    // it failed: the switch shows what it was, so trying again is the same click
+    if r.is_err() {
+        let _ = db.conn.execute("UPDATE profile_mods SET enabled = ?3 WHERE profile_id = ?1 AND install_id = ?2", params![p, install_id, was.unwrap_or(false) as i32]);
+    }
+    r
 }
 
 /// Whether a mod is on in each profile, active one first.

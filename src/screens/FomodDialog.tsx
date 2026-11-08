@@ -95,6 +95,8 @@ export function FomodDialog({ need, onClose, onInstalled, apply }: { need: Choic
       if (out.status === "installed") toast(`Installed ${need.request.name}${out.needsRedmodDeploy ? ". Deploy REDmods from Load order" : ""}`);
       else if (out.status === "staged") toast(`${need.request.name} clashes with other mods. Decide in Library`, true);
       else if (out.status === "alreadyHave") toast(`Already have ${need.request.name}`);
+      else if (out.status === "needsReview") toast(`${need.request.name} has files with no known place. Finish it in Library`, true);
+      else toast(`${need.request.name} still needs choices. Try again from Library`, true);
       onInstalled?.(); onClose();
     } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
@@ -146,7 +148,7 @@ export function FomodDialog({ need, onClose, onInstalled, apply }: { need: Choic
       {missing.length > 0 && <div className="note warn">Still to pick {missing.map((m) => `${m.g.name}${m.st.name ? ` (${m.st.name})` : ""}`).join(", ")}</div>}
       <div className="actions" style={{ justifyContent: "flex-end" }}>
         <Key variant="ghost" onClick={onClose}>Cancel</Key>
-        <Key variant="primary" icon="install" disabled={busy || missing.length > 0} onClick={install}
+        <Key variant="primary" icon="install" busy={busy} disabled={missing.length > 0} onClick={install}
           title={missing.length ? "A group still needs a pick" : undefined}>{apply ? "Use these options" : "Install with these"}</Key>
       </div>
     </Dialog>

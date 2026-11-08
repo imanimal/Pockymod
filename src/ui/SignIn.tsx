@@ -21,7 +21,7 @@ export function NexusSignIn({ onDone, primary }: { onDone: (s: NexusStatus) => v
   };
   return (
     <div className="actions">
-      <Key variant={primary ? "primary" : undefined} icon="key" disabled={waiting} onClick={go}
+      <Key variant={primary ? "primary" : undefined} icon="key" busy={waiting} onClick={go}
         title="Approve Pockymod on Nexus in your browser">{waiting ? "Waiting for Nexus" : "Sign in with Nexus"}</Key>
       {waiting && <Key variant="ghost" onClick={() => cancel.current?.()} title="Stop waiting">Cancel</Key>}
     </div>
