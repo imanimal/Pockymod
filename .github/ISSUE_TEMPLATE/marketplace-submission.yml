@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for sharing. A maintainer checks the package, adds it to `marketplace/`, and it shows in the app's Add-ons screen within an hour of the merge.
-        The rules are in [docs/marketplace.md](https://github.com/imanimal/pocket-mods/blob/main/docs/marketplace.md). In the app, Add-ons, Installed, Share fills this form in for you.
+        The rules are in [docs/marketplace.md](https://github.com/imanimal/Pockymod/blob/main/docs/marketplace.md). In the app, Add-ons, Installed, Share fills this form in for you.
   - type: dropdown
     id: kind
     attributes:

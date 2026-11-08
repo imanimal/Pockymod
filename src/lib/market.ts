@@ -6,14 +6,14 @@ import { installThemePackage, uninstallTheme, type ThemePackage } from "./theme"
 
 export type { MarketEntry, MarketIndex } from "./addon-rules.mjs";
 
-export const REPO = "https://github.com/imanimal/pocket-mods";
+export const REPO = "https://github.com/imanimal/Pockymod";
 export const DOCS = {
   extensions: `${REPO}/blob/main/docs/extensions.md`,
   marketplace: `${REPO}/blob/main/docs/marketplace.md`,
   themes: `${REPO}/blob/main/docs/themes.md`,
   folder: `${REPO}/tree/main/marketplace`,
 };
-const RAW = "https://raw.githubusercontent.com/imanimal/pocket-mods/main/marketplace/";
+const RAW = "https://raw.githubusercontent.com/imanimal/Pockymod/main/marketplace/";
 
 export interface LoadedIndex { index: MarketIndex; source: "network" | "cache" | "offline" | "bundled"; problems: string[] }
 

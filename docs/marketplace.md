@@ -152,4 +152,4 @@ To take something down, open an issue asking for it; the maintainers remove the 
 | `permissions` | extensions | The same list as the package, so the card says what it can do before anything is downloaded. |
 | `adds` | no | What it adds, in words, for the card: `["5 Browse shelves", "3 group rules"]`. |
 
-The app fetches files from `https://raw.githubusercontent.com/imanimal/pocket-mods/main/marketplace/` and keeps each for an hour.
+The app fetches files from `https://raw.githubusercontent.com/imanimal/Pockymod/main/marketplace/` and keeps each for an hour.

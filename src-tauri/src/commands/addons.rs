@@ -9,7 +9,7 @@ use pocket_core::{Error, Result};
 use std::path::PathBuf;
 use tauri::{Manager, State};
 
-pub const MARKET_BASE: &str = "https://raw.githubusercontent.com/imanimal/pocket-mods/main/marketplace/";
+pub const MARKET_BASE: &str = "https://raw.githubusercontent.com/imanimal/Pockymod/main/marketplace/";
 
 include!(concat!(env!("OUT_DIR"), "/market_bundle.rs"));
 

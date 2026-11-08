@@ -8,7 +8,7 @@
 use crate::error::{Error, Result};
 use serde::Serialize;
 
-pub const RELEASES: &str = "https://api.github.com/repos/imanimal/pocket-mods/releases/latest";
+pub const RELEASES: &str = "https://api.github.com/repos/imanimal/Pockymod/releases/latest";
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -59,7 +59,7 @@ pub async fn check(http: &reqwest::Client) -> Result<AppUpdate> {
 
 /// Only GitHub's own download hosts, over HTTPS.
 fn from_github(u: &str) -> bool {
-    u.starts_with("https://github.com/imanimal/pocket-mods/releases/download/") || u.starts_with("https://objects.githubusercontent.com/")
+    u.starts_with("https://github.com/imanimal/Pockymod/releases/download/") || u.starts_with("https://objects.githubusercontent.com/")
 }
 
 /// Download the release's installer into `dir` (once per version) and check its checksum when there is one.
@@ -100,9 +100,9 @@ fn sha256_hex(b: &[u8]) -> String {
 mod dl_tests {
     #[test]
     fn only_this_projects_downloads() {
-        assert!(super::from_github("https://github.com/imanimal/pocket-mods/releases/download/v0.2.0/Pockymod_0.2.0_x64-setup.exe"));
+        assert!(super::from_github("https://github.com/imanimal/Pockymod/releases/download/v0.2.0/Pockymod_0.2.0_x64-setup.exe"));
         assert!(!super::from_github("https://github.com/someone/else/releases/download/v1/x.exe"));
-        assert!(!super::from_github("http://github.com/imanimal/pocket-mods/releases/download/v1/x.exe"));
+        assert!(!super::from_github("http://github.com/imanimal/Pockymod/releases/download/v1/x.exe"));
         assert_eq!(super::sha256_hex(b"abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
     }
     use super::*;

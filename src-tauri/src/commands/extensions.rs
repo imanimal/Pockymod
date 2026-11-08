@@ -229,7 +229,7 @@ pub async fn ext_open_link(app: AppHandle, ext_id: String, link_id: String) -> R
 
 /// Pages the app itself opens in the default browser: this project on GitHub (the marketplace, docs, submissions)
 /// and Nexus Mods.
-pub const BROWSER_PREFIXES: [&str; 2] = ["https://github.com/imanimal/pocket-mods/", "https://www.nexusmods.com/"];
+pub const BROWSER_PREFIXES: [&str; 2] = ["https://github.com/imanimal/Pockymod/", "https://www.nexusmods.com/"];
 
 pub fn browser_url_allowed(url: &str) -> Option<String> {
     let u = url::Url::parse(url).ok()?;
@@ -357,17 +357,17 @@ mod tests {
 
     #[test]
     fn browser_prefixes() {
-        assert!(browser_url_allowed("https://github.com/imanimal/pocket-mods/issues/new?template=marketplace-submission.yml&title=a b").is_some());
+        assert!(browser_url_allowed("https://github.com/imanimal/Pockymod/issues/new?template=marketplace-submission.yml&title=a b").is_some());
         assert!(browser_url_allowed("https://www.youtube.com/watch?v=dQw4w9WgXcQ").is_some());
         assert!(browser_url_allowed("https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=x").is_none());
         assert!(browser_url_allowed("https://www.youtube.com/redirect?q=evil").is_none());
         assert!(browser_url_allowed("https://www.nexusmods.com/cyberpunk2077/mods/107").is_some());
-        for bad in ["http://www.nexusmods.com/x", "https://github.com/imanimal/other", "https://github.com/imanimal/pocket-mods/../x/",
+        for bad in ["http://www.nexusmods.com/x", "https://github.com/imanimal/other", "https://github.com/imanimal/Pockymod/../x/",
             "https://www.nexusmods.com.evil.example/", "https://user@www.nexusmods.com/", "file:///c:/x", "javascript:alert(1)"] {
             assert!(browser_url_allowed(bad).is_none(), "{bad}");
         }
         // spaces and quotes come back percent-encoded, so nothing can split the command line
-        let s = browser_url_allowed("https://github.com/imanimal/pocket-mods/issues/new?title=\"a b\"").unwrap();
+        let s = browser_url_allowed("https://github.com/imanimal/Pockymod/issues/new?title=\"a b\"").unwrap();
         assert!(!s.contains(' ') && !s.contains('"'));
     }
 

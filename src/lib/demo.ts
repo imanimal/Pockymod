@@ -431,7 +431,7 @@ export function installDemo() {
     ext_open_link: () => { throw { kind: "demo", message: "Links open in your browser from the desktop app" }; },
     open_external: ({ url }) => {
       const u = String(url);
-      if (!["https://github.com/imanimal/pocket-mods/", "https://www.nexusmods.com/", "https://www.youtube.com/watch?v="].some((p) => u.startsWith(p))) throw { kind: "invalid", message: "Only this project's GitHub pages and Nexus Mods pages open from here" };
+      if (!["https://github.com/imanimal/Pockymod/", "https://www.nexusmods.com/", "https://www.youtube.com/watch?v="].some((p) => u.startsWith(p))) throw { kind: "invalid", message: "Only this project's GitHub pages and Nexus Mods pages open from here" };
       window.open(u, "_blank", "noopener,noreferrer");
     },
     open_link: ({ url }) => { window.open(String(url), "_blank", "noopener,noreferrer"); },

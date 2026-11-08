@@ -4,7 +4,7 @@ A mod manager for Cyberpunk 2077 on Windows. You browse and install mods from Ne
 
 ![Browsing mods in Pockymod](docs/pockymod.png)
 
-**[Download the latest installer](https://github.com/imanimal/pocket-mods/releases/latest)** for Windows 10 or 11 (64-bit). It's an alpha.
+**[Download the latest installer](https://github.com/imanimal/Pockymod/releases/latest)** for Windows 10 or 11 (64-bit). It's an alpha.
 
 The installer isn't signed yet, so Windows may say it protected your PC. Click More info, then Run anyway.
 

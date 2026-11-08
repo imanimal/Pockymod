@@ -145,7 +145,7 @@ describe("marketplace", () => {
     const small = submissionUrl("theme", "Neon", '{"id":"neon"}');
     expect(small.withPackage).toBe(true);
     const u = new URL(small.url);
-    expect(u.origin + u.pathname).toBe("https://github.com/imanimal/pocket-mods/issues/new");
+    expect(u.origin + u.pathname).toBe("https://github.com/imanimal/Pockymod/issues/new");
     expect(u.searchParams.get("template")).toBe("marketplace-submission.yml");
     expect(u.searchParams.get("kind")).toBe("Theme");
     expect(u.searchParams.get("package")).toBe('{"id":"neon"}');

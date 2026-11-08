@@ -35,7 +35,7 @@ Each point of the [API Acceptable Use Policy](https://help.nexusmods.com/article
 What the policy asks for, and what goes with the request to support@nexusmods.com:
 
 - A testing build that works with a personal API key: the installer from a GitHub release.
-- The source: github.com/imanimal/pocket-mods (MIT).
+- The source: github.com/imanimal/Pockymod (MIT).
 - Name: Pockymod. Logo: `src-tauri/icons/icon.png` (512 px, a black P on a yellow plate, which reads on dark
   backgrounds), or `design/brand/icon-1024.png` for a larger copy.
 - Short description: "A mod manager for Cyberpunk 2077 on Windows. Browse, install and update Nexus mods and
