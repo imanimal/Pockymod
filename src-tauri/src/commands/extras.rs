@@ -69,7 +69,7 @@ pub async fn creator_package(app: tauri::AppHandle, path: String, name: String, 
 #[tauri::command]
 pub async fn creator_publish(app: tauri::AppHandle, state: State<'_, AppState>, request: pocket_core::creator::Publish) -> Result<u64> {
     use tauri::Emitter;
-    let key = state.keys.get()?.ok_or(Error::NoKey)?;
+    let key = state.keys.get()?.ok_or_else(|| Error::Invalid("Publishing uses your personal API key. Paste it in Settings, under Account".into()))?;
     let app2 = app.clone();
     pocket_core::creator::publish(state.nexus.http(), key.expose(), &request, move |sent, total| {
         let _ = app2.emit("publish-progress", (sent, total));

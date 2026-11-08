@@ -18,12 +18,23 @@ export interface RateDisplay {
 }
 
 export interface NexusUser { userId: number; name: string; isPremium: boolean; isSupporter: boolean; profileUrl?: string | null }
-export interface NexusStatus { hasKey: boolean; user: NexusUser | null; rateLimit: RateDisplay }
+export interface NexusStatus {
+  hasKey: boolean; user: NexusUser | null; rateLimit: RateDisplay;
+  /** "nexus" for a sign-in, "key" for a pasted key. */
+  signedInWith: "nexus" | "key" | null;
+  /** A personal key is saved (publishing needs one, signed in or not). */
+  keySaved: boolean;
+  /** Nexus has issued the app's client ID, so Sign in with Nexus works. */
+  signInAvailable: boolean;
+}
 
 export const nexus = {
   status: (refresh = false) => call<NexusStatus>("nexus_status", { refresh }),
   setKey: (key: string) => call<NexusStatus>("nexus_set_key", { key }),
   clearKey: () => call<NexusStatus>("nexus_clear_key"),
+  /** Opens Nexus in the browser and resolves once the user has approved the app there. */
+  signIn: () => call<NexusStatus>("nexus_sign_in"),
+  cancelSignIn: () => call<void>("nexus_sign_in_cancel"),
   rateLimit: () => call<RateDisplay>("rate_limit"),
   onRateLimit: (cb: (r: RateDisplay) => void) => listen<RateDisplay>("rate-limit", cb),
 };

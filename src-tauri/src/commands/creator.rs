@@ -32,7 +32,7 @@ pub async fn creator_my_mods(state: State<'_, AppState>, user: Option<String>, r
     let member = match typed {
         Some(t) => mods::resolve_member(&state.nexus, &t).await?,
         None => me.as_ref().map(|u| u.user_id)
-            .ok_or_else(|| Error::Invalid("Add your Nexus API key in Settings or type your Nexus user name".into()))?,
+            .ok_or_else(|| Error::Invalid("Sign in to Nexus in Settings, or type your Nexus user name".into()))?,
     };
     let own = me.is_some_and(|u| u.user_id == member);
     let pins = pinned(&state, member)?;
@@ -48,7 +48,7 @@ pub async fn creator_mod_files(state: State<'_, AppState>, mod_id: u32) -> Resul
 /// The files the Upload API lists for a mod: the ids a new version goes to. Needs the author's key.
 #[tauri::command]
 pub async fn creator_upload_targets(state: State<'_, AppState>, mod_id: u32) -> Result<Vec<UploadTarget>> {
-    let key = state.keys.get()?.ok_or(Error::NoKey)?;
+    let key = state.keys.get()?.ok_or_else(|| Error::Invalid("Publishing uses your personal API key. Paste it in Settings, under Account".into()))?;
     mods::upload_targets(&state.nexus, key.expose(), mod_id).await
 }
 

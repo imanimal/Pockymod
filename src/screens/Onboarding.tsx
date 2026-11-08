@@ -3,12 +3,11 @@ import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { Logo } from "../ui/Logo";
 import { Key, Lcd, Module, Pill } from "../ui/pocket";
-import { errorText, game, handler, nexus, nexusPages, paths, pickFolder, settings, type GameInstall, type HandlerStatus, type PathsView } from "../lib/api";
+import { errorText, game, handler, nexus, nexusPages, paths, pickFolder, settings, type GameInstall, type HandlerStatus, type NexusStatus, type PathsView } from "../lib/api";
 import { ExistingBody } from "./Existing";
 import { Scanner, type ScanLine } from "../ui/Scanner";
 import { toast } from "../ui/toast";
 import { NexusSignIn } from "../ui/SignIn";
-import { ssoReady } from "../lib/sso";
 
 /** Nexus's personal API key page (its account settings). */
 export const API_KEY_PAGE = "https://next.nexusmods.com/settings/api-keys";
@@ -102,7 +101,10 @@ function AccountStep({ onNext }: { onNext: () => void }) {
   const [name, setName] = useState<string | null>(null);
   const [premium, setPremium] = useState(false);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { nexus.status().then((s) => { if (s.user) { setName(s.user.name); setPremium(s.user.isPremium); } }).catch(() => {}); }, []);
+  const [st, setSt] = useState<NexusStatus | null>(null);
+  // with sign-in on offer, the key field waits behind a link
+  const [useKey, setUseKey] = useState(false);
+  useEffect(() => { nexus.status().then((s) => { setSt(s); if (s.user) { setName(s.user.name); setPremium(s.user.isPremium); } }).catch(() => {}); }, []);
   const save = async () => {
     if (!key || busy) return;
     setBusy(true);
@@ -114,18 +116,22 @@ function AccountStep({ onNext }: { onNext: () => void }) {
         <p>Connected as <b className="hi">{name}</b> {premium ? <Pill tone="ok">Premium</Pill> : <Pill>Free</Pill>}</p>
       ) : (
         <>
-          {ssoReady() ? <>
+          {st?.signInAvailable ? <>
             <p>Sign in to download. Browsing works without it</p>
-            <NexusSignIn primary onDone={(s) => { setName(s.user?.name ?? "connected"); setPremium(!!s.user?.isPremium); }} />
-            <p className="dim" style={{ fontSize: ".84em", marginTop: ".6em" }}>Or paste an API key</p>
+            <NexusSignIn status={st} primary onDone={(s) => { setName(s.user?.name ?? "connected"); setPremium(!!s.user?.isPremium); }} />
           </> : <p>Paste your Nexus API key to download. Browsing works without it</p>}
-          <div className="actions" style={{ flexWrap: "nowrap", marginTop: ".5em" }}>
-            <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Personal API key" aria-label="Nexus API key" onKeyDown={(e) => { if (e.key === "Enter") void save(); }} /></label>
-            <Key icon="check" disabled={!key} busy={busy} onClick={save} title={key ? "Saved in Windows Credential Manager" : "Paste a key first"}>Connect</Key>
-          </div>
-          <button type="button" className="linkish" style={{ marginTop: ".4em", fontSize: ".86em" }}
-            title="nexusmods.com, your avatar, Site preferences, API keys"
-            onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => toast(errorText(e), true))}>Get my key</button>
+          {st?.signInAvailable && !useKey ? (
+            <button type="button" className="linkish" style={{ marginTop: ".6em", fontSize: ".86em" }} onClick={() => setUseKey(true)}
+              title="A personal key from your Nexus settings, if you'd rather not sign in">Use an API key instead</button>
+          ) : <>
+            <div className="actions" style={{ flexWrap: "nowrap", marginTop: ".5em" }}>
+              <label className="fbox"><input className="finput" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Personal API key" aria-label="Nexus API key" autoFocus={useKey} onKeyDown={(e) => { if (e.key === "Enter") void save(); }} /></label>
+              <Key icon="check" disabled={!key} busy={busy} onClick={save} title={key ? "Saved in Windows Credential Manager" : "Paste a key first"}>Connect</Key>
+            </div>
+            <button type="button" className="linkish" style={{ marginTop: ".4em", fontSize: ".86em" }}
+              title="nexusmods.com, your avatar, Site preferences, API keys"
+              onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => toast(errorText(e), true))}>Get my key</button>
+          </>}
         </>
       )}
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>

@@ -112,6 +112,8 @@ pub fn run() {
             commands::nexus::nexus_status,
             commands::nexus::nexus_set_key,
             commands::nexus::nexus_clear_key,
+            commands::nexus::nexus_sign_in,
+            commands::nexus::nexus_sign_in_cancel,
             commands::nexus::rate_limit,
             commands::browse::browse_search,
             commands::browse::browse_detail,

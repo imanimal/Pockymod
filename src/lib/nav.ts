@@ -15,7 +15,7 @@ export function settingsTarget(text: string): { section?: string } | null {
   const rest = text.slice(m.index + m[0].length);
   const named = SETTINGS_SECTIONS.find((s) => rest.startsWith(`, ${s}`));
   if (named) return { section: named };
-  if (/API key/i.test(text)) return { section: "Nexus account" };
+  if (/API key|sign(?:ed)? ?in\b/i.test(text)) return { section: "Nexus account" };
   if (/game folder|Cyberpunk 2077 folder|mod library/i.test(text)) return { section: "Game and mod folders" };
   return {};
 }

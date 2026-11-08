@@ -1,5 +1,7 @@
-//! Shared app state: the Nexus client, the key store, the local database and the download queue.
+//! Shared app state: the Nexus client, the key and sign-in stores, the local database and the download queue.
 use pocket_core::credentials::{OsKeyring, SecretStore};
+use pocket_core::nexus::client::Auth;
+use pocket_core::nexus::oauth::Tokens;
 use pocket_core::db::Db;
 use pocket_core::deploy::DeployOptions;
 use pocket_core::nexus::rest::NexusUser;
@@ -12,6 +14,10 @@ use tokio::sync::{Notify, RwLock};
 pub struct AppState {
     pub nexus: Arc<NexusClient>,
     pub keys: Box<dyn SecretStore>,
+    /// The refresh token of a Nexus sign-in.
+    pub sign_in: Box<dyn SecretStore>,
+    /// Stops the sign-in that is waiting for the browser.
+    pub sign_in_cancel: Mutex<Option<tokio::sync::oneshot::Sender<()>>>,
     pub user: RwLock<Option<NexusUser>>,
     pub db: Arc<Mutex<Db>>,
     pub queue: Arc<Mutex<Queue>>,
@@ -28,14 +34,22 @@ pub struct AppState {
 impl AppState {
     pub fn new(data_dir: PathBuf) -> pocket_core::Result<Self> {
         let keys: Box<dyn SecretStore> = Box::new(OsKeyring::nexus());
+        let sign_in: Box<dyn SecretStore> = Box::new(OsKeyring::nexus_sign_in());
         // a broken credential store must not stop the app: start without a key and let Settings report it
         let key = keys.get().unwrap_or(None);
+        let nexus = NexusClient::new(key)?;
+        // a saved sign-in is used over a pasted key, which stays for the creator tools' Upload API
+        if let Some(refresh) = sign_in.get().unwrap_or(None) { nexus.set_auth(Some(Auth::SignIn(Tokens::from_refresh(refresh)))); }
+        nexus.set_token_saver(Arc::new(|t| {
+            let store = OsKeyring::nexus_sign_in();
+            let _ = match t.and_then(|t| t.refresh.as_ref()) { Some(r) => store.set(r), None => store.clear() };
+        }));
         let db = Db::open(&data_dir.join("pocket-mods.sqlite"))?;
         // old pages are useless once their TTL has passed; keep the file small
         let _ = db.cache_prune(pocket_core::db::now() - 7 * 86400);
         // (removed mods past their time are purged after start, off the main thread: lib.rs)
         Ok(AppState {
-            nexus: Arc::new(NexusClient::new(key)?), keys, user: RwLock::new(None), db: Arc::new(Mutex::new(db)),
+            nexus: Arc::new(nexus), keys, sign_in, sign_in_cancel: Mutex::new(None), user: RwLock::new(None), db: Arc::new(Mutex::new(db)),
             queue: Arc::new(Mutex::new(Queue::default())), pump: Arc::new(Notify::new()), cancel: Arc::new(Mutex::new(Default::default())),
             moving: Default::default(), fetching: Default::default(),
         })

@@ -19,6 +19,15 @@ cargo test -p pocket-core --test live -- --ignored     # live checks against the
 cargo run -p pocket-core --example nexus_probe         # log the live mods() response shape
 ```
 
+To try Sign in with Nexus before the app has its own client ID, start it with the test client from Nexus's
+[OAuth guide](https://modding.wiki/en/api/oauth2-guide), which calls back on port 8089:
+
+```
+set POCKYMOD_NEXUS_CLIENT_ID=public_test
+set POCKYMOD_NEXUS_CALLBACK_PORT=8089
+npm run tauri dev
+```
+
 ## Where things are
 
 - `src/`: the React UI. It holds no Nexus or file logic.

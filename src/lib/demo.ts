@@ -15,7 +15,10 @@ import myModFilesFixture from "./demo/my-mod-files.json";
 const marketFiles = import.meta.glob("../../marketplace/**/*.json", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
 
 const rate: RateDisplay = { level: "unknown", remaining: null, limit: null, window: "hour", resetsAt: null, throttledUntil: null };
-let status: NexusStatus = { hasKey: false, user: null, rateLimit: rate };
+const signedOut = (): NexusStatus => ({ hasKey: false, user: null, rateLimit: rate, signedInWith: null, keySaved: false, signInAvailable: true });
+let status: NexusStatus = signedOut();
+/** Stops the pretend wait for the browser. */
+let stopSignIn: (() => void) | null = null;
 const flags = new Map<number, { hidden: boolean; ignored: boolean }>();
 const store = new Map<string, string>();
 const fixture = browseFixture as unknown as BrowseResult;
@@ -163,6 +166,12 @@ function search(q: BrowseQuery, local: LocalFilter): BrowseResult {
   return { ...fixture, total: nodes.length, offset: q.offset, nodes: nodes.slice(q.offset, q.offset + q.count), filteredOnPage: before - nodes.length, fromCache: false };
 }
 
+function signedIn(how: "nexus" | "key"): NexusStatus {
+  const rateLimit: RateDisplay = { level: "ok", remaining: 487, limit: 500, window: "hour", resetsAt: null, throttledUntil: null };
+  demoEmit("rate-limit", rateLimit);
+  return { hasKey: true, user: { userId: 1, name: "demo-user", isPremium: false, isSupporter: false }, rateLimit, signedInWith: how, keySaved: how === "key", signInAvailable: true };
+}
+
 export function installDemo() {
   if (inTauri()) return;
   registerDemo({
@@ -170,15 +179,18 @@ export function installDemo() {
     rate_limit: () => status.rateLimit,
     nexus_set_key: ({ key }) => {
       if (String(key).trim().length < 16) throw { kind: "invalid", message: "That does not look like a Nexus API key" };
-      status = {
-        hasKey: true,
-        user: { userId: 1, name: "demo-user", isPremium: false, isSupporter: false },
-        rateLimit: { level: "ok", remaining: 487, limit: 500, window: "hour", resetsAt: null, throttledUntil: null },
-      };
-      demoEmit("rate-limit", status.rateLimit);
+      // a key pasted while signed in is kept for publishing; the sign-in stays in use
+      status = status.signedInWith === "nexus" ? { ...status, keySaved: true } : signedIn("key");
       return status;
     },
-    nexus_clear_key: () => { status = { hasKey: false, user: null, rateLimit: rate }; return status; },
+    nexus_clear_key: () => { status = signedOut(); return status; },
+    // the pretend approval page is "approved" after a couple of seconds
+    nexus_sign_in: () => new Promise((ok, fail) => {
+      stopSignIn?.();
+      const t = setTimeout(() => { stopSignIn = null; status = signedIn("nexus"); ok(status); }, 2000);
+      stopSignIn = () => { clearTimeout(t); stopSignIn = null; fail({ kind: "cancelled", message: "Cancelled" }); };
+    }),
+    nexus_sign_in_cancel: () => { stopSignIn?.(); },
     browse_search: ({ query, local }) => new Promise((ok) => setTimeout(() => ok(search(query as BrowseQuery, local as LocalFilter)), 120)),
     browse_detail: ({ modId }) => {
       const d = details.find((x) => x.detail.modId === modId);
@@ -200,8 +212,8 @@ export function installDemo() {
     },
     queue_remove: ({ id }) => { const i = q.findIndex((x) => x.id === id); if (i >= 0) q.splice(i, 1); pump(); return snapshot(); },
     queue_retry: ({ id }) => { const k = q.findIndex((x) => x.id === id); if (k >= 0 && q[k].state.state === "failed") q[k].state = { state: "waiting" }; pump(); return snapshot(); },
-    mod_endorse: () => { if (!status.hasKey) throw { kind: "no_key", message: "Add your Nexus API key in Settings first" }; },
-    mod_track: () => { if (!status.hasKey) throw { kind: "no_key", message: "Add your Nexus API key in Settings first" }; },
+    mod_endorse: () => { if (!status.hasKey) throw { kind: "no_key", message: "Not signed in to Nexus. Sign in from Settings" }; },
+    mod_track: () => { if (!status.hasKey) throw { kind: "no_key", message: "Not signed in to Nexus. Sign in from Settings" }; },
     updates_skip: () => { demoEmit("updates", []); return []; },
     queue_cancel: ({ id }) => { const k = q.findIndex((x) => x.id === id); if (k >= 0) q[k].state = { state: "failed", message: "Cancelled. Retry resumes it" }; pump(); return snapshot(); },
     queue_clear_finished: () => { for (let i = q.length - 1; i >= 0; i--) if (["done", "failed"].includes(q[i].state.state)) q.splice(i, 1); demoEmit("queue", snapshot()); return snapshot(); },
@@ -597,7 +609,7 @@ const later = <T,>(v: T, ms = 250) => new Promise<T>((ok) => setTimeout(() => ok
 if (!inTauri()) registerDemo({
   creator_my_mods: ({ user }) => {
     const typed = String(user ?? "").trim();
-    if (!typed && !status.hasKey) throw { kind: "invalid", message: "Add your Nexus API key in Settings, or type your Nexus user name to see your mods" };
+    if (!typed && !status.hasKey) throw { kind: "invalid", message: "Sign in to Nexus in Settings, or type your Nexus user name to see your mods" };
     const known = new Set(demoMine.mods.map((m) => m.modId));
     const missingPinned = demoPins.filter((id) => !known.has(id)).map((modId) => ({ modId, links: { ...demoMine.mods[0].links,
       page: `https://www.nexusmods.com/cyberpunk2077/mods/${modId}`, edit: `https://www.nexusmods.com/cyberpunk2077/mods/edit/?id=${modId}` } }));
@@ -609,7 +621,7 @@ if (!inTauri()) registerDemo({
     return later(d);
   },
   creator_upload_targets: ({ modId }) => {
-    if (!status.hasKey) throw { kind: "no_key", message: "No Nexus API key. Add one in Settings" };
+    if (!status.hasKey) throw { kind: "no_key", message: "Not signed in to Nexus. Sign in from Settings" };
     const m = demoMine.mods.find((x) => x.modId === Number(modId));
     return later((m?.files ?? []).filter((f) => f.groupId != null).map((f) => ({ id: String(f.groupId), name: f.name, versionsCount: 1 + (m?.oldFiles ?? 0),
       lastUploadedAt: new Date(f.date * 1000).toISOString(), isActive: true, groupId: f.groupId })));

@@ -411,7 +411,7 @@ pub async fn resolve_files(client: &NexusClient, db: &Mutex<Db>, check: &mut Che
         let d = match crate::browse::detail(client, db, e.mod_id, None).await {
             Ok(d) => d,
             // Nexus can't be asked right now: that says nothing about the file, so stop rather than call them all gone
-            Err(err @ (Error::Throttled { .. } | Error::Network(_) | Error::NoKey | Error::BadKey)) => return Err(err),
+            Err(err @ (Error::Throttled { .. } | Error::Network(_) | Error::NoKey | Error::BadKey | Error::SignedOut)) => return Err(err),
             Err(_) => { e.status = "unavailable".into(); continue }
         };
         let pinned = d.files.iter().find(|f| f.file_id == e.file_id);

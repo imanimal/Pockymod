@@ -14,7 +14,7 @@ The NSIS installer lands in `target\release\bundle\nsis\`. It installs per user 
 ## Before a public release
 
 - **Code signing.** The installer and `pocket-mods.exe` are unsigned, so Windows SmartScreen warns ("Windows protected your PC") until the publisher has a reputation. Sign both with an OV or EV code-signing certificate (`bundle.windows.certificateThumbprint` or a `signCommand` in `tauri.conf.json`).
-- **Nexus app registration.** A personal API key is fine for testing and personal use. A public app must be registered with Nexus support, with a testing build, to get an application ID for SSO, and Nexus may refuse. Never ship a personal key in the app. Until registered, each user pastes their own key (Settings, Nexus account).
+- **Nexus app registration.** A personal API key is fine for testing and personal use. A public app must be registered with Nexus support, with a testing build, to get a client ID for Sign in with Nexus (`CLIENT_ID` in `crates/pocket-core/src/nexus/oauth.rs`), and Nexus may refuse. Never ship a personal key in the app. Until registered, each user pastes their own key (Settings, Nexus account).
 - **Self-updates.** Push a tag like `v0.2.0`: `.github/workflows/release.yml` builds the installer and publishes it with
   `<installer>.sha256`. Running copies find it within six hours, download it quietly and install it silently when the
   user is away (the window closed, or on quit), then start again in the tray (Settings, Background: install when I'm

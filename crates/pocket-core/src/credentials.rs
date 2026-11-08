@@ -27,12 +27,15 @@ pub trait SecretStore: Send + Sync {
 
 /// The OS store. On Windows the entry shows in Credential Manager under Windows Credentials as
 /// `nexus-api-key.Pocket Mods`: the app's first name, kept so keys saved before the rename still work.
-pub struct OsKeyring { service: String, user: String }
+pub struct OsKeyring { service: String, user: String, bytes: bool }
 
 impl OsKeyring {
     pub fn nexus() -> Self { Self::named("nexus-api-key") }
+    /// The refresh token of a Nexus sign-in. Kept as bytes, which Windows allows 2560 of; a password is stored as
+    /// UTF-16 and gets half that, and Nexus doesn't say how long its tokens are.
+    pub fn nexus_sign_in() -> Self { OsKeyring { bytes: true, ..Self::named("nexus-sign-in") } }
     /// Another secret of this app, e.g. `mod.io-api-key`.
-    pub fn named(user: &str) -> Self { OsKeyring { service: crate::KEYRING_SERVICE.into(), user: user.into() } }
+    pub fn named(user: &str) -> Self { OsKeyring { service: crate::KEYRING_SERVICE.into(), user: user.into(), bytes: false } }
     fn entry(&self) -> Result<keyring::Entry> {
         keyring::Entry::new(&self.service, &self.user).map_err(|e| Error::Credentials(e.to_string()))
     }
@@ -40,14 +43,16 @@ impl OsKeyring {
 
 impl SecretStore for OsKeyring {
     fn get(&self) -> Result<Option<Secret>> {
-        match self.entry()?.get_password() {
+        let got = if self.bytes { self.entry()?.get_secret().map(|b| String::from_utf8_lossy(&b).into_owned()) } else { self.entry()?.get_password() };
+        match got {
             Ok(p) => Ok(Some(Secret(p))),
             Err(keyring::Error::NoEntry) => Ok(None),
             Err(e) => Err(Error::Credentials(e.to_string())),
         }
     }
     fn set(&self, secret: &Secret) -> Result<()> {
-        self.entry()?.set_password(secret.expose()).map_err(|e| Error::Credentials(e.to_string()))
+        let e = self.entry()?;
+        if self.bytes { e.set_secret(secret.expose().as_bytes()) } else { e.set_password(secret.expose()) }.map_err(|e| Error::Credentials(e.to_string()))
     }
     fn clear(&self) -> Result<()> {
         match self.entry()?.delete_credential() {

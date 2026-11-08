@@ -10,7 +10,6 @@ import { About, Experiments } from "./About";
 import { InstallPrefs } from "./InstallPrefs";
 import { PREMIUM_TIPS, getPremium } from "../ui/Premium";
 import { NexusSignIn } from "../ui/SignIn";
-import { ssoReady } from "../lib/sso";
 import { ADULT_OPTIONS, setAdultPref, setAiPref, useAdult, useAiHide, type Adult } from "../lib/prefs";
 import { AI_OPTIONS, type AiHide } from "../lib/ai";
 import type { PaneSignIn } from "../lib/api";
@@ -39,6 +38,8 @@ function NexusAccount() {
   const [busy, setBusy] = useState<"save" | "clear" | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // with sign-in on offer, the key field is an advanced option (the creator tools' Upload API still uses a key)
+  const [showKey, setShowKey] = useState(false);
 
   useEffect(() => { nexus.status().then(setSt).catch((e) => setErr(errorText(e))).finally(() => setLoaded(true)); }, []);
 
@@ -49,9 +50,11 @@ function NexusAccount() {
   };
   const clear = async () => {
     setBusy("clear"); setErr(null);
-    try { setSt(await nexus.clearKey()); toast("Key removed"); } catch (e) { setErr(errorText(e)); } finally { setBusy(null); }
+    try { const wasSignedIn = st?.signedInWith === "nexus"; setSt(await nexus.clearKey()); setShowKey(false); toast(wasSignedIn ? "Signed out" : "Key removed"); } catch (e) { setErr(errorText(e)); } finally { setBusy(null); }
   };
   const user = st?.user;
+  const signedIn = st?.signedInWith === "nexus";
+  const keyOpen = !st?.signInAvailable || st.signedInWith === "key" || showKey;
   const rl = st?.rateLimit;
 
   return (
@@ -67,18 +70,32 @@ function NexusAccount() {
               {user.isSupporter && <Pill>Supporter</Pill>}
             </div>
           ) : (
-            <p>{ssoReady() ? "Sign in or paste an API key" : "Paste an API key"} to download, endorse and track</p>
+            <p>{st?.signInAvailable ? "Sign in" : "Paste an API key"} to download, endorse and track</p>
           )}
-          {loaded && !user && <NexusSignIn onDone={setSt} />}
-          <label className="fbox" style={{ flex: "none" }}>
-            <input className="finput" type="password" autoComplete="off" spellCheck={false} placeholder={st?.hasKey ? "Replace saved key" : "Personal API key"}
-              value={key} onChange={(e) => setKey(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} aria-label="Nexus API key" />
-          </label>
-          <div className="actions">
-            <Key icon="check" onClick={save} disabled={!!busy || !key} busy={busy === "save"} title={key ? "Saved in Windows Credential Manager" : "Paste a key first"}>Save</Key>
-            {!st?.hasKey && <Key variant="ghost" icon="web" onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => setErr(errorText(e)))} title="Nexus, Site preferences, API keys">Get my key</Key>}
-            {st?.hasKey && <Key variant="ghost" icon="trash" onClick={clear} disabled={!!busy} busy={busy === "clear"} title="Forget the key saved in Windows Credential Manager">Remove key</Key>}
-          </div>
+          {loaded && !st?.hasKey && <NexusSignIn status={st} primary onDone={setSt} />}
+          {signedIn && (
+            <div className="actions">
+              <Key variant="ghost" icon="power" onClick={clear} disabled={!!busy} busy={busy === "clear"} title="Forget this sign-in, and any saved API key, on this PC">Sign out</Key>
+            </div>
+          )}
+          {loaded && st?.signInAvailable && st.signedInWith !== "key" && (
+            <div className="actions">
+              <Key size="sm" variant="ghost" icon="chevron" className={keyOpen ? "rot-key" : ""} onClick={() => setShowKey(!showKey)} aria-expanded={keyOpen}
+                title={signedIn ? "Only the creator tools use a key, to publish your mods" : "A personal key from your Nexus settings, if you'd rather not sign in"}>
+                {signedIn ? (st.keySaved ? "API key for publishing, saved" : "API key for publishing") : "Use an API key instead"}</Key>
+            </div>
+          )}
+          {loaded && keyOpen && <>
+            <label className="fbox" style={{ flex: "none" }}>
+              <input className="finput" type="password" autoComplete="off" spellCheck={false} placeholder={st?.keySaved ? "Replace saved key" : "Personal API key"}
+                value={key} onChange={(e) => setKey(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && key) void save(); }} aria-label="Nexus API key" />
+            </label>
+            <div className="actions">
+              <Key icon="check" onClick={save} disabled={!!busy || !key} busy={busy === "save"} title={key ? "Saved in Windows Credential Manager" : "Paste a key first"}>Save</Key>
+              {st?.signedInWith !== "key" && <Key variant="ghost" icon="web" onClick={() => nexusPages.url(API_KEY_PAGE).catch((e) => setErr(errorText(e)))} title="Nexus, Site preferences, API keys">Get my key</Key>}
+              {st?.signedInWith === "key" && <Key variant="ghost" icon="trash" onClick={clear} disabled={!!busy} busy={busy === "clear"} title="Forget the key saved in Windows Credential Manager">Remove key</Key>}
+            </div>
+          </>}
           {err && <div className="note bad">{err}</div>}
           {user && !user.isPremium && <PremiumTips />}
         </div>

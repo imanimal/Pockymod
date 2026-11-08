@@ -9,6 +9,8 @@ describe("settingsTarget", () => {
   });
   it("places a bare Settings by what the message is about", () => {
     expect(settingsTarget("No Nexus API key. Add one in Settings")).toEqual({ section: "Nexus account" });
+    expect(settingsTarget("Your Nexus sign-in has run out. Sign in again from Settings")).toEqual({ section: "Nexus account" });
+    expect(settingsTarget("Not signed in to Nexus. Sign in from Settings")).toEqual({ section: "Nexus account" });
     expect(settingsTarget("Set the Cyberpunk 2077 folder in Settings first")).toEqual({ section: "Game and mod folders" });
     expect(settingsTarget("Turn on the copy fallback in Settings")).toEqual({});
   });

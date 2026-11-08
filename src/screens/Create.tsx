@@ -60,7 +60,7 @@ export function Create() {
     return () => { live = false; };
   }, [load]);
 
-  const hasKey = !!st?.hasKey;
+  const hasKey = !!st?.keySaved;
   return (
     <div className="stack cr" style={{ maxWidth: "110em" }}>
       <div className="vtabs" role="tablist" aria-label="Create">

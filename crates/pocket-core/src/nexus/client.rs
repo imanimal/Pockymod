@@ -1,7 +1,9 @@
 //! HTTP client for the Nexus API: v2 GraphQL for browsing, v1 REST for account, files and download links.
-//! Every request carries `Application-Name` and `Application-Version`; keyed requests carry `APIKEY`.
+//! Every request carries `Application-Name` and `Application-Version`. Requests for an account carry either a
+//! sign-in's access token (`Authorization: Bearer`, which v1 and v2 both take) or a personal key (`APIKEY`).
 //! A request is never retried automatically: a 429 stops all requests until the reset.
 
+use super::oauth::{self, Tokens};
 use super::ratelimit::{Gate, RateDisplay, RateLimit};
 use crate::credentials::Secret;
 use crate::error::{Error, Result};
@@ -16,13 +18,24 @@ pub const V1_BASE: &str = "https://api.nexusmods.com/v1";
 pub const V2_GRAPHQL: &str = "https://api.nexusmods.com/v2/graphql";
 
 pub type RateObserver = Arc<dyn Fn(RateDisplay) + Send + Sync>;
+/// Called with new tokens after a refresh, or None when the sign-in is over, so they can be saved.
+pub type TokenSaver = Arc<dyn Fn(Option<&Tokens>) + Send + Sync>;
+
+/// How requests prove the account.
+#[derive(Clone)]
+pub enum Auth { Key(Secret), SignIn(Tokens) }
 
 pub struct NexusClient {
     http: reqwest::Client,
     /// For file downloads: no limit on the whole transfer (a big file on a free account takes many minutes),
     /// only on a stalled connection.
     dl: reqwest::Client,
-    key: RwLock<Option<Secret>>,
+    auth: RwLock<Option<Auth>>,
+    /// Held while an access token is refreshed: a refresh token may only work once.
+    refreshing: tokio::sync::Mutex<()>,
+    saver: RwLock<Option<TokenSaver>>,
+    token_url: String,
+    client_id: Option<String>,
     rate: Mutex<RateLimit>,
     observer: RwLock<Option<RateObserver>>,
     v1_base: String,
@@ -62,11 +75,25 @@ impl NexusClient {
             .read_timeout(std::time::Duration::from_secs(60))
             .build()
             .map_err(|e| Error::Network(e.to_string()))?;
-        Ok(NexusClient { http, dl, key: RwLock::new(key), rate: Mutex::new(RateLimit::default()), observer: RwLock::new(None), v1_base: v1_base.into(), v2_url: v2_url.into() })
+        Ok(NexusClient {
+            http, dl, auth: RwLock::new(key.map(Auth::Key)), refreshing: Default::default(), saver: RwLock::new(None), token_url: oauth::TOKEN_URL.into(), client_id: oauth::client_id(),
+            rate: Mutex::new(RateLimit::default()), observer: RwLock::new(None), v1_base: v1_base.into(), v2_url: v2_url.into(),
+        })
     }
 
-    pub fn set_key(&self, key: Option<Secret>) { *self.key.write().unwrap() = key; }
-    pub fn has_key(&self) -> bool { self.key.read().unwrap().is_some() }
+    /// Where sign-ins are refreshed, and as which app.
+    pub fn with_token_endpoint(mut self, token_url: &str, client_id: Option<&str>) -> Self {
+        self.token_url = token_url.into();
+        self.client_id = client_id.map(Into::into);
+        self
+    }
+
+    pub fn set_key(&self, key: Option<Secret>) { self.set_auth(key.map(Auth::Key)); }
+    pub fn set_auth(&self, auth: Option<Auth>) { *self.auth.write().unwrap() = auth; }
+    pub fn auth(&self) -> Option<Auth> { self.auth.read().unwrap().clone() }
+    /// True with either a sign-in or a key.
+    pub fn has_key(&self) -> bool { self.auth.read().unwrap().is_some() }
+    pub fn set_token_saver(&self, f: TokenSaver) { *self.saver.write().unwrap() = Some(f); }
     pub fn http(&self) -> &reqwest::Client { &self.http }
     /// The client for downloading files (no overall time limit).
     pub fn download_http(&self) -> &reqwest::Client { &self.dl }
@@ -84,9 +111,9 @@ impl NexusClient {
             Gate::Wait(d) => tokio::time::sleep(d).await,
             Gate::Stop(until) => return Err(Error::Throttled { until: until.format("%H:%M UTC").to_string() }),
         }
-        let key = self.key.read().unwrap().clone();
-        let req = match (&key, needs_key) {
-            (Some(k), _) => req.header("APIKEY", k.expose()),
+        let signed_in = matches!(self.auth(), Some(Auth::SignIn(_)));
+        let req = match (self.auth_header().await?, needs_key) {
+            (Some((name, value)), _) => req.header(name, value),
             (None, true) => return Err(Error::NoKey),
             (None, false) => req,
         };
@@ -102,13 +129,52 @@ impl NexusClient {
         match status {
             200..=299 => Ok((resp, snap)),
             429 => Err(Error::Throttled { until: display.throttled_until.map(|t| t.format("%H:%M UTC").to_string()).unwrap_or_else(|| "the next hour".into()) }),
-            401 => Err(Error::BadKey),
+            401 => Err(if signed_in { Error::SignedOut } else { Error::BadKey }),
             403 => {
                 let msg = message_of(resp).await;
                 // UNVERIFIED: v1 answers 403 with a Premium message when a free account asks for a download link
                 if msg.to_lowercase().contains("premium") { Err(Error::NeedsPremium) } else { Err(Error::Http { status, message: msg }) }
             }
             _ => Err(Error::Http { status, message: message_of(resp).await }),
+        }
+    }
+
+    /// The header that proves the account. A sign-in's access token is refreshed first when it is about to run out.
+    async fn auth_header(&self) -> Result<Option<(&'static str, String)>> {
+        let now = Utc::now().timestamp();
+        let bearer = |t: &Tokens| Some(("Authorization", format!("Bearer {}", t.access.expose())));
+        match self.auth() {
+            None => return Ok(None),
+            Some(Auth::Key(k)) => return Ok(Some(("APIKEY", k.expose().to_owned()))),
+            Some(Auth::SignIn(t)) if !t.expiring(now) => return Ok(bearer(&t)),
+            Some(Auth::SignIn(_)) => {}
+        }
+        let _one = self.refreshing.lock().await;
+        // another request may have refreshed it while this one waited
+        let t = match self.auth() {
+            Some(Auth::SignIn(t)) if t.expiring(now) => t,
+            Some(Auth::SignIn(t)) => return Ok(bearer(&t)),
+            Some(Auth::Key(k)) => return Ok(Some(("APIKEY", k.expose().to_owned()))),
+            None => return Ok(None),
+        };
+        let saver = self.saver.read().unwrap().clone();
+        let fresh = match (t.refresh.as_ref(), self.client_id.as_deref()) {
+            (Some(r), Some(id)) => oauth::refresh(&self.http, &self.token_url, id, r).await,
+            _ => Err(Error::SignedOut),
+        };
+        match fresh {
+            Ok(fresh) => {
+                self.set_auth(Some(Auth::SignIn(fresh.clone())));
+                if let Some(s) = saver { s(Some(&fresh)); }
+                Ok(bearer(&fresh))
+            }
+            Err(Error::SignedOut) => {
+                self.set_auth(None);
+                if let Some(s) = saver { s(None); }
+                Err(Error::SignedOut)
+            }
+            // offline or Nexus is down: the next request tries again
+            Err(e) => Err(e),
         }
     }
 
@@ -176,4 +242,45 @@ async fn message_of(resp: reqwest::Response) -> String {
             else { status.canonical_reason().unwrap_or("No answer").into() };
     }
     text.chars().take(200).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn saved(c: &NexusClient) -> Arc<Mutex<Vec<Option<String>>>> {
+        let log: Arc<Mutex<Vec<Option<String>>>> = Default::default();
+        let l = log.clone();
+        c.set_token_saver(Arc::new(move |t| l.lock().unwrap().push(t.and_then(|t| t.refresh.as_ref()).map(|r| r.expose().to_owned()))));
+        log
+    }
+
+    #[tokio::test]
+    async fn a_saved_sign_in_gets_its_access_token_once() {
+        let (url, _) = oauth::token_server(r#"{"access_token":"acc2","refresh_token":"ref2","expires_in":3600}"#, "200 OK").await;
+        let c = NexusClient::new(None).unwrap().with_token_endpoint(&url, Some("pockymod"));
+        let log = saved(&c);
+        c.set_auth(Some(Auth::SignIn(Tokens::from_refresh(Secret::new("ref")))));
+        assert_eq!(c.auth_header().await.unwrap(), Some(("Authorization", "Bearer acc2".to_string())));
+        // the new token lasts an hour, so this one doesn't go to the endpoint (it only answers once)
+        assert_eq!(c.auth_header().await.unwrap(), Some(("Authorization", "Bearer acc2".to_string())));
+        assert_eq!(*log.lock().unwrap(), vec![Some("ref2".to_string())]);
+    }
+
+    #[tokio::test]
+    async fn a_dead_refresh_token_signs_out() {
+        let (url, _) = oauth::token_server(r#"{"error":"invalid_grant"}"#, "400 Bad Request").await;
+        let c = NexusClient::new(None).unwrap().with_token_endpoint(&url, Some("pockymod"));
+        let log = saved(&c);
+        c.set_auth(Some(Auth::SignIn(Tokens::from_refresh(Secret::new("ref")))));
+        assert!(matches!(c.auth_header().await, Err(Error::SignedOut)));
+        assert!(!c.has_key());
+        assert_eq!(*log.lock().unwrap(), vec![None]);
+    }
+
+    #[tokio::test]
+    async fn a_key_goes_in_the_apikey_header() {
+        let c = NexusClient::new(Some(Secret::new("k"))).unwrap();
+        assert_eq!(c.auth_header().await.unwrap(), Some(("APIKEY", "k".to_string())));
+    }
 }

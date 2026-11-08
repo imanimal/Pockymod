@@ -7,10 +7,14 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub enum Error {
     #[error("Nexus is limiting requests. Try again after {until}")]
     Throttled { until: String },
-    #[error("No Nexus API key. Add one in Settings")]
+    #[error("Not signed in to Nexus. Sign in from Settings")]
     NoKey,
     #[error("Nexus rejected the API key")]
     BadKey,
+    #[error("Your Nexus sign-in has run out. Sign in again from Settings")]
+    SignedOut,
+    #[error("Cancelled")]
+    Cancelled,
     #[error("Needs Nexus Premium")]
     NeedsPremium,
     #[error("Nexus answered {status}: {message}")]
@@ -41,6 +45,8 @@ impl Error {
             Error::Throttled { .. } => "throttled",
             Error::NoKey => "no_key",
             Error::BadKey => "bad_key",
+            Error::SignedOut => "signed_out",
+            Error::Cancelled => "cancelled",
             Error::NeedsPremium => "needs_premium",
             Error::Http { .. } => "http",
             Error::GraphQl(_) => "graphql",
