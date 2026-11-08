@@ -1,13 +1,13 @@
 # How Pockymod follows Nexus's API policy
 
 Each point of the [API Acceptable Use Policy](https://help.nexusmods.com/article/114-api-acceptable-use-policy)
-(last updated 1 December 2020, read 5 November 2026), and where the app meets it.
+(last updated 1 December 2020, read again 7 November 2026), and where the app meets it.
 
 | The policy | In Pockymod |
 |---|---|
 | A public app registers with Nexus, from a testing build | In testing. Registration is asked for with a testing build before any public release ([release.md](../release.md)). |
 | Personal keys only for testing or personal use | Each tester pastes their own key; none is shipped in the app. Single sign-on is built and turns on when Nexus issues the app's slug (`SSO_SLUG` in `src/lib/sso.ts`); the key field then stays only as an advanced option. |
-| `Application-Name` and `Application-Version` on every request, consistent across versions | Every request, keyed or not, sends `Application-Name: Pockymod` and the build's version (`crates/pocket-core/src/nexus/client.rs`). |
+| `Application-Name` and `Application-Version` on every request, consistent across versions | Every request, keyed or not, sends `Application-Name: Pockymod` and the build's version, and the user agent starts with the same name (`crates/pocket-core/src/nexus/client.rs`). Uploads send the same headers (`creator.rs`). |
 | No fetching en masse to rehost | Nothing is fetched ahead or in bulk for display. Search pages, mod details and file lists are fetched when the user opens them and cached on their own machine (pages 10 minutes, details until the mod changes). Nothing is sent anywhere but Nexus. |
 | No storing keys on your own server | There is no server. The key is kept in Windows Credential Manager on the user's PC and goes only to Nexus. |
 | No using keys without the user starting the action | Keyed requests follow what the user does: opening the window, pressing Check now, installing, endorsing, tracking. Checking for mod updates every six hours (and Premium downloads ahead) is off until the user turns it on in Settings, Background. |
@@ -24,6 +24,22 @@ Each point of the [API Acceptable Use Policy](https://help.nexusmods.com/article
 - Before an install that would take a free account several clicks, one quiet line says what Premium would do instead,
   with a link to Nexus's Premium page (`src/ui/Premium.tsx`). It can be snoozed or turned off. After upgrading, the
   app notices on its own and the waiting files download without clicks.
+- Premium links carry `utm_source=pockymod&utm_medium=app` and a `utm_campaign` naming the place they were opened
+  from (`install`, `downloads`, `collection`, `settings`), so Nexus can count the sign-ups the app sends. The app
+  itself records nothing.
+- Every download is a real Nexus download: Premium through `download_link.json`, free accounts through the site's own
+  button. Both count toward the mod's downloads and its author's Donation Points the same way a Vortex download does.
+
+## Registering
+
+What the policy asks for, and what goes with the request to support@nexusmods.com:
+
+- A testing build that works with a personal API key: the installer from a GitHub release.
+- The source: github.com/imanimal/pocket-mods (MIT).
+- Name: Pockymod. Logo: `src-tauri/icons/icon.png` (512 px, a black P on a yellow plate, which reads on dark
+  backgrounds), or `design/brand/icon-1024.png` for a larger copy.
+- Short description: "A mod manager for Cyberpunk 2077 on Windows. Browse, install and update Nexus mods and
+  collections, with load order and conflict checks."
 
 ## Linking back to Nexus
 

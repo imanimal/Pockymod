@@ -147,7 +147,7 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
           <div className="note warn">Marked incompatible by the curator {c.manifest.conflicts.slice(0, 4).map(([a, b]) => `${nameOf(c, a)} + ${nameOf(c, b)}`).join(", ")}</div>
         )}
         {c.needsClick > 20 && <div className="note warn">{c.needsClick} clicks on Nexus, one page at a time</div>}
-        <PremiumNote clicks={c.needsClick} />
+        <PremiumNote clicks={c.needsClick} from="collection" />
         <div className="rows" style={all ? undefined : { maxHeight: "16em", overflow: "auto" }}>
           {shown.slice(0, all ? 400 : 80).map((e) => (
             <div key={`${e.modId}-${e.fileId}`} className={`row${e.status === "unavailable" && !e.replacement ? " off" : ""}`}>

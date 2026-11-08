@@ -98,7 +98,7 @@ function PremiumTips() {
       <Switch checked={on} onChange={set}>
         <span title="A note before installs that need several Nexus clicks">Show Premium hints</span>
       </Switch>
-      <Key size="sm" variant="ghost" icon="web" onClick={getPremium} title="Opens Nexus Premium on the Nexus site">Get Premium</Key>
+      <Key size="sm" variant="ghost" icon="web" onClick={() => getPremium("settings")} title="Opens Nexus Premium on the Nexus site">Get Premium</Key>
     </div>
   );
 }

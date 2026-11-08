@@ -46,7 +46,8 @@ impl NexusClient {
         let mut h = HeaderMap::new();
         h.insert("Application-Name", HeaderValue::from_static(crate::APP_NAME));
         h.insert("Application-Version", HeaderValue::from_static(crate::APP_VERSION));
-        let ua = format!("PocketMods/{} ({})", crate::APP_VERSION, std::env::consts::OS);
+        // the same name as Application-Name, so Nexus sees one app
+        let ua = format!("{}/{} ({})", crate::APP_NAME, crate::APP_VERSION, std::env::consts::OS);
         let http = reqwest::Client::builder()
             .user_agent(ua.clone())
             .default_headers(h.clone())

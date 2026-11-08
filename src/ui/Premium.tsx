@@ -6,8 +6,11 @@ import { Key } from "./pocket";
 import { toast } from "./toast";
 import { errorText, nexus, nexusPages, settings } from "../lib/api";
 
-/** The site's Premium page, as Nexus's help centre gives it (help.nexusmods.com, article 96). */
-export const PREMIUM_PAGE = "https://next.nexusmods.com/premium";
+/** The site's Premium page (next.nexusmods.com/premium redirects here, checked 7 November 2026). */
+export const PREMIUM_PAGE = "https://www.nexusmods.com/premium";
+/** The Premium page tagged with where in the app it was opened from, so Nexus's own analytics can count the
+ *  sign-ups the app sends them. Nothing is sent anywhere else. */
+export const premiumUrl = (from: string) => `${PREMIUM_PAGE}?utm_source=pockymod&utm_medium=app&utm_campaign=${encodeURIComponent(from)}`;
 export const PREMIUM_TIPS = "tips.premium";
 const SNOOZE = "pm.premium.snooze";
 /** One click is no bother; say nothing below this. */
@@ -18,8 +21,8 @@ const write = (k: string, v: number) => { try { localStorage.setItem(k, String(v
 
 /** Open the Premium page where Settings says Nexus pages open, then look at the account again each time the window
  *  comes back (at most every 30 seconds, for an hour): once it is Premium, say so and let the app know. */
-export function getPremium() {
-  nexusPages.url(PREMIUM_PAGE).catch((e) => toast(errorText(e), true));
+export function getPremium(from: string) {
+  nexusPages.url(premiumUrl(from)).catch((e) => toast(errorText(e), true));
   const until = Date.now() + 3600_000;
   let last = 0;
   const h = () => {
@@ -38,7 +41,7 @@ export function getPremium() {
 
 /** The strip, for `clicks` Nexus pages a free account is about to click through. Renders nothing for Premium,
  *  without an account, under two clicks, while snoozed or when turned off in Settings. */
-export function PremiumNote({ clicks, what = "these" }: { clicks: number; what?: string }) {
+export function PremiumNote({ clicks, what = "these", from }: { clicks: number; what?: string; from: string }) {
   const [free, setFree] = useState(false);
   const [off, setOff] = useState(true);
   const [snoozed, setSnoozed] = useState(() => read(SNOOZE) > Date.now());
@@ -56,7 +59,7 @@ export function PremiumNote({ clicks, what = "these" }: { clicks: number; what?:
   return (
     <div className="premium-strip" role="note">
       <span className="m-main" title="No clicking through Nexus pages, full speed"><b className="hi">Premium skips the {clicks} clicks for {what}</b></span>
-      <Key size="sm" icon="web" onClick={getPremium} title="Opens Nexus Premium on the Nexus site">Get Premium</Key>
+      <Key size="sm" icon="web" onClick={() => getPremium(from)} title="Opens Nexus Premium on the Nexus site">Get Premium</Key>
       <Key size="sm" variant="ghost" onClick={() => { write(SNOOZE, Date.now() + 14 * 86400_000); setSnoozed(true); }} title="Hide for two weeks. Turn off in Settings">Not now</Key>
     </div>
   );

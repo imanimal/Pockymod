@@ -49,7 +49,7 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
             <Key variant="ghost" onClick={() => act(queue.remove(waiting.id))}>Skip this mod</Key>
           </div>
           {waiting.manualOnly && <div className="note warn" style={{ marginTop: ".7em" }}>Not a .zip, .7z or .rar. Install it by hand from its page</div>}
-          {!s?.premium && <div style={{ marginTop: ".7em" }}><PremiumNote clicks={s?.needsClick ?? 0} what="the" /></div>}
+          {!s?.premium && <div style={{ marginTop: ".7em" }}><PremiumNote clicks={s?.needsClick ?? 0} what="the" from="downloads" /></div>}
         </Module>
       )}
 

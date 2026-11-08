@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <!-- Pockymod: an angular P on a chamfered plate, a glitch slice through it, a corner bracket -->
-  <path d="M52 12 H204 L244 52 V204 L204 244 H52 L12 204 V52 Z" fill="#1b2230"/>
-  <path d="M52 12 H204 L244 52 V204 L204 244 H52 L12 204 V52 Z" fill="none" stroke="#3a4558" stroke-width="10" stroke-linejoin="miter"/>
-  <path d="M72 58 H168 L196 86 V128 L168 156 H110 V198 H72 Z M110 92 V122 H156 L164 114 V100 L156 92 Z" fill="#f5d742" fill-rule="evenodd"/>
-  <rect x="58" y="136" width="96" height="12" fill="#4fd6df"/>
-  <rect x="160" y="136" width="22" height="12" fill="#4fd6df"/>
-  <path d="M184 222 H222 V184" fill="none" stroke="#4fd6df" stroke-width="10" stroke-linecap="square"/>
+  <!-- Pockymod, Standard: the black P on Standard's yellow, all four corners cut -->
+  <path d="M48 12 H208 L244 48 V208 L208 244 H48 L12 208 V48 Z" fill="#f3e600"/>
+  <path d="M66 58 H162 L190 86 V128 L162 156 H104 V198 H66 Z M104 92 V122 H150 L158 114 V100 L150 92 Z" fill="#0b0e13" fill-rule="evenodd"/>
 </svg>
