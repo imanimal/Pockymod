@@ -120,6 +120,7 @@ mod dl_tests {
         assert!(is_newer("1.0.0", "1.0.0-alpha"));
         assert!(!is_newer("1.0.0-alpha", "1.0.0"));
         assert!(is_newer("1.0.0-beta", "1.0.0-alpha"));
+        assert!(is_newer("1-alpha.2", "1.0.0-alpha"));
         assert!(is_newer("0.2.0", "0.1.0"));
         assert!(!is_newer("v0.1", "0.1.0"));
     }

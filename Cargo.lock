@@ -3077,7 +3077,7 @@ dependencies = [
 
 [[package]]
 name = "pocket-core"
-version = "1.0.0-alpha"
+version = "1.0.0-alpha.2"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -3108,7 +3108,7 @@ dependencies = [
 
 [[package]]
 name = "pocket-mods"
-version = "1.0.0-alpha"
+version = "1.0.0-alpha.2"
 dependencies = [
  "pocket-core",
  "rusqlite",
