@@ -331,6 +331,8 @@
 .toast-x:hover { color: var(--text); background: var(--surface-2); }
 .toast .tt { animation: print calc(var(--m) * 260ms + 1ms) steps(8, end); }
 @keyframes print { from { clip-path: inset(0 100% 0 0); } }
+/* the theme escape notice (ui/themeEscape.ts) sits in the toasts' corner; toasts stack above it */
+.toasts { margin-bottom: var(--escape-h, 0px); }
 
 /* files dragged over the window */
 .dropzone { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; pointer-events: none; background: color-mix(in srgb, var(--bg) 60%, transparent); }

@@ -12,6 +12,7 @@ export const SHORTCUTS: Array<[string, string]> = [
   ["Ctrl+B", "Show or hide the Nexus pane"],
   ["Ctrl+Z, Ctrl+Y", "Undo, redo"],
   ["Ctrl+=, Ctrl+-, Ctrl+0", "Text size"],
+  ["Ctrl+Alt+Shift+T", "Go back to the last theme, if one breaks the app"],
   ["?", "This list"],
 ];
 

@@ -11,11 +11,13 @@ import { initTheme, loadInstalled } from "./lib/theme";
 import { installDemo } from "./lib/demo";
 import { installFx } from "./ui/fx";
 import { installTips } from "./lib/keys";
+import { installThemeEscape } from "./ui/themeEscape";
 
 initTheme();
 installDemo();
 installFx();
 installTips();
+installThemeEscape();
 void loadInstalled();
 
 // Keys spring back when released: add .ack on release, drop it when the animation ends.

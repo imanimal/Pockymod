@@ -217,13 +217,14 @@ from the app is the file you share.
 
 ## If a theme makes the app hard to use
 
-- Picking a theme you installed asks **Keep this theme?** and goes back to the one you had after 12 seconds unless
-  you press Keep.
+- **Ctrl+Alt+Shift+T** goes back to the theme you had before, from anywhere, even when the theme hides everything.
+  Press it again to go further back, down to Redline. On a controller, press both sticks in (L3+R3).
+- When a theme you installed comes on, and for its first three starts, a notice in the bottom corner says so and has a
+  Go back key. Theme css can't hide, cover or restyle it, and it uses Redline's colours when the theme's wouldn't read.
 - **Customize** (Settings, Appearance) changes the colours of the theme in use, built-in or installed, without making a
   new one: five swatches (accent, highlight, background, text, displays; the shades around them follow), one-click
   palettes, and every colour under Advanced. They are kept per theme and mode; Reset takes them off, and Save as a
   new theme turns them into a file to share.
-- **Ctrl+Alt+Shift+T** switches back to Redline, the default, from anywhere, even when the theme hides the menus.
 - A theme's own css is switched off while the extension review dialog is open, so what an extension asks for always
   shows as it is.
 - Theme css cannot load anything: `url()`, `image-set()`, `@import` and `@font-face` are refused, and so are

@@ -4,6 +4,7 @@
 //   A                     press          B   back / close        X   the focused mod's key (install, or its menu)
 //   Y                     find (search)  LB, RB   previous, next view in the rail
 //   LT, RT, right stick   scroll         View (Back)   the shortcuts and buttons list      Menu (Start)   go to Play
+//   both sticks pressed in (L3+R3)   back to the last theme, the way out of one that breaks the app
 // It reads the pad only while this window has focus, so a pad used in the game never moves the app, and it polls
 // only while a pad is connected.
 import { focusSearch, topLayer } from "./keys";
@@ -41,7 +42,7 @@ export function moveFocus(dx: number, dy: number) {
 
 const key = (k: string) => (document.activeElement ?? document.body).dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true }));
 
-export function installGamepad(opts: { nextView: (dir: 1 | -1) => void; help: () => void; play: () => void; back: () => void }): () => void {
+export function installGamepad(opts: { nextView: (dir: 1 | -1) => void; help: () => void; play: () => void; back: () => void; themeBack: () => void }): () => void {
   let raf = 0;
   const held = new Map<string, number>(); // button -> next repeat time
   const press = (name: string, now: number, on: boolean, fn: () => void, repeat = false) => {
@@ -74,6 +75,7 @@ export function installGamepad(opts: { nextView: (dir: 1 | -1) => void; help: ()
     press("rt", now, (pad.buttons[7]?.value ?? 0) > 0.3, () => scroll(window.innerHeight * 0.6), true);
     press("view", now, b(8), opts.help);
     press("menu", now, b(9), opts.play);
+    press("sticks", now, b(10) && b(11), opts.themeBack);
     const rs = ax(3);
     if (Math.abs(rs) > 0.25) scroll(rs * 22);
   };

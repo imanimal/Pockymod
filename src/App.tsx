@@ -26,7 +26,8 @@ import { Addons } from "./screens/Addons";
 import { Toasts, toast } from "./ui/toast";
 import { installPrefs } from "./lib/prefs";
 import { background as backgroundApi, errorText, game, handler, nexus, nexusPages, onChoicesNeeded, onToast, queue, settings, type ChoicesNeeded, updates as updatesApi, type QueueSnapshot, type Update } from "./lib/api";
-import { resetTheme, toggleScheme, useTheme, watchSystemTheme } from "./lib/theme";
+import { toggleScheme, useTheme, watchSystemTheme } from "./lib/theme";
+import { themeBack } from "./ui/themeEscape";
 import { channel, powerOff, powerOn } from "./ui/fx";
 import { nope } from "./ui/motion";
 import { call, held, inTauri, listen, windowAction } from "./lib/tauri";
@@ -92,7 +93,7 @@ export function App() {
     const offKeys = installKeys({ views: ids, go, help: () => setHelp((h) => !h), back, pane: () => window.dispatchEvent(new Event("pm-pane-toggle")) });
     const offPad = installGamepad({
       nextView: (d) => setView((cur) => ids[(ids.indexOf(cur) + d + ids.length) % ids.length] as View),
-      help: () => setHelp((h) => !h), back,
+      help: () => setHelp((h) => !h), back, themeBack,
       play: () => (document.querySelector(".side .foot .btn") as HTMLElement | null)?.focus(),
     });
     return () => { offKeys(); offPad(); };
@@ -116,9 +117,9 @@ export function App() {
     window.addEventListener("pm-go", h);
     return () => { window.removeEventListener("pm-go", h); window.clearTimeout(t); };
   }, []);
-  // the way out of a theme that hides the app: Ctrl+Alt+Shift+T, wherever the focus is
+  // the way out of a theme that breaks the app: Ctrl+Alt+Shift+T goes back a theme, wherever the focus is
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); void resetTheme().then(() => toast("Theme reset to Redline")); } };
+    const h = (e: KeyboardEvent) => { if (e.ctrlKey && e.altKey && e.shiftKey && e.key.toLowerCase() === "t") { e.preventDefault(); themeBack(); } };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, []);
@@ -236,7 +237,7 @@ export function App() {
           <div className="sub-h">Controller</div>
           <div className="keys-list">
             {[["D-pad, left stick", "Move between keys"], ["A", "Press"], ["B", "Back, close"], ["X", "Install, or the mod's menu"], ["Y", "Find"],
-              ["LB, RB", "Previous, next view"], ["LT, RT, right stick", "Scroll"], ["View", "This list"], ["Menu", "Go to Play"]].map(([k, what]) => <div key={k}><kbd>{k}</kbd><span>{what}</span></div>)}
+              ["LB, RB", "Previous, next view"], ["LT, RT, right stick", "Scroll"], ["View", "This list"], ["Menu", "Go to Play"], ["L3+R3", "Go back to the last theme"]].map(([k, what]) => <div key={k}><kbd>{k}</kbd><span>{what}</span></div>)}
           </div>
         </Dialog>
       )}

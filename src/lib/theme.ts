@@ -45,7 +45,7 @@ export const BUILTIN_THEMES: ThemeInfo[] = [
     description: "Raised keys, green LCDs, pixel icons. Cream or Night" },
 ];
 
-const K = { id: "pm.theme.id", scheme: "pm.theme.scheme", cache: "pm.theme.css", fx: "pm.fx", motion: "pm.motion", legacy: "pm.theme" };
+const K = { id: "pm.theme.id", scheme: "pm.theme.scheme", cache: "pm.theme.css", fx: "pm.fx", motion: "pm.motion", legacy: "pm.theme", back: "pm.theme.back" };
 const read = (k: string): string | null => { try { return localStorage.getItem(k); } catch { return null; } };
 const write = (k: string, v: string | null) => {
   try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage unavailable */ }
@@ -104,6 +104,16 @@ function savedChoice(): SchemeChoice | null {
 }
 
 const savedFx = (): FxLevel | null => { const v = read(K.fx); return isFx(v) ? v : null; };
+
+/** The themes used before this one, oldest first, each once: where goBackTheme() goes. */
+type Back = { id: string; choice: SchemeChoice };
+const BACK_MAX = 8;
+function backList(): Back[] {
+  try {
+    const v: unknown = JSON.parse(read(K.back) ?? "[]");
+    return Array.isArray(v) ? v.filter((b): b is Back => !!b && typeof b.id === "string" && isChoice(b.choice)) : [];
+  } catch { return []; }
+}
 
 /** The installed theme's compiled CSS, kept so it shows from the first frame instead of after the add-on store answers. */
 interface Cached { id: string; name: string; look: Look; schemes: Scheme[]; css: string }
@@ -185,11 +195,13 @@ function appIcon(info: ThemeInfo) {
 function swap(fn: () => void, kind: "theme" | "scheme") {
   const root = document.documentElement;
   const done = () => window.dispatchEvent(new CustomEvent("pm-theme", { detail: kind }));
-  const start = (document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } }).startViewTransition;
+  const start = (document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void>; skipTransition?: () => void } }).startViewTransition;
   if (!start || !motionOn() || document.visibilityState === "hidden") { fn(); done(); return; }
   root.dataset.vt = "theme";
   const t = start.call(document, () => flushSync(fn));
-  t.finished.catch(() => {}).finally(() => { delete root.dataset.vt; done(); });
+  // a theme's css can stretch the transition's animations; the window never stays frozen longer than this
+  const cap = window.setTimeout(() => t.skipTransition?.(), 1500);
+  t.finished.catch(() => {}).finally(() => { clearTimeout(cap); delete root.dataset.vt; done(); });
 }
 
 function current(): ThemeInfo {
@@ -237,7 +249,6 @@ export async function listThemes(): Promise<ThemeInfo[]> {
   return [...BUILTIN_THEMES, ...mine.sort((a, b) => a.name.localeCompare(b.name))];
 }
 
-/** Switch to a theme by id, optionally with a scheme. */
 /** Switch a theme's own css off (and back on): the extension review shows exactly what it is, whatever a theme
  * would hide. */
 export function suspendUserCss(on: boolean) {
@@ -245,10 +256,31 @@ export function suspendUserCss(on: boolean) {
   if (st) st.media = on ? "not all" : "";
 }
 
-/** Back to the built-in default (Redline), from anywhere (Ctrl+Alt+Shift+T): the way out when a theme hides the app. */
-export function resetTheme(): Promise<void> { return setTheme(DEFAULT_THEME, "dark"); }
+/** Where goBackTheme() would go: the newest theme in the history that is still there, else the default. Null when
+ *  there is nowhere to go. */
+export function previousTheme(): ThemeInfo | null {
+  for (const b of backList().reverse()) {
+    if (b.id === state.id) continue;
+    const info = BUILTIN_THEMES.find((t) => t.id === b.id) ?? installed.get(b.id);
+    if (info) return info;
+  }
+  return state.id === DEFAULT_THEME ? null : BUILTIN_THEMES[0];
+}
 
-export async function setTheme(id: string, choice?: SchemeChoice): Promise<void> {
+/** Back to the theme before this one, from anywhere (Ctrl+Alt+Shift+T, both sticks): the way out when a theme breaks
+ *  the app. A theme removed since is skipped; with none left it is the default. Null when there was nowhere to go. */
+export async function goBackTheme(): Promise<ThemeInfo | null> {
+  const list = backList();
+  for (let b = list.pop(); b; b = list.pop()) {
+    write(K.back, JSON.stringify(list));
+    if (b.id === state.id) continue;
+    try { return await setTheme(b.id, b.choice, false); } catch { /* removed since: the one before */ }
+  }
+  return state.id === DEFAULT_THEME ? null : setTheme(DEFAULT_THEME, "dark", false);
+}
+
+/** Switch to a theme, optionally with a scheme. The one it leaves goes in the history unless `record` is false. */
+export async function setTheme(id: string, choice?: SchemeChoice, record = true): Promise<ThemeInfo> {
   let info = themeInfo(id);
   if (!info || (!info.builtin && !installed.has(id))) { await loadInstalled(); info = installed.get(id) ?? BUILTIN_THEMES.find((t) => t.id === id); }
   if (!info) throw new Error("Theme not installed");
@@ -258,7 +290,13 @@ export async function setTheme(id: string, choice?: SchemeChoice): Promise<void>
   cache(info);
   const changed = info.id !== state.id;
   const target = info;
+  if (changed && record) {
+    const list = backList().filter((b) => b.id !== state.id && b.id !== target.id);
+    list.push({ id: state.id, choice: state.choice });
+    write(K.back, JSON.stringify(list.slice(-BACK_MAX)));
+  }
   swap(() => paint(target, c), changed ? "theme" : "scheme");
+  return target;
 }
 
 /** Dark, light or system, within the current theme. */
