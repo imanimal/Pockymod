@@ -288,7 +288,7 @@ export interface GameInfo {
 export type Fix =
   | { kind: "installMod"; modId: number; name: string } | { kind: "updateMod"; modId: number; name: string }
   | { kind: "runRedmodDeploy" } | { kind: "redeploy"; installId: number } | { kind: "openLibrary" } | { kind: "openSettings" } | { kind: "resetScripts" }
-  | { kind: "turnOff"; installId: number; name: string } | { kind: "disableModlist" };
+  | { kind: "turnOff"; installId: number; name: string } | { kind: "disableModlist" } | { kind: "openPage"; modId: number; name: string };
 export interface Issue { id: string; severity: "problem" | "warning" | "info"; area: "game" | "frameworks" | "deploy" | "redmod" | "conflicts" | "logs"; title: string; detail: string; fix: Fix | null }
 export interface FrameworkRow extends FrameworkState { latest: string | null; updateAvailable: boolean; neededBy: string[] }
 export interface HealthReport { game: GameInfo | null; patch: string | null; patchSource: "detected" | "settings" | "assumed"; frameworks: FrameworkRow[]; issues: Issue[]; problems: number; warnings: number }

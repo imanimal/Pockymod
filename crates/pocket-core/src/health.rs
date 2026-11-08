@@ -19,7 +19,7 @@ use std::path::Path;
 pub enum Severity { Problem, Warning, Info }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "camelCase", tag = "kind")]
+#[serde(rename_all = "camelCase", rename_all_fields = "camelCase", tag = "kind")]
 pub enum Fix {
     InstallMod { mod_id: u32, name: String },
     UpdateMod { mod_id: u32, name: String },
@@ -32,6 +32,8 @@ pub enum Fix {
     TurnOff { install_id: i64, name: String },
     /// Move `archive/pc/mod/modlist.txt` aside.
     DisableModlist,
+    /// Nothing to do here yet: open the mod's Nexus page to check for an update.
+    OpenPage { mod_id: u32, name: String },
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -167,6 +169,11 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
         let info = frameworks::info(st.framework);
         let lat = latest.iter().find(|l| l.mod_id == info.nexus_mod_id);
         let update_available = match (&st.version, lat) { (Some(v), Some(l)) => version_key(v) < version_key(&l.version), _ => false };
+        let newest = matches!((&st.version, lat), (Some(v), Some(l)) if version_key(v) >= version_key(&l.version));
+        let newer_on_nexus = lat.and_then(|l| chrono::DateTime::parse_from_rfc3339(&l.updated_at).ok()).map(|t| t.timestamp())
+            .zip(exe_patch_time).is_some_and(|(t, e)| t > e);
+        // the newest version came out after the patch and is installed: the old file date came from its archive
+        let older = st.older_than_game && !(newest && newer_on_nexus);
         let needed_by = needed.get(&st.framework).cloned().unwrap_or_default();
         if !st.installed && !needed_by.is_empty() {
             let mut who = needed_by.clone();
@@ -175,21 +182,22 @@ pub fn check(db: &Db, game: Option<&GameInfo>, patch_setting: Option<String>, la
                 detail: format!("Needed by {}. Without it they fail or stop the game from starting", list_names(&who)),
                 fix: Some(Fix::InstallMod { mod_id: info.nexus_mod_id, name: info.name.into() }) });
         }
-        if st.installed && st.older_than_game {
-            // a framework file older than the game's last patch: frameworks hook the executable and break on patches
-            let newer_on_nexus = lat.and_then(|l| chrono::DateTime::parse_from_rfc3339(&l.updated_at).ok()).map(|t| t.timestamp())
-                .zip(exe_patch_time).is_some_and(|(t, e)| t > e);
-            issues.push(Issue { id: format!("fw.old.{}", info.key), severity: if newer_on_nexus || update_available { Severity::Problem } else { Severity::Warning }, area: "frameworks",
+        if st.installed && older {
+            // a framework file older than the game's last patch: frameworks hook the executable and break on patches.
+            // Update only when Nexus has something to update to; otherwise point at the page.
+            let update = newer_on_nexus || update_available;
+            issues.push(Issue { id: format!("fw.old.{}", info.key), severity: if update { Severity::Problem } else { Severity::Warning }, area: "frameworks",
                 title: format!("{} is older than the game patch", info.name),
-                detail: if newer_on_nexus || update_available { format!("Nexus has a newer version{1}. Update {0} before you play", info.name, lat.map(|l| format!(" ({})", l.version)).unwrap_or_default()) }
+                detail: if update { format!("Nexus has a newer version{1}. Update {0} before you play", info.name, lat.map(|l| format!(" ({})", l.version)).unwrap_or_default()) }
+                        else if newest { format!("You have the newest version on Nexus, but it came out before this patch. If the game crashes at start, check {}'s page for an update", info.name) }
                         else { format!("If the game crashes at start, check {}'s page for an update", info.name) },
-                fix: Some(Fix::UpdateMod { mod_id: info.nexus_mod_id, name: info.name.into() }) });
+                fix: Some(if update { Fix::UpdateMod { mod_id: info.nexus_mod_id, name: info.name.into() } } else { Fix::OpenPage { mod_id: info.nexus_mod_id, name: info.name.into() } }) });
         } else if st.installed && update_available {
             issues.push(Issue { id: format!("fw.update.{}", info.key), severity: Severity::Warning, area: "frameworks", title: format!("{} has an update", info.name),
                 detail: format!("Installed {}, newest {}", st.version.as_deref().unwrap_or("?"), lat.map(|l| l.version.as_str()).unwrap_or("?")),
                 fix: Some(Fix::UpdateMod { mod_id: info.nexus_mod_id, name: info.name.into() }) });
         }
-        rows.push(FrameworkRow { state: st.clone(), latest: lat.map(|l| l.version.clone()), update_available, needed_by });
+        rows.push(FrameworkRow { state: FrameworkState { older_than_game: older, ..st.clone() }, latest: lat.map(|l| l.version.clone()), update_available, needed_by });
     }
 
     // ── deploy state ──
@@ -327,5 +335,53 @@ mod tests {
         assert!(r.issues.iter().any(|i| i.id == "fw.update.red4ext"));
         assert!(r.frameworks.iter().find(|f| f.state.key == "red4ext").unwrap().update_available);
         assert_eq!(r.patch_source, "assumed");
+    }
+
+    /// RED4ext 1.31.0 whose file is dated 2020, under an executable written now.
+    fn red4ext_before_patch() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        let g = dir.path();
+        std::fs::create_dir_all(g.join("red4ext")).unwrap();
+        std::fs::create_dir_all(g.join("bin/x64")).unwrap();
+        std::fs::write(g.join("bin/x64/Cyberpunk2077.exe"), b"").unwrap();
+        let dll = g.join("red4ext/RED4ext.dll");
+        std::fs::copy(Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/version-fixture.dll"), &dll).unwrap();
+        let old = std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1_600_000_000);
+        std::fs::File::options().write(true).open(&dll).unwrap().set_modified(old).unwrap();
+        dir
+    }
+
+    #[test]
+    fn newest_framework_before_the_patch_points_at_its_page() {
+        let dir = red4ext_before_patch();
+        let info = inspect(dir.path());
+        let r = check(&Db::memory().unwrap(), Some(&info), None, &[Latest { mod_id: 2380, version: "1.31.0".into(), updated_at: "2020-10-01T00:00:00Z".into() }]).unwrap();
+        let i = r.issues.iter().find(|i| i.id == "fw.old.red4ext").unwrap();
+        assert_eq!(i.severity, Severity::Warning);
+        // nothing newer to download, so no Update key (Fix all used to re-queue the same version)
+        assert_eq!(i.fix, Some(Fix::OpenPage { mod_id: 2380, name: "RED4ext".into() }));
+    }
+
+    #[test]
+    fn newest_framework_after_the_patch_is_fine() {
+        let dir = red4ext_before_patch();
+        let info = inspect(dir.path());
+        let r = check(&Db::memory().unwrap(), Some(&info), None, &[Latest { mod_id: 2380, version: "1.31.0".into(), updated_at: "2099-01-01T00:00:00Z".into() }]).unwrap();
+        assert!(!r.issues.iter().any(|i| i.id.starts_with("fw.old.") || i.id.starts_with("fw.update.")), "{:?}", r.issues);
+        assert!(!r.frameworks.iter().find(|f| f.state.key == "red4ext").unwrap().state.older_than_game);
+    }
+
+    #[test]
+    fn the_ui_gets_camel_case_fields() {
+        // the screens read modId, installId and so on; serde's rename_all on an enum only renames the variants
+        let j = |v: serde_json::Value| v.to_string();
+        assert_eq!(j(serde_json::to_value(Fix::UpdateMod { mod_id: 107, name: "CET".into() }).unwrap()), r#"{"kind":"updateMod","modId":107,"name":"CET"}"#);
+        assert_eq!(j(serde_json::to_value(Fix::Redeploy { install_id: 4 }).unwrap()), r#"{"installId":4,"kind":"redeploy"}"#);
+        let done = serde_json::to_value(crate::queue::ItemState::Done { install_id: Some(3), note: None }).unwrap();
+        assert_eq!(done["installId"], 3);
+        let have = serde_json::to_value(install::InstallOutcome::AlreadyHave { install_id: Some(5), files: 2 }).unwrap();
+        assert_eq!(have["installId"], 5);
+        let dep = serde_json::to_value(deploy::DeployOutcome::Deployed { linked: 1, copied: 0, backed_up: vec![], took_from: vec![] }).unwrap();
+        assert!(dep.get("backedUp").is_some() && dep.get("tookFrom").is_some(), "{dep}");
     }
 }

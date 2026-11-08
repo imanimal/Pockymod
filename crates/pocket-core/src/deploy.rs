@@ -42,7 +42,7 @@ pub struct DeployOptions {
 pub struct Conflict { pub target: String, pub owner_install: i64, pub owner_name: String }
 
 #[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase", tag = "outcome")]
+#[serde(rename_all = "camelCase", rename_all_fields = "camelCase", tag = "outcome")]
 pub enum DeployOutcome {
     Deployed { linked: usize, copied: usize, backed_up: Vec<String>, took_from: Vec<Conflict> },
     /// Nothing was written: these paths belong to other mods.

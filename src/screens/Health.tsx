@@ -4,7 +4,7 @@ import { plural } from "../lib/text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Tag } from "../ui/pocket";
 import type { IconName } from "../ui/icons";
-import { archives, errorText, game, library, queueMod, resetScripts, type Fix, type HealthReport, type Issue } from "../lib/api";
+import { archives, errorText, game, library, nexusPages, queueMod, resetScripts, type Fix, type HealthReport, type Issue } from "../lib/api";
 import { toast } from "../ui/toast";
 import { LogsModule } from "./LogsModule";
 import * as ops from "../lib/ops";
@@ -39,25 +39,34 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
   }, [onIssues]);
   useEffect(() => { load(); }, [load]);
 
-  /** Run one fix; with `quiet` it neither navigates nor reloads (Fix all does that once at the end). */
-  const run = async (f: Fix, quiet = false): Promise<boolean> => {
+  /** Run one fix; with `quiet` it neither navigates nor reloads (Fix all does that once at the end). A fix that
+   *  doesn't work out throws, with the reason as its message. */
+  const run = async (f: Fix, quiet = false): Promise<void> => {
     switch (f.kind) {
-      case "installMod": case "updateMod": await queueMod(f.modId); if (!quiet) { toast(`${f.name} queued`); onNavigate("downloads"); } return true;
+      case "installMod": case "updateMod": await queueMod(f.modId); if (!quiet) { toast(`${f.name} queued`); onNavigate("downloads"); } return;
       case "runRedmodDeploy": {
         const res = await game.redmodDeploy();
-        toast(res.ok ? `REDmod deploy done (${plural(res.mods.length, "mod")})` : `REDmod deploy hit ${plural(res.problems.length, "problem")}`, !res.ok);
-        return res.ok;
+        if (!res.ok) throw new Error(`REDmod deploy hit ${plural(res.problems.length, "problem")}${res.problems[0] ? `: ${res.problems[0]}` : ""}`);
+        if (!quiet) toast(`REDmod deploy done (${plural(res.mods.length, "mod")})`);
+        return;
       }
-      case "redeploy": { const d = await library.deploy(f.installId, { allowCopy: false, takeConflicts: false }); if (!quiet) toast("Deployed again"); return d.outcome === "deployed"; }
-      case "resetScripts": { const n = await resetScripts(); if (!quiet) toast(n ? "Game scripts reset" : "Nothing to reset"); return true; }
+      case "redeploy": {
+        const d = await library.deploy(f.installId, { allowCopy: false, takeConflicts: false });
+        if (d.outcome === "conflicts") throw new Error("Its files clash with other mods. Decide in Library");
+        if (d.outcome === "needsCopy") throw new Error("It needs copying instead of linking. Decide in Library");
+        if (!quiet) toast("Deployed again");
+        return;
+      }
+      case "resetScripts": { const n = await resetScripts(); if (!quiet) toast(n ? "Game scripts reset" : "Nothing to reset"); return; }
       case "turnOff": {
         const row = (await library.list()).find((x) => x.id === f.installId);
         if (row) await ops.setEnabled([row], false);
         else toast(`${f.name} is no longer installed`);
-        return true;
+        return;
       }
-      case "disableModlist": { const done = await archives.disableModlist(); if (!quiet) toast(done ? "modlist.txt renamed to modlist.txt.off" : "No modlist.txt"); return true; }
-      case "openLibrary": case "openSettings": return false;
+      case "disableModlist": { const done = await archives.disableModlist(); if (!quiet) toast(done ? "modlist.txt renamed to modlist.txt.off" : "No modlist.txt"); return; }
+      case "openPage": await nexusPages.mod(f.modId); return;
+      case "openLibrary": case "openSettings": return;
     }
   };
   /** Every fix the app can do by itself, in order: downloads first, files next, the REDmod deploy last (and only
@@ -67,12 +76,22 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
     setWorking(key);
     const order: Fix["kind"][] = ["installMod", "updateMod", "redeploy", "resetScripts", "disableModlist", "runRedmodDeploy"];
     const todo = [...list].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
-    let ok = 0, failed = 0, queued = 0;
+    let ok = 0, queued = 0;
+    const failed: Array<{ fix: Fix; why: string }> = [];
     for (const f of todo) {
       if (f.kind === "runRedmodDeploy" && queued) continue;
-      try { if (await run(f, true)) ok++; else failed++; if (f.kind === "installMod" || f.kind === "updateMod") queued++; } catch { failed++; }
+      try {
+        await run(f, true);
+        if (f.kind === "installMod" || f.kind === "updateMod") queued++; else ok++;
+      } catch (e) { failed.push({ fix: f, why: errorText(e) }); }
     }
-    toast(`${plural(ok, "fix", "fixes")} done${queued ? `, ${plural(queued, "download")} queued` : ""}${failed ? `, ${failed} failed` : ""}`, failed > 0);
+    const done = [ok && `${plural(ok, "fix", "fixes")} done`, queued && `${plural(queued, "download")} queued`].filter(Boolean).join(", ");
+    if (!failed.length) toast(done || "Nothing to fix");
+    else {
+      // one reason for all of them is said once; otherwise the first, named
+      const why = failed.every((x) => x.why === failed[0].why) ? failed[0].why : `${fixLabel(failed[0].fix)}: ${failed[0].why}`;
+      toast(`${done ? `${done}. ${failed.length} failed` : `Couldn't fix ${failed.length === 1 ? "it" : `any of the ${failed.length}`}`}. ${why}`, true);
+    }
     load();
     if (queued) onNavigate("downloads");
   };
@@ -81,6 +100,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
     const f = i.fix;
     if (f.kind === "openLibrary") return onNavigate("library");
     if (f.kind === "openSettings") return onNavigate("settings");
+    if (f.kind === "openPage") return run(f).catch((e) => toast(errorText(e), true));
     setWorking(i.id);
     try { await run(f); if (f.kind !== "installMod" && f.kind !== "updateMod") load(); else setWorking(null); }
     catch (e) { toast(errorText(e), true); setWorking(null); }
@@ -134,7 +154,8 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
                   </span>
                   <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".5em" }}>
                     <Pill tone={i.severity === "problem" ? "over" : i.severity === "warning" ? "soon" : undefined}>{i.severity === "problem" ? "Problem" : i.severity === "warning" ? "Warning" : "Note"}</Pill>
-                    {i.fix && <Key size="sm" variant={i === first ? "primary" : "dark"} onClick={() => fix(i as Issue & { fix: Fix })} disabled={busy} busy={working === i.id}>{fixLabel(i.fix)}</Key>}
+                    {i.fix && <Key size="sm" variant={i === first ? "primary" : "dark"} onClick={() => fix(i as Issue & { fix: Fix })} disabled={busy} busy={working === i.id}
+                      title={i.fix.kind === "openPage" ? `Open ${i.fix.name} on Nexus to check for an update` : undefined}>{fixLabel(i.fix)}</Key>}
                   </span>
                 </div>
               ))}
@@ -165,6 +186,7 @@ function fixLabel(f: Fix): string {
     case "resetScripts": return "Reset scripts";
     case "turnOff": return "Turn this mod off";
     case "disableModlist": return "Move it aside";
+    case "openPage": return "Nexus page";
   }
 }
 

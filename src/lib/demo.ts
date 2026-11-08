@@ -119,16 +119,17 @@ function health(): HealthReport {
     game: pathsView.gameDir ? { path: pathsView.gameDir, exeFound: true, version: { file: "3.0.80.0", product: "3.0.80.0", productString: null }, detectedPatch: null,
       exeModified: null, redmodAvailable: true, frameworks: [], writable: true } : null,
     patch: "2.5", patchSource: "assumed",
-    frameworks: [fw("cet", "Cyber Engine Tweaks", true, "1.37.1", "1.38.1", true, ["Native Settings UI"]), fw("red4ext", "RED4ext", true, "1.31.0", "1.31.0", false, ["ArchiveXL"]),
+    frameworks: [fw("cet", "Cyber Engine Tweaks", true, "1.37.1", "1.38.1", true, ["Native Settings UI"]), fw("red4ext", "RED4ext", true, "1.31.0", "1.31.0", true, ["ArchiveXL"]),
       fw("redscript", "redscript", false, null, "0.5.32", false, ["Mod Settings"]), fw("archivexl", "ArchiveXL", true, "1.28.6", "1.28.6"), fw("tweakxl", "TweakXL", false, null, "1.10.9"),
       fw("codeware", "Codeware", false, null, "1.19.2"), fw("cybercmd", "cybercmd", false, null, "0.0.9")],
     issues: [
       { id: "fw.missing.redscript", severity: "problem", area: "frameworks", title: "redscript is missing", detail: "Mod Settings needs it. Without it the game may not start", fix: { kind: "installMod", modId: 1511, name: "redscript" } },
       { id: "fw.old.cet", severity: "problem", area: "frameworks", title: "Cyber Engine Tweaks predates the game patch", detail: "Older than the game patch. Nexus has 1.38.1", fix: { kind: "updateMod", modId: 107, name: "Cyber Engine Tweaks" } },
+      { id: "fw.old.red4ext", severity: "warning", area: "frameworks", title: "RED4ext is older than the game patch", detail: "You have the newest version on Nexus, but it came out before this patch. If the game crashes at start, check RED4ext's page for an update", fix: { kind: "openPage", modId: 2380, name: "RED4ext" } },
       { id: "redmod.deploy", severity: "warning", area: "redmod", title: "REDmods need deploying", detail: "REDmods changed since the last deploy", fix: { kind: "runRedmodDeploy" } },
       { id: "game.patch", severity: "info", area: "game", title: "Game patch assumed to be 2.5", detail: "Couldn't read the patch. Pick it in Settings", fix: { kind: "openSettings" } },
     ],
-    problems: 2, warnings: 1,
+    problems: 2, warnings: 2,
   };
 }
 

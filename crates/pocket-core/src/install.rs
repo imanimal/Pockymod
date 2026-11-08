@@ -62,7 +62,7 @@ pub struct InstallRequest {
 fn yes() -> bool { true }
 
 #[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase", tag = "status")]
+#[serde(rename_all = "camelCase", rename_all_fields = "camelCase", tag = "status")]
 pub enum InstallOutcome {
     Installed { install_id: i64, mod_type: ModType, files: usize, needs_redmod_deploy: bool, deploy: DeployOutcome, replaced: Vec<i64>, warnings: Vec<String> },
     /// Some files have no known place. Nothing was installed.

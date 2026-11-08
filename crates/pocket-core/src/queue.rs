@@ -14,7 +14,7 @@ use std::collections::{BTreeSet, VecDeque};
 use std::sync::Mutex;
 
 #[derive(Debug, Clone, Serialize, serde::Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase", tag = "state")]
+#[serde(rename_all = "camelCase", rename_all_fields = "camelCase", tag = "state")]
 pub enum ItemState {
     Waiting,
     /// Free account: the file's page is open and waits for the user's click.
