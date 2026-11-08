@@ -6,7 +6,7 @@ It uses the Pocket design language (handheld plastic, program keys, label bands,
 
 ## Status
 
-Built milestone by milestone from [docs/build-prompt.md](docs/build-prompt.md). Each milestone has a note in [docs/milestones](docs/milestones) with what to test and what is not verified yet. Assumptions are in [docs/assumptions.md](docs/assumptions.md).
+Built milestone by milestone. Each milestone has a note in [docs/milestones](docs/milestones) with what to test and what is not verified yet. Assumptions are in [docs/assumptions.md](docs/assumptions.md).
 
 ## What it does
 
@@ -46,7 +46,6 @@ cargo run -p pocket-core --example nexus_probe         # log the live mods() res
 
 ## Repo layout
 
-- `docs/build-prompt.md`: the product, design, tech and Nexus rules for the build.
 - `design/reference/pocket.css`: the Pocket stylesheet from Collegiapp, the reference for tokens and component names.
 - `src/styles/pocket-os.css`: the standalone Pocket stylesheet this app uses, with bundled fonts. `src/styles/themes/` holds the Standard and Redline themes, `fx.css` the CRT layer.
 - `src/`: the React UI. It holds no Nexus or file logic.
