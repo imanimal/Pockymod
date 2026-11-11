@@ -220,6 +220,7 @@ pub fn install(db: &Db, game: &Path, library: &Path, req: &InstallRequest) -> Re
         return Err(Error::Invalid(format!("{} isn't the Cyberpunk 2077 folder (no bin\\x64). Set it in Settings", game.display())));
     }
     let entries = archive::list(&req.archive)?;
+    if crate::appupdate::is_own_installer(&entries) { return Err(Error::Invalid(crate::appupdate::OWN_INSTALLER_NOTE.into())); }
     let staging = staging_dir(library, req.mod_id, req.file_id);
     let fresh = staging.with_extension("new");
     // whatever happens below, a half-made extraction does not stay behind (after the swap it is gone anyway)
@@ -688,6 +689,13 @@ pub fn record_download(db: &Db, mod_id: u32, file_id: u32, name: &str, version: 
         "INSERT INTO downloads (mod_id, file_id, name, version, path, size, md5, downloaded_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
          ON CONFLICT(mod_id, file_id) DO UPDATE SET path = ?5, size = ?6, md5 = ?7, downloaded_at = ?8",
         params![mod_id, file_id, name, version, path.to_string_lossy(), size as i64, md5, now()])?;
+    Ok(())
+}
+
+/// Delete a downloaded archive and its row (one that is no use, like Pockymod's own installer).
+pub fn forget_download(db: &Db, mod_id: u32, file_id: u32) -> Result<()> {
+    if let Some((p, _)) = downloaded_archive(db, mod_id, file_id)? { let _ = fs::remove_file(p); }
+    db.conn.execute("DELETE FROM downloads WHERE mod_id = ?1 AND file_id = ?2", params![mod_id, file_id])?;
     Ok(())
 }
 

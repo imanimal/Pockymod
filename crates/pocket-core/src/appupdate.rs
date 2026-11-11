@@ -57,6 +57,19 @@ pub async fn check(http: &reqwest::Client) -> Result<AppUpdate> {
     })
 }
 
+/// What a queue item says when the "mod" is Pockymod's own installer, from its Nexus page.
+pub const OWN_INSTALLER_NOTE: &str = "That's Pockymod itself, not a mod, so nothing was installed. It updates on its own, or press Check for updates in About";
+
+/// Pockymod's own installer (`Pockymod_1.0.0_x64-setup.exe`, or Nexus's renamed copy of it), given file names or an
+/// archive's entries. Its Nexus page offers Mod Manager Download like any mod's, and that is not a mod for the game.
+pub fn is_own_installer<S: AsRef<str>>(names: &[S]) -> bool {
+    names.iter().any(|n| {
+        let n = n.as_ref();
+        let base = n.rsplit(['/', '\\']).next().unwrap_or(n).to_ascii_lowercase();
+        base.starts_with("pockymod") && base.contains("setup") && base.ends_with(".exe")
+    })
+}
+
 /// Only GitHub's own download hosts, over HTTPS.
 fn from_github(u: &str) -> bool {
     u.starts_with("https://github.com/imanimal/Pockymod/releases/download/") || u.starts_with("https://objects.githubusercontent.com/")
@@ -123,5 +136,14 @@ mod dl_tests {
         assert!(is_newer("1-alpha.2", "1.0.0-alpha"));
         assert!(is_newer("0.2.0", "0.1.0"));
         assert!(!is_newer("v0.1", "0.1.0"));
+    }
+    #[test]
+    fn spots_its_own_installer() {
+        assert!(is_own_installer(&["Pockymod_1.0.0-alpha.2_x64-setup.exe"]));
+        assert!(is_own_installer(&["Pockymod_1.0.0_x64-setup-12345-1-0-0-1767225600.exe"]));
+        assert!(is_own_installer(&["readme.txt", "Pockymod/Pockymod_1.0.0_x64-setup.exe"]));
+        assert!(!is_own_installer(&["bin/x64/plugins/cyber_engine_tweaks.asi", "Pockymod theme.zip"]));
+        assert!(!is_own_installer(&["archive/pc/mod/pockymod_setup.archive"]));
+        assert!(!is_own_installer::<&str>(&[]));
     }
 }

@@ -177,6 +177,9 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
     while st.moving.load(std::sync::atomic::Ordering::SeqCst) { tokio::time::sleep(std::time::Duration::from_millis(500)).await; }
     let paths = Paths::load(&st.db.lock().unwrap());
     let (game, library) = paths.require()?;
+    // Pockymod's own installer, from Mod Manager Download on its Nexus page: not a mod, so skip it
+    let own = pocket_core::appupdate::OWN_INSTALLER_NOTE;
+    if pocket_core::appupdate::is_own_installer(&[&item.uri, &item.file_name]) { return Ok(ItemState::Done { install_id: None, note: Some(own.into()) }); }
     // added for another mod, and the user has it by now (from Vortex, by hand, or an earlier install): keep theirs
     let for_another = item.required_by.is_some();
     // a requirement is met by any copy of the mod the user has (turned on if it is off); a collection asks for this
@@ -244,6 +247,13 @@ async fn fetch_and_install(app: &AppHandle, item: &QueueItem) -> pocket_core::Re
 
     // stopped while the archive was already here or being checked
     if st.cancel.lock().unwrap().remove(&item.id) { return Err(Error::Invalid(pocket_core::download::CANCELLED.into())); }
+    // the same, zipped (as the Nexus and GameBanana pages offer it): the download is no use, so it goes
+    let a = archive.clone();
+    let is_own = tauri::async_runtime::spawn_blocking(move || pocket_core::archive::list(&a).is_ok_and(|e| pocket_core::appupdate::is_own_installer(&e))).await.unwrap_or(false);
+    if is_own {
+        let _ = install::forget_download(&st.db.lock().unwrap(), item.mod_id, item.file_id);
+        return Ok(ItemState::Done { install_id: None, note: Some(own.into()) });
+    }
     // the game locks its files: an install waits until it is closed
     if pocket_core::launch::game_running() {
         return Err(Error::Invalid("Downloaded. Close Cyberpunk 2077 and press Retry to install".into()));
