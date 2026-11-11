@@ -19,7 +19,9 @@ Each point of the [API Acceptable Use Policy](https://help.nexusmods.com/article
 
 - Free accounts download through the site's **Mod Manager Download** button, one file at a time, on the mod's own
   Nexus page (in the user's own browser by default, so Nexus's page, countdown and ads are what they see). Nothing
-  skips or automates that step; the app only catches the nxm:// link the button produces.
+  skips or automates that step; the app only catches the nxm:// link the button produces. When the page opens in the
+  app's pane, it scrolls so Slow download sits in the middle, in the same place on every page, and Enter presses it.
+  The user still clicks it, and the countdown runs as usual.
 - Direct links (`download_link.json` without an nxm key) are asked for only for Premium accounts.
 - Before an install that would take a free account several clicks, one quiet line says what Premium would do instead,
   with a link to Nexus's Premium page (`src/ui/Premium.tsx`). It can be snoozed or turned off. After upgrading, the

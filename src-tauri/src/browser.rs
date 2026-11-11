@@ -57,6 +57,42 @@ const STYLE_GUARD: &str = r#"(function () {
   });
 })();"#;
 
+/// A file's download page (`nmm=1`, what a free account's queue opens) scrolls so the Slow download button sits in the
+/// middle of the pane, the same spot on every page, and takes keyboard focus so Enter presses it. It stays there while
+/// ads and images load around it, until the user scrolls, clicks or types. The click is always the user's.
+const DOWNLOAD_BUTTON: &str = r#"(function () {
+  if (!/(^|\.)nexusmods\.com$/.test(location.hostname)) return;
+  if (new URLSearchParams(location.search).get("nmm") !== "1") return;
+  var done = false, focused = false, found = 0, start = Date.now(), btn = null;
+  function stop() { done = true; }
+  ["wheel", "pointerdown", "keydown", "touchstart"].forEach(function (t) { addEventListener(t, stop, { capture: true, passive: true }); });
+  // the button lives in a web component's shadow root, so look through those too
+  function find(root) {
+    var els = root.querySelectorAll("a, button");
+    for (var i = 0; i < els.length; i++) {
+      if (/^\s*slow download\s*$/i.test(els[i].textContent) && els[i].getClientRects().length) return els[i];
+    }
+    var all = root.querySelectorAll("*");
+    for (var j = 0; j < all.length; j++) { if (all[j].shadowRoot) { var f = find(all[j].shadowRoot); if (f) return f; } }
+    return null;
+  }
+  function place() {
+    if (done) return;
+    if (!btn || !btn.isConnected) btn = find(document);
+    if (!btn || !innerHeight) return;
+    if (!found) found = Date.now();
+    var r = btn.getBoundingClientRect();
+    if (Math.abs(r.top + r.height / 2 - innerHeight / 2) > 1) btn.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+    if (!focused) { focused = true; try { btn.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  (function tick() {
+    place();
+    var now = Date.now();
+    if (!done && now - start < 20000 && !(found && now - found > 10000)) setTimeout(tick, 100);
+  })();
+  addEventListener("resize", place);
+})();"#;
+
 #[derive(serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BrowserState {
@@ -123,6 +159,7 @@ macro_rules! common {
         let dl = app.clone();
         let load = app.clone();
         b.initialization_script(STYLE_GUARD)
+            .initialization_script(DOWNLOAD_BUTTON)
             .on_download(move |_, ev| {
                 match ev {
                     // "Manual download" on a Nexus page: into the library's downloads folder, and the app offers Install
