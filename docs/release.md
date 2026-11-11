@@ -20,4 +20,8 @@ The NSIS installer lands in `target\release\bundle\nsis\`. It installs per user 
   user is away (the window closed, or on quit), then start again in the tray (Settings, Background: install when I'm
   away, download and I'll restart, or off). Bump `version` in `Cargo.toml` and `tauri.conf.json` first. Sign the
   installer before a public release, so Windows vouches for it.
+- **Nexus Mods and GameBanana.** Both get `Pockymod-<version>-setup.zip`, which the release workflow attaches to the
+  GitHub release (or run `scripts\store-zip.ps1` after a local build; it lands in `target\store\`). The installer keeps
+  its own name inside the zip, which is how the app knows not to install itself as a mod when someone presses Mod
+  Manager Download on its page. Page text, form settings and images are in `store/`.
 - **mod.io.** The read-only mod.io browser is an experiment that needs a mod.io API key. Ask mod.io (through its developer contact) whether Cyberpunk 2077's catalogue may be used by a third-party app before turning it on by default.

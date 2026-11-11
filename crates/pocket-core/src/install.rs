@@ -974,6 +974,20 @@ mod tests {
     }
 
     #[test]
+    fn its_own_installer_is_not_a_mod() {
+        let dir = tempfile::tempdir().unwrap();
+        let game = dir.path().join("game");
+        fs::create_dir_all(game.join("bin/x64")).unwrap();
+        let a = dir.path().join("Pockymod-1.0.0-setup.zip");
+        zip(&a, &[("Pockymod_1.0.0_x64-setup.exe", "MZ"), ("LICENSE.txt", "MIT"), ("Read me.txt", "x")]);
+        let db = Db::memory().unwrap();
+        let req = InstallRequest { mod_id: 1, file_id: 1, name: "Pockymod".into(), version: "1".into(), archive: a, accept_unknown: true, replace_older: true, options: Default::default(), fomod_choices: None, origin: None, keep_existing: false, file_name: None, replace_only: None, same_file_only: false };
+        let err = install(&db, &game, &dir.path().join("lib"), &req).unwrap_err().to_string();
+        assert!(err.contains("Pockymod itself"), "{err}");
+        assert!(list_installs(&db).unwrap().is_empty());
+    }
+
+    #[test]
     fn unknown_files_ask_first() {
         let dir = tempfile::tempdir().unwrap();
         let game = dir.path().join("game");

@@ -1,0 +1,53 @@
+<!doctype html>
+<!-- The store cover (1920x1080) and the GitHub social preview (1280x640), in the app's Redline look.
+     Rendered by store/images/src/render.sh: cover.html?social for the second one. -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>Pockymod cover</title>
+<style>
+  @font-face { font-family: "Chakra Petch"; font-weight: 600; src: url(../../../src/styles/fonts/chakra-petch-latin-600-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Chakra Petch"; font-weight: 700; src: url(../../../src/styles/fonts/chakra-petch-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Space Grotesk"; font-weight: 500; src: url(../../../src/styles/fonts/space-grotesk-latin-500-normal.woff2) format("woff2"); }
+  :root {
+    --bg: #07070b; --line: #6a2a29; --text: #ff6f63; --text-2: #f1d3ce; --text-3: #bb7f78; --accent: #fcee0a;
+    --w: 1920px; --h: 1080px; --u: 1px;
+  }
+  :root.social { --w: 1280px; --h: 640px; --u: .62px; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: var(--w); height: var(--h); overflow: hidden; background: var(--bg); }
+  body {
+    position: relative; color: var(--text-2); font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    background:
+      linear-gradient(rgba(255, 111, 99, .05) 1px, transparent 1px) 0 0 / calc(32 * var(--u)) calc(32 * var(--u)),
+      linear-gradient(90deg, rgba(255, 111, 99, .05) 1px, transparent 1px) 0 0 / calc(32 * var(--u)) calc(32 * var(--u)),
+      var(--bg);
+  }
+  .copy { position: absolute; left: calc(110 * var(--u)); top: calc(130 * var(--u)); width: calc(640 * var(--u)); }
+  .mark { display: flex; align-items: center; gap: calc(26 * var(--u)); }
+  .mark img { width: calc(124 * var(--u)); height: calc(124 * var(--u)); }
+  .name { font: 700 calc(80 * var(--u)) / 1 "Chakra Petch", sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--text-2); }
+  .what { margin-top: calc(70 * var(--u)); font: 600 calc(56 * var(--u)) / 1.12 "Chakra Petch", sans-serif; color: var(--text); text-wrap: balance; }
+  .more { margin-top: calc(30 * var(--u)); font-size: calc(32 * var(--u)); line-height: 1.35; color: var(--text-2); text-wrap: balance; }
+  .foot { position: absolute; left: calc(110 * var(--u)); bottom: calc(100 * var(--u)); font: 600 calc(26 * var(--u)) / 1 "Chakra Petch", sans-serif;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
+  .shot { position: absolute; left: calc(820 * var(--u)); top: calc(150 * var(--u)); width: calc(1280 * var(--u)); height: calc(800 * var(--u));
+    border: calc(2 * var(--u)) solid var(--line); background: url(../../../docs/screens/browse.png) 0 0 / 100% auto no-repeat;
+    clip-path: polygon(calc(40 * var(--u)) 0, 100% 0, 100% 100%, 0 100%, 0 calc(40 * var(--u))); }
+  /* the cut corner's own edge, so the border reads as one line */
+  .cut { position: absolute; left: calc(820 * var(--u)); top: calc(150 * var(--u)); width: calc(57 * var(--u)); height: calc(2 * var(--u));
+    background: var(--line); transform-origin: 0 0; transform: translate(0, calc(40 * var(--u))) rotate(-45deg); }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <div class="mark"><img src="../../../design/brand/icon.svg" alt=""><span class="name">Pockymod</span></div>
+    <p class="what">A mod manager for Cyberpunk 2077</p>
+    <p class="more">Press Install and the mod comes with everything it needs, straight from Nexus Mods.</p>
+  </div>
+  <p class="foot">Windows 10 and 11 &middot; Free and open source</p>
+  <div class="shot"></div>
+  <div class="cut"></div>
+  <script>if (location.search.includes("social")) document.documentElement.classList.add("social");</script>
+</body>
+</html>

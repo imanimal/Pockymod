@@ -1,8 +1,9 @@
 name: Release
 
 # Push a tag like v0.2.0: the Windows installer is built and published as a GitHub release with its checksum
-# (<installer>.sha256), which the app's quiet updater checks (src-tauri/src/background.rs). Signing the installer is
-# a separate task (see docs/release.md).
+# (<installer>.sha256), which the app's quiet updater checks (src-tauri/src/background.rs), and a zip of it for the
+# Nexus Mods and GameBanana pages (scripts/store-zip.ps1). Signing the installer is a separate task (see
+# docs/release.md).
 on:
   push:
     tags: ["v*"]
@@ -30,9 +31,14 @@ jobs:
           Get-ChildItem target/release/bundle/nsis/*-setup.exe | ForEach-Object {
             (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower() + "  " + $_.Name | Set-Content -NoNewline "$($_.FullName).sha256"
           }
+      # the zip that goes on Nexus Mods and GameBanana
+      - name: Store zip
+        shell: pwsh
+        run: ./scripts/store-zip.ps1
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             target/release/bundle/nsis/*-setup.exe
             target/release/bundle/nsis/*-setup.exe.sha256
+            target/store/*-setup.zip
           generate_release_notes: true
