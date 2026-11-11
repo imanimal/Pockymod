@@ -188,8 +188,8 @@ export function MediaStage({ items }: { items: Shot[] }) {
 }
 
 const toShot = (m: MediaItem): Shot => m.__typename === "Video"
-  ? { kind: "video", url: `https://www.youtube-nocookie.com/embed/${(m.link ?? "").match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/)?.[1] ?? ""}`, thumb: m.thumbnailUrl, caption: `${m.title ?? "Video"} · ${m.owner.name}` }
-  : { kind: "image", url: m.url ?? m.thumbnailUrl, thumb: m.thumbnailUrl, caption: `${m.title || m.owner.name} · ${formatCount(m.views)} views` };
+  ? { kind: "video", url: `https://www.youtube-nocookie.com/embed/${(m.link ?? "").match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/)?.[1] ?? ""}`, thumb: m.thumbnailUrl, caption: `${m.title || "Video"} · ${m.owner.name}` }
+  : { kind: "image", url: m.url ?? m.thumbnailUrl, thumb: m.thumbnailUrl, caption: `${m.title || m.owner.name} · ${formatCount(m.views)} ${m.views === 1 ? "view" : "views"}` };
 
 /** The game's media on Nexus: top-rated, most viewed or newest screenshots and videos. */
 export function MediaWall() {

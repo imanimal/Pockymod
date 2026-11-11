@@ -14,7 +14,7 @@ export function ago(unix: number | null): string {
   if (s < 90) return "just now";
   if (s < 3600) return `${Math.round(s / 60)} min ago`;
   if (s < 86400) return `${Math.round(s / 3600)} h ago`;
-  return `${Math.round(s / 86400)} days ago`;
+  return `${plural(Math.round(s / 86400), "day")} ago`;
 }
 
 function clock(unix: number | null): string {

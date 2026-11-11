@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "../../ui/Icon";
 import { Empty, Key, Lcd, Module, Pill, Seg, bytesText, formatCount, useBusy } from "../../ui/pocket";
 import { authoring, errorText, fileLink, nexusPages, type AuthorFile, type ModManage, type MyMod, type MyMods as MyModsData, type NexusUser } from "../../lib/api";
-import { shortDate } from "../../lib/text";
+import { plural, shortDate } from "../../lib/text";
 import { toast } from "../../ui/toast";
 import { ScanPill, StatusPill, categoryOf, copy, fileCategoryText, openNexus, unixDate, type PublishPrefill } from "./shared";
 
@@ -101,7 +101,7 @@ export function MyMods({ mine, loading, error, me, who, onLoad, onPublish, onNew
           {month && <Lcd label={`This month`} value={formatCount(month.downloads)} sub={`downloads, all games`} />}
         </div>
         <div className="actions" style={{ marginTop: ".7em" }}>
-          <Key variant="primary" icon="share" disabled={mine.mods.length === 0} title={mine.mods.length === 0 ? "No mod to publish a version of yet" : undefined} onClick={() => onPublish(null)}>Publish a version</Key>
+          {mine.own && <Key variant="primary" icon="share" disabled={mine.mods.length === 0} title={mine.mods.length === 0 ? "No mod to publish a version of yet" : undefined} onClick={() => onPublish(null)}>Publish a version</Key>}
           <Key icon="plus" onClick={onNew}>Upload a new mod</Key>
           <span className="sp" style={{ flex: 1 }} />
           {!other ? <Key variant="ghost" size="sm" icon="browse" onClick={() => setOther(true)}>Look up another member</Key> : null}
@@ -171,7 +171,7 @@ function ModCard({ m, canPublish, onPublish, onManage }: { m: MyMod; canPublish:
         {m.files.length === 0 ? <p className="dim" style={{ fontSize: ".86em" }}>No current files</p> : (
           <div className="rows">
             {m.files.slice(0, 5).map((f) => <FileRow key={f.fileId} f={f} onPublish={canPublish ? () => onPublish(prefillFor(m, f)) : undefined} />)}
-            {m.files.length > 5 && <button type="button" className="linkish" style={{ margin: ".3em .6em", fontSize: ".86em" }} onClick={onManage}>{m.files.length - 5} more files</button>}
+            {m.files.length > 5 && <button type="button" className="linkish" style={{ margin: ".3em .6em", fontSize: ".86em" }} onClick={onManage}>{plural(m.files.length - 5, "more file", "more files")}</button>}
           </div>
         )}
         <div className="m-meta" style={{ marginTop: ".5em" }}>
@@ -270,7 +270,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
           </div>
 
           <div className="sub-h cr-subh">
-            <span>Files</span><span className="dim mono">{d ? `${d.files.length} versions` : ""}</span><span className="sp" style={{ flex: 1 }} />
+            <span>Files</span><span className="dim mono">{d ? plural(d.files.length, "version") : ""}</span><span className="sp" style={{ flex: 1 }} />
             <Seg label="Which files" value={files} onChange={setFiles} options={[{ value: "current", label: "Current" }, { value: "all", label: "All versions" }]} />
           </div>
           {err && <div className="note bad">{err}</div>}
@@ -279,7 +279,7 @@ function Manage({ m, canPublish, onPublish, onClose, onUnpin }: { m: MyMod; canP
               <div key={f.fileId}>
                 <FileRow f={f} onCopy={() => copy(fileLink(links, f.fileId), "File link copied")}
                   onPublish={canPublish && ["MAIN", "UPDATE", "OPTIONAL", "MISCELLANEOUS"].includes(f.category) ? () => onPublish(prefillFor(m, f)) : undefined} />
-                {files === "all" && <div className="cr-file-sub dim">{shortDate(unixDate(f.date))} · {formatCount(f.totalDownloads)} downloads, {formatCount(f.uniqueDownloads)} unique{f.groupId != null && <> · update chain <span className="mono">{f.groupId}</span></>}</div>}
+                {files === "all" && <div className="cr-file-sub dim">{shortDate(unixDate(f.date))} · {formatCount(f.totalDownloads)} {f.totalDownloads === 1 ? "download" : "downloads"}, {formatCount(f.uniqueDownloads)} unique{f.groupId != null && <> · update chain <span className="mono">{f.groupId}</span></>}</div>}
               </div>
             ))}
             {list.length === 0 && <p className="dim">No files</p>}

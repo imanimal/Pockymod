@@ -25,7 +25,7 @@ export function Modio() {
       <Module icon="web" title="mod.io" count={r?.page ? `${formatCount(r.page.result_total)} · read-only` : "read-only"} bodyClass="list">
         {err && <div className="note bad" style={{ margin: ".6em" }}>{err}</div>}
         {r && !r.game && <Empty icon="web" title="Cyberpunk 2077 isn't on mod.io for this key" />}
-        <div className="note" style={{ margin: ".6em" }}>Install these in game from Main menu, Mods</div>
+        {r?.game && <div className="note" style={{ margin: ".6em" }}>Install these in game from Main menu, Mods</div>}
         {!r && busy && <div className="stack" style={{ gap: ".55em", padding: ".2em .8em .8em" }} aria-hidden="true">
           {Array.from({ length: 4 }, (_, i) => <span key={i} className="skel" style={{ height: "3.4em" }} />)}
         </div>}

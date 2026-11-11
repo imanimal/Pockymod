@@ -11,7 +11,7 @@ import {
   FRAMEWORKS, browse, endorseMod, errorText, fileBytes, links as linksApi, nexusUrl, openExternal, trackMod,
   type CardView, type Classification, type DetailView, type InstallRow, type ModFile, type Update,
 } from "../../lib/api";
-import { descriptionLinks, descriptionParts, descriptionText, shortDate } from "../../lib/text";
+import { descriptionLinks, descriptionParts, descriptionText, plural, shortDate } from "../../lib/text";
 import { extractCommands } from "../../lib/commands";
 import { packCommandsFor, useExtensions } from "../../lib/extensions";
 import { toast } from "../../ui/toast";
@@ -185,7 +185,7 @@ function ArchiveList({ d }: { d: DetailView }) {
     <div className="sub-h">Files in the archive</div>
     {d.fileList ? (
       <>
-        <p className="dim" style={{ fontSize: ".86em" }}>{d.fileList.length} paths{" "}
+        <p className="dim" style={{ fontSize: ".86em" }}>{plural(d.fileList.length, "path")}{" "}
           <button type="button" className="linkish" onClick={() => setShow(!show)}>{show ? "Hide" : "Show"}</button></p>
         {show && <div className="log" style={{ maxHeight: "12em" }}>{d.fileList.slice(0, 200).join("\n")}{d.fileList.length > 200 ? `\nand ${d.fileList.length - 200} more` : ""}</div>}
       </>
@@ -201,7 +201,7 @@ function Drawer(x: Parts) {
   return (
     <Module icon="library" title={m.name} count={`v${m.version}`} fill className="detail-mod" tools={<HeadKeys p={p} d={d} />}>
       {shots.length > 0 && <Veil {...veil}><MediaStage items={shots} /></Veil>}
-      <div className="m-meta" style={{ marginTop: ".6em" }}><span>{m.author ?? m.uploader?.name}</span><span>{m.category}</span><span>Updated {shortDate(m.updatedAt)}</span></div>
+      <div className="m-meta" style={{ marginTop: ".6em" }}>{(m.author ?? m.uploader?.name) && <span>{m.author ?? m.uploader?.name}</span>}<span>{m.category}</span><span>Updated {shortDate(m.updatedAt)}</span></div>
       <p style={{ margin: ".5em 0 .2em", color: "var(--text)" }}>{m.summary}</p>
       <div className="m-tags"><AiTags tags={m.tags} /><TypeTag c={d.classification} /><FrameworkTags c={d.classification} /></div>
       {commands.length > 0 && <Commands list={commands} />}
@@ -261,7 +261,7 @@ function Page(x: Parts) {
           </div>
           <Actions p={p} d={d} setD={setD} file={file} view={view} />
           <div className="sub-h">Files {archived > 0 && <span className="dim">· {archived} older on Nexus</span>}</div>
-          <FileRows files={current} fileId={fileId} setFileId={setFileId} have={p.installed ?? []} limit={30} />
+          <FileRows files={current} fileId={fileId} setFileId={setFileId} have={p.installed ?? []} limit={Infinity} />
           {file?.description && <p className="dim" style={{ fontSize: ".86em", marginTop: ".4em" }}><DescText parts={descriptionParts(file.description)} onMod={p.onOpen} /></p>}
           <Requires d={d} onOpen={p.onOpen} />
           <ArchiveList d={d} />

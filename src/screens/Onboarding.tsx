@@ -108,17 +108,17 @@ function AccountStep({ onNext }: { onNext: () => void }) {
   const save = async () => {
     if (!key || busy) return;
     setBusy(true);
-    try { const s = await nexus.setKey(key); setName(s.user?.name ?? "connected"); setPremium(!!s.user?.isPremium); setKey(""); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
+    try { const s = await nexus.setKey(key); setName(s.user?.name ?? ""); setPremium(!!s.user?.isPremium); setKey(""); } catch (e) { toast(errorText(e), true); } finally { setBusy(false); }
   };
   return (
     <Module icon="key" title="Connect Nexus Mods" band="hot" count="optional">
-      {name ? (
-        <p>Connected as <b className="hi">{name}</b> {premium ? <Pill tone="ok">Premium</Pill> : <Pill>Free</Pill>}</p>
+      {name !== null ? (
+        <p>Connected{name && <> as <b className="hi">{name}</b></>} {premium ? <Pill tone="ok">Premium</Pill> : <Pill>Free</Pill>}</p>
       ) : (
         <>
           {st?.signInAvailable ? <>
             <p>Sign in to download. Browsing works without it</p>
-            <NexusSignIn status={st} primary onDone={(s) => { setName(s.user?.name ?? "connected"); setPremium(!!s.user?.isPremium); }} />
+            <NexusSignIn status={st} primary onDone={(s) => { setName(s.user?.name ?? ""); setPremium(!!s.user?.isPremium); }} />
           </> : <p>Paste your Nexus API key to download. Browsing works without it</p>}
           {st?.signInAvailable && !useKey ? (
             <button type="button" className="linkish" style={{ marginTop: ".6em", fontSize: ".86em" }} onClick={() => setUseKey(true)}
@@ -135,7 +135,7 @@ function AccountStep({ onNext }: { onNext: () => void }) {
         </>
       )}
       <div className="actions" style={{ justifyContent: "flex-end", marginTop: ".8em" }}>
-        <Key variant={name ? "dark" : "ghost"} icon="chevron" onClick={onNext}>{name ? "Next" : "Later"}</Key>
+        <Key variant={name !== null ? "dark" : "ghost"} icon="chevron" onClick={onNext}>{name !== null ? "Next" : "Later"}</Key>
       </div>
     </Module>
   );

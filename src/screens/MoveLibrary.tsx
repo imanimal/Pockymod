@@ -13,7 +13,7 @@ export function relinkText(r: RelinkReport): string {
     r.copies && `${r.copies} kept as copies (other drive)`,
     r.changed && `${r.changed} changed in the game, left alone`,
   ].filter(Boolean);
-  return parts.length ? `Game mod files: ${parts.join(", ")}` : `All ${r.checked} game mod files linked`;
+  return parts.length ? `Game mod files: ${parts.join(", ")}` : r.checked === 0 ? "No mod files in the game to check" : r.checked === 1 ? "The game mod file is linked" : `All ${r.checked} game mod files linked`;
 }
 
 export function MoveLibraryDialog({ onClose, onMoved }: { onClose: () => void; onMoved: () => void }) {
@@ -46,7 +46,7 @@ export function MoveLibraryDialog({ onClose, onMoved }: { onClose: () => void; o
     try {
       const r = await relocate.move(check.to);
       toast(r.how === "renamed" ? `Library moved to ${check.to}`
-        : `Copied ${bytesText(r.bytes)} to ${check.to}${r.relinked ? `, ${r.relinked} game files relinked` : ""}${r.copyTurnedOn ? ". New mods will be copied" : ""}`);
+        : `Copied ${bytesText(r.bytes)} to ${check.to}${r.relinked ? `, ${r.relinked} game ${r.relinked === 1 ? "file" : "files"} relinked` : ""}${r.copyTurnedOn ? ". New mods will be copied" : ""}`);
       if (r.leftBehind) toast(`Couldn't delete part of the old folder: ${r.leftBehind}`, true);
       onMoved(); onClose();
     } catch (e) { toast(errorText(e), true); setBusy(false); }

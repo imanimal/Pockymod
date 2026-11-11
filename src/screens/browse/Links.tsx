@@ -192,8 +192,8 @@ function LinkCard({ url, labels, p, onMod, onCopy }: { url: string; labels: stri
           {p?.error && <span className="lnk-d dim">{p.error}</span>}
           <span className="lnk-m">
             {modId && p?.author && <span>by {p.author}</span>}
-            {p?.downloads != null && <span>{formatCount(p.downloads)} downloads</span>}
-            {p?.endorsements != null && <span>{formatCount(p.endorsements)} endorsements</span>}
+            {p?.downloads != null && <span>{formatCount(p.downloads)} {p.downloads === 1 ? "download" : "downloads"}</span>}
+            {p?.endorsements != null && <span>{formatCount(p.endorsements)} {p.endorsements === 1 ? "endorsement" : "endorsements"}</span>}
             {labels.length > 0 && labels.some((l) => l !== title) && <span className="lnk-w" title="Link text">“{labels.filter((l) => l !== title).slice(0, 2).join("”, “")}”</span>}
             {!modId && path && path.length > 1 && <span className="mono lnk-p">{path}</span>}
           </span>

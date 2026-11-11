@@ -494,7 +494,7 @@
 .endorse-star { color: var(--sel, var(--acc2)); font-size: 1.2em; }
 
 /* the app's own hover tips (lib/keys.ts installTips) */
-.apptip { position: fixed; z-index: 95; max-width: 26em; padding: .4em .6em; border-radius: 7px; background: var(--chrome-bg); color: var(--chrome-fg); font-size: .8em; line-height: 1.35; box-shadow: var(--drop); pointer-events: none; animation: scrimIn calc(var(--m) * 120ms + 1ms) ease-out; }
+.apptip { position: fixed; z-index: 95; max-width: 26em; white-space: pre-line; overflow-wrap: anywhere; padding: .4em .6em; border-radius: 7px; background: var(--chrome-bg); color: var(--chrome-fg); font-size: .8em; line-height: 1.35; box-shadow: var(--drop); pointer-events: none; animation: scrimIn calc(var(--m) * 120ms + 1ms) ease-out; }
 /* keyboard and controller: a clear ring on what has focus */
 html.kbd :is(button, a, input, select, textarea, [tabindex], [role="button"]):focus-visible { outline: 3px solid var(--focus, var(--acc2)); outline-offset: 2px; }
 /* the shortcuts list, and the controller's hint bar */

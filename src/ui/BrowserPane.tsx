@@ -115,7 +115,7 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
   if (!st.open) return null;
   if (st.popped || mode === "hidden") return (
     <button type="button" className="bpane-tab" onClick={() => (st.popped ? act(browserPane.pop(false)) : setMode((read(MODE) as Mode | null) === "full" ? "full" : "split"))}
-      title={st.popped ? "Bring the Nexus window back in" : "Show the Nexus pane"}>
+      title={st.popped ? "Bring the Nexus window back in" : "Show the Nexus pane (Ctrl+B)"}>
       <Icon name="web" size={9} /><span>{st.popped ? "Nexus window" : "Nexus"}</span>{waiting && <span className="led wait" aria-label="Waiting for your click" />}
     </button>
   );
@@ -139,7 +139,7 @@ export function BrowserPane({ waiting }: { waiting?: boolean }) {
         <Key size="sm" variant="ghost" icon="max" latched={mode === "full"} onClick={() => setMode(mode === "full" ? "split" : "full")}
           aria-label={mode === "full" ? "Beside the app" : "Over the whole view"} title={mode === "full" ? "Beside the app" : "Over the whole view"} />
         <Key size="sm" variant="ghost" icon="share" onClick={() => act(browserPane.pop(true))} aria-label="Pop out" title="Pop out into its own window" />
-        <Key size="sm" variant="ghost" icon="minus" onClick={() => setMode("hidden")} aria-label="Hide" title="Hide behind a tab" />
+        <Key size="sm" variant="ghost" icon="minus" onClick={() => setMode("hidden")} aria-label="Hide" title="Hide behind a tab (Ctrl+B)" />
         <Key size="sm" variant="ghost" icon="x" onClick={() => act(browserPane.close())} aria-label="Close the Nexus pane" title="Close" />
       </div>
       <div className="bpane-view" ref={view}>

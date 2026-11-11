@@ -168,8 +168,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
 
   const handleOutcome = (o: InstallOutcome, name: string, download?: Extract<Pending, { kind: "review" }>["download"]) => {
     if (o.status === "installed") {
-      toast(`Installed ${name}${o.deploy.outcome === "deployed" && o.deploy.copied ? ` (${plural(o.deploy.copied, "file")} copied)` : ""}`);
-      if (o.needsRedmodDeploy) toast("REDmod. Deploy it from Load order");
+      toast(`Installed ${name}${o.deploy.outcome === "deployed" && o.deploy.copied ? ` (${plural(o.deploy.copied, "file")} copied)` : ""}${o.needsRedmodDeploy ? ". Deploy REDmods from Load order" : ""}`);
     } else if (o.status === "needsReview" && download) setPending({ kind: "review", download, plan: o.plan });
     else if (o.status === "staged") onDeployOutcome(o.installId, name, o.deploy);
     else if (o.status === "needsChoices" && download) setChoices({ request: download, fomod: o.fomod, defaults: o.defaults });
@@ -266,8 +265,8 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
             <div className="rows" style={{ marginTop: ".5em" }}>
               {unm.copies.length > 0 && (
                 <div className="row" style={{ cursor: "default" }}>
-                  <span className="m-main"><span className="m-t">{plural(unm.copies.length, "leftover copy", "leftover copies")} of Vortex mods</span>
-                    <span className="m-meta"><span title={unm.copies.slice(0, 12).map((c) => `${c[1]} (copy of ${c[2]})`).join("\n")}>for example {unm.copies.slice(0, 3).map((c) => c[2]).join(", ")}</span><span>safe to remove, Vortex has its own</span></span></span>
+                  <span className="m-main"><span className="m-t">{unm.copies.length === 1 ? "1 leftover copy of a Vortex mod" : `${unm.copies.length} leftover copies of Vortex mods`}</span>
+                    <span className="m-meta"><span title={unm.copies.slice(0, 12).map((c) => `${c[1]} (copy of ${c[2]})`).join("\n")}>{unm.copies.length > 1 ? "for example " : ""}{unm.copies.slice(0, 3).map((c) => c[2]).join(", ")}</span><span>safe to remove, Vortex has its own</span></span></span>
                   <span className="m-side"><Key size="sm" icon="trash" disabled={busy} busy={at("unmCopies")} onClick={() => run(async () => { await ops.remove(rowsOf(copies)); toast(`Removed ${plural(copies.length, "leftover copy", "leftover copies")}`); }, "unmCopies")}
                     title="The Vortex originals stay">Remove {unm.copies.length}</Key></span>
                 </div>
@@ -475,7 +474,7 @@ export function Library({ updates, onExisting }: { updates?: Update[]; onExistin
           </>}>
           {!trashOpen ? (
             <button type="button" className="linkish fold-line" onClick={() => setTrashOpen(true)}>
-              {trash.slice(0, 3).map((t) => t.name).join(", ")}{trash.length > 3 ? ` and ${trash.length - 3} more` : ""}, kept 14 days
+              {trash.slice(0, 3).map((t) => t.name).join(", ")}{trash.length > 3 ? ` and ${trash.length - 3} more` : ""}, kept up to 14 days
             </button>
           ) : (
             <>
@@ -559,7 +558,7 @@ function ago(unix: number): string {
   if (s < 90) return "just now";
   if (s < 3600) return `${Math.round(s / 60)} min ago`;
   if (s < 86400) return `${Math.round(s / 3600)} h ago`;
-  return `${Math.round(s / 86400)} days ago`;
+  return `${plural(Math.round(s / 86400), "day")} ago`;
 }
 
 function GroupManager({ custom, onChange }: { custom: string[]; onChange: () => void }) {

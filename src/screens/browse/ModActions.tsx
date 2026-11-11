@@ -10,7 +10,7 @@ import { Key, Switch } from "../../ui/pocket";
 import { Popover } from "../../ui/Popover";
 import { toast } from "../../ui/toast";
 import {
-  browse, endorseMod, errorText, groups as groupsApi, installerOptions, library, nexusPages, nexusUrl, openExternal, profiles, queue, trackMod,
+  browse, endorseMod, errorText, groups as groupsApi, installerOptions, library, nexusPages, nexusUrl, openExternal, profiles, queue, queueMod, trackMod,
   updates as updatesApi, type ChoicesNeeded, type InstallRow, type Membership, type ModFile, type QueueSnapshot, type Update,
 } from "../../lib/api";
 import { installPrefs } from "../../lib/prefs";
@@ -170,7 +170,7 @@ export function ManageMenu({ mod, rows, updates, onClose, onDetail, onLibrary, o
                 <Switch checked={r.enabled} disabled={working} onChange={(v) => run("switch", () => ops.setEnabled([r], v))}>{r.enabled ? "On" : "Off"}</Switch>
               </div>
               <div className="actions">
-                {u && nexus && <Key size="sm" icon="downloads" busy={busy === `update${r.id}`} disabled={working} onClick={() => run(`update${r.id}`, async () => { await (u.fileId ? queue.add(u.modId, u.fileId, true) : queue.add(r.modId, r.fileId, true)); toast(`${r.name} ${u.latest} queued`); }, true)}>Update to {u.latest}</Key>}
+                {u && nexus && <Key size="sm" icon="downloads" busy={busy === `update${r.id}`} disabled={working} onClick={() => run(`update${r.id}`, async () => { await (u.fileId ? queue.add(u.modId, u.fileId, true) : queueMod(r.modId)); toast(`${r.name} ${u.latest} queued`); }, true)}>Update to {u.latest}</Key>}
                 {u && <Key size="sm" variant="ghost" busy={busy === `skip${r.id}`} disabled={working} title="Do not offer this version again" onClick={() => run(`skip${r.id}`, async () => { await updatesApi.skip(u.modId, u.latest); toast(`Skipped ${r.name} ${u.latest}`); })}>Skip {u.latest}</Key>}
                 {r.enabled && r.deployedFiles === 0 && <Key size="sm" icon="install" busy={busy === `deploy${r.id}`} disabled={working} onClick={() => run(`deploy${r.id}`, async () => {
                   const d = await library.deploy(r.id, { takeConflicts: false, allowCopy: false });

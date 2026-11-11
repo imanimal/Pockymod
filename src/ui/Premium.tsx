@@ -45,9 +45,10 @@ export function getPremium(from: string) {
   watching = stop;
 }
 
-/** The strip, for `clicks` Nexus pages a free account is about to click through. Renders nothing for Premium,
+/** The strip, for `clicks` Nexus pages a free account is about to click through; `what` finishes the sentence
+ *  ("this queue", "these mods"). Renders nothing for Premium,
  *  without an account, under two clicks, while snoozed or when turned off in Settings. */
-export function PremiumNote({ clicks, what = "these", from }: { clicks: number; what?: string; from: string }) {
+export function PremiumNote({ clicks, what, from }: { clicks: number; what: string; from: string }) {
   const [free, setFree] = useState(false);
   const [off, setOff] = useState(true);
   const [snoozed, setSnoozed] = useState(() => read(SNOOZE) > Date.now());

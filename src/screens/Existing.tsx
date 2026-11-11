@@ -70,7 +70,7 @@ export function ExistingBody({ onDone, compact, quiet }: { onDone: (tracked: num
   return (
     <>
       <div className="lcds">
-        {v && <Lcd size="sm" label="From Vortex" value={String(newVortex).padStart(2, "0")} sub={`${v.deployed} in the game, ${v.mods - v.deployed} turned off`} />}
+        {v && <Lcd size="sm" label="From Vortex" value={String(newVortex).padStart(2, "0")} sub={v.alreadyTracked ? `${v.alreadyTracked} already in Library` : `${v.deployed} in the game, ${v.mods - v.deployed} turned off`} />}
         <Lcd size="sm" label="Put in by hand" value={String(scan.found.length).padStart(2, "0")} sub="no manager" />
       </div>
       {v && newVortex > 0 && <>
@@ -97,7 +97,7 @@ export function profilesText(r: ProfileImport): string {
   const made = r.profiles.filter((p) => p.created).length;
   const names = r.profiles.map((p) => p.name).join(", ");
   const moved = r.deployed + r.removed;
-  return `Vortex profiles added: ${names}${made < r.profiles.length ? ` (${made} new, ${r.profiles.length - made} updated)` : ""}${moved ? `. ${moved} ${moved === 1 ? "mod" : "mods"} changed in the game` : ""}${r.notDeployed.length ? `. ${r.notDeployed.length} need a decision in Library` : ""}`;
+  return `Vortex profiles added: ${names}${made < r.profiles.length ? ` (${made} new, ${r.profiles.length - made} updated)` : ""}${moved ? `. ${moved} ${moved === 1 ? "mod" : "mods"} changed in the game` : ""}${r.notDeployed.length ? `. ${r.notDeployed.length} ${r.notDeployed.length === 1 ? "needs" : "need"} a decision in Library` : ""}`;
 }
 
 export function ExistingDialog({ onClose }: { onClose: () => void }) {

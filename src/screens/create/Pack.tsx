@@ -1,12 +1,13 @@
 // Check a mod folder or archive the way players' managers will see it, and pack it into a clean zip.
 import { Key, Lcd, Module, Pill, Tag, useProgress } from "../../ui/pocket";
 import { creator } from "../../lib/api";
+import { plural } from "../../lib/text";
 import { fileName, type Pack } from "./shared";
 
 export function CheckModule({ pack, compact }: { pack: Pack; compact?: boolean }) {
   const c = pack.check;
   return (
-    <Module icon="file" title="Check your mod" count={c ? `${c.files} files` : pack.busy ? "checking" : undefined}>
+    <Module icon="file" title="Check your mod" count={c ? plural(c.files, "file") : pack.busy ? "checking" : undefined}>
       <div className="actions">
         <Key icon="folder" onClick={() => void pack.pick(true)} busy={pack.busy === "folder"} disabled={!!pack.busy}>Choose a folder</Key>
         <Key variant="ghost" icon="file" onClick={() => void pack.pick(false)} busy={pack.busy === "archive"} disabled={!!pack.busy}>Choose an archive</Key>
@@ -39,7 +40,7 @@ export function PackModule({ pack, primary }: { pack: Pack; primary?: boolean })
       : !pack.check.plan.files.length ? "Nothing to pack, no file has a place in the game" : null;
   const packed = useProgress(pack.busy === "pack", creator.onPack);
   return (
-    <Module icon="install" title="Pack it" count={pack.zip ? "packed" : undefined}>
+    <Module icon="install" title="Pack it" count={pack.isFolder && pack.zip ? "packed" : undefined}>
       <div className="fgrid">
         <span className="lab">Name</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={pack.name} onChange={(e) => pack.set({ name: e.target.value })} aria-label="Mod name" /></label>
         <span className="lab">Version</span><label className="fbox" style={{ flex: "none" }}><input className="finput" value={pack.version} onChange={(e) => pack.set({ version: e.target.value })} aria-label="Version" /></label>

@@ -62,7 +62,7 @@ export function DropZone({ onChoices }: { onChoices: (c: ChoicesNeeded) => void 
 
 function report(o: InstallOutcome, name: string, request: ChoicesNeeded["request"], onChoices: (c: ChoicesNeeded) => void) {
   switch (o.status) {
-    case "installed": toast(`Installed ${name}`); if (o.needsRedmodDeploy) toast("REDmod, deploy it from Load order"); return;
+    case "installed": toast(`Installed ${name}${o.needsRedmodDeploy ? ". Deploy REDmods from Load order" : ""}`); return;
     case "needsChoices": onChoices({ request, fomod: o.fomod, defaults: o.defaults }); return;
     case "needsReview": toast(`${name} has files with no known place. Finish it in Library`, true); return;
     case "staged": toast(`${name} clashes with other mods. Sort it in Library`, true); return;

@@ -274,7 +274,7 @@ function MarketGrid({ kind, entries, loaded, installedVersion, busy, onInstall, 
                 <span className="acard-f">
                   {have === undefined ? <Key size="sm" icon="install" busy={working} disabled={dropping} onClick={() => onInstall(e)}>Install</Key>
                     : upd ? <Key size="sm" icon="downloads" busy={working} disabled={dropping} onClick={() => onInstall(e)}>Update to {e.version}</Key>
-                      : <span className="dim acard-have"><Icon name="check" size={9} /> v{have || e.version} installed</span>}
+                      : <span className="dim acard-have"><Icon name="check" size={9} /> {have ? `v${have} installed` : "Installed"}</span>}
                   <span className="sp" />
                   {have !== undefined && <Key size="sm" variant="ghost" icon="trash" busy={dropping} disabled={working} onClick={() => onRemove(e)} aria-label={`Remove ${e.name}`} title="Remove" />}
                 </span>
@@ -371,7 +371,7 @@ function Installed({ loaded, ext, themes, versions, index, updates, busy, allP, 
                     {(x.status === "on" || x.status === "off") && <Switch checked={x.status === "on"} disabled={working}
                       onChange={(v) => setExtensionEnabled(x.id, v).then(() => toast(`${m?.name} ${v ? "on" : "off"}`)).catch((e) => toast(errorText(e), true))}>
                       <span className="sr-only">{m?.name} on</span></Switch>}
-                    <Key size="sm" variant="ghost" icon="chevron" className={isOpen ? "rot-key" : ""} onClick={() => toggleOpen(x.id)} aria-expanded={isOpen}>Details</Key>
+                    {m && k && <Key size="sm" variant="ghost" icon="chevron" className={isOpen ? "rot-key" : ""} onClick={() => toggleOpen(x.id)} aria-expanded={isOpen}>Details</Key>}
                   </span>
                 </div>
                 {x.status === "broken" && <div className="note bad ext-errs-n">{x.errors.slice(0, 4).map((e) => <div key={e} className="mono">{e}</div>)}</div>}
@@ -387,7 +387,7 @@ function Installed({ loaded, ext, themes, versions, index, updates, busy, allP, 
                           <span className="m-main"><span className="m-t">{t.name}</span>
                             <span className="dim mono ext-path">{t.path ? `Game folder\\${t.path.replace(/\//g, "\\")}` : x.state.toolPaths[t.id] ?? "Not chosen yet"}</span></span>
                           {t.pick && <Key size="sm" icon="folder" onClick={() => void pickTool(x, t)}>
-                            {x.state.toolPaths[t.id] ? "Change" : `Choose ${t.pick.file ?? "program"}`}</Key>}
+                            {x.state.toolPaths[t.id] ? "Change" : `Choose ${t.pick.file ?? "a program"}`}</Key>}
                           {t.download && <Key size="sm" variant="ghost" icon="web" disabled={x.status !== "on"} title={x.status === "on" ? t.download : "Turn the extension on to open its links"} onClick={() => extensionsApi.openLink(x.id, `tool:${t.id}`).catch((e) => { if (!("__TAURI_INTERNALS__" in window)) window.open(t.download, "_blank", "noopener,noreferrer"); else toast(errorText(e), true); })}>Get it</Key>}
                         </div>
                       ))}

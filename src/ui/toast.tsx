@@ -70,7 +70,7 @@ export function Toasts() {
           <Icon name={t.bad ? "warn" : t.action?.label === "Redo" ? "redo" : "check"} />
           <span className="tt" key={t.text}>{t.text}</span>
           {t.action && <button type="button" className="toast-act" onClick={() => void t.action!.run()}>{t.action.label}</button>}
-          <button type="button" className="toast-x" aria-label="Dismiss" onClick={() => { live.delete(t.id); setList((l) => l.filter((x) => x.id !== t.id)); }}><Icon name="x" size={9} /></button>
+          <button type="button" className="toast-x" aria-label="Dismiss" title="Dismiss" onClick={() => { live.delete(t.id); setList((l) => l.filter((x) => x.id !== t.id)); }}><Icon name="x" size={9} /></button>
           <i key={`${t.text}-${t.ms}`} className="t-life" style={{ animationDuration: `${t.ms}ms` }} aria-hidden="true" />
         </div>
       ))}

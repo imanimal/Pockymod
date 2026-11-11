@@ -71,7 +71,7 @@ export function ReviewDialog({ manifest: m, text, mode, state, fromMarket, warni
           {picks.map((t) => (
             <div key={t.id} className="ext-pick">
               <span className="m-main"><span className="m-t">{t.name}</span><span className="dim mono ext-path">{paths[t.id] ?? "Not chosen, can be set later"}</span></span>
-              <Key size="sm" icon="folder" onClick={() => choose(t.id, t.pick?.title ?? `Find ${t.pick?.file ?? t.name}`)}>{paths[t.id] ? "Change" : `Choose ${t.pick?.file ?? "program"}`}</Key>
+              <Key size="sm" icon="folder" onClick={() => choose(t.id, t.pick?.title ?? `Find ${t.pick?.file ?? t.name}`)}>{paths[t.id] ? "Change" : `Choose ${t.pick?.file ?? "a program"}`}</Key>
             </div>
           ))}
         </div>

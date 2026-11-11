@@ -118,7 +118,7 @@ export function PlayMenu({ onLaunch, disabled }: { onLaunch: (o: LaunchChoice) =
         </div>
       )}
       {cmds && (
-        <Dialog icon="file" title="Console commands" count={`${commandPacks.length} packs`} onClose={() => setCmds(false)}>
+        <Dialog icon="file" title="Console commands" count={plural(commandPacks.length, "pack")} onClose={() => setCmds(false)}>
           <p className="dim">Copy one, paste it in the CET console</p>
           {commandPacks.map((p) => (
             <div key={`${p.extId}/${p.id}`} className="stack" style={{ gap: ".3em" }}>

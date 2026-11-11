@@ -208,7 +208,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
     ...q.excludeTags.map((t) => ({ label: `not #${t}`, off: () => set({ excludeTags: q.excludeTags.filter((x) => x !== t) }) })),
     ...(aiHide !== "show" ? [{ label: aiHideText(aiHide), off: () => void setAiPref("show").catch((e) => toast(errorText(e), true)) }] : []),
     ...(since !== "any" ? [{ label: `Updated in the last ${since === "7" ? "week" : since === "30" ? "month" : "year"}`, off: () => setSince("any") }] : []),
-    ...(dl !== "any" ? [{ label: `${formatCount(Number(dl))}+ downloads`, off: () => setDl("any") }] : []),
+    ...(dl !== "any" ? [{ label: `${Number(dl) / 1000}k+ downloads`, off: () => setDl("any") }] : []),
     ...(size !== "any" ? [{ label: `Under ${size === "1024" ? "1 GB" : `${size} MB`}`, off: () => setSize("any") }] : []),
     ...(local.downloaded !== null ? [{ label: local.downloaded ? "Downloaded" : "Not downloaded", off: () => setLocal({ ...local, downloaded: null }) }] : []),
     ...(local.showHidden ? [{ label: "Showing hidden", off: () => setLocal({ ...local, showHidden: false }) }] : []),
@@ -316,7 +316,7 @@ export function Browse({ onInstall, onOpenPage, updates, onLibrary }: {
           ) : (
             <>
               <div className="results-bar">
-                <b className="hi">{res && !(busy && !more) ? `${formatCount(res.total)} mods` : "Searching"}</b>
+                <b className="hi">{res && !(busy && !more) ? `${formatCount(res.total)} ${res.total === 1 ? "mod" : "mods"}` : "Searching"}</b>
                 {res?.fromCache && <span className="dim">· from the cache</span>}
                 {active.map((a) => <button key={a.label} type="button" className="chip on" onClick={a.off}>{a.label}<span className="x">×</span></button>)}
                 {active.length > 1 && <Key size="sm" variant="ghost" onClick={clearAll}>Clear all</Key>}

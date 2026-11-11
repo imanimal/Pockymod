@@ -37,7 +37,7 @@ export async function remove(rows: InstallRow[]) {
   const trashIds = async () => (await library.trash()).filter((t) => gone.has(t.installId)).map((t) => t.id);
   record({
     label: `Removed ${named(rows)}`,
-    undo: async () => { const t = await trashIds(); if (!t.length) throw new Error("they are no longer in Recently removed"); await library.restore(t); },
+    undo: async () => { const t = await trashIds(); if (!t.length) throw new Error(rows.length === 1 ? "It isn't in Recently removed any more" : "They aren't in Recently removed any more"); await library.restore(t); },
     redo: () => bulk(ids, "uninstall"),
   });
 }
@@ -50,7 +50,7 @@ export async function moveToGroup(rows: InstallRow[], group: string | null) {
   const before = new Map<string | null, number[]>();
   for (const r of rows) { const g = r.customGroup ? r.group : null; before.set(g, [...(before.get(g) ?? []), r.id]); }
   record({
-    label: group ? `Moved ${named(rows)} to ${group}` : `Put ${named(rows)} back in their own groups`,
+    label: group ? `Moved ${named(rows)} to ${group}` : `Put ${named(rows)} back in ${rows.length === 1 ? "its own group" : "their own groups"}`,
     undo: async () => { for (const [g, list] of before) await groups.set(list, g); },
     redo: () => groups.set(ids, group),
   });

@@ -163,8 +163,8 @@ export function App() {
     if (p.confirm || p.requirements === "ask") { setInstalling({ modId, fileId, name }); return; }
     try {
       const snap = await queue.add(modId, fileId, p.requirements === "always");
-      const n = snap.items.filter((i) => i.state.state === "waiting" || i.state.state === "needsClick").length;
-      toast(`Queued ${name}${n > 1 ? ` and ${n - 1} required` : ""}`);
+      const extra = snap.items.filter((i) => i.requiredBy === name && ["waiting", "needsClick", "downloading"].includes(i.state.state)).length;
+      toast(`Queued ${name}${extra ? ` and ${extra} required` : ""}`);
     } catch (e) { toast(errorText(e), true); }
   };
 

@@ -40,7 +40,7 @@ export function GameFolders() {
     : <span className="skel skel-line" style={{ flex: 1 }} aria-hidden="true" />;
 
   return (
-    <Module icon="folder" title="Game and mod folders" count={p ? (p.gameLooksRight ? "game found" : "not set") : undefined}>
+    <Module icon="folder" title="Game and mod folders" count={p ? (p.gameLooksRight ? "game found" : p.gameDir ? "wrong folder" : "not set") : undefined}>
       <div className="fgrid">
         <span className="lab">Cyberpunk 2077</span>
         <div className="actions" style={{ flexWrap: "nowrap" }}>
@@ -93,7 +93,7 @@ export function GameFolders() {
 
       <div className="sub-h">Downloaded archives</div>
       <div className="actions">
-        {usage && <span className="dim" style={{ fontSize: ".88em" }}>{usage.files} archives, {bytesText(usage.bytes)} · {usage.installedFiles} installed ({bytesText(usage.installedBytes)})</span>}
+        {usage && <span className="dim" style={{ fontSize: ".88em" }}>{usage.files} {usage.files === 1 ? "archive" : "archives"}, {bytesText(usage.bytes)} · {usage.installedFiles} installed ({bytesText(usage.installedBytes)})</span>}
         {usage && usage.installedFiles > 0 && <Key size="sm" icon="trash" disabled={busy} busy={working === "cleanup"} title="Their mods stay installed"
           onClick={() => run("cleanup", async () => { const b = await downloadsCleanup(); toast(`Freed ${bytesText(b)}`); setUsage(await downloadsUsage()); })}>Delete installed archives</Key>}
       </div>

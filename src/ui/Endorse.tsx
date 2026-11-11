@@ -89,7 +89,7 @@ export function useAfterPlayNudge() {
       endorse.status().then((s) => {
         if (!s.hasKey || s.candidates.length === 0) return;
         write(ASKED, Date.now());
-        toast(`Endorse the ${s.candidates.length} mods you played with?`, false, { label: "Endorse all", run: () => void endorseAll(s.candidates) });
+        toast(s.candidates.length === 1 ? "Endorse the mod you played with?" : `Endorse the ${s.candidates.length} mods you played with?`, false, { label: "Endorse all", run: () => void endorseAll(s.candidates) });
       }).catch(() => {});
     };
     window.addEventListener("focus", h);

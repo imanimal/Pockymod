@@ -7,7 +7,7 @@ import { Chip, Empty, Key, Lcd, Module, Pill, SearchField, Seg, Switch, Veil, by
 import { held } from "../lib/tauri";
 import { useAdult } from "../lib/prefs";
 import {
-  collections, errorText, links as linksApi, nexusPages, nexusUrl, openExternal, pickCollectionFile, pickSavePath, settings,
+  collections, errorText, links as linksApi, nexus, nexusPages, nexusUrl, openExternal, pickCollectionFile, pickSavePath, settings,
   type CollectionCard, type CollectionCheck, type CollectionsPage, type LocalCollection,
 } from "../lib/api";
 import { toast } from "../ui/toast";
@@ -102,7 +102,7 @@ function NexusCollections({ onQueued }: { onQueued: () => void }) {
               <p style={{ fontSize: ".88em", margin: ".3em 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.summary}</p>
               <div className="actions">
                 {r?.gameVersions.map((g) => <Pill key={g.reference}>{g.reference}</Pill>)}
-                <span className="mono dim" style={{ fontSize: ".78em" }}>★ {formatCount(c.endorsements)} · ↓ {formatCount(c.totalDownloads)} · {r ? bytesText(r.totalSize) : ""}</span>
+                <span className="mono dim" style={{ fontSize: ".78em" }}>★ {formatCount(c.endorsements)} · ↓ {formatCount(c.totalDownloads)}{r ? ` · ${bytesText(r.totalSize)}` : ""}</span>
               </div>
             </Module>
             </div>
@@ -133,6 +133,8 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
   const [c, setC] = useState<CollectionCheck | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [optional, setOptional] = useState(false);
+  const [premium, setPremium] = useState(false);
+  useEffect(() => { nexus.status().then((s) => setPremium(!!s.user?.isPremium)).catch(() => {}); }, []);
   const [busy, setBusy] = useState(false);
   const [tries, setTries] = useState(0);
   // how many of its files have been looked up on Nexus so far
@@ -146,10 +148,12 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tries]);
+  // what Install queues: missing mods (optional ones only when asked) and removed ones that have a replacement
+  const toQueue = c ? c.entries.filter((e) => e.status !== "installed" && (optional || !e.optional) && (e.status !== "unavailable" || e.replacement)).length : 0;
   const install = async () => {
     if (!c) return;
     setBusy(true);
-    try { await collections.install(c, optional); toast(`${c.name} queued, ${plural(c.missing, "mod")}`); onQueued(); } catch (e) { toast(errorText(e), true); setBusy(false); }
+    try { await collections.install(c, optional); toast(`${c.name} queued, ${plural(toQueue, "mod")}`); onQueued(); } catch (e) { toast(errorText(e), true); setBusy(false); }
   };
   const copy = (url: string) => navigator.clipboard.writeText(url).then(() => toast("Link copied")).catch(() => toast("Couldn't copy", true));
   const shown = (all ? c?.entries : c?.entries.filter((e) => e.status !== "installed")) ?? [];
@@ -160,7 +164,7 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
       {c && <>
         <div className="lcds">
           <Lcd size="sm" label="Missing" value={String(c.missing).padStart(2, "0")} sub={`${c.installed} installed`} />
-          <Lcd size="sm" label="Needs your click" value={String(c.needsClick).padStart(2, "0")} tone={c.needsClick ? "hot" : "ok"} sub={c.needsClick ? "Free account" : "Automatic"} />
+          <Lcd size="sm" label="Needs your click" value={String(c.needsClick).padStart(2, "0")} tone={c.needsClick ? "hot" : "ok"} sub={c.needsClick ? (premium ? "Manual downloads" : "Free account") : "Automatic"} />
           <Lcd size="sm" label="Unavailable" value={String(c.unavailable).padStart(2, "0")} tone={c.unavailable ? "bad" : "ok"} sub="Removed on Nexus" />
           <Lcd size="sm" label="Download" value={bytesText(c.downloadBytes).split(" ")[0]} unit={bytesText(c.downloadBytes).split(" ")[1]} />
         </div>
@@ -176,10 +180,10 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
             {c.manifest.wins.length > 0 && <>{plural(c.manifest.wins.length, "file rule")}</>}</p>
         )}
         {c.manifest && c.manifest.conflicts.length > 0 && (
-          <div className="note warn">Marked incompatible by the curator {c.manifest.conflicts.slice(0, 4).map(([a, b]) => `${nameOf(c, a)} + ${nameOf(c, b)}`).join(", ")}</div>
+          <div className="note warn">Marked incompatible by the curator: {c.manifest.conflicts.slice(0, 4).map(([a, b]) => `${nameOf(c, a)} + ${nameOf(c, b)}`).join(", ")}</div>
         )}
         {c.needsClick > 20 && <div className="note warn">{c.needsClick} clicks on Nexus, one page at a time</div>}
-        <PremiumNote clicks={c.needsClick} from="collection" />
+        <PremiumNote clicks={c.needsClick} what="this collection" from="collection" />
         <div className="rows" style={all ? undefined : { maxHeight: "16em", overflow: "auto" }}>
           {shown.slice(0, all ? 400 : 80).map((e) => (
             <div key={`${e.modId}-${e.fileId}`} className={`row${e.status === "unavailable" && !e.replacement ? " off" : ""}`}>
@@ -218,7 +222,7 @@ function CheckBody({ load, onClose, onQueued, all }: { load: () => Promise<Colle
         <div className="actions" style={{ justifyContent: "flex-end" }}>
           {c.entries.some((e) => e.optional) && <Switch checked={optional} onChange={setOptional}>Include optional mods</Switch>}
           {onClose && <Key variant="ghost" onClick={onClose}>Cancel</Key>}
-          <Key variant="primary" icon="install" busy={busy} disabled={c.missing === 0} onClick={install}>{c.missing ? `Install ${plural(c.missing, "mod")}` : "All installed"}</Key>
+          <Key variant="primary" icon="install" busy={busy} disabled={toQueue === 0} onClick={install}>{toQueue ? `Install ${plural(toQueue, "mod")}` : c.missing || c.unavailable ? "Nothing to install" : "All installed"}</Key>
         </div>
       </>}
     </>

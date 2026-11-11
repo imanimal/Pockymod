@@ -59,7 +59,7 @@ export function LoadOrder() {
   return (
     <div className="grid2 lo" style={{ alignItems: "start" }}>
       <div className="stack">
-        <Module icon="loadorder" title="REDmod deploy" count={`${redmods.filter((r) => r.enabled).length} REDmods`}>
+        <Module icon="loadorder" title="REDmod deploy" count={plural(redmods.filter((r) => r.enabled).length, "REDmod")}>
           <p>Run after adding, removing or reordering REDmods</p>
           <div className="actions" style={{ margin: ".7em 0" }}>
             <Key variant="primary" icon="play" disabled={busy || redmods.length === 0} busy={working === "deploy"} title={redmods.length ? undefined : "No REDmods installed"}
@@ -103,7 +103,7 @@ export function LoadOrder() {
             <div className="actions" style={{ marginTop: ".5em" }}>
               <Key size="sm" variant="ghost" icon="user" disabled={busy} busy={working === "vortex"} onClick={() => run("vortex", async () => { const r = await vortexProfiles.import(); toast(profilesText(r)); loadVx(); })}
                 title={`${vx.profiles.map((p) => p.name).join(", ")}, with the same mods on`}>
-                {vx.imported ? "Sync with Vortex's profiles again" : `Bring in Vortex's ${vx.profiles.length} profiles`}</Key>
+                {vx.imported ? "Sync with Vortex's profiles again" : vx.profiles.length === 1 ? "Bring in Vortex's profile" : `Bring in Vortex's ${vx.profiles.length} profiles`}</Key>
             </div>
           )}
         </Module>

@@ -45,7 +45,7 @@ export function InstallDialog({ modId, fileId, name, premium, onClose, onQueued 
           <Lcd size="sm" label="Download" value={bytesText(bytes).split(" ")[0]} unit={bytesText(bytes).split(" ")[1]} />
         </div>
         {!premium && clicks > 0 && <div className="note warn">Press Mod Manager Download on each page as it opens</div>}
-        {!premium && <PremiumNote clicks={clicks} from="install" />}
+        {!premium && <PremiumNote clicks={clicks} what="these mods" from="install" />}
         <div className="rows">
           {chosen.map((i) => (
             <div key={`${i.modId}-${i.fileId}`} className="row">

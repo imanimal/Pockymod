@@ -48,13 +48,13 @@ export function Downloads({ snap }: { snap: QueueSnapshot | null }) {
 
       {waiting && (
         <Module icon="downloads" title="Download next" count={waiting.modName} band="hot">
-          <p>Press <b className="hi">Mod Manager Download</b> on the Nexus page for <b className="hi">{waiting.fileName}</b></p>
+          <p>{waiting.manualOnly ? <>Download <b className="hi">{waiting.fileName}</b> from its Nexus page</> : <>Press <b className="hi">Mod Manager Download</b> on the Nexus page for <b className="hi">{waiting.fileName}</b></>}</p>
           <div className="actions" style={{ marginTop: ".7em" }}>
             <Key variant="dark" icon="web" busy={showing} onClick={() => runShow(() => queue.showPage(waiting.id))}>Show the Nexus page</Key>
             <Key variant="ghost" busy={skipping} onClick={() => runSkip(() => queue.remove(waiting.id))} title="Take it out of the queue">Skip this mod</Key>
           </div>
           {waiting.manualOnly && <div className="note warn" style={{ marginTop: ".7em" }}>Not a .zip, .7z or .rar. Install it by hand from its page</div>}
-          {!s?.premium && <div style={{ marginTop: ".7em" }}><PremiumNote clicks={s?.needsClick ?? 0} what="the" from="downloads" /></div>}
+          {!s?.premium && <div style={{ marginTop: ".7em" }}><PremiumNote clicks={s?.needsClick ?? 0} what="this queue" from="downloads" /></div>}
         </Module>
       )}
 

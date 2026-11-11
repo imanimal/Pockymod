@@ -228,7 +228,7 @@ function ThemeMaker({ onDone }: { onDone: () => void }) {
         <span className="pt"><Icon name="plus" />Make your own</span>
         <span className="cnt">from {base.name}</span>
         <span className="sp" />
-        <Key variant="ghost" size="sm" icon="x" onClick={cancel} aria-label="Close without saving" />
+        <Key variant="ghost" size="sm" icon="x" onClick={cancel} aria-label="Close without saving" title="Close without saving" />
       </header>
       <div className="pb">
         <div className="fgrid appear-grid">
@@ -268,10 +268,9 @@ function TextSize() {
   const [px, setPx] = useState(getTextSize());
   useEffect(() => { const h = (e: Event) => setPx((e as CustomEvent<number>).detail); window.addEventListener("pm-text-size", h); return () => window.removeEventListener("pm-text-size", h); }, []);
   const opts = [{ value: "13", label: "Small" }, { value: "14", label: "Normal" }, { value: "16", label: "Large" }, { value: "18", label: "Larger" }];
-  const value = opts.some((o) => Number(o.value) === px) ? String(px) : "14";
   return (
     <span className="actions" style={{ gap: ".5em" }}>
-      <span title="Ctrl+= and Ctrl+-, Ctrl+0 resets"><Seg label="Text size" value={value} onChange={(v) => { setTextSize(Number(v)); setPx(Number(v)); }} options={opts} /></span>
+      <span title="Ctrl+= and Ctrl+-, Ctrl+0 resets"><Seg label="Text size" value={String(px)} onChange={(v) => { setTextSize(Number(v)); setPx(Number(v)); }} options={opts} /></span>
     </span>
   );
 }

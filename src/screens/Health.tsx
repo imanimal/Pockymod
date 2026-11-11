@@ -117,7 +117,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
   const fixable = unique(r.issues.filter((i) => auto(i) && i.severity !== "info").map((i) => i.fix!));
   const fwFixes = unique(r.issues.filter((i) => i.area === "frameworks" && (i.fix?.kind === "updateMod" || i.fix?.kind === "installMod")).map((i) => i.fix!));
   // with two or more fixes the orange key is Fix all; with one it is that fix
-  const first = fixable.length > 1 ? undefined : r.issues.find((i) => i.fix && i.severity !== "info" && i.area !== "logs");
+  const first = fixable.length > 1 ? undefined : r.issues.find((i) => (fixable.length ? auto(i) : !!i.fix) && i.severity !== "info" && i.area !== "logs");
   const g = r.game;
 
   return (
@@ -143,7 +143,7 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         return (
           <Module key={a.id} icon={a.icon} title={a.title} band={bad ? "bad" : undefined} count={list.length ? `${list.length} ${list.length === 1 ? "item" : "items"}` : "ok"}
             tools={a.id === "frameworks" && fwFixes.length > 1 ? <Key size="sm" variant="dark" icon="downloads" disabled={busy} busy={working === "frameworks"} onClick={() => fixAll(fwFixes, "frameworks")}
-              title="Queue missing and outdated frameworks">{fwFixes.every((f) => f.kind === "updateMod") ? `Update all ${fwFixes.length}` : `Install and update all ${fwFixes.length}`}</Key> : undefined}>
+              title="Queue missing and outdated frameworks">{fwFixes.every((f) => f.kind === "updateMod") ? `Update all ${fwFixes.length}` : fwFixes.every((f) => f.kind === "installMod") ? `Install all ${fwFixes.length}` : `Install and update all ${fwFixes.length}`}</Key> : undefined}>
             {a.id === "frameworks" && <FrameworkTable r={r} />}
             {list.length === 0 && a.id !== "frameworks" && <p className="dim">{a.id === "redmod" ? (g?.redmodAvailable ? "Up to date" : "No REDmods") : "All good"}</p>}
             <div className="rows" style={{ marginTop: a.id === "frameworks" && list.length ? ".6em" : 0 }}>

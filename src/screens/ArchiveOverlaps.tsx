@@ -83,7 +83,7 @@ export function OverlapsModule() {
                 <span>{plural(o.files, "game file")} both change</span>
                 {o.loser.redmod && <span>REDmod</span>}
               </span>
-              <span className="logline" title={[...o.winner.archives, ...o.loser.archives].join("\n")}>{o.winner.archives.map(file).join(", ")} loads before {o.loser.archives.map(file).join(", ")}</span>
+              <span className="logline" title={[...o.winner.archives, ...o.loser.archives].join("\n")}>{o.winner.archives.map(file).join(", ")} {o.winner.archives.length > 1 ? "load" : "loads"} before {o.loser.archives.map(file).join(", ")}</span>
               {!o.loadFirst && <span className="ovhow">{o.how}</span>}
             </span>
             <span className="m-side" style={{ flexDirection: "row", alignItems: "center", gap: ".3em" }}>

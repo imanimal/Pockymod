@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Icon } from "../../ui/Icon";
 import { Key, Module, Pill, Tag, useBusy } from "../../ui/pocket";
 import { authoring, browse, settings, type MyMods } from "../../lib/api";
-import { shortDate } from "../../lib/text";
+import { plural, shortDate } from "../../lib/text";
 import { toast } from "../../ui/toast";
 import { CheckModule, PackModule } from "./Pack";
 import { copy, fileName, openNexus, type Pack } from "./shared";
@@ -85,7 +85,7 @@ export function NewMod({ pack, mine, onRefresh, onOpenMine }: { pack: Pack; mine
               pack.name && <Key size="sm" variant="ghost" icon="file" onClick={() => copy(pack.name)} aria-label="Copy the name" title="Copy" />)}
             {row("summary", "Summary", <>
               <textarea rows={3} value={draft.summary} onChange={(e) => save({ ...draft, summary: e.target.value })} aria-label="Summary" placeholder="What it does and what it needs" />
-              <span className="dim cr-count">{draft.summary.length} characters</span>
+              <span className="dim cr-count">{plural(draft.summary.length, "character")}</span>
             </>, draft.summary && <Key size="sm" variant="ghost" icon="file" onClick={() => copy(draft.summary)} aria-label="Copy the summary" title="Copy" />)}
             {row("category", "Category", (
               <select value={draft.category} onChange={(e) => save({ ...draft, category: e.target.value })} aria-label="Category"

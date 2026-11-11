@@ -112,7 +112,7 @@ export function FomodDialog({ need, onClose, onInstalled, apply }: { need: Choic
       </div>
       {visibleCount > 2 && !needle && (
         <div className="fomod-jump" aria-label="Steps">
-          {f.steps.map((s, si) => shows[si] && <button key={si} type="button" className="chip" onClick={() => jump(si)} title={`Go to ${s.name}`}>{s.name || `Step ${si + 1}`}</button>)}
+          {f.steps.map((s, si) => shows[si] && <button key={si} type="button" className="chip" onClick={() => jump(si)} title={`Go to ${s.name || `step ${si + 1}`}`}>{s.name || `Step ${si + 1}`}</button>)}
         </div>
       )}
       {needle && <p className="dim" style={{ fontSize: ".84em" }}>{matches ? `${matches} ${matches === 1 ? "match" : "matches"}` : "No matches"}</p>}

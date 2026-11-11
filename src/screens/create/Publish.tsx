@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Empty, Key, Lcd, Module, Pill, Seg, Switch, bytesText, useBusy } from "../../ui/pocket";
 import { authoring, creator, errorText, type MyMods, type UploadTarget } from "../../lib/api";
-import { shortDate } from "../../lib/text";
+import { plural, shortDate } from "../../lib/text";
 import { toast } from "../../ui/toast";
 import { SettingsLink } from "../../ui/SettingsLink";
 import { bump } from "../../lib/version";
@@ -71,9 +71,9 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
   const publish = () => run(async () => {
     if (!zip) return;
     setProg(null);
-    const id = await creator.publish({ file: zip, fileId: /^\d+$/.test(fileId) ? Number(fileId) : fileId, modId: modId ? Number(modId) : null, version: pack.version,
+    await creator.publish({ file: zip, fileId: /^\d+$/.test(fileId) ? Number(fileId) : fileId, modId: modId ? Number(modId) : null, version: pack.version,
       displayName: display || pack.name || null, category, changelog: changelog || null, archiveExisting: archiveOld, updateModVersion: bumpVersion });
-    toast(`Published ${pack.version}${id ? ` (version ${id})` : ""}. Nexus scans it first`);
+    toast(`Published ${pack.version}. Nexus scans it first`);
     onPublished();
   });
 
@@ -111,7 +111,7 @@ export function Publish({ pack, mine, hasKey, prefill, onPack, onPublished }: {
               {targets.map((t) => (
                 <button key={t.id} type="button" className={`row${t.id === fileId ? " sel" : ""}`} onClick={() => { setFileId(t.id); if (t.name) setDisplay(t.name); }}>
                   <span className="m-main"><span className="m-t">{t.name || "Unnamed file"}</span>
-                    <span className="m-meta">{t.versionsCount != null && <span>{t.versionsCount} versions</span>}{t.lastUploadedAt && <span>last {shortDate(t.lastUploadedAt)}</span>}{t.isActive === false && <span>no current version</span>}</span></span>
+                    <span className="m-meta">{t.versionsCount != null && <span>{plural(t.versionsCount, "version")}</span>}{t.lastUploadedAt && <span>last {shortDate(t.lastUploadedAt)}</span>}{t.isActive === false && <span>no current version</span>}</span></span>
                   <span className="m-side mono">{t.id}</span>
                 </button>
               ))}

@@ -80,7 +80,7 @@ export function AddsList({ m, fresh }: { m: ExtensionManifest; fresh?: string[] 
     { icon: "library", what: "Library group rules", items: (k.groupRules ?? []).map((r, i) => ({ key: String(i), main: `Into ${r.group}`, sub: ruleText(r.match) })) },
     { icon: "play", what: "Tools in the Play menu", items: (k.tools ?? []).map((t) => ({ key: t.id, main: t.name, sub: t.path ? `Runs ${t.path} in the game folder${t.args?.length ? ` with ${t.args.join(" ")}` : ""}` : `Runs ${t.pick?.file ?? "a program"} you pick${t.args?.length ? ` with ${t.args.join(" ")}` : ""}`, badge: isNew(`tool:${t.id}:`) })) },
     { icon: "play", what: "Launch options", items: (k.launchOptions ?? []).map((o) => ({ key: o.id, main: o.name, sub: `Game with ${o.args.join(" ")}`, badge: isNew(`launch:${o.id}:`) })) },
-    { icon: "file", what: "Console command packs", items: (k.commandPacks ?? []).map((p) => ({ key: p.id, main: p.title, sub: `${p.commands.length} commands${p.mods?.length ? `, shown on ${p.mods.length === 1 ? "one mod's" : `${p.mods.length} mods'`} page` : ""}` })) },
+    { icon: "file", what: "Console command packs", items: (k.commandPacks ?? []).map((p) => ({ key: p.id, main: p.title, sub: `${p.commands.length} ${p.commands.length === 1 ? "command" : "commands"}${p.mods?.length ? `, shown on ${p.mods.length === 1 ? "one mod's page" : `${p.mods.length} mods' pages`}` : ""}` })) },
     { icon: "link", what: "Links", items: (k.links ?? []).map((l) => ({ key: l.id, main: l.title, sub: hostOf(l.url), badge: isNew(`link:${l.url}`) })) },
     { icon: "addons", what: "Panels", items: (k.panels ?? []).map((p) => ({ key: p.id, main: p.title, sub: "Own page in Add-ons, sandboxed" })) },
   ];
@@ -105,7 +105,7 @@ function ruleText(m: GroupRule["match"]): string {
   if (m.author?.length) parts.push(`by ${m.author.join(", ")}`);
   if (m.modType?.length) parts.push(`type ${m.modType.join(", ")}`);
   if (m.frameworks?.length) parts.push(`using ${m.frameworks.join(", ")}`);
-  if (m.mods?.length) parts.push(`${m.mods.length} listed mods`);
+  if (m.mods?.length) parts.push(`${m.mods.length} listed ${m.mods.length === 1 ? "mod" : "mods"}`);
   return parts.join(" or ");
 }
 
