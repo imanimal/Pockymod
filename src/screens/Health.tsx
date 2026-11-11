@@ -134,7 +134,8 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
         {g?.version && <span className="dim mono" style={{ fontSize: ".8em" }}>Cyberpunk2077.exe {g.version.productString ?? g.version.product}</span>}
       </div>
 
-      {AREAS.map((a) => {
+      {/* an area with a problem goes first, so the Problems count always has something red under it */}
+      {[...AREAS].sort((a, b) => Number(hasProblem(r, b.id)) - Number(hasProblem(r, a.id))).map((a) => {
         const list = r.issues.filter((i) => i.area === a.id);
         if (a.id === "conflicts" && list.length === 0) return null;
         if (a.id === "logs") return g ? <LogsModule key="logs" stamp={stamp} onChanged={() => load()} /> : null;
@@ -166,6 +167,8 @@ export function Health({ onNavigate, onIssues }: { onNavigate: (v: "library" | "
     </div>
   );
 }
+
+const hasProblem = (r: HealthReport, area: Issue["area"]) => r.issues.some((i) => i.area === area && i.severity === "problem");
 
 /** The fixes Fix all runs by itself. */
 const AUTO: Fix["kind"][] = ["installMod", "updateMod", "runRedmodDeploy", "redeploy", "resetScripts", "disableModlist"];
